@@ -2002,7 +2002,8 @@ const translations = {
         clausulaIsencaoParceiro: "DECLARAÇÃO DE ISENÇÃO DE RESPONSABILIDADE DO PARCEIRO:\nA presente análise incide exclusivamente sobre o reporte algorítmico da plataforma. Eventuais discrepâncias não imputam dolo ou omissão voluntária ao parceiro operador, dada a opacidade dos dados de origem. Nos termos do Art. 36.º, n.º 11 do CIVA (Faturação elaborada pelo adquirente ou por terceiros), a plataforma detém o monopólio da emissão documental fiscal e SAF-T. Esta assimetria estrutural impede o parceiro de auditar, mitigar ou corrigir atempadamente as discrepâncias algorítmicas que se agravam progressiva e ciclicamente.",
         clausulaCadeiaCustodia: "REGISTO DE CADEIA DE CUSTÓDIA (HASH CHECK):\nA integridade de cada ficheiro de evidência processado é garantida pelo seu hash SHA-256 completo, listado abaixo. Qualquer alteração aos dados originais resultaria numa hash divergente, invalidando a prova.",
         clausulaNormativoISO: "REFERENCIAL NORMATIVO:\nA recolha, preservação e análise das evidências digitais seguiram as diretrizes estabelecidas pela norma ISO/IEC 27037 (Linhas de orientação para identificação, recolha, aquisição e preservação de prova digital), em conformidade com o Decreto-Lei n.º 28/2019.",
-        clausulaAssinaturaDigital: "VALIDAÇÃO TÉCNICA DE CONSULTORIA:\nO presente relatorio e selado com o Master Hash SHA-256 completo e o QR Code anexo, garantindo a sua integridade e não-repúdio. A sua validação pode ser efetuada através de qualquer ferramenta de verificação de hash ou leitura de QR Code, que remete para o hash completo do documento."
+        clausulaAssinaturaDigital: "VALIDAÇÃO TÉCNICA DE CONSULTORIA:\nO presente relatorio e selado com o Master Hash SHA-256 completo e o QR Code anexo, garantindo a sua integridade e não-repúdio. A sua validação pode ser efetuada através de qualquer ferramenta de verificação de hash ou leitura de QR Code, que remete para o hash completo do documento.",
+        hashTitle: "Integridade SHA-256"
     },
     en: {
         startBtn: "START FORENSIC EXAM v13.5.0-PURE",
@@ -2131,7 +2132,8 @@ const translations = {
         clausulaIsencaoParceiro: "PARTNER LIABILITY DISCLAIMER:\nThis analysis focuses exclusively on the platform's algorithmic reporting. Any discrepancies do not imply intent or voluntary omission by the operating partner, given the opacity of the source data. Under Art. 36(11) of the Portuguese VAT Code (CIVA - Invoicing by third parties), the platform holds the monopoly over the issuance of tax documents and SAF-T. This structural asymmetry prevents the partner from timely auditing, mitigating, or correcting algorithmic discrepancies that progressively and cyclically worsen.",
         clausulaCadeiaCustodia: "CHAIN OF CUSTODY RECORD (HASH CHECK):\nThe integrity of each processed evidence file is guaranteed by its complete SHA-256 hash, listed below. Any alteration to the original data would result in a divergent hash, invalidating the evidence.",
         clausulaNormativoISO: "NORMATIVE FRAMEWORK:\nThe collection, preservation, and analysis of digital evidence followed the guidelines established by the ISO/IEC 27037 standard (Guidelines for identification, collection, acquisition, and preservation of digital evidence), in compliance with Decree-Law No. 28/2019.",
-        clausulaAssinaturaDigital: "TECHNICAL CONSULTANCY VALIDATION:\nThis report is sealed with the complete Master Hash SHA-256 and the attached QR Code, ensuring its integrity and non-repudiation. Its validation can be performed using any hash verification tool or QR Code reader, which redirects to the document's complete hash."
+        clausulaAssinaturaDigital: "TECHNICAL CONSULTANCY VALIDATION:\nThis report is sealed with the complete Master Hash SHA-256 and the attached QR Code, ensuring its integrity and non-repudiation. Its validation can be performed using any hash verification tool or QR Code reader, which redirects to the document's complete hash.",
+        hashTitle: "SHA-256 Integrity"
     }
 };
 
@@ -5346,8 +5348,6 @@ async function exportPDF() {
             console.warn('[UNIFED-PDF] Não foi possível atualizar o hash dinâmico:', e);
         }
     }
-    // ... resto do corpo da função ...
-}
 
     ForensicLogger.addEntry('PDF_EXPORT_STARTED');
     logAudit('📄 A gerar Parecer Técnico (Estilo Institucional v13.5.0-PURE)...', 'info');
@@ -5397,79 +5397,76 @@ async function exportPDF() {
             doc.setTextColor(0, 0, 0);
         };
 
-        const _qrHashFull = UNIFEDSystem.masterHash || 'HASH_INDISPONIVEL';
-        const _qrSessionShort = UNIFEDSystem.sessionId ? UNIFEDSystem.sessionId.substring(0, 20) : 'N/A';
-        const _qrPayload = `UNIFED|${_qrSessionShort}|${_qrHashFull}`;
+        // ========== QR Code síncrono (sem await / Promise) ==========
+const _qrHashFull = UNIFEDSystem.masterHash || 'HASH_INDISPONIVEL';
+const _qrSessionShort = UNIFEDSystem.sessionId ? UNIFEDSystem.sessionId.substring(0, 20) : 'N/A';
+const _qrPayload = `UNIFED|${_qrSessionShort}|${_qrHashFull}`;
 
-        const _qrDataUrl = await new Promise((resolve) => {
-            if (typeof QRCode === 'undefined') { resolve(null); return; }
-            const _tmpDiv = document.createElement('div');
-            _tmpDiv.style.cssText = 'position:absolute;left:-9999px;top:-9999px;';
-            document.body.appendChild(_tmpDiv);
-            new QRCode(_tmpDiv, {
-                text: _qrPayload,
-                width: 256,
-                height: 256,
-                colorDark: '#000000',
-                colorLight: '#ffffff',
-                correctLevel: QRCode.CorrectLevel.L
-            });
-            setTimeout(() => {
-                const _canvas = _tmpDiv.querySelector('canvas');
-                const _dataUrl = _canvas ? _canvas.toDataURL('image/png') : null;
-                document.body.removeChild(_tmpDiv);
-                resolve(_dataUrl);
-            }, 200);
-        });
+let _qrDataUrl = null;
+if (typeof QRCode !== 'undefined') {
+    const _tmpDiv = document.createElement('div');
+    _tmpDiv.style.cssText = 'position:absolute;left:-9999px;top:-9999px;';
+    document.body.appendChild(_tmpDiv);
+    new QRCode(_tmpDiv, {
+        text: _qrPayload,
+        width: 256,
+        height: 256,
+        colorDark: '#000000',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.L
+    });
+    const _canvas = _tmpDiv.querySelector('canvas');
+    _qrDataUrl = _canvas ? _canvas.toDataURL('image/png') : null;
+    document.body.removeChild(_tmpDiv);
+}
+if (_qrDataUrl) {
+    console.log('[UNIFED-PDF] ✅ QR Code gerado sincronamente.');
+} else {
+    console.warn('[UNIFED-PDF] ⚠ QR Code não disponível (biblioteca QRCode ausente).');
+}
 
-        if (_qrDataUrl) {
-            console.log('[UNIFED-PDF] ✅ QR Code pré-gerado com sucesso — dataURL pronto para inserção no PDF.');
+// ========== Resto do código (já com await, mas dentro de async function) ==========
+let _enrichLegalNarrative = null;
+let _enrichSankeyImage = null;
+let _enrichTemporalImage = null;
+
+if (typeof window.generateLegalNarrative === 'function') {
+    try {
+        logAudit('🤖 [v13.3.0] A gerar Síntese Jurídica + Simulador Adversarial (IA)...', 'info');
+        _enrichLegalNarrative = await window.generateLegalNarrative(UNIFEDSystem.analysis);
+        logAudit('✅ [v13.3.0] Síntese Jurídica + Contra-Interrogatório gerados.', 'success');
+    } catch (_aiErr) {
+        _enrichLegalNarrative = '[Síntese jurídica indisponível — motor forense íntegro]';
+        logAudit('⚠ [v13.3.0] IA indisponível — PDF gerado sem síntese (CORS/offline).', 'warning');
+    }
+}
+
+if (typeof window.renderSankeyToImage === 'function') {
+    try {
+        logAudit('📊 [v13.3.0] A renderizar Diagrama de Fluxo Financeiro (Sankey)...', 'info');
+        _enrichSankeyImage = await window.renderSankeyToImage(UNIFEDSystem.analysis);
+        if (_enrichSankeyImage) {
+            logAudit('✅ [v13.3.0] Diagrama Sankey renderizado com sucesso.', 'success');
         } else {
-            console.warn('[UNIFED-PDF] ⚠ QR Code não disponível (biblioteca QRCode ausente).');
+            logAudit('⚠ [v13.3.0] Diagrama Sankey indisponível — PDF gerado sem gráfico.', 'warning');
         }
-
-        let _enrichLegalNarrative = null;
-        let _enrichSankeyImage = null;
-        let _enrichTemporalImage = null;
-
-        if (typeof window.generateLegalNarrative === 'function') {
-            try {
-                logAudit('🤖 [v13.3.0] A gerar Síntese Jurídica + Simulador Adversarial (IA)...', 'info');
-                _enrichLegalNarrative = await window.generateLegalNarrative(UNIFEDSystem.analysis);
-                logAudit('✅ [v13.3.0] Síntese Jurídica + Contra-Interrogatório gerados.', 'success');
-            } catch (_aiErr) {
-                _enrichLegalNarrative = '[Síntese jurídica indisponível — motor forense íntegro]';
-                logAudit('⚠ [v13.3.0] IA indisponível — PDF gerado sem síntese (CORS/offline).', 'warning');
-            }
+    } catch (_sankeyErr) {
+        _enrichSankeyImage = null;
+        logAudit('⚠ [v13.3.0] Erro Sankey — PDF gerado sem diagrama.', 'warning');
+    }
+}
+if (typeof window.generateTemporalChartImage === 'function') {
+    try {
+        logAudit('📅 [v13.3.0] A renderizar Gráfico ATF (Análise Temporal Forense)...', 'info');
+        _enrichTemporalImage = await window.generateTemporalChartImage(UNIFEDSystem.monthlyData, UNIFEDSystem.analysis);
+        if (_enrichTemporalImage) {
+            logAudit('✅ [v13.3.0] Gráfico ATF renderizado com sucesso.', 'success');
         }
-
-        if (typeof window.renderSankeyToImage === 'function') {
-            try {
-                logAudit('📊 [v13.3.0] A renderizar Diagrama de Fluxo Financeiro (Sankey)...', 'info');
-                _enrichSankeyImage = await window.renderSankeyToImage(UNIFEDSystem.analysis);
-                if (_enrichSankeyImage) {
-                    logAudit('✅ [v13.3.0] Diagrama Sankey renderizado com sucesso.', 'success');
-                } else {
-                    logAudit('⚠ [v13.3.0] Diagrama Sankey indisponível — PDF gerado sem gráfico.', 'warning');
-                }
-            } catch (_sankeyErr) {
-                _enrichSankeyImage = null;
-                logAudit('⚠ [v13.3.0] Erro Sankey — PDF gerado sem diagrama.', 'warning');
-            }
-        }
-        if (typeof window.generateTemporalChartImage === 'function') {
-            try {
-                logAudit('📅 [v13.3.0] A renderizar Gráfico ATF (Análise Temporal Forense)...', 'info');
-                _enrichTemporalImage = await window.generateTemporalChartImage(UNIFEDSystem.monthlyData, UNIFEDSystem.analysis);
-                if (_enrichTemporalImage) {
-                    logAudit('✅ [v13.3.0] Gráfico ATF renderizado com sucesso.', 'success');
-                }
-            } catch (_atfErr) {
-                _enrichTemporalImage = null;
-                logAudit('⚠ [v13.3.0] ATF gráfico indisponível — PDF sem análise temporal.', 'warning');
-            }
-        }
-
+    } catch (_atfErr) {
+        _enrichTemporalImage = null;
+        logAudit('⚠ [v13.3.0] ATF gráfico indisponível — PDF sem análise temporal.', 'warning');
+    }
+}
         const addFooter = (doc, pageNum, isLastPage = false) => {
             const pageWidth = doc.internal.pageSize.getWidth();
             const pageHeight = doc.internal.pageSize.getHeight();
