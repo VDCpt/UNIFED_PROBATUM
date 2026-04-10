@@ -6,169 +6,142 @@
    PORTUGUÊS DE PORTUGAL
    + v13.1.0-GOLD: LED blink classes, box-despesas-blink, DORA Compliant badges
    ===================================================================== */
-
 /* -------------------------------------------------------------------------
    1. VARIÁVEIS GLOBAIS
    --------------------------------------------------------------------- */
-:root {
-    --bg-primary: #020617;
-    --bg-secondary: #0f172a;
-    --bg-tertiary: #1e293b;
+: root {
+	--bg - primary: #020617;
+    --bg-secondary: # 0 f172a;
+	--bg - tertiary: #1e293b;
     --bg-card: rgba(15, 23, 42, 0.7);
 
-    --text-primary: #f1f5f9;
-    --text-secondary: #94a3b8;
-    --text-tertiary: #64748b;
-
-    --accent-primary: #00e5ff;
-    --accent-secondary: #0ea5e9;
-    --accent-glow: rgba(0, 229, 255, 0.4);
-    --warn-primary: #ef4444;
-    --warn-secondary: #dc2626;
-    
-    --pure-font-mono: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+    --text-primary: # f1f5f9;
+	--text - secondary: #94a3b8;
+    --text-tertiary: # 64748 b;
+	--accent - primary: #00e5ff;
+    --accent-secondary: # 0 ea5e9;
+	--accent - glow: rgba(0, 229, 255, 0.4);
+	--warn - primary: #ef4444;
+	--warn - secondary: #dc2626;
+	--pure - font - mono: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
 }
-
 /* -------------------------------------------------------------------------
    2. RESET & BASE
    --------------------------------------------------------------------- */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+*{
+	margin: 0;
+	padding: 0;
+	box - sizing: border - box;
 }
-
 body {
-    background-color: var(--bg-primary);
-    color: var(--text-primary);
-    font-family: 'Inter', -apple-system, sans-serif;
-    line-height: 1.5;
-    overflow-x: hidden;
+	background - color: var (--bg - primary);
+	color: var (--text - primary);
+	font - family: 'Inter', -apple - system, sans - serif;
+	line - height: 1.5;
+	overflow - x: hidden;
 }
-
 /* -------------------------------------------------------------------------
    3. LAYOUT E COMPONENTES
    --------------------------------------------------------------------- */
-
 /* [CORREÇÃO PERICIAL A-01]: Estabilização da Identificação do Sujeito Passivo */
-.pure-subject-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem 1.5rem;
-    background: linear-gradient(90deg, rgba(15,23,42,0.9) 0%, rgba(30,41,59,0.7) 100%);
-    border-bottom: 1px solid var(--accent-glow);
-    gap: 20px;
-    flex-wrap: nowrap !important; /* Impede a quebra de linha que desconfigura a box */
-    min-height: 70px;
-}
-
-.pure-subject-info {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    flex: 1;
-    min-width: 0; /* Permite o truncamento se necessário em vez de quebrar layout */
-}
-
-.pure-subject-label {
-    font-size: 0.65rem;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--text-tertiary);
-    font-weight: 700;
-}
-
-.pure-subject-value {
-    font-family: var(--pure-font-mono);
-    color: var(--accent-primary);
-    font-size: 0.9rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-/* -------------------------------------------------------------------------
-   4. DASHBOARD GRID & CARDS
-   --------------------------------------------------------------------- */
-.pure-card-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 1.5rem;
-    padding: 1.5rem;
-}
-
-.pure-card {
-    background: var(--bg-card);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    padding: 1.25rem;
-    transition: transform 0.2s ease, border-color 0.2s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-.pure-card:hover {
-    border-color: var(--accent-glow);
-    transform: translateY(-2px);
-}
-
-.pure-card-title {
-    font-size: 0.75rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    color: var(--text-secondary);
-    margin-bottom: 1rem;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.pure-card-value {
-    font-family: var(--pure-font-mono);
-    font-size: 1.75rem;
-    font-weight: 600;
-    color: var(--text-primary);
-}
-
-/* -------------------------------------------------------------------------
-   5. MÓDULOS ESPECÍFICOS (DAC7 / ATF / CUSTÓDIA)
-   --------------------------------------------------------------------- */
-.pure-evidence-manager {
-    border-left: 4px solid var(--accent-secondary);
-}
-
-/* [CORREÇÃO PERICIAL A-02]: Ocultação inicial de contadores de evidência */
-.pure-evidence-count {
-    display: none; /* Estado inicial: Oculto até CASO REAL ser clicado */
-    font-size: 0.8rem;
-    background: rgba(0, 229, 255, 0.15);
-    padding: 2px 8px;
-    border-radius: 4px;
-    color: var(--accent-primary);
-    margin-left: auto;
-}
-
-.pure-evidence-count.active {
-    display: inline-block;
-}
-
-.chart-section {
-    padding: 1.5rem;
-    background: var(--bg-secondary);
-    margin: 1.5rem;
-    border-radius: 12px;
-}
-
-.console-section {
-    background: #000;
+.pure - subject - header {
+		display: flex;
+		justify - content: space - between;
+		align - items: center;
+		padding: 1 rem 1.5 rem;
+		background: linear - gradient(90 deg, rgba(15, 23, 42, 0.9) 0 % , rgba(30, 41, 59, 0.7) 100 % );
+		border - bottom: 1 px solid
+		var (--accent - glow);
+		gap: 20 px;
+		flex - wrap: nowrap!important; /* Impede a quebra de linha que desconfigura a box */
+		min - height: 70 px;
+	}.pure - subject - info {
+		display: flex;
+		flex - direction: column;
+		gap: 4 px;
+		flex: 1;
+		min - width: 0; /* Permite o truncamento se necessário em vez de quebrar layout */
+	}.pure - subject - label {
+		font - size: 0.65 rem;
+		text - transform: uppercase;
+		letter - spacing: 0.1 em;
+		color: var (--text - tertiary);
+		font - weight: 700;
+	}.pure - subject - value {
+		font - family: var (--pure - font - mono);
+		color: var (--accent - primary);
+		font - size: 0.9 rem;
+		white - space: nowrap;
+		overflow: hidden;
+		text - overflow: ellipsis;
+	}
+	/* -------------------------------------------------------------------------
+	   4. DASHBOARD GRID & CARDS
+	   --------------------------------------------------------------------- */
+	.pure - card - grid {
+		display: grid;
+		grid - template - columns: repeat(auto - fit, minmax(300 px, 1 fr));
+		gap: 1.5 rem;
+		padding: 1.5 rem;
+	}.pure - card {
+		background: var (--bg - card);
+		backdrop - filter: blur(12 px);
+		border: 1 px solid rgba(255, 255, 255, 0.1);
+		border - radius: 8 px;
+		padding: 1.25 rem;
+		transition: transform 0.2 s ease,
+		border - color 0.2 s ease;
+		position: relative;
+		overflow: hidden;
+	}.pure - card: hover {
+		border - color: var (--accent - glow);
+		transform: translateY(-2 px);
+	}.pure - card - title {
+		font - size: 0.75 rem;
+		font - weight: 800;
+		text - transform: uppercase;
+		color: var (--text - secondary);
+		margin - bottom: 1 rem;
+		display: flex;
+		align - items: center;
+		gap: 8 px;
+	}.pure - card - value {
+		font - family: var (--pure - font - mono);
+		font - size: 1.75 rem;
+		font - weight: 600;
+		color: var (--text - primary);
+	}
+	/* -------------------------------------------------------------------------
+	   5. MÓDULOS ESPECÍFICOS (DAC7 / ATF / CUSTÓDIA)
+	   --------------------------------------------------------------------- */
+	.pure - evidence - manager {
+		border - left: 4 px solid
+		var (--accent - secondary);
+	}
+	/* [CORREÇÃO PERICIAL A-02]: Ocultação inicial de contadores de evidência */
+	.pure - evidence - count {
+		display: none; /* Estado inicial: Oculto até CASO REAL ser clicado */
+		font - size: 0.8 rem;
+		background: rgba(0, 229, 255, 0.15);
+		padding: 2 px 8 px;
+		border - radius: 4 px;
+		color: var (--accent - primary);
+		margin - left: auto;
+	}.pure - evidence - count.active {
+		display: inline - block;
+	}.chart - section {
+		padding: 1.5 rem;
+		background: var (--bg - secondary);
+		margin: 1.5 rem;
+		border - radius: 12 px;
+	}.console - section {
+		background: #000;
     font-family: var(--pure-font-mono);
     font-size: 0.8rem;
     padding: 1rem;
     margin: 1.5rem;
-    border: 1px solid #333;
-    color: #4ade80;
+    border: 1px solid # 333;
+		color: #4ade80;
     max-height: 300px;
     overflow-y: auto;
 }
@@ -195,8 +168,8 @@ body {
 }
 
 /* Estabilização Global Wrapper */
-#pureDashboardWrapper {
-    background: #020617 !important;
+# pureDashboardWrapper {
+			background: #020617 !important;
     transition: opacity 0.2s ease-in !important;
     min-height: 100vh;
 }
@@ -229,119 +202,101 @@ body {
 }
 
 .modal-content {
-    background: #0f172a;
-    border: 1px solid var(--accent-primary);
-    width: 90%;
-    max-width: 750px;
-    max-height: 85vh;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    box-shadow: var(--shadow-glow-cyan);
-    border-radius: var(--border-radius-sm);
-}
-
-.modal-header {
-    background: #020617;
+    background: # 0 f172a;
+			border: 1 px solid
+			var (--accent - primary);
+			width: 90 % ;
+			max - width: 750 px;
+			max - height: 85 vh;
+			overflow: hidden;
+			display: flex;
+			flex - direction: column;
+			box - shadow: var (--shadow - glow - cyan);
+			border - radius: var (--border - radius - sm);
+		}.modal - header {
+			background: #020617;
     padding: 1rem;
     border-bottom: 1px solid var(--border-color);
     display: flex;
     justify-content: space-between;
-    color: #fff;
-    align-items: center;
-}
-
-.modal-header h3 {
-    font-size: 1.1rem;
-    display: flex;
-    align-items: center;
-    gap: 0.8rem;
-    color: var(--accent-primary);
-    font-weight: 800;
-}
-
-.modal-header .icon-btn {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid var(--border-color);
-    color: #fff;
-    width: 36px;
-    height: 36px;
-    border-radius: var(--border-radius-sm);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.modal-header .icon-btn:hover {
-    background: var(--warn-primary);
-    border-color: var(--warn-primary);
-    transform: rotate(90deg);
-}
-
-.modal-body {
-    padding: 2rem;
-    overflow-y: auto;
-    flex: 1;
-}
-
-.upload-section-modal {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-#globalDropZone {
-    border: 2px dashed var(--accent-primary);
-    background: rgba(0, 229, 255, 0.05);
-    padding: 1.5rem;
-    text-align: center;
-    transition: all 0.3s ease;
-    cursor: pointer;
-}
-
-#globalDropZone:hover {
-    background: rgba(0, 229, 255, 0.1);
-    border-color: var(--accent-secondary);
-    transform: scale(1.02);
-}
-
-#globalDropZone.drag-over {
-    background: rgba(0, 229, 255, 0.2);
-    border-color: var(--success-primary);
-    box-shadow: var(--shadow-glow-green);
-}
-
-#globalProcessingStatus {
-    margin-top: 1rem;
-    padding: 0.5rem;
-    background: rgba(0,0,0,0.3);
-    border-radius: var(--border-radius-sm);
-    color: var(--accent-primary);
-}
-
-.upload-group-modal {
-    margin-bottom: 0.5rem;
-    background: rgba(255,255,255,0.03);
-    padding: 1rem;
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius-sm);
-}
-
-.upload-group-modal label {
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-    display: block;
-    margin-bottom: 0.5rem;
-    font-weight: 700;
-    text-transform: uppercase;
-}
-
-.upload-btn,
-.modal-btn {
-    width: 100%;
-    background: #000;
+    color: # fff;
+			align - items: center;
+		}.modal - header h3 {
+			font - size: 1.1 rem;
+			display: flex;
+			align - items: center;
+			gap: 0.8 rem;
+			color: var (--accent - primary);
+			font - weight: 800;
+		}.modal - header.icon - btn {
+			background: rgba(255, 255, 255, 0.1);
+			border: 1 px solid
+			var (--border - color);
+			color: #fff;
+			width: 36 px;
+			height: 36 px;
+			border - radius: var (--border - radius - sm);
+			display: flex;
+			align - items: center;
+			justify - content: center;
+			cursor: pointer;
+			transition: all 0.2 s ease;
+		}.modal - header.icon - btn: hover {
+			background: var (--warn - primary);
+			border - color: var (--warn - primary);
+			transform: rotate(90 deg);
+		}.modal - body {
+			padding: 2 rem;
+			overflow - y: auto;
+			flex: 1;
+		}.upload - section - modal {
+			display: flex;
+			flex - direction: column;
+			gap: 1 rem;
+		}
+		#globalDropZone {
+			border: 2 px dashed
+			var (--accent - primary);
+			background: rgba(0, 229, 255, 0.05);
+			padding: 1.5 rem;
+			text - align: center;
+			transition: all 0.3 s ease;
+			cursor: pointer;
+		}
+		#globalDropZone: hover {
+			background: rgba(0, 229, 255, 0.1);
+			border - color: var (--accent - secondary);
+			transform: scale(1.02);
+		}
+		#globalDropZone.drag - over {
+			background: rgba(0, 229, 255, 0.2);
+			border - color: var (--success - primary);
+			box - shadow: var (--shadow - glow - green);
+		}
+		#globalProcessingStatus {
+			margin - top: 1 rem;
+			padding: 0.5 rem;
+			background: rgba(0, 0, 0, 0.3);
+			border - radius: var (--border - radius - sm);
+			color: var (--accent - primary);
+		}.upload - group - modal {
+			margin - bottom: 0.5 rem;
+			background: rgba(255, 255, 255, 0.03);
+			padding: 1 rem;
+			border: 1 px solid
+			var (--border - color);
+			border - radius: var (--border - radius - sm);
+		}.upload - group - modal label {
+			font - size: 0.8 rem;
+			color: var (--text - secondary);
+			display: block;
+			margin - bottom: 0.5 rem;
+			font - weight: 700;
+			text - transform: uppercase;
+		}.upload - btn,
+		.modal - btn {
+			width: 100 % ;
+			background: #000;
     color: var(--text-secondary);
     border: 1px solid var(--border-color);
     padding: 0.8rem;
@@ -366,143 +321,120 @@ body {
 .upload-btn.processing,
 .modal-btn.processing {
     background: linear-gradient(90deg, var(--accent-primary) 0%, var(--success-primary) 100%);
-    color: #000;
-    border-color: var(--accent-primary);
-}
-
-.file-input-modal {
-    display: none;
-}
-
-.file-list-modal {
-    margin-top: 1rem;
-    max-height: 150px;
-    overflow-y: auto;
-    display: block;
-    background: rgba(0,0,0,0.5);
-    border-radius: var(--border-radius-sm);
-    padding: 0.5rem;
-    min-height: 60px;
-    position: relative;
-    z-index: 10;
-    border: 1px solid var(--border-color);
-}
-
-.file-item-modal {
-    display: flex;
-    align-items: center;
-    gap: 0.8rem;
-    padding: 0.6rem;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-    font-size: 0.8rem;
-    background: rgba(0, 229, 255, 0.05);
-    border-left: 3px solid var(--accent-primary);
-    margin-bottom: 0.4rem;
-    border-radius: var(--border-radius-sm);
-    transition: all 0.2s ease;
-}
-
-.file-item-modal:hover {
-    background: rgba(0, 229, 255, 0.15);
-    transform: translateX(2px);
-}
-
-.file-name-modal {
-    flex: 1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    font-family: var(--font-mono);
-    color: var(--text-primary);
-    font-weight: 500;
-}
-
-.file-hash-modal {
-    color: var(--text-tertiary);
-    font-size: 0.7rem;
-    font-family: var(--font-mono);
-    background: rgba(0,0,0,0.3);
-    padding: 0.2rem 0.4rem;
-    border-radius: var(--border-radius-sm);
-}
-
-.processing-summary {
-    background: rgba(20, 30, 48, 0.8);
-    border-radius: var(--border-radius-sm);
-    padding: 1.5rem;
-    margin-top: 1.5rem;
-    border-top: 1px solid var(--accent-primary);
-}
-
-.processing-summary h4 {
-    color: var(--accent-primary);
-    font-size: 1rem;
-    margin-bottom: 1rem;
-    display: flex;
-    align-items: center;
-    gap: 0.8rem;
-    font-weight: 800;
-}
-
-.summary-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-    gap: 1rem;
-    text-align: center;
-}
-
-.summary-item {
-    background: rgba(30, 42, 68, 0.9);
-    padding: 1rem;
-    border-radius: var(--border-radius-sm);
-    border: 1px solid var(--border-color);
-}
-
-.summary-label {
-    display: block;
-    font-size: 0.7rem;
-    color: var(--text-secondary);
-    margin-bottom: 0.5rem;
-    font-weight: 700;
-    text-transform: uppercase;
-}
-
-.summary-value {
-    display: block;
-    font-size: 1.2rem;
-    font-weight: 800;
-    color: var(--text-primary);
-    font-family: var(--font-mono);
-}
-
-.summary-value.total {
-    color: var(--accent-primary);
-}
-
-.modal-footer {
-    background: rgba(30, 42, 68, 0.9);
-    padding: 1rem;
-    border-top: 1px solid var(--border-color);
-    display: flex;
-    gap: 1rem;
-}
-
-.modal-footer .btn-primary {
-    flex: 1;
-    padding: 0.8rem 1rem;
-    border-radius: var(--border-radius-sm);
-    font-weight: 700;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    transition: all 0.3s ease;
-    border: none;
-    font-family: var(--font-main);
-    font-size: 0.9rem;
-    background: linear-gradient(90deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
-    color: #000;
+    color: # 000;
+			border - color: var (--accent - primary);
+		}.file - input - modal {
+			display: none;
+		}.file - list - modal {
+			margin - top: 1 rem;
+			max - height: 150 px;
+			overflow - y: auto;
+			display: block;
+			background: rgba(0, 0, 0, 0.5);
+			border - radius: var (--border - radius - sm);
+			padding: 0.5 rem;
+			min - height: 60 px;
+			position: relative;
+			z - index: 10;
+			border: 1 px solid
+			var (--border - color);
+		}.file - item - modal {
+			display: flex;
+			align - items: center;
+			gap: 0.8 rem;
+			padding: 0.6 rem;
+			border - bottom: 1 px solid rgba(255, 255, 255, 0.1);
+			font - size: 0.8 rem;
+			background: rgba(0, 229, 255, 0.05);
+			border - left: 3 px solid
+			var (--accent - primary);
+			margin - bottom: 0.4 rem;
+			border - radius: var (--border - radius - sm);
+			transition: all 0.2 s ease;
+		}.file - item - modal: hover {
+				background: rgba(0, 229, 255, 0.15);
+				transform: translateX(2 px);
+			}.file - name - modal {
+				flex: 1;
+				white - space: nowrap;
+				overflow: hidden;
+				text - overflow: ellipsis;
+				font - family: var (--font - mono);
+				color: var (--text - primary);
+				font - weight: 500;
+			}.file - hash - modal {
+				color: var (--text - tertiary);
+				font - size: 0.7 rem;
+				font - family: var (--font - mono);
+				background: rgba(0, 0, 0, 0.3);
+				padding: 0.2 rem 0.4 rem;
+				border - radius: var (--border - radius - sm);
+			}.processing - summary {
+				background: rgba(20, 30, 48, 0.8);
+				border - radius: var (--border - radius - sm);
+				padding: 1.5 rem;
+				margin - top: 1.5 rem;
+				border - top: 1 px solid
+				var (--accent - primary);
+			}.processing - summary h4 {
+				color: var (--accent - primary);
+				font - size: 1 rem;
+				margin - bottom: 1 rem;
+				display: flex;
+				align - items: center;
+				gap: 0.8 rem;
+				font - weight: 800;
+			}.summary - grid {
+				display: grid;
+				grid - template - columns: repeat(auto - fit, minmax(100 px, 1 fr));
+				gap: 1 rem;
+				text - align: center;
+			}.summary - item {
+				background: rgba(30, 42, 68, 0.9);
+				padding: 1 rem;
+				border - radius: var (--border - radius - sm);
+				border: 1 px solid
+				var (--border - color);
+			}.summary - label {
+				display: block;
+				font - size: 0.7 rem;
+				color: var (--text - secondary);
+				margin - bottom: 0.5 rem;
+				font - weight: 700;
+				text - transform: uppercase;
+			}.summary - value {
+				display: block;
+				font - size: 1.2 rem;
+				font - weight: 800;
+				color: var (--text - primary);
+				font - family: var (--font - mono);
+			}.summary - value.total {
+				color: var (--accent - primary);
+			}.modal - footer {
+				background: rgba(30, 42, 68, 0.9);
+				padding: 1 rem;
+				border - top: 1 px solid
+				var (--border - color);
+				display: flex;
+				gap: 1 rem;
+			}.modal - footer.btn - primary {
+				flex: 1;
+				padding: 0.8 rem 1 rem;
+				border - radius: var (--border - radius - sm);
+				font - weight: 700;
+				cursor: pointer;
+				display: flex;
+				align - items: center;
+				justify - content: center;
+				gap: 0.5 rem;
+				transition: all 0.3 s ease;
+				border: none;
+				font - family: var (--font - main);
+				font - size: 0.9 rem;
+				background: linear - gradient(90 deg,
+					var (--accent - primary) 0 % ,
+					var (--accent - secondary) 100 % );
+				color: #000;
 }
 
 .modal-footer .btn-primary:hover {
@@ -511,228 +443,190 @@ body {
 }
 
 /* Estilos específicos para o Modal de Hash */
-#hashVerificationModal .modal-content {
-    max-width: 600px;
-}
-
-#hashVerificationContent {
-    font-family: var(--font-mono);
-    line-height: 1.6;
-}
-
-#masterHashFull {
-    font-size: 0.75rem;
-    word-break: break-all;
-    background: rgba(0, 0, 0, 0.3);
-    padding: 0.75rem;
-    border-radius: var(--border-radius-sm);
-    border: 1px solid var(--border-color);
-}
-
-.evidence-hash-item {
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 0.75rem;
-    padding: 0.5rem;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.evidence-hash-filename {
-    color: var(--accent-primary);
-    font-weight: 600;
-    font-size: 0.7rem;
-}
-
-.evidence-hash-value {
-    color: var(--text-secondary);
-    font-size: 0.65rem;
-    word-break: break-all;
-    font-family: var(--font-mono);
-    margin-top: 0.2rem;
-}
-
-/* ---------------------------------------------------------------------
-   8. TOAST
-   --------------------------------------------------------------------- */
-#toastContainer {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    z-index: 10000;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.toast-notification {
-    background: var(--bg-tertiary);
-    color: var(--text-primary);
-    padding: 1rem 1.5rem;
-    border-radius: var(--border-radius-sm);
-    border-left: 4px solid var(--accent-primary);
-    box-shadow: 0 0 20px rgba(0,0,0,0.5);
-    min-width: 300px;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    animation: slideIn 0.3s ease;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(255,255,255,0.05);
-}
-
-.toast-notification.success {
-    border-left-color: var(--success-primary);
-}
-
-.toast-notification.error {
-    border-left-color: var(--warn-primary);
-}
-
-.toast-notification.warning {
-    border-left-color: var(--warn-secondary);
-}
-
-.toast-notification i {
-    font-size: 1.2rem;
-}
-
-.toast-notification p {
-    font-weight: 600;
-    font-size: 0.9rem;
-    margin: 0;
-}
-
-@keyframes slideIn {
-    from { transform: translateX(100%); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
-}
-
-/* ---------------------------------------------------------------------
-   9. MODO APRESENTAÇÃO
-   --------------------------------------------------------------------- */
-body.presentation-mode {
-    font-size: var(--presentation-font-size-base);
-}
-
-body.presentation-mode .splash-content {
-    transform: scale(var(--presentation-scale));
-}
-
-body.presentation-mode .analysis-area {
-    font-size: 1.2rem;
-}
-
-body.presentation-mode .kpi-card p {
-    font-size: 2.2rem;
-}
-
-body.presentation-mode .stat-card p {
-    font-size: 2.5rem;
-}
-
-body.presentation-mode .quantum-value {
-    font-size: 3.5rem;
-}
-
-body.presentation-mode .chart-section {
-    height: 500px;
-}
-
-body.presentation-mode .btn-tool,
-body.presentation-mode .btn-forensic,
-body.presentation-mode .evidence-management-btn-solid {
-    font-size: 1rem;
-    padding: 1rem 1.5rem;
-}
-
-body.presentation-mode .conformity-seals {
-    transform: scale(1.1);
-    transform-origin: bottom;
-}
-
-@media (min-width: 1920px) {
-    body.secondary-screen .analysis-area {
-        font-size: 1.1rem;
-    }
-    
-    body.secondary-screen .kpi-card p {
-        font-size: 2rem;
-    }
-    
-    body.secondary-screen .stat-card p {
-        font-size: 2.2rem;
-    }
-    
-    body.secondary-screen .quantum-value {
-        font-size: 3rem;
-    }
-}
-
-/* Dual-screen mode: activado via window.screen.isExtended */
-body.dual-screen .analysis-area {
-    font-size: 1.05rem;
-}
-
-body.dual-screen .kpi-card p {
-    font-size: 1.9rem;
-}
-
-body.dual-screen .stat-card p {
-    font-size: 2.1rem;
-}
-
-/* ---------------------------------------------------------------------
-   10. CLASSES DE CREDIBILIDADE
-   --------------------------------------------------------------------- */
-.file-source-badge {
-    display: block;
-    font-size: 0.6rem;
-    color: var(--text-tertiary);
-    font-family: var(--font-mono);
-    margin-top: 0.3rem;
-    padding-top: 0.3rem;
-    border-top: 1px dashed rgba(255,255,255,0.1);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.file-source-badge::before {
-    content: "📁 ";
-    opacity: 0.7;
-}
-
-/* O atributo data-original-file não deve ser exibido na UI */
-[data-original-file] {
-    /* Apenas um placeholder, o valor não é mostrado visualmente */
-}
-
-[data-tooltip] {
-    position: relative;
-    cursor: help;
-}
-
-[data-tooltip]:hover::after {
-    content: attr(data-tooltip);
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    background: #000;
-    color: #fff;
-    padding: 0.5rem;
-    border-radius: var(--border-radius-sm);
-    font-size: 0.7rem;
-    white-space: nowrap;
-    z-index: 1000;
-    border: 1px solid var(--accent-primary);
-    box-shadow: var(--shadow-glow-cyan);
-}
-
-.demo-badge {
-    background: var(--warn-secondary);
-    color: #000;
+# hashVerificationModal.modal - content {
+					max - width: 600 px;
+				}
+				#hashVerificationContent {
+					font - family: var (--font - mono);
+					line - height: 1.6;
+				}
+				#masterHashFull {
+					font - size: 0.75 rem;
+					word -
+						break: break -all;
+					background: rgba(0, 0, 0, 0.3);
+					padding: 0.75 rem;
+					border - radius: var (--border - radius - sm);
+					border: 1 px solid
+					var (--border - color);
+				}.evidence - hash - item {
+					display: flex;
+					flex - direction: column;
+					margin - bottom: 0.75 rem;
+					padding: 0.5 rem;
+					border - bottom: 1 px solid
+					var (--border - color);
+				}.evidence - hash - filename {
+					color: var (--accent - primary);
+					font - weight: 600;
+					font - size: 0.7 rem;
+				}.evidence - hash - value {
+					color: var (--text - secondary);
+					font - size: 0.65 rem;
+					word - break: break -all;
+					font - family: var (--font - mono);
+					margin - top: 0.2 rem;
+				}
+				/* ---------------------------------------------------------------------
+				   8. TOAST
+				   --------------------------------------------------------------------- */
+				#toastContainer {
+					position: fixed;
+					bottom: 20 px;
+					right: 20 px;
+					z - index: 10000;
+					display: flex;
+					flex - direction: column;
+					gap: 10 px;
+				}.toast - notification {
+					background: var (--bg - tertiary);
+					color: var (--text - primary);
+					padding: 1 rem 1.5 rem;
+					border - radius: var (--border - radius - sm);
+					border - left: 4 px solid
+					var (--accent - primary);
+					box - shadow: 0 0 20 px rgba(0, 0, 0, 0.5);
+					min - width: 300 px;
+					display: flex;
+					align - items: center;
+					gap: 1 rem;
+					animation: slideIn 0.3 s ease;
+					backdrop - filter: blur(10 px); - webkit - backdrop - filter: blur(10 px);
+					border: 1 px solid rgba(255, 255, 255, 0.05);
+				}.toast - notification.success {
+					border - left - color: var (--success - primary);
+				}.toast - notification.error {
+					border - left - color: var (--warn - primary);
+				}.toast - notification.warning {
+					border - left - color: var (--warn - secondary);
+				}.toast - notification i {
+					font - size: 1.2 rem;
+				}.toast - notification p {
+					font - weight: 600;
+					font - size: 0.9 rem;
+					margin: 0;
+				}
+				@keyframes slideIn {
+					from {
+						transform: translateX(100 % );opacity: 0;
+					}
+					to {
+						transform: translateX(0);opacity: 1;
+					}
+				}
+				/* ---------------------------------------------------------------------
+				   9. MODO APRESENTAÇÃO
+				   --------------------------------------------------------------------- */
+				body.presentation - mode {
+					font - size: var (--presentation - font - size - base);
+				}
+				body.presentation - mode.splash - content {
+					transform: scale(var (--presentation - scale));
+				}
+				body.presentation - mode.analysis - area {
+					font - size: 1.2 rem;
+				}
+				body.presentation - mode.kpi - card p {
+					font - size: 2.2 rem;
+				}
+				body.presentation - mode.stat - card p {
+					font - size: 2.5 rem;
+				}
+				body.presentation - mode.quantum - value {
+					font - size: 3.5 rem;
+				}
+				body.presentation - mode.chart - section {
+					height: 500 px;
+				}
+				body.presentation - mode.btn - tool,
+				body.presentation - mode.btn - forensic,
+				body.presentation - mode.evidence - management - btn - solid {
+					font - size: 1 rem;
+					padding: 1 rem 1.5 rem;
+				}
+				body.presentation - mode.conformity - seals {
+					transform: scale(1.1);
+					transform - origin: bottom;
+				}
+				@media(min - width: 1920 px) {
+					body.secondary - screen.analysis - area {
+						font - size: 1.1 rem;
+					}
+					body.secondary - screen.kpi - card p {
+						font - size: 2 rem;
+					}
+					body.secondary - screen.stat - card p {
+						font - size: 2.2 rem;
+					}
+					body.secondary - screen.quantum - value {
+						font - size: 3 rem;
+					}
+				}
+				/* Dual-screen mode: activado via window.screen.isExtended */
+				body.dual - screen.analysis - area {
+					font - size: 1.05 rem;
+				}
+				body.dual - screen.kpi - card p {
+					font - size: 1.9 rem;
+				}
+				body.dual - screen.stat - card p {
+					font - size: 2.1 rem;
+				}
+				/* ---------------------------------------------------------------------
+				   10. CLASSES DE CREDIBILIDADE
+				   --------------------------------------------------------------------- */
+				.file - source - badge {
+					display: block;
+					font - size: 0.6 rem;
+					color: var (--text - tertiary);
+					font - family: var (--font - mono);
+					margin - top: 0.3 rem;
+					padding - top: 0.3 rem;
+					border - top: 1 px dashed rgba(255, 255, 255, 0.1);
+					white - space: nowrap;
+					overflow: hidden;
+					text - overflow: ellipsis;
+				}.file - source - badge::before {
+					content: "📁 ";
+					opacity: 0.7;
+				}
+				/* O atributo data-original-file não deve ser exibido na UI */
+				[data - original - file] {
+					/* Apenas um placeholder, o valor não é mostrado visualmente */
+				}
+				[data - tooltip] {
+					position: relative;
+					cursor: help;
+				}
+				[data - tooltip]: hover::after {
+						content: attr(data - tooltip);
+						position: absolute;
+						bottom: 100 % ;
+						left: 50 % ;
+						transform: translateX(-50 % );
+						background: #000;
+    color: # fff;
+						padding: 0.5 rem;
+						border - radius: var (--border - radius - sm);
+						font - size: 0.7 rem;
+						white - space: nowrap;
+						z - index: 1000;
+						border: 1 px solid
+						var (--accent - primary);
+						box - shadow: var (--shadow - glow - cyan);
+					}.demo - badge {
+						background: var (--warn - secondary);
+						color: #000;
     font-size: 0.5rem;
     padding: 2px 4px;
     border-radius: 2px;
@@ -745,252 +639,171 @@ body.dual-screen .stat-card p {
    11. ELEMENTOS AUXILIARES
    --------------------------------------------------------------------- */
 /* Ocultar o contador de páginas na UI */
-#pageCount {
-    display: none;
-}
-
-/* ---------------------------------------------------------------------
-   12. RESPONSIVIDADE
-   --------------------------------------------------------------------- */
-@media (max-width: 1400px) {
-    .kpi-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (max-width: 1200px) {
-    .kpi-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    .grid-4 {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (max-width: 1024px) {
-    .app-container {
-        grid-template-columns: 1fr;
-        overflow-y: auto;
-        height: auto;
-    }
-    .sidebar {
-        width: 100% !important;
-        min-width: 100% !important;
-        max-width: 100% !important;
-        height: auto;
-        max-height: 500px;
-        border-right: none;
-        border-bottom: 1px solid var(--border-color);
-    }
-    .analysis-area {
-        height: auto;
-        overflow-y: visible;
-    }
-    .chart-section {
-        height: 350px;
-    }
-    .kpi-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    .toolbar-grid {
-        flex-wrap: wrap;
-    }
-}
-
-@media (max-width: 768px) {
-    .header-content {
-        flex-direction: column;
-        align-items: flex-start;
-        padding: 0.8rem 1rem;
-    }
-    .logo-section {
-        width: 100%;
-        justify-content: space-between;
-    }
-    .control-group {
-        width: 100%;
-        justify-content: flex-start;
-        margin-top: 0.5rem;
-    }
-    .btn-demo-nav,
-    .btn-lang-toggle {
-        flex: 1;
-        justify-content: center;
-    }
-    .timestamp-fbi {
-        font-size: 0.7rem;
-        white-space: normal;
-        width: 100%;
-        text-align: center;
-    }
-    .dashboard-fixed {
-        grid-template-columns: 1fr;
-    }
-    .kpi-grid {
-        grid-template-columns: 1fr;
-    }
-    .counters-compact {
-        grid-template-columns: repeat(3, 1fr);
-    }
-    .modal-content {
-        width: 100%;
-        height: 100%;
-        max-height: 100vh;
-        border-radius: 0;
-        border: none;
-    }
-    .modal-body {
-        padding: 1rem;
-    }
-    .summary-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    .grid-3, .grid-4 {
-        grid-template-columns: 1fr;
-    }
-}
-
-@media (max-width: 480px) {
-    .summary-grid {
-        grid-template-columns: 1fr;
-    }
-    .btn-forensic,
-    .btn-tool {
-        width: 100%;
-    }
-    .toolbar-grid {
-        flex-direction: column;
-    }
-    .splash-content {
-        padding: 1.5rem;
-        margin: 1rem;
-    }
-    .splash-screen h1 {
-        font-size: 1.5rem;
-    }
-    .splash-screen h2 {
-        font-size: 1rem;
-    }
-    .quantum-value {
-        font-size: 1.8rem;
-    }
-}
-
-/* ---------------------------------------------------------------------
-   13. PRINT (PDF) - OTIMIZADO PARA ESTILO JURÍDICO v13.1.0-GOLD
-   --------------------------------------------------------------------- */
-@media print {
-    /* Ocultar todos os elementos da interface */
-    .splash-screen,
-    .loading-overlay,
-    .sidebar,
-    .btn-tool,
-    .btn-demo-nav,
-    .btn-lang-toggle,
-    .evidence-management-btn-solid,
-    #toastContainer,
-    .modal-overlay,
-    .console-controls,
-    .toolbar-section,
-    .laser-h,
-    .laser-v,
-    .conformity-seals,
-    .btn-wipe,
-    .main-header,
-    .app-container,
-    .dashboard-fixed,
-    .kpi-section,
-    .chart-section,
-    .console-section,
-    .quantum-box,
-    .bigdata-alert,
-    .verdict-display,
-    #viewLogsBtn,
-    #startSessionBtn,
-    .control-group,
-    .session-info,
-    .logo-section i,
-    .version-badge,
-    .subtitle,
-    .counters-compact,
-    .evidence-count-solid,
-    .privacy-badge,
-    .seals-grid,
-    .copyright {
-        display: none !important;
-    }
-    
-    /* Garantir que o main container aparece com fundo branco */
-    .main-container {
-        display: block !important;
-        opacity: 1 !important;
-        background: white !important;
-        position: relative !important;
-        width: 100% !important;
-        height: auto !important;
-        overflow: visible !important;
-    }
-    
-    /* Ajustar a área de análise para impressão */
-    .analysis-area {
-        background: white !important;
-        padding: 0 !important;
-        height: auto !important;
-        overflow: visible !important;
-        display: block !important;
-    }
-    
-    /* Garantir que os cabeçalhos dos módulos não aparecem */
-    .module-card h4,
-    .kpi-section h3,
-    .chart-section h3,
-    .console-header h3 {
-        display: none !important;
-    }
-    
-    /* Esconder elementos de fonte e badges */
-    .file-source-badge {
-        display: none !important;
-    }
-    
-    /* Esconder o QR code da interface (o PDF tem o seu próprio) */
-    #qrcodeContainer {
-        display: none !important;
-    }
-    
-    /* Garantir que o footer original não aparece */
-    .action-footer {
-        display: none !important;
-    }
-
-    /* Garantir que o texto não seja cortado na impressão */
-    .console-output, 
-    .verdict-desc, 
-    .quantum-breakdown,
-    .kpi-card p,
-    .stat-card p,
-    .module-card .kpi-card p {
-        overflow: visible !important;
-        white-space: normal !important;
-        word-wrap: break-word !important;
-        text-overflow: clip !important;
-    }
-
-    /* CORREÇÃO DA SOBREPOSIÇÃO NA PÁGINA 2 - VERSÃO DEFINITIVA */
-    .pdf-table-container {
-        margin-top: 25px !important;
-        clear: both !important;
-        page-break-inside: avoid !important;
-    }
-    
-    .pdf-table-header {
-        margin-bottom: 8px !important;
-        font-weight: bold !important;
-    }
-    
-    .pdf-table-line {
-        margin: 10px 0 15px 0 !important;
-        border-top: 1px solid #000 !important;
+# pageCount {
+							display: none;
+						}
+						/* ---------------------------------------------------------------------
+						   12. RESPONSIVIDADE
+						   --------------------------------------------------------------------- */
+						@media(max - width: 1400 px) {
+							.kpi - grid {
+								grid - template - columns: repeat(2, 1 fr);
+							}
+						}
+						@media(max - width: 1200 px) {
+							.kpi - grid {
+								grid - template - columns: repeat(2, 1 fr);
+							}.grid - 4 {
+								grid - template - columns: repeat(2, 1 fr);
+							}
+						}
+						@media(max - width: 1024 px) {
+							.app - container {
+								grid - template - columns: 1 fr;
+								overflow - y: auto;
+								height: auto;
+							}.sidebar {
+								width: 100 % !important;
+								min - width: 100 % !important;
+								max - width: 100 % !important;
+								height: auto;
+								max - height: 500 px;
+								border - right: none;
+								border - bottom: 1 px solid
+								var (--border - color);
+							}.analysis - area {
+								height: auto;
+								overflow - y: visible;
+							}.chart - section {
+								height: 350 px;
+							}.kpi - grid {
+								grid - template - columns: repeat(2, 1 fr);
+							}.toolbar - grid {
+								flex - wrap: wrap;
+							}
+						}
+						@media(max - width: 768 px) {
+							.header - content {
+								flex - direction: column;
+								align - items: flex - start;
+								padding: 0.8 rem 1 rem;
+							}.logo - section {
+								width: 100 % ;
+								justify - content: space - between;
+							}.control - group {
+								width: 100 % ;
+								justify - content: flex - start;
+								margin - top: 0.5 rem;
+							}.btn - demo - nav, .btn - lang - toggle {
+								flex: 1;
+								justify - content: center;
+							}.timestamp - fbi {
+								font - size: 0.7 rem;
+								white - space: normal;
+								width: 100 % ;
+								text - align: center;
+							}.dashboard - fixed {
+								grid - template - columns: 1 fr;
+							}.kpi - grid {
+								grid - template - columns: 1 fr;
+							}.counters - compact {
+								grid - template - columns: repeat(3, 1 fr);
+							}.modal - content {
+								width: 100 % ;
+								height: 100 % ;
+								max - height: 100 vh;
+								border - radius: 0;
+								border: none;
+							}.modal - body {
+								padding: 1 rem;
+							}.summary - grid {
+								grid - template - columns: repeat(2, 1 fr);
+							}.grid - 3, .grid - 4 {
+								grid - template - columns: 1 fr;
+							}
+						}
+						@media(max - width: 480 px) {
+							.summary - grid {
+								grid - template - columns: 1 fr;
+							}.btn - forensic, .btn - tool {
+								width: 100 % ;
+							}.toolbar - grid {
+								flex - direction: column;
+							}.splash - content {
+								padding: 1.5 rem;
+								margin: 1 rem;
+							}.splash - screen h1 {
+								font - size: 1.5 rem;
+							}.splash - screen h2 {
+								font - size: 1 rem;
+							}.quantum - value {
+								font - size: 1.8 rem;
+							}
+						}
+						/* ---------------------------------------------------------------------
+						   13. PRINT (PDF) - OTIMIZADO PARA ESTILO JURÍDICO v13.1.0-GOLD
+						   --------------------------------------------------------------------- */
+						@media print {
+							/* Ocultar todos os elementos da interface */
+							.splash - screen, .loading - overlay, .sidebar, .btn - tool, .btn - demo - nav, .btn - lang - toggle, .evidence - management - btn - solid,
+								#toastContainer, .modal - overlay, .console - controls, .toolbar - section, .laser - h, .laser - v, .conformity - seals, .btn - wipe, .main - header, .app - container, .dashboard - fixed, .kpi - section, .chart - section, .console - section, .quantum - box, .bigdata - alert, .verdict - display,
+								#viewLogsBtn,
+								#startSessionBtn, .control - group, .session - info, .logo - section i, .version - badge, .subtitle, .counters - compact, .evidence - count - solid, .privacy - badge, .seals - grid, .copyright {
+									display: none!important;
+								}
+								/* Garantir que o main container aparece com fundo branco */
+								.main - container {
+									display: block!important;
+									opacity: 1!important;
+									background: white!important;
+									position: relative!important;
+									width: 100 % !important;
+									height: auto!important;
+									overflow: visible!important;
+								}
+								/* Ajustar a área de análise para impressão */
+								.analysis - area {
+									background: white!important;
+									padding: 0!important;
+									height: auto!important;
+									overflow: visible!important;
+									display: block!important;
+								}
+								/* Garantir que os cabeçalhos dos módulos não aparecem */
+								.module - card h4, .kpi - section h3, .chart - section h3, .console - header h3 {
+									display: none!important;
+								}
+								/* Esconder elementos de fonte e badges */
+								.file - source - badge {
+									display: none!important;
+								}
+							/* Esconder o QR code da interface (o PDF tem o seu próprio) */
+							#qrcodeContainer {
+								display: none!important;
+							}
+							/* Garantir que o footer original não aparece */
+							.action - footer {
+									display: none!important;
+								}
+								/* Garantir que o texto não seja cortado na impressão */
+								.console - output, .verdict - desc, .quantum - breakdown, .kpi - card p, .stat - card p, .module - card.kpi - card p {
+									overflow: visible!important;
+									white - space: normal!important;
+									word - wrap: break -word!important;
+									text - overflow: clip!important;
+								}
+								/* CORREÇÃO DA SOBREPOSIÇÃO NA PÁGINA 2 - VERSÃO DEFINITIVA */
+								.pdf - table - container {
+									margin - top: 25 px!important;
+									clear: both!important;
+									page -
+										break -inside: avoid!important;
+								}.pdf - table - header {
+									margin - bottom: 8 px!important;
+									font - weight: bold!important;
+								}.pdf - table - line {
+									margin: 10 px 0 15 px 0!important;
+									border - top: 1 px solid #000 !important;
         width: 100% !important;
     }
     
@@ -1021,207 +834,189 @@ body.dual-screen .stat-card p {
     }
 }
 
-/* =====================================================================
-   14. LED STATUS & DORA v13.1.0-GOLD
-   --------------------------------------------------------------------- */
-
-/* LED base */
-.led-status {
-    display: inline-block;
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    margin-right: 6px;
-    vertical-align: middle;
-}
-
-.led-off {
-    background: #333;
+/* = === === === === === === === === === === === === === === === === === === === === === === == 14. LED STATUS & DORA v13 .1 .0 - GOLD
+										-- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- - * /
+										/* LED base */
+										.led - status {
+											display: inline - block;
+											width: 10 px;
+											height: 10 px;
+											border - radius: 50 % ;
+											margin - right: 6 px;
+											vertical - align: middle;
+										}.led - off {
+											background: #333;
     box-shadow: none;
 }
 
 /* LED vermelho piscante — discrepância crítica */
 @keyframes led-red-pulse {
     0%, 100% {
-        background: #ff0000;
-        box-shadow: 0 0 6px #ff0000, 0 0 12px rgba(255, 0, 0, 0.7);
-    }
-    50% {
-        background: #cc0000;
-        box-shadow: 0 0 2px #ff0000;
-    }
-}
-
-.led-red-blink {
-    background: #ff0000;
-    animation: led-red-pulse 0.8s infinite;
-}
-
-/* LED amarelo piscante (existente) */
-@keyframes led-yellow-pulse {
-    0%, 100% {
-        background: var(--warn-secondary);
-        box-shadow: 0 0 6px var(--warn-secondary);
-    }
-    50% {
-        background: #c47a00;
-        box-shadow: none;
-    }
-}
-
-.led-yellow-blink {
-    background: var(--warn-secondary);
-    animation: led-yellow-pulse 1s infinite;
-}
-
-/* Box de despesas piscante — sincronizada com LED */
-@keyframes box-glow-sync {
-    0%, 100% {
-        border-color: #ff0000;
-        box-shadow: 0 0 10px rgba(255, 0, 0, 0.5), 0 0 20px rgba(255, 0, 0, 0.2);
-        background: rgba(255, 0, 0, 0.08);
-    }
-    50% {
-        border-color: #cc0000;
-        box-shadow: 0 0 4px rgba(255, 0, 0, 0.2);
-        background: rgba(255, 0, 0, 0.03);
-    }
-}
-
-.box-despesas-blink {
-    animation: box-glow-sync 0.8s infinite;
-    border-color: #ff0000 !important;
-}
-
-/* ─────────────────────────────────────────────────────────────
-   BOX BORDER BLINK — atua apenas em border-color e box-shadow
-   (background permanece estável para não perturbar a leitura)
-   Aplicar em: #jurosCard e #discrepancy5Card
-   ───────────────────────────────────────────────────────────── */
-@keyframes border-blink-red {
-    0%, 100% {
-        border-color: #ff0000;
-        box-shadow: inset 0 0 4px rgba(255, 0, 0, 0.2), 0 0 12px rgba(255, 0, 0, 0.5);
-    }
-    50% {
-        border-color: rgba(255, 0, 0, 0.3);
-        box-shadow: inset 0 0 1px rgba(255, 0, 0, 0.05), 0 0 3px rgba(255, 0, 0, 0.1);
-    }
-}
-
-.box-border-blink {
-    animation: border-blink-red 1s infinite;
-    border-left-color: #ff0000 !important;
-    /* background intencional: não declarado aqui — herda da classe base */
-}
-
-/* Targets específicos das boxes de discrepância */
-#jurosCard.box-border-blink,
-#discrepancy5Card.box-border-blink {
-    border-left-color: #ff0000 !important;
-    animation: border-blink-red 1s infinite;
-}
-
-/* ─────────────────────────────────────────────────────────────────────
-   THRESHOLD ALERT — Percentagem Cobrada Pela Plataforma (> 25%)
-   Actua APENAS no perímetro (border + box-shadow).
-   Background mantém-se neutro — sem LED intermitente amarelo.
-   ───────────────────────────────────────────────────────────────────── */
-@keyframes omissao-border-pulse {
-    0%, 100% {
-        border-color: #ef4444;
-        box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.4), 0 0 12px rgba(239, 68, 68, 0.3);
-    }
-    50% {
-        border-color: rgba(239, 68, 68, 0.5);
-        box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.15), 0 0 4px rgba(239, 68, 68, 0.1);
-    }
-}
-
-.omissao-threshold-alert {
-    animation: omissao-border-pulse 1.2s ease-in-out infinite;
-    border-color: #ef4444 !important;
-    /* background: intencional — não declarado, herda neutro da classe base */
-}
-
-/* =====================================================================
-   FIM
-   ===================================================================== */
-
-/* ═══════════════════════════════════════════════════════════════════════
-   MÓDULO: CADEIA DE CUSTÓDIA FORENSE — v13.1.0-GOLD-CHAIN
-   UNIFED - PROBATUM · DORA COMPLIANT · SHA-256 · RFC 3161 MOCK
-   ═══════════════════════════════════════════════════════════════════════ */
-
-/* Estado de evento verificado (SHA-256 confirmado) */
-.log-verified {
-    color: #00e5ff;
+        background: # ff0000;
+											box - shadow: 0 0 6 px #ff0000,
+											0 0 12 px rgba(255, 0, 0, 0.7);
+										}
+									50 % {
+										background: #cc0000;
+										box - shadow: 0 0 2 px #ff0000;
+									}
+								}.led - red - blink {
+									background: #ff0000;
+									animation: led - red - pulse 0.8 s infinite;
+								}
+							/* LED amarelo piscante (existente) */
+							@keyframes led - yellow - pulse {
+								0 % , 100 % {
+									background: var (--warn - secondary);
+									box - shadow: 0 0 6 px
+									var (--warn - secondary);
+								}
+								50 % {
+									background: #c47a00;
+									box - shadow: none;
+								}
+							}.led - yellow - blink {
+								background: var (--warn - secondary);
+								animation: led - yellow - pulse 1 s infinite;
+							}
+							/* Box de despesas piscante — sincronizada com LED */
+							@keyframes box - glow - sync {
+								0 % , 100 % {
+									border - color: #ff0000;
+									box - shadow: 0 0 10 px rgba(255, 0, 0, 0.5),
+									0 0 20 px rgba(255, 0, 0, 0.2);
+									background: rgba(255, 0, 0, 0.08);
+								}
+								50 % {
+									border - color: #cc0000;
+									box - shadow: 0 0 4 px rgba(255, 0, 0, 0.2);
+									background: rgba(255, 0, 0, 0.03);
+								}
+							}.box - despesas - blink {
+								animation: box - glow - sync 0.8 s infinite;
+								border - color: #ff0000!important;
+							}
+							/* ─────────────────────────────────────────────────────────────
+							   BOX BORDER BLINK — atua apenas em border-color e box-shadow
+							   (background permanece estável para não perturbar a leitura)
+							   Aplicar em: #jurosCard e #discrepancy5Card
+							   ───────────────────────────────────────────────────────────── */
+							@keyframes border - blink - red {
+								0 % , 100 % {
+									border - color: #ff0000;
+									box - shadow: inset 0 0 4 px rgba(255, 0, 0, 0.2),
+									0 0 12 px rgba(255, 0, 0, 0.5);
+								}
+								50 % {
+									border - color: rgba(255, 0, 0, 0.3);
+									box - shadow: inset 0 0 1 px rgba(255, 0, 0, 0.05),
+									0 0 3 px rgba(255, 0, 0, 0.1);
+								}
+							}.box - border - blink {
+								animation: border - blink - red 1 s infinite;
+								border - left - color: #ff0000!important;
+								/* background intencional: não declarado aqui — herda da classe base */
+							}
+							/* Targets específicos das boxes de discrepância */
+							#jurosCard.box - border - blink,
+								#discrepancy5Card.box - border - blink {
+									border - left - color: #ff0000!important;
+									animation: border - blink - red 1 s infinite;
+								}
+							/* ─────────────────────────────────────────────────────────────────────
+							   THRESHOLD ALERT — Percentagem Cobrada Pela Plataforma (> 25%)
+							   Actua APENAS no perímetro (border + box-shadow).
+							   Background mantém-se neutro — sem LED intermitente amarelo.
+							   ───────────────────────────────────────────────────────────────────── */
+							@keyframes omissao - border - pulse {
+									0 % , 100 % {
+										border - color: #ef4444;
+										box - shadow: 0 0 0 2 px rgba(239, 68, 68, 0.4),
+										0 0 12 px rgba(239, 68, 68, 0.3);
+									}
+									50 % {
+										border - color: rgba(239, 68, 68, 0.5);
+										box - shadow: 0 0 0 1 px rgba(239, 68, 68, 0.15),
+										0 0 4 px rgba(239, 68, 68, 0.1);
+									}
+								}.omissao - threshold - alert {
+									animation: omissao - border - pulse 1.2 s ease - in - out infinite;
+									border - color: #ef4444!important;
+									/* background: intencional — não declarado, herda neutro da classe base */
+								}
+								/* =====================================================================
+								   FIM
+								   ===================================================================== */
+								/* ═══════════════════════════════════════════════════════════════════════
+								   MÓDULO: CADEIA DE CUSTÓDIA FORENSE — v13.1.0-GOLD-CHAIN
+								   UNIFED - PROBATUM · DORA COMPLIANT · SHA-256 · RFC 3161 MOCK
+								   ═══════════════════════════════════════════════════════════════════════ */
+								/* Estado de evento verificado (SHA-256 confirmado) */
+								.log - verified {
+									color: #00e5ff;
     font-weight: 600;
     font-family: 'JetBrains Mono', 'Courier New', monospace;
-    border-left: 3px solid #00e5ff;
-    padding-left: 0.6rem;
-    background: rgba(0, 229, 255, 0.06);
-    border-radius: 0 3px 3px 0;
-}
-
-/* Estado de evento pendente / sem hash */
-.log-pending {
-    color: #f59e0b;
-    font-family: 'JetBrains Mono', 'Courier New', monospace;
-    border-left: 3px solid #f59e0b;
-    padding-left: 0.6rem;
-    background: rgba(245, 158, 11, 0.05);
-    border-radius: 0 3px 3px 0;
-}
-
-/* Estado de erro no log — ver definição base acima (.log-error já definido) */
-
-/* ── Modal Cadeia de Custódia ── */
-#custodyModal {
-    display: none;
-    position: fixed;
-    inset: 0;
-    z-index: 99999;
-    background: rgba(0, 0, 0, 0.93);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    overflow-y: auto;
-    padding: 2rem 1rem;
-}
-
-#custodyModal.active {
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-}
-
-.custody-modal-box {
-    background: #0a0f1e;
-    border: 1px solid #00e5ff;
-    border-radius: 4px;
-    width: 100%;
-    max-width: 900px;
-    box-shadow: 0 0 40px rgba(0, 229, 255, 0.15), 0 0 80px rgba(0, 0, 0, 0.8);
-    font-family: 'JetBrains Mono', 'Courier New', monospace;
-    animation: custodyFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes custodyFadeIn {
-    from { opacity: 0; transform: translateY(24px) scale(0.98); }
-    to   { opacity: 1; transform: translateY(0)   scale(1); }
-}
-
-.custody-modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1.1rem 1.5rem;
-    border-bottom: 1px solid rgba(0, 229, 255, 0.25);
-    background: rgba(0, 229, 255, 0.04);
-}
-
-.custody-modal-title {
-    color: #00e5ff;
+    border-left: 3px solid # 00e5 ff;
+									padding - left: 0.6 rem;
+									background: rgba(0, 229, 255, 0.06);
+									border - radius: 0 3 px 3 px 0;
+								}
+								/* Estado de evento pendente / sem hash */
+								.log - pending {
+									color: #f59e0b;
+									font - family: 'JetBrains Mono',
+									'Courier New',
+									monospace;
+									border - left: 3 px solid #f59e0b;
+									padding - left: 0.6 rem;
+									background: rgba(245, 158, 11, 0.05);
+									border - radius: 0 3 px 3 px 0;
+								}
+							/* Estado de erro no log — ver definição base acima (.log-error já definido) */
+							/* ── Modal Cadeia de Custódia ── */
+							#custodyModal {
+								display: none;
+								position: fixed;
+								inset: 0;
+								z - index: 99999;
+								background: rgba(0, 0, 0, 0.93);
+								backdrop - filter: blur(10 px); - webkit - backdrop - filter: blur(10 px);
+								overflow - y: auto;
+								padding: 2 rem 1 rem;
+							}
+							#custodyModal.active {
+								display: flex;
+								align - items: flex - start;
+								justify - content: center;
+							}.custody - modal - box {
+								background: #0a0f1e;
+    border: 1px solid # 00e5 ff;
+								border - radius: 4 px;
+								width: 100 % ;
+								max - width: 900 px;
+								box - shadow: 0 0 40 px rgba(0, 229, 255, 0.15),
+								0 0 80 px rgba(0, 0, 0, 0.8);
+								font - family: 'JetBrains Mono',
+								'Courier New',
+								monospace;
+								animation: custodyFadeIn 0.35 s cubic - bezier(0.16, 1, 0.3, 1);
+							}
+							@keyframes custodyFadeIn {
+								from {
+									opacity: 0;transform: translateY(24 px) scale(0.98);
+								}
+								to {
+									opacity: 1;transform: translateY(0) scale(1);
+								}
+							}.custody - modal - header {
+									display: flex;
+									justify - content: space - between;
+									align - items: center;
+									padding: 1.1 rem 1.5 rem;
+									border - bottom: 1 px solid rgba(0, 229, 255, 0.25);
+									background: rgba(0, 229, 255, 0.04);
+								}.custody - modal - title {
+									color: #00e5ff;
     font-size: 0.85rem;
     font-weight: 700;
     letter-spacing: 2px;
@@ -1231,12 +1026,11 @@ body.dual-screen .stat-card p {
     gap: 0.6rem;
 }
 
-.custody-modal-title i { color: #00e5ff; }
-
-.custody-close-btn {
-    background: none;
-    border: 1px solid rgba(0, 229, 255, 0.3);
-    color: #00e5ff;
+.custody-modal-title i { color: # 00e5 ff;
+								}.custody - close - btn {
+									background: none;
+									border: 1 px solid rgba(0, 229, 255, 0.3);
+									color: #00e5ff;
     font-size: 1.1rem;
     width: 32px;
     height: 32px;
@@ -1249,8 +1043,8 @@ body.dual-screen .stat-card p {
 }
 
 .custody-close-btn:hover {
-    background: #00e5ff;
-    color: #000;
+    background: # 00e5 ff;
+									color: #000;
 }
 
 .custody-modal-meta {
@@ -1261,73 +1055,62 @@ body.dual-screen .stat-card p {
     gap: 2rem;
     flex-wrap: wrap;
     font-size: 0.7rem;
-    color: #64748b;
-}
-
-.custody-modal-meta span { color: #94a3b8; }
-.custody-modal-meta strong { color: #00e5ff; }
-
-.custody-log-list {
-    padding: 1rem 1.5rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.6rem;
-    max-height: 55vh;
-    overflow-y: auto;
-}
-
-.custody-log-entry {
-    display: grid;
-    grid-template-columns: 160px 1fr;
-    gap: 0.8rem;
-    padding: 0.7rem 0.8rem;
-    border-radius: 3px;
-    font-size: 0.72rem;
-    line-height: 1.5;
-    transition: background 0.15s;
-}
-
-.custody-log-entry:hover {
-    background: rgba(0, 229, 255, 0.04);
-}
-
-.custody-entry-ts {
-    color: #64748b;
+    color: # 64748 b;
+								}.custody - modal - meta span {
+									color: #94a3b8; }
+.custody-modal-meta strong { color: # 00e5 ff;
+								}.custody - log - list {
+									padding: 1 rem 1.5 rem;
+									display: flex;
+									flex - direction: column;
+									gap: 0.6 rem;
+									max - height: 55 vh;
+									overflow - y: auto;
+								}.custody - log - entry {
+									display: grid;
+									grid - template - columns: 160 px 1 fr;
+									gap: 0.8 rem;
+									padding: 0.7 rem 0.8 rem;
+									border - radius: 3 px;
+									font - size: 0.72 rem;
+									line - height: 1.5;
+									transition: background 0.15 s;
+								}.custody - log - entry: hover {
+									background: rgba(0, 229, 255, 0.04);
+								}.custody - entry - ts {
+									color: #64748b;
     font-size: 0.65rem;
     word-break: break-all;
 }
 
-.custody-entry-body { color: #cbd5e1; }
-.custody-entry-body .entry-action {
-    color: #00e5ff;
+.custody-entry-body { color: # cbd5e1;
+								}.custody - entry - body.entry - action {
+									color: #00e5ff;
     font-weight: 700;
     font-size: 0.7rem;
     letter-spacing: 1px;
 }
 
-.custody-entry-body .entry-file { color: #e2b87a; }
-
-.custody-entry-body .entry-hash {
-    color: #4ade80;
+.custody-entry-body .entry-file { color: # e2b87a;
+								}.custody - entry - body.entry - hash {
+									color: #4ade80;
     word-break: break-all;
     font-size: 0.62rem;
     opacity: 0.85;
 }
 
 .custody-entry-body .entry-tsa {
-    color: #94a3b8;
-    font-size: 0.6rem;
-    font-style: italic;
-}
-
-.custody-modal-footer {
-    padding: 0.9rem 1.5rem;
-    border-top: 1px solid rgba(0, 229, 255, 0.15);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.65rem;
-    color: #475569;
+    color: # 94 a3b8;
+									font - size: 0.6 rem;
+									font - style: italic;
+								}.custody - modal - footer {
+									padding: 0.9 rem 1.5 rem;
+									border - top: 1 px solid rgba(0, 229, 255, 0.15);
+									display: flex;
+									justify - content: space - between;
+									align - items: center;
+									font - size: 0.65 rem;
+									color: #475569;
     background: rgba(0, 0, 0, 0.3);
     flex-wrap: wrap;
     gap: 0.5rem;
@@ -1335,8 +1118,8 @@ body.dual-screen .stat-card p {
 
 .custody-export-btn {
     background: transparent;
-    border: 1px solid #00e5ff;
-    color: #00e5ff;
+    border: 1px solid # 00e5 ff;
+									color: #00e5ff;
     padding: 0.4rem 1rem;
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.7rem;
@@ -1349,15 +1132,15 @@ body.dual-screen .stat-card p {
 }
 
 .custody-export-btn:hover {
-    background: #00e5ff;
-    color: #000;
+    background: # 00e5 ff;
+									color: #000;
 }
 
 /* Botão de acesso no footer da UI */
-#custodyChainTriggerBtn {
-    background: transparent;
-    border: 1px solid rgba(0, 229, 255, 0.4);
-    color: #00e5ff;
+# custodyChainTriggerBtn {
+											background: transparent;
+											border: 1 px solid rgba(0, 229, 255, 0.4);
+											color: #00e5ff;
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.68rem;
     padding: 0.4rem 0.9rem;
@@ -1370,9 +1153,9 @@ body.dual-screen .stat-card p {
     gap: 0.4rem;
 }
 
-#custodyChainTriggerBtn:hover {
-    background: rgba(0, 229, 255, 0.1);
-    border-color: #00e5ff;
+# custodyChainTriggerBtn: hover {
+													background: rgba(0, 229, 255, 0.1);
+													border - color: #00e5ff;
     box-shadow: 0 0 10px rgba(0, 229, 255, 0.2);
 }
 
@@ -1380,25 +1163,22 @@ body.dual-screen .stat-card p {
 .custody-empty-state {
     text-align: center;
     padding: 3rem 1rem;
-    color: #475569;
-    font-size: 0.75rem;
-}
-
-.custody-empty-state i {
-    font-size: 2rem;
-    color: rgba(0, 229, 255, 0.2);
-    display: block;
-    margin-bottom: 1rem;
-}
-
-/* Botão inline "Validar na Blockchain/TSA" dentro de cada entrada de log */
-.tsa-validate-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
-    background: transparent;
-    border: 1px solid rgba(0, 229, 255, 0.25);
-    color: #00e5ff;
+    color: # 475569;
+													font - size: 0.75 rem;
+												}.custody - empty - state i {
+													font - size: 2 rem;
+													color: rgba(0, 229, 255, 0.2);
+													display: block;
+													margin - bottom: 1 rem;
+												}
+												/* Botão inline "Validar na Blockchain/TSA" dentro de cada entrada de log */
+												.tsa - validate - btn {
+													display: inline - flex;
+													align - items: center;
+													gap: 0.25 rem;
+													background: transparent;
+													border: 1 px solid rgba(0, 229, 255, 0.25);
+													color: #00e5ff;
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.58rem;
     padding: 0.15rem 0.5rem;
@@ -1412,13 +1192,13 @@ body.dual-screen .stat-card p {
 
 .tsa-validate-btn:hover {
     background: rgba(0, 229, 255, 0.08);
-    border-color: #00e5ff;
-}
-
-/* ── Entradas de custódia (cartões individuais) ── */
-.custody-entry {
-    background: rgba(15, 23, 42, 0.5);
-    border-left: 3px solid var(--accent-primary, #00e5ff);
+    border-color: # 00e5 ff;
+												}
+												/* ── Entradas de custódia (cartões individuais) ── */
+												.custody - entry {
+													background: rgba(15, 23, 42, 0.5);
+													border - left: 3 px solid
+													var (--accent - primary, #00e5ff);
     padding: 1rem;
     margin-bottom: 0.8rem;
     border-radius: 0 4px 4px 0;
@@ -1437,8 +1217,7 @@ body.dual-screen .stat-card p {
 }
 
 .custody-badge {
-    background: #00e5ff;
-    color: #020617;
+    background: # 00e5 ff; color: #020617;
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.58rem;
     font-weight: 800;
@@ -1450,22 +1229,19 @@ body.dual-screen .stat-card p {
 .custody-serial {
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.62rem;
-    color: #64748b;
-}
-
-.custody-body {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.72rem;
-    line-height: 1.7;
-    color: #cbd5e1;
-}
-
-.custody-body p { margin: 0 0 0.2rem; }
-.custody-body strong { color: #e2b87a; }
-
-.hash-text {
-    display: block;
-    color: #00e5ff;
+    color: # 64748 b;
+													}.custody - body {
+														font - family: 'JetBrains Mono', monospace;
+														font - size: 0.72 rem;
+														line - height: 1.7;
+														color: #cbd5e1;
+													}.custody - body p {
+														margin: 0 0 0.2 rem;
+													}.custody - body strong {
+														color: #e2b87a;
+													}.hash - text {
+														display: block;
+														color: #00e5ff;
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.65rem;
     word-break: break-all;
@@ -1479,61 +1255,58 @@ body.dual-screen .stat-card p {
     margin-top: 0.8rem;
     background: transparent;
     border: 1px solid rgba(0, 229, 255, 0.3);
-    color: #94a3b8;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.65rem;
-    padding: 5px 12px;
-    cursor: pointer;
-    transition: border-color 0.2s, color 0.2s, background 0.2s;
-    border-radius: 2px;
-    letter-spacing: 0.5px;
-}
-
-.blockchain-btn:hover {
-    border-color: #00e5ff;
-    color: #00e5ff;
-    background: rgba(0, 229, 255, 0.05);
-}
-
-/* Painel de protocolos de verificação */
-.custody-info-panel {
-    padding: 0.9rem 1.5rem;
-    background: rgba(0, 0, 0, 0.25);
-    border-top: 1px solid rgba(0, 229, 255, 0.1);
-    border-bottom: 1px solid rgba(0, 229, 255, 0.1);
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.7rem;
-    color: #64748b;
+    color: # 94 a3b8;
+														font - family: 'JetBrains Mono',
+														monospace;
+														font - size: 0.65 rem;
+														padding: 5 px 12 px;
+														cursor: pointer;
+														transition: border - color 0.2 s,
+														color 0.2 s,
+														background 0.2 s;
+														border - radius: 2 px;
+														letter - spacing: 0.5 px;
+													}.blockchain - btn: hover {
+															border - color: #00e5ff;
+    color: # 00e5 ff;
+															background: rgba(0, 229, 255, 0.05);
+														}
+														/* Painel de protocolos de verificação */
+														.custody - info - panel {
+															padding: 0.9 rem 1.5 rem;
+															background: rgba(0, 0, 0, 0.25);
+															border - top: 1 px solid rgba(0, 229, 255, 0.1);
+															border - bottom: 1 px solid rgba(0, 229, 255, 0.1);
+															font - family: 'JetBrains Mono',
+															monospace;
+															font - size: 0.7 rem;
+															color: #64748b;
 }
 
 .custody-info-panel p {
-    color: #94a3b8;
-    margin-bottom: 0.5rem;
-}
-
-.custody-info-panel i { color: #00e5ff; margin-right: 0.4rem; }
-.custody-info-panel strong { color: #e2b87a; }
-
-.custody-info-panel ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
-}
-
-.custody-info-panel ul li::before {
-    content: '▸ ';
-    color: #00e5ff;
+    color: # 94 a3b8;
+															margin - bottom: 0.5 rem;
+														}.custody - info - panel i {
+															color: #00e5ff; margin-right: 0.4rem; }
+.custody-info-panel strong { color: # e2b87a;
+														}.custody - info - panel ul {
+															list - style: none;
+															padding: 0;
+															margin: 0;
+															display: flex;
+															flex - direction: column;
+															gap: 0.3 rem;
+														}.custody - info - panel ul li::before {
+															content: '▸ ';
+															color: #00e5ff;
     font-size: 0.6rem;
 }
 
 /* ── NÍVEL 2 — Botão de Selagem Externa RFC 3161 ─────────────────────────── */
 .nivel2-btn {
     background: rgba(74, 222, 128, 0.05) !important;
-    border-color: #4ade80 !important;
-    color: #4ade80 !important;
+    border-color: # 4 ade80!important;
+															color: #4ade80 !important;
     font-weight: 700;
     letter-spacing: 0.8px;
     transition: background 0.2s, box-shadow 0.2s !important;
@@ -1552,173 +1325,143 @@ body.dual-screen .stat-card p {
 /* ── BLOCKCHAIN OTS — Botão OpenTimestamps ──────────────────────────────── */
 .ots-btn {
     background: rgba(245, 158, 11, 0.05) !important;
-    border-color: #f59e0b !important;
-    color: #f59e0b !important;
-    font-weight: 700;
-    letter-spacing: 0.8px;
-    transition: background 0.2s, box-shadow 0.2s !important;
-}
-
-.ots-btn:hover {
-    background: rgba(245, 158, 11, 0.12) !important;
-    box-shadow: 0 0 14px rgba(245, 158, 11, 0.25) !important;
-}
-
-.ots-btn:disabled {
-    opacity: 0.55;
-    cursor: not-allowed;
-}
-
-/* ── STATUS RFC 3161 — Indicador de Validade Jurídica Máxima (Nível 2) ─────── */
-
-/* Classe base: destaque de ficheiros com selo RFC 3161 na lista de evidências */
-.status-rfc3161 {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.3rem;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.6rem;
-    font-weight: 700;
-    letter-spacing: 0.8px;
-    text-transform: uppercase;
-    color: #e2b87a;
-    background: rgba(226, 184, 122, 0.08);
-    border: 1px solid rgba(226, 184, 122, 0.35);
-    border-radius: 2px;
-    padding: 2px 6px;
-    box-shadow: 0 0 8px rgba(226, 184, 122, 0.2);
-    transition: box-shadow 0.3s ease, background 0.3s ease;
-}
-
-.status-rfc3161:hover {
-    background: rgba(226, 184, 122, 0.14);
-    box-shadow: 0 0 14px rgba(226, 184, 122, 0.4);
-}
-
-/* Classe GOLD: glow dourado/âmbar intenso para documentos com validade jurídica máxima */
-.status-rfc3161-gold {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.62rem;
-    font-weight: 800;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    color: #f5c842;
-    background: rgba(245, 200, 66, 0.06);
-    border: 1px solid rgba(245, 200, 66, 0.5);
-    border-radius: 3px;
-    padding: 3px 8px;
-    margin-left: 6px;
-    /* Glow âmbar / dourado — validade jurídica RFC 3161 máxima */
-    box-shadow:
-        0 0 6px  rgba(226, 184, 122, 0.5),
-        0 0 14px rgba(245, 200, 66,  0.25),
-        0 0 28px rgba(245, 200, 66,  0.10);
-    animation: rfc3161GoldPulse 3s ease-in-out infinite;
-    transition: box-shadow 0.3s ease;
-}
-
-.status-rfc3161-gold i {
-    color: #f5c842;
-    font-size: 0.65rem;
-}
-
-.status-rfc3161-gold:hover {
-    box-shadow:
-        0 0 10px rgba(226, 184, 122, 0.7),
-        0 0 22px rgba(245, 200, 66,  0.4),
-        0 0 40px rgba(245, 200, 66,  0.18);
-}
-
-/* Itens da lista de evidências com selagem RFC 3161 ativa */
-.file-item-modal.sealed-rfc3161 {
-    border-left: 3px solid #e2b87a !important;
-    background: rgba(226, 184, 122, 0.04) !important;
-    box-shadow: inset 0 0 12px rgba(226, 184, 122, 0.06);
-}
-
-@keyframes rfc3161GoldPulse {
-    0%, 100% {
-        box-shadow:
-            0 0 6px  rgba(226, 184, 122, 0.5),
-            0 0 14px rgba(245, 200, 66,  0.25),
-            0 0 28px rgba(245, 200, 66,  0.10);
-    }
-    50% {
-        box-shadow:
-            0 0 10px rgba(226, 184, 122, 0.7),
-            0 0 22px rgba(245, 200, 66,  0.38),
-            0 0 40px rgba(245, 200, 66,  0.15);
-    }
-}
-
-
-/* ── UNIFED - PROBATUM · Tipografia Splash Screen · v13.2.1-GOLD ── */
-.splash-content h1,
-.glitch {
-    font-size: 4rem;
-    font-weight: 900;
-    color: var(--accent-cyan);
-    letter-spacing: 0.5rem;
-    text-transform: uppercase;
-}
-
-.splash-content h2,
-.sub-glitch {
-    color: var(--accent-gold);
-    font-size: 1.5rem;
-    font-weight: 700;
-    margin-top: -0.5rem;
-    letter-spacing: 0.3rem;
-    text-transform: uppercase;
-}
-/* ═══ FIM — Cadeia de Custódia CSS · v13.2.1-GOLD-CHAIN · UNIFED - PROBATUM ═══ */
-
-/* ═══════════════════════════════════════════════════════════════════════════════
-   MÓDULO AUXILIAR PERICIAL — INDICAÇÃO DE APOIO PERICIAL
-   UNIFED - PROBATUM v13.2.1-GOLD-AUX
-   Non-Interfering UI Components — Encapsulamento total da main-grid
-   Lei TVDE · Art. 125.º CPP · ISO/IEC 27037:2012 · DORA (UE) 2022/2554
-   ═══════════════════════════════════════════════════════════════════════════════ */
-
-/* ── Wrapper da secção auxiliar ────────────────────────────────────────────── */
-.auxiliary-helper-section {
-    margin-top: 1.5rem;
-    padding: 1.25rem 1.25rem 1rem;
-    background: rgba(0, 229, 255, 0.03);
-    border: 1px solid rgba(0, 229, 255, 0.18);
-    border-radius: var(--border-radius, 8px);
-    position: relative;
-    overflow: hidden;
-}
-
-.auxiliary-helper-section::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: repeating-linear-gradient(
-        135deg,
-        transparent,
-        transparent 12px,
-        rgba(0, 229, 255, 0.015) 12px,
-        rgba(0, 229, 255, 0.015) 14px
-    );
-    pointer-events: none;
-}
-
-/* ── Cabeçalho da secção ───────────────────────────────────────────────────── */
-.aux-section-header {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    margin-bottom: 1rem;
-    font-family: var(--font-mono, 'JetBrains Mono', monospace);
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    color: #00e5ff;
+    border-color: # f59e0b!important;
+															color: #f59e0b!important;
+															font - weight: 700;
+															letter - spacing: 0.8 px;
+															transition: background 0.2 s,
+															box - shadow 0.2 s!important;
+														}.ots - btn: hover {
+															background: rgba(245, 158, 11, 0.12) !important;
+															box - shadow: 0 0 14 px rgba(245, 158, 11, 0.25) !important;
+														}.ots - btn: disabled {
+															opacity: 0.55;
+															cursor: not - allowed;
+														}
+														/* ── STATUS RFC 3161 — Indicador de Validade Jurídica Máxima (Nível 2) ─────── */
+														/* Classe base: destaque de ficheiros com selo RFC 3161 na lista de evidências */
+														.status - rfc3161 {
+															display: inline - flex;
+															align - items: center;
+															gap: 0.3 rem;
+															font - family: 'JetBrains Mono',
+															monospace;
+															font - size: 0.6 rem;
+															font - weight: 700;
+															letter - spacing: 0.8 px;
+															text - transform: uppercase;
+															color: #e2b87a;
+															background: rgba(226, 184, 122, 0.08);
+															border: 1 px solid rgba(226, 184, 122, 0.35);
+															border - radius: 2 px;
+															padding: 2 px 6 px;
+															box - shadow: 0 0 8 px rgba(226, 184, 122, 0.2);
+															transition: box - shadow 0.3 s ease,
+															background 0.3 s ease;
+														}.status - rfc3161: hover {
+															background: rgba(226, 184, 122, 0.14);
+															box - shadow: 0 0 14 px rgba(226, 184, 122, 0.4);
+														}
+														/* Classe GOLD: glow dourado/âmbar intenso para documentos com validade jurídica máxima */
+														.status - rfc3161 - gold {
+															display: inline - flex;
+															align - items: center;
+															gap: 0.35 rem;
+															font - family: 'JetBrains Mono',
+															monospace;
+															font - size: 0.62 rem;
+															font - weight: 800;
+															letter - spacing: 1 px;
+															text - transform: uppercase;
+															color: #f5c842;
+															background: rgba(245, 200, 66, 0.06);
+															border: 1 px solid rgba(245, 200, 66, 0.5);
+															border - radius: 3 px;
+															padding: 3 px 8 px;
+															margin - left: 6 px;
+															/* Glow âmbar / dourado — validade jurídica RFC 3161 máxima */
+															box - shadow: 0 0 6 px rgba(226, 184, 122, 0.5),
+															0 0 14 px rgba(245, 200, 66, 0.25),
+															0 0 28 px rgba(245, 200, 66, 0.10);
+															animation: rfc3161GoldPulse 3 s ease - in - out infinite;
+															transition: box - shadow 0.3 s ease;
+														}.status - rfc3161 - gold i {
+															color: #f5c842;
+															font - size: 0.65 rem;
+														}.status - rfc3161 - gold: hover {
+															box - shadow: 0 0 10 px rgba(226, 184, 122, 0.7),
+																0 0 22 px rgba(245, 200, 66, 0.4),
+																0 0 40 px rgba(245, 200, 66, 0.18);
+														}
+														/* Itens da lista de evidências com selagem RFC 3161 ativa */
+														.file - item - modal.sealed - rfc3161 {
+															border - left: 3 px solid #e2b87a!important;
+															background: rgba(226, 184, 122, 0.04) !important;
+															box - shadow: inset 0 0 12 px rgba(226, 184, 122, 0.06);
+														}
+													@keyframes rfc3161GoldPulse {
+														0 % , 100 % {
+															box - shadow: 0 0 6 px rgba(226, 184, 122, 0.5),
+															0 0 14 px rgba(245, 200, 66, 0.25),
+															0 0 28 px rgba(245, 200, 66, 0.10);
+														}
+														50 % {
+															box - shadow: 0 0 10 px rgba(226, 184, 122, 0.7),
+															0 0 22 px rgba(245, 200, 66, 0.38),
+															0 0 40 px rgba(245, 200, 66, 0.15);
+														}
+													}
+													/* ── UNIFED - PROBATUM · Tipografia Splash Screen · v13.2.1-GOLD ── */
+													.splash - content h1,
+													.glitch {
+														font - size: 4 rem;
+														font - weight: 900;
+														color: var (--accent - cyan);
+														letter - spacing: 0.5 rem;
+														text - transform: uppercase;
+													}.splash - content h2,
+													.sub - glitch {
+														color: var (--accent - gold);
+														font - size: 1.5 rem;
+														font - weight: 700;
+														margin - top: -0.5 rem;
+														letter - spacing: 0.3 rem;
+														text - transform: uppercase;
+													}
+													/* ═══ FIM — Cadeia de Custódia CSS · v13.2.1-GOLD-CHAIN · UNIFED - PROBATUM ═══ */
+													/* ═══════════════════════════════════════════════════════════════════════════════
+													   MÓDULO AUXILIAR PERICIAL — INDICAÇÃO DE APOIO PERICIAL
+													   UNIFED - PROBATUM v13.2.1-GOLD-AUX
+													   Non-Interfering UI Components — Encapsulamento total da main-grid
+													   Lei TVDE · Art. 125.º CPP · ISO/IEC 27037:2012 · DORA (UE) 2022/2554
+													   ═══════════════════════════════════════════════════════════════════════════════ */
+													/* ── Wrapper da secção auxiliar ────────────────────────────────────────────── */
+													.auxiliary - helper - section {
+														margin - top: 1.5 rem;
+														padding: 1.25 rem 1.25 rem 1 rem;
+														background: rgba(0, 229, 255, 0.03);
+														border: 1 px solid rgba(0, 229, 255, 0.18);
+														border - radius: var (--border - radius, 8 px);
+														position: relative;
+														overflow: hidden;
+													}.auxiliary - helper - section::before {
+														content: '';
+														position: absolute;
+														inset: 0;
+														background: repeating - linear - gradient(135 deg, transparent, transparent 12 px, rgba(0, 229, 255, 0.015) 12 px, rgba(0, 229, 255, 0.015) 14 px);
+														pointer - events: none;
+													}
+													/* ── Cabeçalho da secção ───────────────────────────────────────────────────── */
+													.aux - section - header {
+														display: flex;
+														align - items: center;
+														gap: 0.6 rem;
+														margin - bottom: 1 rem;
+														font - family: var (--font - mono, 'JetBrains Mono', monospace);
+														font - size: 0.72 rem;
+														font - weight: 700;
+														letter - spacing: 0.08 em;
+														color: #00e5ff;
     text-transform: uppercase;
     flex-wrap: wrap;
 }
@@ -1734,54 +1477,45 @@ body.dual-screen .stat-card p {
     background: rgba(226, 184, 122, 0.12);
     border: 1px solid rgba(226, 184, 122, 0.35);
     border-radius: 3px;
-    color: #e2b87a;
-    font-size: 0.62rem;
-    letter-spacing: 0.04em;
-    white-space: nowrap;
-}
-
-/* ── Grid das boxes ────────────────────────────────────────────────────────── */
-.aux-boxes-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 0.75rem;
-    margin-bottom: 1rem;
-}
-
-/* ── Box individual (small-info-box) ───────────────────────────────────────── */
-.small-info-box {
-    display: flex;
-    flex-direction: column;
-    background: rgba(10, 15, 30, 0.7);
-    border: 1px solid rgba(0, 229, 255, 0.15);
-    border-radius: 6px;
-    padding: 0.85rem 0.8rem 0.55rem;
-    position: relative;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
-    min-width: 0;
-}
-
-.small-info-box:hover {
-    border-color: rgba(0, 229, 255, 0.4);
-    box-shadow: 0 0 14px rgba(0, 229, 255, 0.08);
-}
-
-.aux-box-icon {
-    font-size: 1.1rem;
-    color: rgba(0, 229, 255, 0.55);
-    margin-bottom: 0.35rem;
-}
-
-.aux-box-body {
-    flex: 1;
-}
-
-.aux-box-label {
-    font-family: var(--font-mono, 'JetBrains Mono', monospace);
-    font-size: 0.6rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    color: #94a3b8;
+    color: # e2b87a;
+														font - size: 0.62 rem;
+														letter - spacing: 0.04 em;
+														white - space: nowrap;
+													}
+													/* ── Grid das boxes ────────────────────────────────────────────────────────── */
+													.aux - boxes - grid {
+														display: grid;
+														grid - template - columns: repeat(auto - fill, minmax(160 px, 1 fr));
+														gap: 0.75 rem;
+														margin - bottom: 1 rem;
+													}
+													/* ── Box individual (small-info-box) ───────────────────────────────────────── */
+													.small - info - box {
+														display: flex;
+														flex - direction: column;
+														background: rgba(10, 15, 30, 0.7);
+														border: 1 px solid rgba(0, 229, 255, 0.15);
+														border - radius: 6 px;
+														padding: 0.85 rem 0.8 rem 0.55 rem;
+														position: relative;
+														transition: border - color 0.2 s ease,
+														box - shadow 0.2 s ease;
+														min - width: 0;
+													}.small - info - box: hover {
+															border - color: rgba(0, 229, 255, 0.4);
+															box - shadow: 0 0 14 px rgba(0, 229, 255, 0.08);
+														}.aux - box - icon {
+															font - size: 1.1 rem;
+															color: rgba(0, 229, 255, 0.55);
+															margin - bottom: 0.35 rem;
+														}.aux - box - body {
+															flex: 1;
+														}.aux - box - label {
+															font - family: var (--font - mono, 'JetBrains Mono', monospace);
+															font - size: 0.6 rem;
+															font - weight: 700;
+															letter - spacing: 0.08 em;
+															color: #94a3b8;
     text-transform: uppercase;
     margin: 0 0 0.2rem;
 }
@@ -1790,19 +1524,15 @@ body.dual-screen .stat-card p {
     font-family: var(--font-mono, 'JetBrains Mono', monospace);
     font-size: 1rem;
     font-weight: 700;
-    color: #00e5ff;
-    margin: 0 0 0.2rem;
-    line-height: 1.2;
-}
-
-.aux-box-value.highlighted {
-    color: #e2b87a;
-    font-size: 1.1rem;
-}
-
-.aux-box-desc {
-    font-size: 0.6rem;
-    color: #475569;
+    color: # 00e5 ff;
+															margin: 0 0 0.2 rem;
+															line - height: 1.2;
+														}.aux - box - value.highlighted {
+															color: #e2b87a;
+															font - size: 1.1 rem;
+														}.aux - box - desc {
+															font - size: 0.6 rem;
+															color: #475569;
     display: block;
     line-height: 1.3;
 }
@@ -1810,32 +1540,32 @@ body.dual-screen .stat-card p {
 /* ── Variações cromáticas por tipo ─────────────────────────────────────────── */
 .aux-box-campaigns { border-color: rgba(74, 222, 128, 0.2); }
 .aux-box-campaigns .aux-box-icon  { color: rgba(74, 222, 128, 0.65); }
-.aux-box-campaigns .aux-box-value { color: #4ade80; }
-
-.aux-box-tolls { border-color: rgba(148, 163, 184, 0.2); }
-.aux-box-tolls .aux-box-value { color: #94a3b8; }
+.aux-box-campaigns .aux-box-value { color: # 4 ade80;
+														}.aux - box - tolls {
+															border - color: rgba(148, 163, 184, 0.2);
+														}.aux - box - tolls.aux - box - value {
+															color: #94a3b8; }
 
 .aux-box-tips { border-color: rgba(196, 148, 255, 0.2); }
 .aux-box-tips .aux-box-icon  { color: rgba(196, 148, 255, 0.65); }
-.aux-box-tips .aux-box-value { color: #c494ff; }
-
-.aux-box-total-ns {
-    border-color: rgba(226, 184, 122, 0.35);
-    background: rgba(226, 184, 122, 0.04);
-}
-.aux-box-total-ns .aux-box-icon  { color: rgba(226, 184, 122, 0.7); }
-
-.aux-box-cancel {
-    border-color: rgba(239, 68, 68, 0.2);
-    background: rgba(239, 68, 68, 0.03);
-}
-.aux-box-cancel .aux-box-icon  { color: rgba(239, 68, 68, 0.6); }
-.aux-box-cancel .aux-box-value { color: #ef4444; }
-
-/* ── Etiqueta legal no rodapé de cada box ───────────────────────────────────── */
-.aux-box-legal-tag {
-    font-size: 0.55rem;
-    color: #334155;
+.aux-box-tips .aux-box-value { color: # c494ff;
+														}.aux - box - total - ns {
+															border - color: rgba(226, 184, 122, 0.35);
+															background: rgba(226, 184, 122, 0.04);
+														}.aux - box - total - ns.aux - box - icon {
+															color: rgba(226, 184, 122, 0.7);
+														}.aux - box - cancel {
+															border - color: rgba(239, 68, 68, 0.2);
+															background: rgba(239, 68, 68, 0.03);
+														}.aux - box - cancel.aux - box - icon {
+															color: rgba(239, 68, 68, 0.6);
+														}.aux - box - cancel.aux - box - value {
+															color: #ef4444;
+														}
+														/* ── Etiqueta legal no rodapé de cada box ───────────────────────────────────── */
+														.aux - box - legal - tag {
+															font - size: 0.55 rem;
+															color: #334155;
     border-top: 1px solid rgba(255,255,255,0.05);
     margin-top: 0.5rem;
     padding-top: 0.35rem;
@@ -1854,12 +1584,12 @@ body.dual-screen .stat-card p {
 .aux-dac7-reconciliation-note {
     background: rgba(226, 184, 122, 0.05);
     border: 1px solid rgba(226, 184, 122, 0.25);
-    border-left: 3px solid #e2b87a;
-    border-radius: 4px;
-    padding: 0.9rem 1rem;
-    font-family: var(--font-mono, 'JetBrains Mono', monospace);
-    font-size: 0.72rem;
-    color: #94a3b8;
+    border-left: 3px solid # e2b87a;
+															border - radius: 4 px;
+															padding: 0.9 rem 1 rem;
+															font - family: var (--font - mono, 'JetBrains Mono', monospace);
+															font - size: 0.72 rem;
+															color: #94a3b8;
     line-height: 1.7;
     margin-top: 0.75rem;
 }
@@ -1868,30 +1598,25 @@ body.dual-screen .stat-card p {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    color: #e2b87a;
-    font-weight: 700;
-    font-size: 0.7rem;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    margin-bottom: 0.6rem;
-}
-
-.dac7-highlight {
-    color: #e2b87a;
-    font-weight: 700;
-}
-
-/* ── Questionário Estratégico ao Advogado ───────────────────────────────────── */
-.dac7-question-contraditorio {
-    margin-top: 0.8rem;
-    padding: 0.7rem 0.8rem;
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px dashed rgba(0, 229, 255, 0.2);
-    border-radius: 3px;
-}
-
-.dac7-q-label {
-    color: #00e5ff;
+    color: # e2b87a;
+															font - weight: 700;
+															font - size: 0.7 rem;
+															letter - spacing: 0.06 em;
+															text - transform: uppercase;
+															margin - bottom: 0.6 rem;
+														}.dac7 - highlight {
+															color: #e2b87a;
+															font - weight: 700;
+														}
+														/* ── Questionário Estratégico ao Advogado ───────────────────────────────────── */
+														.dac7 - question - contraditorio {
+															margin - top: 0.8 rem;
+															padding: 0.7 rem 0.8 rem;
+															background: rgba(0, 0, 0, 0.3);
+															border: 1 px dashed rgba(0, 229, 255, 0.2);
+															border - radius: 3 px;
+														}.dac7 - q - label {
+															color: #00e5ff;
     font-size: 0.62rem;
     font-weight: 700;
     letter-spacing: 0.06em;
@@ -1903,78 +1628,65 @@ body.dual-screen .stat-card p {
 
 .dac7-q-text {
     font-size: 0.68rem;
-    color: #94a3b8;
-    line-height: 1.75;
-    margin: 0;
-}
-
-.dac7-q-text em {
-    font-style: italic;
-    color: #cbd5e1;
-}
-
-.dac7-q-text strong {
-    color: #e2e8f0;
-}
-
-/* ── Responsive ────────────────────────────────────────────────────────────── */
-@media (max-width: 768px) {
-    .aux-boxes-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    .aux-section-header {
-        font-size: 0.62rem;
-    }
-}
-
-@media (max-width: 480px) {
-    .aux-boxes-grid {
-        grid-template-columns: 1fr 1fr;
-    }
-}
-
-/* ═══ FIM — Módulo Auxiliar Pericial · v13.2.1-GOLD-AUX · UNIFED - PROBATUM ═══ */
-
-
-/* ============================================================================
-   REALCE FORENSE — CAMPO ADAPTADO 2025 (PORTAGENS → REEMBOLSOS DE DESPESAS)
-   Protocolo UNIFED-GOLD v13.2 · Art. 125.º CPP · Identificação Visual Pericial
-   Permite que o advogado e o juiz identifiquem a adaptação técnica ao novo
-   formato de reporte da plataforma (alteração anual de nomenclatura do Ledger).
-   ============================================================================ */
-
-/* ── Caixa de Reembolsos/Portagens — realce visual de campo adaptado 2025 ── */
-.info-box-refunds {
-    border-left: 3px solid var(--accent-primary) !important;
-    background: rgba(0, 229, 255, 0.05) !important;
-    position: relative;
-    padding: 10px;
-    margin-bottom: 10px;
-}
-
-.info-box-refunds::after {
-    content: "ADAPTADO 2025 (REF: REEMBOLSOS)";
-    font-size: 0.45rem !important; /* Reduzido para evitar transbordamento */
-    position: absolute;
-    top: 2px;
-    right: 5px;
-    color: var(--accent-primary);
-    font-weight: 800;
-    letter-spacing: 0.02em;
-    font-family: var(--font-mono, 'Courier New', monospace);
-    opacity: 0.7;
-    pointer-events: none;
-    white-space: nowrap;
-    max-width: 90%; /* Limite de segurança */
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-/* Ocultar o badge "ADAPTADO 2025" em anos fiscais ≤ 2024
-   (controlado via classe JS aplicada pelo _updateAuxiliaryBoxes) */
-.info-box-refunds.year-2024::after {
-    content: "PORTAGENS (2024)";
-    color: #8b9cb5;
+    color: # 94 a3b8;
+															line - height: 1.75;
+															margin: 0;
+														}.dac7 - q - text em {
+															font - style: italic;
+															color: #cbd5e1;
+														}.dac7 - q - text strong {
+															color: #e2e8f0;
+														}
+													/* ── Responsive ────────────────────────────────────────────────────────────── */
+													@media(max - width: 768 px) {
+														.aux - boxes - grid {
+															grid - template - columns: repeat(2, 1 fr);
+														}.aux - section - header {
+															font - size: 0.62 rem;
+														}
+													}
+													@media(max - width: 480 px) {
+														.aux - boxes - grid {
+															grid - template - columns: 1 fr 1 fr;
+														}
+													}
+													/* ═══ FIM — Módulo Auxiliar Pericial · v13.2.1-GOLD-AUX · UNIFED - PROBATUM ═══ */
+													/* ============================================================================
+													   REALCE FORENSE — CAMPO ADAPTADO 2025 (PORTAGENS → REEMBOLSOS DE DESPESAS)
+													   Protocolo UNIFED-GOLD v13.2 · Art. 125.º CPP · Identificação Visual Pericial
+													   Permite que o advogado e o juiz identifiquem a adaptação técnica ao novo
+													   formato de reporte da plataforma (alteração anual de nomenclatura do Ledger).
+													   ============================================================================ */
+													/* ── Caixa de Reembolsos/Portagens — realce visual de campo adaptado 2025 ── */
+													.info - box - refunds {
+														border - left: 3 px solid
+														var (--accent - primary) !important;
+														background: rgba(0, 229, 255, 0.05) !important;
+														position: relative;
+														padding: 10 px;
+														margin - bottom: 10 px;
+													}.info - box - refunds::after {
+														content: "ADAPTADO 2025 (REF: REEMBOLSOS)";
+														font - size: 0.45 rem!important; /* Reduzido para evitar transbordamento */
+														position: absolute;
+														top: 2 px;
+														right: 5 px;
+														color: var (--accent - primary);
+														font - weight: 800;
+														letter - spacing: 0.02 em;
+														font - family: var (--font - mono, 'Courier New', monospace);
+														opacity: 0.7;
+														pointer - events: none;
+														white - space: nowrap;
+														max - width: 90 % ; /* Limite de segurança */
+														overflow: hidden;
+														text - overflow: ellipsis;
+													}
+													/* Ocultar o badge "ADAPTADO 2025" em anos fiscais ≤ 2024
+													   (controlado via classe JS aplicada pelo _updateAuxiliaryBoxes) */
+													.info - box - refunds.year - 2024::after {
+														content: "PORTAGENS (2024)";
+														color: #8b9cb5;
     font-weight: 600;
 }
 
@@ -2004,21 +1716,16 @@ body.dual-screen .stat-card p {
     box-shadow: 0 0 8px rgba(0, 229, 255, 0.08);
 }
 
-/* ============================================================================
-   UNIFED - PROBATUM · v13.5.0-PURE · ESTILOS INTEGRADOS
-   ============================================================================
-   Nota: Os estilos completos do painel #pureDashboard estão em
-   style_additions_v13.5.0-PURE.css (ficheiro externo, carregado em index.html).
-   Este bloco contém apenas os overrides de versão e animações globais
-   que afectam componentes existentes actualizados para v13.5.0-PURE.
-   ============================================================================ */
-
-/* ── Actualização de badges de versão para v13.5.0-PURE ──────────────────── */
-.version-badge {
-    /* Sobrepõe cor dourada GOLD → ciano PURE */
-    background: linear-gradient(135deg, rgba(0,229,255,0.15), rgba(14,165,233,0.12));
-    border-color: rgba(0, 229, 255, 0.5);
-    color: var(--accent-primary, #00E5FF);
+/* = === === === === === === === === === === === === === === === === === === === === === === === === === UNIFED - PROBATUM· v13 .5 .0 - PURE· ESTILOS INTEGRADOS === === === === === === === === === === === === === === === === === === === === === === === === === = Nota: Os estilos completos do painel #pureDashboard estão em
+															style_additions_v13 .5 .0 - PURE.css(ficheiro externo, carregado em index.html).
+														Este bloco contém apenas os overrides de versão e animações globais
+														que afectam componentes existentes actualizados para v13 .5 .0 - PURE. === === === === === === === === === === === === === === === === === === === === === === === === === = * /
+														/* ── Actualização de badges de versão para v13.5.0-PURE ──────────────────── */
+														.version - badge {
+															/* Sobrepõe cor dourada GOLD → ciano PURE */
+															background: linear - gradient(135 deg, rgba(0, 229, 255, 0.15), rgba(14, 165, 233, 0.12));
+															border - color: rgba(0, 229, 255, 0.5);
+															color: var (--accent - primary, #00E5FF);
 }
 
 /* ── Indicador de modo PURE na splash screen ──────────────────────────────── */
@@ -2032,70 +1739,67 @@ body.dual-screen .stat-card p {
     padding: 3px 10px;
     font-size: 0.62rem;
     font-family: var(--font-mono, 'JetBrains Mono', monospace);
-    color: var(--accent-primary, #00E5FF);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-}
-
-.pure-mode-indicator::before {
-    content: '';
-    display: inline-block;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--accent-primary, #00E5FF);
-    box-shadow: 0 0 6px var(--accent-primary, #00E5FF);
-    animation: pure-pulse 2s infinite;
-}
-
-@keyframes pure-pulse {
-    0%, 100% { opacity: 1; box-shadow: 0 0 4px var(--accent-primary, #00E5FF); }
-    50%       { opacity: 0.5; box-shadow: 0 0 10px var(--accent-primary, #00E5FF); }
-}
-
-/* ── Wrapper do painel PURE — transição de entrada ───────────────────────── */
-#pureDashboardWrapper {
-    opacity: 0;
-    transform: translateY(12px);
-    transition: opacity 0.4s ease, transform 0.4s ease;
-}
-
-#pureDashboardWrapper[style*="display: block"],
-#pureDashboardWrapper[style*="display:block"] {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-/* ── Blink class para SP ≥ 90% (v13.5.0-PURE não atinge — reservado) ─────── */
-.led-pure-amber {
-    animation: pure-amber-blink 1.8s infinite;
-}
-
-@keyframes pure-amber-blink {
-    0%, 100% { color: #F59E0B; text-shadow: 0 0 8px rgba(245,158,11,0.6); }
-    50%       { color: #FCD34D; text-shadow: 0 0 18px rgba(245,158,11,0.9); }
-}
-
-/* ══ FIM — v13.5.0-PURE CSS Integration · UNIFED - PROBATUM ══════════════ */
-
-/* ============================================================================
-   RETIFICAÇÃO CIRÚRGICA v13.10.1 — Módulo DAC7 e Wrapper
-   ============================================================================ */
-#pure-dac7-module, .pure-card-dac7 {
-    height: auto !important;
-    min-height: 120px !important;
-    overflow: visible !important;
-    display: block !important;
-}
-
-.pure-card-grid .box {
-    flex: 1 1 100% !important;
-    margin-bottom: 15px !important;
-}
-
-/* Elimina o flash branco de transição */
-#pureDashboardWrapper {
-    background: #020617 !important;
+    color: var(--accent-primary, # 00E5 FF);
+															letter - spacing: 0.08 em;
+															text - transform: uppercase;
+														}.pure - mode - indicator::before {
+															content: '';
+															display: inline - block;
+															width: 6 px;
+															height: 6 px;
+															border - radius: 50 % ;
+															background: var (--accent - primary, #00E5FF);
+    box-shadow: 0 0 6px var(--accent-primary, # 00E5 FF);
+															animation: pure - pulse 2 s infinite;
+														}
+														@keyframes pure - pulse {
+															0 % , 100 % {
+																opacity: 1;box - shadow: 0 0 4 px
+																var (--accent - primary, #00E5FF); }
+    50%       { opacity: 0.5; box-shadow: 0 0 10px var(--accent-primary, # 00E5 FF);
+															}
+														}
+														/* ── Wrapper do painel PURE — transição de entrada ───────────────────────── */
+														#pureDashboardWrapper {
+															opacity: 0;
+															transform: translateY(12 px);
+															transition: opacity 0.4 s ease,
+															transform 0.4 s ease;
+														}
+														#pureDashboardWrapper[style *= "display: block"],
+														#pureDashboardWrapper[style *= "display:block"] {
+															opacity: 1;
+															transform: translateY(0);
+														}
+														/* ── Blink class para SP ≥ 90% (v13.5.0-PURE não atinge — reservado) ─────── */
+														.led - pure - amber {
+															animation: pure - amber - blink 1.8 s infinite;
+														}
+														@keyframes pure - amber - blink {
+															0 % , 100 % {
+																color: #F59E0B;text - shadow: 0 0 8 px rgba(245, 158, 11, 0.6);
+															}
+															50 % {
+																color: #FCD34D;text - shadow: 0 0 18 px rgba(245, 158, 11, 0.9);
+															}
+														}
+														/* ══ FIM — v13.5.0-PURE CSS Integration · UNIFED - PROBATUM ══════════════ */
+														/* ============================================================================
+														   RETIFICAÇÃO CIRÚRGICA v13.10.1 — Módulo DAC7 e Wrapper
+														   ============================================================================ */
+														#pure - dac7 - module,
+														.pure - card - dac7 {
+															height: auto!important;
+															min - height: 120 px!important;
+															overflow: visible!important;
+															display: block!important;
+														}.pure - card - grid.box {
+															flex: 1 1 100 % !important;
+															margin - bottom: 15 px!important;
+														}
+														/* Elimina o flash branco de transição */
+														#pureDashboardWrapper {
+															background: #020617 !important;
     transition: opacity 0.2s ease-in !important;
 }
 
@@ -2118,22 +1822,21 @@ body.dual-screen .stat-card p {
     min-height: auto;
 }
 
-/* ============================================================================
-   ESTABILIZAÇÃO DO BLOCO DE IDENTIFICAÇÃO – evitar quebra de linha e overflow
-   ============================================================================ */
-.pure-subject-header {
-    overflow-x: auto;
-    flex-wrap: nowrap;
-}
-@media (max-width: 768px) {
-    .pure-subject-header {
-        flex-wrap: wrap;
-    }
-}
-#pure-subject-name, #pure-subject-nif, #pure-subject-platform {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100%;
-    display: inline-block;
-}
+/* = === === === === === === === === === === === === === === === === === === === === === === === === === ESTABILIZAÇÃO DO BLOCO DE IDENTIFICAÇÃO– evitar quebra de linha e overflow === === === === === === === === === === === === === === === === === === === === === === === === === = * /.pure - subject - header {
+																overflow - x: auto;
+																flex - wrap: nowrap;
+															}
+															@media(max - width: 768 px) {
+																.pure - subject - header {
+																	flex - wrap: wrap;
+																}
+															}
+															#pure - subject - name,
+															#pure - subject - nif,
+															#pure - subject - platform {
+																white - space: nowrap;
+																overflow: hidden;
+																text - overflow: ellipsis;
+																max - width: 100 % ;
+																display: inline - block;
+															}
