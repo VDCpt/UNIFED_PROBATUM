@@ -9,22 +9,56 @@
 
    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🔬%3C/text%3E%3C/svg%3E">
 
-    <!-- Retificação v13.12.1: Prioridade ao Proxy Interno para evitar bloqueio CORS -->
+    <!-- ══ UNIFED - PROBATUM v13.12.0-PURE · OTS DYNAMIC LOADER (CORS-SAFE) ═══ -->
     <script>
     (function loadOTSWithFallback() {
-        var proxyUrl = 'https://api.unifed.com/ots-proxy?url=';
-        var otsLib = 'https://unpkg.com/javascript-opentimestamps@0.0.12/dist/opentimestamps.min.js';
-        
-        var s = document.createElement('script');
-        s.src = proxyUrl + encodeURIComponent(otsLib); // Encapsulamento em Proxy
-        s.onload = function() { console.log('[UNIFED-OTS] ✅ OTS carregado via Proxy.'); };
-        s.onerror = function() {
-            console.warn('[UNIFED-OTS] ⚠️ Proxy falhou. Tentando fallback local...');
-            var fallback = document.createElement('script');
-            fallback.src = 'js/vendor/opentimestamps.min.js';
-            document.head.appendChild(fallback);
-        };
-        document.head.appendChild(s);
+        var scripts = [
+            'https://unpkg.com/javascript-opentimestamps@0.0.12/dist/opentimestamps.min.js',
+            'https://cdn.jsdelivr.net/npm/javascript-opentimestamps@0.0.12/dist/opentimestamps.min.js'
+        ];
+        var current = 0;
+
+        function normalizeOTS() {
+            if (typeof window.OpenTimestamps === 'undefined') {
+                if (typeof window.opentimestamps !== 'undefined') {
+                    window.OpenTimestamps = window.opentimestamps;
+                } else if (typeof opentimestamps !== 'undefined') {
+                    window.OpenTimestamps = opentimestamps;
+                }
+            }
+        }
+
+        function injectScript(url) {
+            var s = document.createElement('script');
+            s.src = url;
+            s.async = true;
+            s.crossOrigin = "anonymous";
+
+            s.onload = function() {
+                normalizeOTS();
+                console.info('[UNIFED-OTS] ✅ OpenTimestamps carregado via: ' + url);
+            };
+
+            s.onerror = function() {
+                console.warn('[UNIFED-OTS] ⚠️ Falha na CDN: ' + url);
+                current++;
+                if (current < scripts.length) {
+                    injectScript(scripts[current]);
+                } else {
+                    console.error('[UNIFED-OTS] ❌ Erro Crítico: Todas as CDNs falharam para OTS. Selagem de Nível 1 ativa (hash local).');
+                }
+            };
+            document.head.appendChild(s);
+        }
+
+        if (typeof window.OpenTimestamps !== 'undefined' ||
+            typeof window.opentimestamps  !== 'undefined') {
+            normalizeOTS();
+            console.log('[UNIFED-OTS] ✅ Biblioteca em cache. window.OpenTimestamps ✓');
+            return;
+        }
+
+        injectScript(scripts[current]);
     })();
     </script>
 
@@ -830,14 +864,13 @@
         </div>
     </div>
 
-    <!-- SCRIPTS (UNIFED PROBATUM v13.12.0-PURE - SEM DUPLICAÇÕES) -->
-    <script>
-        window.pdfjsLib = window['pdfjs-dist/build/pdf'];
-        if (window.pdfjsLib) {
-            window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-        }
-    </script>
-    <!-- UNIFED PROBATUM v13.12.0-PURE — Ordem de carregamento corrigida:             -->
+    <!-- SCRIPTS (UNIFED PROBATUM v13.12.1-FIX - SEM DUPLICAÇÕES) -->
+    <!-- [FIX v13.12.1] Bloco inline de inicialização pdfjsLib REMOVIDO.
+         A inicialização é feita exclusivamente em script.js (ponto único de verdade).
+         Motivo: o bloco inline + const pdfjsLib em script.js causava
+         SyntaxError: "Identifier pdfjsLib has already been declared"
+         no [[GlobalEnv]] partilhado dos classic scripts. -->
+    <!-- UNIFED PROBATUM v13.12.1-FIX — Ordem de carregamento corrigida:             -->
     <!-- 1. script.js (motor principal)                                                -->
     <!-- 2. enrichment.js (Output Enrichment Layer — Read-Only)                       -->
     <!-- 3. nexus.js (NEXUS Adaptive Extension Layer)                                  -->

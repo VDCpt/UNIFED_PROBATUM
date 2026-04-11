@@ -17,63 +17,6 @@
  */
 
 'use strict';
-
-// [RETIFICAÇÃO] Centralização do Log Forense para evitar colisões
-window.logAudit = window.logAudit || function(msg, level = 'info') {
-    const prefix = '[UNIFED] ';
-    const levels = { error: 'error', warn: 'warn', success: 'info', info: 'log' };
-    console[levels[level] || 'log'](prefix + msg);
-};
-
-window.showToast = window.showToast || function(m, t) { console.log(`[Toast-Fallback] ${t}: ${m}`); };
-
-// [FIX CORRETIVO] Declaração Global Forçada
-
-'use strict';
-
-// ============================================================================
-// 1. CONFIGURAÇÃO DO PDF.JS (Alocação Única)
-// ============================================================================
-const pdfjsLib = window['pdfjs-dist/build/pdf'];
-if (pdfjsLib) {
-    // Definir prioridade para Local Worker, mantendo a integridade em ambientes air-gapped
-    pdfjsLib.GlobalWorkerOptions.workerSrc = './lib/pdf.worker.min.js';
-}
-
-// Definição global de logAudit (fallback)
-window.logAudit = window.logAudit || function(msg, level = 'info') {
-    const prefix = '[UNIFED] ';
-    if (level === 'error') console.error(prefix + msg);
-    else if (level === 'warn') console.warn(prefix + msg);
-    else if (level === 'success') console.info(prefix + msg);
-    else console.log(prefix + msg);
-};
-const logAudit = window.logAudit; // alias local
-
-window.showToast = window.showToast || function(m, t) { console.log(`[Toast-Fallback] ${t}: ${m}`); alert(m); };
-
-// Declaração Global Forçada
-window.updateAnalysisButton = function() {
-    const btn = document.getElementById('analyzeBtn');
-    if (btn) {
-        const hasClient = !!(window.UNIFEDSystem && window.UNIFEDSystem.client);
-        const hasFiles = window.UNIFEDSystem && window.UNIFEDSystem.documents && 
-                         Object.values(window.UNIFEDSystem.documents).some(d => d.files && d.files.length > 0);
-        btn.disabled = !(hasClient && hasFiles);
-    }
-};
-
-console.log('UNIFED - PROBATUM SCRIPT v13.12.0-PURE · DORA COMPLIANT · ATIVADO');
-// ============================================================================
-// 1. CONFIGURAÇÃO DO PDF.JS (RETIFICAÇÃO: Local Worker)
-// ============================================================================
-const pdfjsLib = window['pdfjs-dist/build/pdf'];
-if (pdfjsLib) {
-    // Substituir por caminho local se possível para garantir execução Offline em Juízo
-    pdfjsLib.GlobalWorkerOptions.workerSrc = './lib/pdf.worker.min.js'; 
-}
-
-'use strict';
 // Definição global de logAudit (fallback)
 window.logAudit = window.logAudit || function(msg, level = 'info') {
     const prefix = '[UNIFED] ';
@@ -124,10 +67,15 @@ console.log('UNIFED - PROBATUM SCRIPT v13.12.0-PURE · DORA COMPLIANT · ATF · 
 
 // ============================================================================
 // 1. CONFIGURAÇÃO DO PDF.JS
+// [FIX v13.12.1] — 'const pdfjsLib' substituído por 'var' para evitar
+// SyntaxError: "Identifier 'pdfjsLib' has already been declared" em contexto
+// de global script scope partilhado entre múltiplos <script> clássicos.
+// Referência: ECMAScript §16.1.7 — var não cria ligação léxica imutável.
 // ============================================================================
-const pdfjsLib = window['pdfjs-dist/build/pdf'];
+var pdfjsLib = window.pdfjsLib || window['pdfjs-dist/build/pdf'];
 if (pdfjsLib) {
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    window.pdfjsLib = pdfjsLib; // Registo global canónico — ponto único de verdade
 }
 
 // ============================================================================
@@ -4313,23 +4261,6 @@ function performAudit() {
 
             calculateTwoAxisDiscrepancy();
             performForensicCrossings();
-
-            // ================================================================
-            // RETIFICAÇÃO FORENSE: Alerta de Omissão Declarativa (Art. 119.º RGIT)
-            // ================================================================
-            const totals = UNIFEDSystem.analysis.totals;
-            if (totals.ganhos > totals.saftBruto * 1.05) { // Tolerância de 5%
-                const omissaoPercent = ((totals.ganhos / totals.saftBruto - 1) * 100).toFixed(2);
-                logAudit(`[ALERTA CRÍTICO] Omissão Declarativa Detectada: +${omissaoPercent}% em Extrato vs SAF-T.`, 'error');
-                // Injeção de metadados para o DOCX
-                UNIFEDSystem.analysis.taxRisk = {
-                    level: 'HIGH',
-                    description: 'Discrepância positiva em conta bancária não refletida no SAF-T PT.',
-                    legalBase: 'Art. 119.º do RGIT'
-                };
-            } else {
-                UNIFEDSystem.analysis.taxRisk = null;
-            }
 
             validateConsistency();
 
