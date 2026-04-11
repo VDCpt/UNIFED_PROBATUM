@@ -6,9 +6,9 @@
  * Conformidade: DORA (UE) 2022/2554 · RGPD · ISO/IEC 27037:2012
  *
  * ALTERAÇÕES v13.12.0-PURE (2026-04-06):
- *   · Garantia de que todas as funções expõem logs para o ForensicLogger.
- *   · Nenhuma alteração estrutural – apenas consistência de auditoria.
- *   · CORREÇÃO CRÍTICA: removido bloco de código solto após generateLegalNarrative.
+ * · Garantia de que todas as funções expõem logs para o ForensicLogger.
+ * · Nenhuma alteração estrutural – apenas consistência de auditoria.
+ * · CORREÇÃO CRÍTICA: removido bloco de código solto após generateLegalNarrative.
  * ============================================================================
  */
 
@@ -1091,6 +1091,8 @@ function generateBurdenOfProofSection(discrepancyValue) {
         'na retenção da discrepância apurada de ' + _fmtVal + '.\n' +
         '---------------------------------------------------------------------------'
     );
+} // FECHAMENTO CORRIGIDO PELA ENGENHARIA FORENSE
+
 window.generateBurdenOfProofSection = generateBurdenOfProofSection;
 
 console.log('[UNIFED-ENRICHMENT] \u2705 Output Enrichment Layer v13.12.0-PURE carregado.');
