@@ -3091,10 +3091,10 @@ function forensicDataSynchronization() {
 
 forensicDataSynchronization._syncDemoCounters = function() {
     const counters = {
-        'invoiceCountCompact': '2',
-        'statementCountCompact': '4',
-        'saftCountCompact': '4',
-        'dac7CountCompact': '1'
+        'invoiceCountCompact': '0',
+        'statementCountCompact': '0',
+        'saftCountCompact': '0',
+        'dac7CountCompact': '0'
     };
     Object.entries(counters).forEach(([id, val]) => {
         const el = document.getElementById(id);
