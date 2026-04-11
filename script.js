@@ -7986,13 +7986,20 @@ async function resetSystem() {
     renderChart();
     renderDiscrepancyChart();
     forensicDataSynchronization();
+
+    console.warn('[FORENSIC] Reset solicitado. Restaurando Toolbar de 6 botões...');
     
-    if (typeof window._activatePurePanel === 'function') {
-        window._activatePurePanel();
-        if (UNIFEDSystem.masterHash) {
-            window.activeForensicSession = { sessionId: UNIFEDSystem.sessionId, masterHash: UNIFEDSystem.masterHash };
+    // Limpa a consola visual
+    const consoleElem = document.getElementById('forensic-console');
+    if (consoleElem) consoleElem.innerHTML = '';
+
+    // GARANTIA DE INTERFACE: Aguarda 100ms para o Triada.js terminar e depois sobrescreve
+    setTimeout(() => {
+        if (typeof window._activatePurePanel === 'function') {
+            window._activatePurePanel(); 
+            logAudit("Interface PURE restaurada com 6 botões.", "success");
         }
-    }
+    }, 150);
     
     window.dispatchEvent(new CustomEvent('UNIFED_CORE_READY', { detail: { reset: true } }));
     
@@ -8000,11 +8007,6 @@ async function resetSystem() {
     showToast(currentLang === 'pt' ? 'Sistema reiniciado com sucesso.' : 'System reset successfully.', 'success');
     ForensicLogger.addEntry('SYSTEM_RESET_COMPLETED');
 }
-
-window.clearConsole = clearConsole;
-window.resetSystem = resetSystem;
-window.resetAllValues = resetSystem;
-window.activeForensicSession = null;
 
 // ============================================================================
 // 31. EXPOSIÇÃO GLOBAL (restantes exportações)

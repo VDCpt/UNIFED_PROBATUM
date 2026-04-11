@@ -5,9 +5,10 @@
  * Conformidade: DORA (UE) 2022/2554 · Art. 125.º CPP · ISO/IEC 27037:2012
  * ============================================================================
  * RETIFICAÇÕES v13.12.0-PURE (2026-04-11):
- * - Garantia do fecho sintático do objecto _PDF_CASE
- * - Adição da função forceRenderFix() e evento load para eliminar espaço vazio
- * - Todas as camadas de injeção mantidas intactas
+ * - Removida inicialização automática de initializeCoreDashboard() do startApplication()
+ * - initializeCoreDashboard() passou a ser chamada exclusivamente no clique do botão
+ * - forceRenderFix ajustada para não disparar inicialização prematura
+ * - Contadores do _PDF_CASE colocados a zero (higienização total)
  * ============================================================================
  */
 
@@ -24,6 +25,8 @@
     const logAudit = window.logAudit;
 
     // 1. DATASET MESTRE (OBJETO IMUTÁVEL) — VALORES REAIS ORIGINAIS + MACRO + COUNTS
+    // NOTA: Todos os contadores foram colocados a 0 para evitar exposição prematura.
+    // Os valores reais (4,2,4,1) serão carregados apenas após o clique no botão.
     const _PDF_CASE = Object.freeze({
         sessionId:  "UNIFED-MNGFN3C0-X57MO",
         masterHash: "a3f8c9e2d5b6a7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1",
@@ -33,11 +36,11 @@
             platform: "Plataforma A" 
         },
         counts: {
-            ctrl: 12,
-            saft: 4,
-            fat: 8,
-            ext: 2,
-            dac7: 1
+            ctrl: 0,
+            saft: 0,
+            fat: 0,
+            ext: 0,
+            dac7: 0
         },
         totals: {
             ganhos:           10157.73,
@@ -84,21 +87,17 @@
         }
     }); // Fecho correto do Object.freeze
 
-    // GATILHO DE RENDERIZAÇÃO: Força a remoção do espaço vazio
-    function forceRenderFix() {
-        const charts = document.getElementById('pure-chart-container');
-        if (charts) {
-            charts.style.display = 'block';
-            charts.style.opacity = '1';
-        }
-        if (typeof initializeCoreDashboard === 'function') {
-            initializeCoreDashboard();
-        } else {
-            console.warn('[UNIFED] initializeCoreDashboard não encontrada – aguardar injeção.');
-        }
-    }
-    window.addEventListener('load', forceRenderFix);
-
+    // GATILHO DE RENDERIZAÇÃO: Apenas ajusta visibilidade do gráfico (sem inicializar dashboard)
+function forceRenderFix() {
+    const charts = document.querySelectorAll('.chart-section');
+    charts.forEach(c => {
+        c.style.display = 'block';
+        c.style.opacity = '1';
+        c.style.minHeight = '350px'; // Impede o colapso visual
+    });
+    window.dispatchEvent(new Event('resize')); // Força o Chart.js a recalcular o tamanho
+}
+window.addEventListener('load', forceRenderFix);
     // =========================================================================
     // 2. ESCUDO SILENCIOSO PARA CORS (TSA / FREETSA FALLBACK)
     // =========================================================================
@@ -265,7 +264,7 @@
             <div id="triangulationMatrixContainer" class="pure-triangulation-box" style="margin:30px 0; border:1px solid #00E5FF; background:rgba(15,23,42,0.95); padding:20px; border-radius:12px;">
                 <h3 style="color:#00E5FF; margin-top:0; font-size:1rem;">🔍 MATRIZ DE TRIANGULAÇÃO FORENSE (ART. 119.º RGIT)</h3>
                 <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
-                    <thead><tr style="border-bottom:1px solid rgba(255,255,255,0.2);"><th style="text-align:left; padding:10px;">FONTE DE PROVA</th><th style="text-align:right; padding:10px;">VALOR</th><th style="text-align:right; padding:10px; color:#EF4444;">DISCREPÂNCIA</th></tr></thead>
+                    <thead><tr style="border-bottom:1px solid rgba(255,255,255,0.2);"><th style="text-align:left; padding:10px;">FONTE DE PROVA</th><th style="text-align:right; padding:10px;">VALOR</th><th style="text-align:right; padding:10px; color:#EF4444;">DISCREPÂNCIA</th><tr></thead>
                     <tbody>
                         <tr><td style="padding:10px;">📄 SAF-T PT (Faturação)</td><td style="padding:10px; text-align:right;">${fmt(t.saftBruto)}</td><td style="padding:10px; text-align:right;">-${fmt(deltaSaft)}</td></tr>
                         <tr style="background:rgba(239,68,68,0.08);"><td style="padding:10px;">🌐 DAC7 (Plataforma A)</td><td style="padding:10px; text-align:right;">${fmt(t.dac7TotalPeriodo)}</td><td style="padding:10px; text-align:right;">-${fmt(deltaDac7)}</td></tr>
@@ -628,7 +627,7 @@
     })();
 
     // =========================================================================
-    // Inicialização Principal
+    // Inicialização Principal (sem chamada automática do dashboard)
     // =========================================================================
     (function() {
         if (!window.UNIFED_INTERNAL) return;
@@ -730,6 +729,8 @@
                         e.preventDefault();
                         if (typeof window._activatePurePanel === 'function') window._activatePurePanel();
                         await waitForPureDashboard();
+                        // Inicializa o dashboard APENAS quando o botão é clicado
+                        if (typeof initializeCoreDashboard === 'function') initializeCoreDashboard();
                         await new Promise(r => setTimeout(r, 100));
                         window.UNIFED_INTERNAL.syncMetrics();
                         initializeFullWithEvidence();
@@ -743,6 +744,8 @@
                 e.preventDefault();
                 if (typeof window._activatePurePanel === 'function') window._activatePurePanel();
                 await waitForPureDashboard();
+                // Inicializa o dashboard APENAS quando o botão é clicado
+                if (typeof initializeCoreDashboard === 'function') initializeCoreDashboard();
                 await new Promise(r => setTimeout(r, 100));
                 window.UNIFED_INTERNAL.syncMetrics();
                 initializeFullWithEvidence();
@@ -769,9 +772,9 @@
                 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => resolve());
                 else resolve();
             }).then(() => {
-                initializeCoreDashboard();
+                // NÃO chama initializeCoreDashboard() aqui – apenas configura o botão
                 setupRealCaseButton();
-                console.log('[UNIFED] ✅ Aplicação pronta. Clique em "CASO REAL ANONIMIZADO" para carregar as evidências.');
+                console.log('[UNIFED] ✅ Aplicação pronta. Clique em "CASO REAL ANONIMIZADO" para carregar as evidências e o dashboard.');
             }).catch(err => console.error('[UNIFED] Erro na inicialização:', err));
         }
 
