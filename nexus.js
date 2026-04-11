@@ -56,6 +56,21 @@ window.UNIFEDSystem.demoMode = true;   // força modo demo
     proxiedFetch.__isNexusProxy = true;
     window.fetch = proxiedFetch;
 
+    // ========================================================================
+    // Monitor de integridade OTS (OpenTimestamps) — Nível 1 Local
+    // ========================================================================
+    window.addEventListener('error', function(e) {
+        if (e.target && e.target.tagName === 'SCRIPT' && e.target.src && e.target.src.includes('opentimestamps')) {
+            window.UNIFEDSystem.integrityLevel = "LEVEL_1_LOCAL";
+            const msg = "Cadeia de Custódia degradada para Nível 1 (Offline/Local).";
+            if (window.ForensicLogger && typeof window.ForensicLogger.addEntry === 'function') {
+                window.ForensicLogger.addEntry('INTEGRITY_DEGRADATION', { level: 'warn', message: msg });
+            } else {
+                console.warn('[NEXUS·M1] ' + msg);
+            }
+        }
+    }, true);
+
     console.info(
         '[NEXUS·M1] ✅ Passive Network Observer activo — Proxy Wrapper Transparente (ISO/IEC 27037:2012).\n' +
         '  Modo  : Apenas observação e registo. Nenhum erro é suprimido.\n' +
@@ -521,7 +536,7 @@ window.UNIFEDSystem.demoMode = true;   // força modo demo
                             '<th style="border:1px solid rgba(168,85,247,0.25);padding:6px 10px;background:rgba(168,85,247,0.15);color:#A855F7;text-align:right">' + _T('Omissão Proj.','Proj. Omission') + '</th>' +
                             '<th style="border:1px solid rgba(168,85,247,0.25);padding:6px 10px;background:rgba(168,85,247,0.15);color:#F97316;text-align:right">' + _T('IVA 23% Proj.','VAT 23% Proj.') + '</th>' +
                             '<th style="border:1px solid rgba(168,85,247,0.25);padding:6px 10px;background:rgba(168,85,247,0.15);color:rgba(255,255,255,0.5);text-align:center">' + _T('Risco','Risk') + '</th>' +
-                        '<tr>' +
+                        '</table>' +
                     '</thead>' +
                     '<tbody>' +
                         forecast.labels.map(function(lbl, i) {

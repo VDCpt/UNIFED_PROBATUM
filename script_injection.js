@@ -713,80 +713,67 @@
             }
         }
 
+       // [RETIFICAÇÃO] Listener Robusto com Delegação de Eventos (Anti-Ghosting)
         function setupRealCaseButton() {
-            let targetButton = document.getElementById('demoModeBtn');
-            if (!targetButton) {
-                const buttons = document.querySelectorAll('button, .btn, [role="button"]');
-                for (let btn of buttons) {
-                    if (btn.textContent.trim() === 'CASO REAL ANONIMIZADO') {
-                        targetButton = btn;
-                        break;
+            document.addEventListener('click', async function(e) {
+                const btn = e.target.closest('#pureDashboardBtn') || 
+                            (e.target.textContent && e.target.textContent.includes('CASO REAL ANONIMIZADO') ? e.target : null);
+
+                if (btn) {
+                    e.preventDefault();
+                    console.log('[UNIFED] ⚡ Ativação Manual do Caso Real detetada.');
+
+                    // 1. Ativa o contentor visual no index.html
+                    if (typeof window._activatePurePanel === 'function') {
+                        window._activatePurePanel();
+                    }
+
+                    // 2. Aguarda a renderização do DOM
+                    await new Promise(r => setTimeout(r, 150));
+
+                    // 3. Injeta as evidências e sincroniza métricas
+                    if (typeof initializeCoreDashboard === 'function') {
+                        initializeCoreDashboard();
+                        if (window.UNIFED_INTERNAL && window.UNIFED_INTERNAL.syncMetrics) {
+                            window.UNIFED_INTERNAL.syncMetrics();
+                        }
+                        if (typeof initializeFullWithEvidence === 'function') {
+                            initializeFullWithEvidence();
+                        }
                     }
                 }
-            }
-            if (!targetButton) {
-                console.warn('[UNIFED] Botão "CASO REAL ANONIMIZADO" não encontrado. Listener genérico activado.');
-                document.body.addEventListener('click', async function(e) {
-                    const el = e.target.closest('button, .btn, [role="button"]');
-                    if (el && el.textContent.includes('CASO REAL ANONIMIZADO')) {
-                        e.preventDefault();
-                        if (typeof window._activatePurePanel === 'function') window._activatePurePanel();
-                        await waitForPureDashboard();
-                        // Inicializa o dashboard APENAS quando o botão é clicado
-                        if (typeof initializeCoreDashboard === 'function') initializeCoreDashboard();
-                        await new Promise(r => setTimeout(r, 100));
-                        window.UNIFED_INTERNAL.syncMetrics();
-                        initializeFullWithEvidence();
-                    }
-                });
-                return;
-            }
-            const newBtn = targetButton.cloneNode(true);
-            targetButton.parentNode.replaceChild(newBtn, targetButton);
-            newBtn.addEventListener('click', async function(e) {
-                e.preventDefault();
-                if (typeof window._activatePurePanel === 'function') window._activatePurePanel();
-                await waitForPureDashboard();
-                // Inicializa o dashboard APENAS quando o botão é clicado
-                if (typeof initializeCoreDashboard === 'function') initializeCoreDashboard();
-                await new Promise(r => setTimeout(r, 100));
-                window.UNIFED_INTERNAL.syncMetrics();
-                initializeFullWithEvidence();
             });
-            console.log('[UNIFED] Listener associado ao botão "CASO REAL ANONIMIZADO".');
         }
 
-        function generateQRCode() {
+        // [RETIFICAÇÃO] QR Code Generator Unificado
+        window.generateQRCode = function() {
             const container = document.getElementById('qrcodeContainer');
             if (!container) return;
+            
             container.innerHTML = '';
-            const hashFull = window.UNIFEDSystem?.masterHash || 'HASH_INDISPONIVEL';
-            const sessionShort = window.UNIFEDSystem?.sessionId ? window.UNIFEDSystem.sessionId.substring(0, 16) : 'N/A';
-            const qrData = `UNIFED|${sessionShort}|${hashFull}`;
+            const sys = window.UNIFEDSystem;
+            const qrData = `UNIFED|${(sys?.sessionId || 'N/A').substring(0,16)}|${sys?.masterHash || 'HASH_PENDING'}`;
+            
             if (typeof QRCode !== 'undefined') {
-                new QRCode(container, { text: qrData, width: 75, height: 75, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.L });
+                new QRCode(container, { text: qrData, width: 75, height: 75 });
+                container.setAttribute('data-tooltip', 'Verificar Integridade SHA-256');
             }
-            container.setAttribute('data-tooltip', 'Clique para verificar a cadeia de custódia completa');
-        }
-        window.generateQRCode = generateQRCode;
+        };
 
+        // [RETIFICAÇÃO] Inicialização Limpa
         function startApplication() {
-            return new Promise((resolve) => {
-                if (document.readyState === 'loading') {
-                    document.addEventListener('DOMContentLoaded', () => resolve());
-                } else {
-                    resolve();
-                }
-            }).then(() => {
-                // REMOVIDO: initializeCoreDashboard(); <-- Esta linha causava a injeção precoce
-                setupRealCaseButton(); // Mantemos apenas o listener do botão
-                console.log('[UNIFED] ✅ Sistema em standby. Aguardando ativação por "CASO REAL ANONIMIZADO".');
-            }).catch(err => {
-                console.error('[UNIFED] Erro Crítico na Sequência de Início:', err);
-            });
+            const readyState = document.readyState;
+            if (readyState === 'complete' || readyState === 'interactive') {
+                setupRealCaseButton();
+                console.log('[UNIFED] ✅ Módulo de Injeção pronto (Standby).');
+            } else {
+                document.addEventListener('DOMContentLoaded', () => {
+                    setupRealCaseButton();
+                    console.log('[UNIFED] ✅ Módulo de Injeção pronto (Standby).');
+                });
+            }
         }
 
         startApplication();
     })();
-
 })();
