@@ -886,26 +886,37 @@
     <link rel="stylesheet" href="style_additions.css">
     <script src="script_injection.js"></script>
     <script>
-        // ── Activação do Painel v13.12.0-PURE ───────────────────────────────────
+        // ── Activação Atómica do Painel v13.12.0-PURE ──────────────────────────
         window._activatePurePanel = function() {
+            const wrapper = document.getElementById('pureDashboardWrapper');
+            
+            // 1. Limpeza de Segurança (Anti-Ghosting)
+            if (wrapper) { 
+                wrapper.innerHTML = ''; 
+                wrapper.style.display = 'none'; 
+            }
+
             fetch('panel.html')
                 .then(function(r) { return r.text(); })
                 .then(function(html) {
-                    var wrapper = document.getElementById('pureDashboardWrapper');
                     if (wrapper) {
                         wrapper.innerHTML = html;
                         wrapper.style.display = 'block';
+                        
+                        // 2. Só agora, com o DOM presente, injetamos os dados
                         if (typeof UNIFEDSystem !== 'undefined' && typeof UNIFEDSystem.loadAnonymizedRealCase === 'function') {
+                            console.info('[UNIFED-PURE] Injetando evidências no Caso Real...');
                             UNIFEDSystem.loadAnonymizedRealCase();
                         }
+                        
                         if (typeof window._translatePurePanel === 'function') {
                             window._translatePurePanel(window.currentLang || 'pt');
                         }
                     }
-                    console.info('[UNIFED-PURE] ✅ Painel v13.12.0-PURE activado.');
+                    console.info('[UNIFED-PURE] ✅ Painel e Dados sincronizados com sucesso.');
                 })
-                .catch(function() {
-                    console.info('[UNIFED-PURE] [i] panel.html não encontrado — modo standalone.');
+                .catch(function(err) {
+                    console.error('[UNIFED-PURE] Erro na carga do painel:', err);
                 });
         };
     </script>
