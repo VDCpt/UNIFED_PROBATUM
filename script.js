@@ -17,63 +17,6 @@
  */
 
 'use strict';
-
-// [RETIFICAÇÃO] Centralização do Log Forense para evitar colisões
-window.logAudit = window.logAudit || function(msg, level = 'info') {
-    const prefix = '[UNIFED] ';
-    const levels = { error: 'error', warn: 'warn', success: 'info', info: 'log' };
-    console[levels[level] || 'log'](prefix + msg);
-};
-
-window.showToast = window.showToast || function(m, t) { console.log(`[Toast-Fallback] ${t}: ${m}`); };
-
-// [FIX CORRETIVO] Declaração Global Forçada
-
-'use strict';
-
-// ============================================================================
-// 1. CONFIGURAÇÃO DO PDF.JS (Alocação Única)
-// ============================================================================
-const pdfjsLib = window['pdfjs-dist/build/pdf'];
-if (pdfjsLib) {
-    // Definir prioridade para Local Worker, mantendo a integridade em ambientes air-gapped
-    pdfjsLib.GlobalWorkerOptions.workerSrc = './lib/pdf.worker.min.js';
-}
-
-// Definição global de logAudit (fallback)
-window.logAudit = window.logAudit || function(msg, level = 'info') {
-    const prefix = '[UNIFED] ';
-    if (level === 'error') console.error(prefix + msg);
-    else if (level === 'warn') console.warn(prefix + msg);
-    else if (level === 'success') console.info(prefix + msg);
-    else console.log(prefix + msg);
-};
-const logAudit = window.logAudit; // alias local
-
-window.showToast = window.showToast || function(m, t) { console.log(`[Toast-Fallback] ${t}: ${m}`); alert(m); };
-
-// Declaração Global Forçada
-window.updateAnalysisButton = function() {
-    const btn = document.getElementById('analyzeBtn');
-    if (btn) {
-        const hasClient = !!(window.UNIFEDSystem && window.UNIFEDSystem.client);
-        const hasFiles = window.UNIFEDSystem && window.UNIFEDSystem.documents && 
-                         Object.values(window.UNIFEDSystem.documents).some(d => d.files && d.files.length > 0);
-        btn.disabled = !(hasClient && hasFiles);
-    }
-};
-
-console.log('UNIFED - PROBATUM SCRIPT v13.12.0-PURE · DORA COMPLIANT · ATIVADO');
-// ============================================================================
-// 1. CONFIGURAÇÃO DO PDF.JS (RETIFICAÇÃO: Local Worker)
-// ============================================================================
-const pdfjsLib = window['pdfjs-dist/build/pdf'];
-if (pdfjsLib) {
-    // Substituir por caminho local se possível para garantir execução Offline em Juízo
-    pdfjsLib.GlobalWorkerOptions.workerSrc = './lib/pdf.worker.min.js'; 
-}
-
-'use strict';
 // Definição global de logAudit (fallback)
 window.logAudit = window.logAudit || function(msg, level = 'info') {
     const prefix = '[UNIFED] ';

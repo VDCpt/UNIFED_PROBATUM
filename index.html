@@ -9,53 +9,57 @@
 
    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🔬%3C/text%3E%3C/svg%3E">
 
- <script>
-
+    <!-- ══ UNIFED - PROBATUM v13.12.0-PURE · OTS DYNAMIC LOADER (CORS-SAFE) ═══ -->
+    <script>
     (function loadOTSWithFallback() {
-       var scripts = [
-            './lib/opentimestamps.min.js', // 1. Prioridade Local (Requer upload físico do ficheiro para a pasta lib)
-            'https://cdnjs.cloudflare.com/ajax/libs/opentimestamps/0.4.6/opentimestamps.min.js' // 2. CDN estrita com cabeçalhos ACAO validados
+        var scripts = [
+            'https://unpkg.com/javascript-opentimestamps@0.0.12/dist/opentimestamps.min.js',
+            'https://cdn.jsdelivr.net/npm/javascript-opentimestamps@0.0.12/dist/opentimestamps.min.js'
         ];
         var current = 0;
 
         function normalizeOTS() {
-            window.OpenTimestamps = window.OpenTimestamps || window.opentimestamps || (typeof opentimestamps !== 'undefined' ? opentimestamps : undefined);
+            if (typeof window.OpenTimestamps === 'undefined') {
+                if (typeof window.opentimestamps !== 'undefined') {
+                    window.OpenTimestamps = window.opentimestamps;
+                } else if (typeof opentimestamps !== 'undefined') {
+                    window.OpenTimestamps = opentimestamps;
+                }
+            }
         }
 
         function injectScript(url) {
             var s = document.createElement('script');
             s.src = url;
             s.async = true;
-            if (url.startsWith('http')) s.crossOrigin = "anonymous";
+            s.crossOrigin = "anonymous";
 
             s.onload = function() {
                 normalizeOTS();
-                if (window.OpenTimestamps) {
-                    console.info('[UNIFED-OTS] ✅ Biblioteca ativa via: ' + url);
-                } else {
-                    s.onerror();
-                }
+                console.info('[UNIFED-OTS] ✅ OpenTimestamps carregado via: ' + url);
             };
 
             s.onerror = function() {
-                if (url.startsWith('http')) console.warn('[UNIFED-OTS] ⚠️ Falha na CDN: ' + url);
+                console.warn('[UNIFED-OTS] ⚠️ Falha na CDN: ' + url);
                 current++;
                 if (current < scripts.length) {
                     injectScript(scripts[current]);
                 } else {
-                    console.error('[UNIFED-OTS] ❌ Erro Crítico: Ambiente Offline e sem Lib Local. Selagem Nível 1 ativa.');
+                    console.error('[UNIFED-OTS] ❌ Erro Crítico: Todas as CDNs falharam para OTS. Selagem de Nível 1 ativa (hash local).');
                 }
             };
             document.head.appendChild(s);
         }
 
-        if (window.OpenTimestamps || window.opentimestamps) {
+        if (typeof window.OpenTimestamps !== 'undefined' ||
+            typeof window.opentimestamps  !== 'undefined') {
             normalizeOTS();
+            console.log('[UNIFED-OTS] ✅ Biblioteca em cache. window.OpenTimestamps ✓');
             return;
         }
+
         injectScript(scripts[current]);
     })();
-
     </script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
