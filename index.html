@@ -7,7 +7,7 @@
     <meta name="author" content="UNIFED - PROBATUM · Unidade Independente de Inteligência Forense Económica e Digital">
     <title>UNIFED - PROBATUM · v13.12.0-PURE · DORA COMPLIANT · COURT READY · SMOKING GUN · CADEIA DE CUSTÓDIA</title>
 
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔬</text></svg>">
+   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🔬%3C/text%3E%3C/svg%3E">
 
     <!-- ══ UNIFED - PROBATUM v13.12.0-PURE · OTS DYNAMIC LOADER (CORS-SAFE) ═══ -->
     <script>
@@ -201,7 +201,7 @@
                 
                 <!-- IDENTIFICAÇÃO DO SUJEITO PASSIVO -->
                 <div class="sidebar-header-fixed" id="clientIdentificationBlock">
-                    <h3 id="sidebarIdTitle"><i class="fas fa-user-shield"></i> IDENTIFICAÇÃO DO SUJEITO PASSIVO</h3>
+                    <h3 id="sidebarIdTitle" role="heading" aria-level="2"><i class="fas fa-user-shield"></i> IDENTIFICAÇÃO DO SUJEITO PASSIVO</h3>
                     <div class="client-identification-fixed">
                         <div class="form-group-fixed">
                             <label id="lblClientName" for="clientNameFixed"><i class="fas fa-id-card"></i> Nome / Denominação Social</label>
@@ -855,10 +855,9 @@
                     <button class="custody-export-btn" onclick="clearCustodyLogs()" style="border-color:#ef4444;color:#ef4444;">
                         <i class="fas fa-trash"></i> LIMPAR
                     </button>
-                    <button class="custody-export-btn" onclick="closeCustodyChainModal()" id="btnCustodyClose">
-                        <span id="btnCustodyClose">FECHAR PAINEL</span>
-                    </button>
-
+                   <button class="custody-export-btn" onclick="closeCustodyChainModal()" id="closeCustodyChainBtn">
+                       <span id="closeCustodyChainLabel">FECHAR PAINEL</span>
+                   </button>
                 </div>
             </div>
 
