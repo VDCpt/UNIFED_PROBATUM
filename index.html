@@ -3,62 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="UNIFED - PROBATUM (Unidade Independente de Inteligência Forense Económica e Digital) v13.12.0-PURE · DORA COMPLIANT · COURT READY · PROVA DIGITAL MATERIAL">
+    <meta name="description" content="UNIFED - PROBATUM (Unidade Independente de Inteligência Forense Económica e Digital) v13.12.1-FIX · DORA COMPLIANT · COURT READY · PROVA DIGITAL MATERIAL">
     <meta name="author" content="UNIFED - PROBATUM · Unidade Independente de Inteligência Forense Económica e Digital">
-    <title>UNIFED - PROBATUM · v13.12.0-PURE · DORA COMPLIANT · COURT READY · SMOKING GUN · CADEIA DE CUSTÓDIA</title>
+    <title>UNIFED - PROBATUM · v13.12.1-FIX · DORA COMPLIANT · COURT READY · SMOKING GUN · CADEIA DE CUSTÓDIA</title>
 
-   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🔬%3C/text%3E%3C/svg%3E">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🔬%3C/text%3E%3C/svg%3E">
 
-    <!-- ══ UNIFED - PROBATUM v13.12.0-PURE · OTS DYNAMIC LOADER (CORS-SAFE) ═══ -->
+    <!-- Retificação v13.12.1: Removido proxy externo não funcional. Usa apenas fallback local se existir. -->
     <script>
     (function loadOTSWithFallback() {
-        var scripts = [
-            'https://unpkg.com/javascript-opentimestamps@0.0.12/dist/opentimestamps.min.js',
-            'https://cdn.jsdelivr.net/npm/javascript-opentimestamps@0.0.12/dist/opentimestamps.min.js'
-        ];
-        var current = 0;
-
-        function normalizeOTS() {
-            if (typeof window.OpenTimestamps === 'undefined') {
-                if (typeof window.opentimestamps !== 'undefined') {
-                    window.OpenTimestamps = window.opentimestamps;
-                } else if (typeof opentimestamps !== 'undefined') {
-                    window.OpenTimestamps = opentimestamps;
-                }
-            }
-        }
-
-        function injectScript(url) {
-            var s = document.createElement('script');
-            s.src = url;
-            s.async = true;
-            s.crossOrigin = "anonymous";
-
-            s.onload = function() {
-                normalizeOTS();
-                console.info('[UNIFED-OTS] ✅ OpenTimestamps carregado via: ' + url);
+        // Tentativa directa via CDN (pode ser bloqueada por CORS, mas é a única forma sem proxy)
+        var otsLib = 'https://unpkg.com/javascript-opentimestamps@0.0.12/dist/opentimestamps.min.js';
+        var s = document.createElement('script');
+        s.src = otsLib;
+        s.onload = function() { console.log('[UNIFED-OTS] ✅ OTS carregado via CDN (modo CORS permitido pelo unpkg).'); };
+        s.onerror = function() {
+            console.warn('[UNIFED-OTS] ⚠️ CDN bloqueada (CORS/rede). Tentando fallback local...');
+            var fallback = document.createElement('script');
+            fallback.src = 'js/vendor/opentimestamps.min.js';
+            fallback.onerror = function() {
+                console.error('[UNIFED-OTS] ❌ Fallback local também falhou. Cadeia de Custódia limitada ao Nível 1 (SHA-256 interno).');
+                window.UNIFEDSystem = window.UNIFEDSystem || {};
+                window.UNIFEDSystem.otsAvailable = false;
             };
-
-            s.onerror = function() {
-                console.warn('[UNIFED-OTS] ⚠️ Falha na CDN: ' + url);
-                current++;
-                if (current < scripts.length) {
-                    injectScript(scripts[current]);
-                } else {
-                    console.error('[UNIFED-OTS] ❌ Erro Crítico: Todas as CDNs falharam para OTS. Selagem de Nível 1 ativa (hash local).');
-                }
-            };
-            document.head.appendChild(s);
-        }
-
-        if (typeof window.OpenTimestamps !== 'undefined' ||
-            typeof window.opentimestamps  !== 'undefined') {
-            normalizeOTS();
-            console.log('[UNIFED-OTS] ✅ Biblioteca em cache. window.OpenTimestamps ✓');
-            return;
-        }
-
-        injectScript(scripts[current]);
+            document.head.appendChild(fallback);
+        };
+        document.head.appendChild(s);
     })();
     </script>
 
@@ -106,7 +76,7 @@
             <div class="splash-right">
                 <div class="metadata-panel">
                     <p><strong>Módulo:</strong> Investigação Digital · ISO/IEC 27037</p>
-                    <p><strong>Big Data Accumulator:</strong> v13.12.0-PURE · DORA Compliant · Smoking Gun · NEXUS</p>
+                    <p><strong>Big Data Accumulator:</strong> v13.12.1-FIX · DORA Compliant · Smoking Gun · NEXUS</p>
                     <p><strong>CSC:</strong> Cadeia de Custódia Ativa</p>
                 </div>
                 
@@ -127,7 +97,7 @@
                     <small>Este sistema destina-se exclusivamente a uso pericial autorizado. O acesso não autorizado constitui crime de Acesso Ilegítimo, previsto no Artigo 6.º da Lei do Cibercrime (Lei n.º 109/2009, de 15 de setembro). Ao iniciar o utilizador aceita os termos e condições aqui mencionados.</small>
                 </div>
                 
-                <p class="version-footer">UNIFED - PROBATUM © 2024/2026 EM v13.12.0-PURE · DORA COMPLIANT · SMOKING GUN · COURT READY · NEXUS · BIG DATA</p>
+                <p class="version-footer">UNIFED - PROBATUM © 2024/2026 EM v13.12.1-FIX · DORA COMPLIANT · SMOKING GUN · COURT READY · NEXUS · BIG DATA</p>
             </div>
         </div>
     </div>
@@ -156,7 +126,7 @@
                     <div>
                         <h1>
                             UNIFED - PROBATUM 
-                            <span class="version-badge">v13.12.0-PURE</span>
+                            <span class="version-badge">v13.12.1-FIX</span>
                         </h1>
                         <p class="subtitle" id="headerSubtitle">ISO/IEC 27037 | NIST SP 800-86 | INTERPOL · CSC | BIG DATA</p>
                     </div>
@@ -539,7 +509,7 @@
 
                 <!-- TRIANGULAÇÃO FINANCEIRA -->
                 <div class="kpi-section">
-                    <h3 id="kpiTitle"><i class="fas fa-project-diagram"></i> TRIANGULAÇÃO FINANCEIRA · BIG DATA ALGORITHM v13.12.0-PURE</h3>
+                    <h3 id="kpiTitle"><i class="fas fa-project-diagram"></i> TRIANGULAÇÃO FINANCEIRA · BIG DATA ALGORITHM v13.12.1-FIX</h3>
                     <div class="kpi-grid">
                         <div class="kpi-card highlight">
                             <h4 id="kpiGross">GANHOS (EXTRATO)</h4>
@@ -576,7 +546,7 @@
                     </div>
                 </div>
 
-                <!-- ══ UNIFED - PROBATUM v13.12.0-PURE · PAINEL DE CASO REAL ANONIMIZADO ══════ -->
+                <!-- ══ UNIFED - PROBATUM v13.12.1-FIX · PAINEL DE CASO REAL ANONIMIZADO ══════ -->
                 <div id="pureDashboardWrapper" style="display:block; opacity:0; transition: opacity 0.2s ease;">
                     <!-- Conteúdo injectado via innerHTML pelo script_injection_v13.12.0-PURE.js -->
                 </div>
@@ -597,7 +567,7 @@
                             <span id="masterHashValue">A aguardar dados...</span>
                         </div>
                         <div id="qrcodeContainer" style="margin-top: 10px; display: flex; justify-content: center;"></div>
-                        <p class="copyright">UNIFED - PROBATUM © 2024/2026 | EM | Módulo de Peritagem Forense v13.12.0-PURE | DORA COMPLIANT | COURT READY | DIAMOND | SMOKING GUN</p>
+                        <p class="copyright">UNIFED - PROBATUM © 2024/2026 | EM | Módulo de Peritagem Forense v13.12.1-FIX | DORA COMPLIANT | COURT READY | DIAMOND | SMOKING GUN</p>
                         <span id="pageCount" style="display: none;"></span>
 
                         <!-- ── Acesso à Cadeia de Custódia ── -->
@@ -864,14 +834,16 @@
         </div>
     </div>
 
-    <!-- SCRIPTS (UNIFED PROBATUM v13.12.0-PURE - SEM DUPLICAÇÕES) -->
+    <!-- SCRIPTS (UNIFED PROBATUM v13.12.1-FIX - SEM DUPLICAÇÕES) -->
     <script>
-        window.pdfjsLib = window['pdfjs-dist/build/pdf'];
+        if (typeof window.pdfjsLib === 'undefined') {
+            window.pdfjsLib = window['pdfjs-dist/build/pdf'];
+        }
         if (window.pdfjsLib) {
             window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
         }
     </script>
-    <!-- UNIFED PROBATUM v13.12.0-PURE — Ordem de carregamento corrigida:             -->
+    <!-- UNIFED PROBATUM v13.12.1-FIX — Ordem de carregamento corrigida:             -->
     <!-- 1. script.js (motor principal)                                                -->
     <!-- 2. enrichment.js (Output Enrichment Layer — Read-Only)                       -->
     <!-- 3. nexus.js (NEXUS Adaptive Extension Layer)                                  -->
@@ -883,7 +855,7 @@
     <link rel="stylesheet" href="style_additions.css">
     <script src="script_injection.js"></script>
     <script>
-        // ── Activação Atómica do Painel v13.12.0-PURE ──────────────────────────
+        // ── Activação Atómica do Painel v13.12.1-FIX ──────────────────────────
         window._activatePurePanel = function() {
             const wrapper = document.getElementById('pureDashboardWrapper');
             
