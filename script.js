@@ -67,15 +67,10 @@ console.log('UNIFED - PROBATUM SCRIPT v13.12.0-PURE · DORA COMPLIANT · ATF · 
 
 // ============================================================================
 // 1. CONFIGURAÇÃO DO PDF.JS
-// [FIX v13.12.1] — 'const pdfjsLib' substituído por 'var' para evitar
-// SyntaxError: "Identifier 'pdfjsLib' has already been declared" em contexto
-// de global script scope partilhado entre múltiplos <script> clássicos.
-// Referência: ECMAScript §16.1.7 — var não cria ligação léxica imutável.
 // ============================================================================
-var pdfjsLib = window.pdfjsLib || window['pdfjs-dist/build/pdf'];
+const pdfjsLib = window['pdfjs-dist/build/pdf'];
 if (pdfjsLib) {
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-    window.pdfjsLib = pdfjsLib; // Registo global canónico — ponto único de verdade
 }
 
 // ============================================================================

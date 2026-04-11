@@ -186,24 +186,7 @@ Maximo 900 palavras. Prosa juridica formal. Sem preambulos.`;
     try {
         // Fallback estático – sem qualquer tentativa de fetch para evitar erros de rede
         console.log('[UNIFED-AI] Modo de segurança ativo – a usar narrativa jurídica local (fallback estático).');
-        var baseNarrative = _fallbackNarrative('Execução em modo standalone (narrativa local)');
-        
-        // ========================================================================
-        // RETIFICAÇÃO v13.12.1: Inserção dinâmica do fragmento sobre inversão do ónus da prova
-        // quando a percentagem de omissão de comissões for superior a 50%
-        // ========================================================================
-        var omissionPct = (analysis && analysis.crossings && analysis.crossings.percentagemOmissao) || 0;
-        if (omissionPct > 50) {
-            var fmtPct = omissionPct.toFixed(2);
-            var additionalBurden = "\n\nDO ÓNUS DA PROVA E DA BOA FÉ CONTRATUAL:\n" +
-                "Dada a discrepância de " + fmtPct + "%, " +
-                "opera-se a inversão do ónus da prova (Art. 344.º do C. Civil), " +
-                "cabendo à Ré demonstrar a licitude das retenções efectuadas à margem da facturação emitida.\n";
-            baseNarrative += additionalBurden;
-            console.log('[UNIFED-AI] Fragmento de inversão do ónus da prova adicionado (discrepância > 50%: ' + fmtPct + '%).');
-        }
-        
-        return baseNarrative;
+        return _fallbackNarrative('Execução em modo standalone (narrativa local)');
     } catch (err) {
         const isCors = err.message.indexOf('fetch') !== -1 || err.message.indexOf('Failed') !== -1;
         if (isCors) {
@@ -211,18 +194,7 @@ Maximo 900 palavras. Prosa juridica formal. Sem preambulos.`;
         } else {
             console.warn('[UNIFED-AI] \u26a0 API indisponivel:', err.message);
         }
-        var fallbackMsg = isCors ? 'Inteligencia Artificial em contencao - Execucao em Ambiente Local Seguro / Air-Gapped' : err.message;
-        var fallbackNarrative = _fallbackNarrative(fallbackMsg);
-        // Também aplicar a retificação no fallback (por segurança)
-        var omissionPctFallback = (analysis && analysis.crossings && analysis.crossings.percentagemOmissao) || 0;
-        if (omissionPctFallback > 50) {
-            var fmtPctFallback = omissionPctFallback.toFixed(2);
-            fallbackNarrative += "\n\nDO ÓNUS DA PROVA E DA BOA FÉ CONTRATUAL:\n" +
-                "Dada a discrepância de " + fmtPctFallback + "%, " +
-                "opera-se a inversão do ónus da prova (Art. 344.º do C. Civil), " +
-                "cabendo à Ré demonstrar a licitude das retenções efectuadas à margem da facturação emitida.\n";
-        }
-        return fallbackNarrative;
+        return _fallbackNarrative(isCors ? 'Inteligencia Artificial em contencao - Execucao em Ambiente Local Seguro / Air-Gapped' : err.message);
     }
 }
 function _buildForensicContext(analysis) {
@@ -1100,7 +1072,7 @@ function generateBurdenOfProofSection(discrepancyValue) {
         'Análise Técnica: A UNIFED-PROBATUM identificou uma divergência estrutural ' +
         'entre o Fluxo de Caixa Real (Ledger) e o Reporte Fiscal (SAF-T/DAC7). ' +
         'Dado que a plataforma detém o Monopólio da Emissão Documental ' +
-        '(Art. 36.º, n.º 11 CIVA) e o controlo exclusivo sobre o algoritmo de ' +
+        '(Art. 36.º, n.º 11 do CIVA) e o controlo exclusivo sobre o algoritmo de ' +
         'cálculo de comissões, o parceiro encontra-se numa situação de indefesa ' +
         'técnica. A plataforma atua como "Black Box" fiscal — o sujeito passivo não ' +
         'tem acesso ao código-fonte nem aos logs brutos de transação que geram a ' +

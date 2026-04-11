@@ -864,13 +864,14 @@
         </div>
     </div>
 
-    <!-- SCRIPTS (UNIFED PROBATUM v13.12.1-FIX - SEM DUPLICAÇÕES) -->
-    <!-- [FIX v13.12.1] Bloco inline de inicialização pdfjsLib REMOVIDO.
-         A inicialização é feita exclusivamente em script.js (ponto único de verdade).
-         Motivo: o bloco inline + const pdfjsLib em script.js causava
-         SyntaxError: "Identifier pdfjsLib has already been declared"
-         no [[GlobalEnv]] partilhado dos classic scripts. -->
-    <!-- UNIFED PROBATUM v13.12.1-FIX — Ordem de carregamento corrigida:             -->
+    <!-- SCRIPTS (UNIFED PROBATUM v13.12.0-PURE - SEM DUPLICAÇÕES) -->
+    <script>
+        window.pdfjsLib = window['pdfjs-dist/build/pdf'];
+        if (window.pdfjsLib) {
+            window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        }
+    </script>
+    <!-- UNIFED PROBATUM v13.12.0-PURE — Ordem de carregamento corrigida:             -->
     <!-- 1. script.js (motor principal)                                                -->
     <!-- 2. enrichment.js (Output Enrichment Layer — Read-Only)                       -->
     <!-- 3. nexus.js (NEXUS Adaptive Extension Layer)                                  -->

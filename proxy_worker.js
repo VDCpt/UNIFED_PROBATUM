@@ -5,17 +5,17 @@
  * Versão     : v13.12.0-PURE
  * Deploy URL  : https://api.unifed.com/claude-proxy
  * Rota        : POST /claude-proxy  →  forward para api.anthropic.com/v1/messages
- *             : GET  /ots-proxy     →  forward dinâmico para URL fornecida (CORS-safe)
+ *             : GET  /ots-proxy     →  forward para unpkg.com (CORS-safe)
  *
  * OBJECTIVO:
- *   Resolver o bloqueio CORS estrito da API da Anthropic e também de CDNs externas
- *   (OpenTimestamps, etc.) fornecendo um proxy que injecta cabeçalhos
- *   Access-Control-Allow-Origin: * e Content-Type adequado.
+ *   Resolver o bloqueio CORS estrito da API da Anthropic e também da CDN do
+ *   OpenTimestamps, forçando cabeçalhos Access-Control-Allow-Origin: * e
+ *   Content-Type correto para evitar CORB.
  *
  * SEGURANÇA:
  *   · x-api-key NUNCA é exposto no front-end.
  *   · A chave é lida exclusivamente da variável de ambiente ANTHROPIC_API_KEY.
- *   · O proxy OTS restringe os domínios permitidos (whitelist) para evitar abuso.
+ *   · O Worker valida o Content-Type e rejeita payloads malformados.
  *   · Rate limiting recomendado via Cloudflare Rate Limiting Rules.
  *
  * DEPLOY:
@@ -30,16 +30,6 @@
 
 /** Versão do Worker — sincronizada com o ciclo de release UNIFED-PROBATUM. */
 const VERSION = "13.12.0-PURE";
-
-// Whitelist de domínios permitidos para o proxy OTS (segurança)
-const ALLOWED_OTS_DOMAINS = [
-    'unpkg.com',
-    'cdn.jsdelivr.net',
-    'raw.githubusercontent.com',
-    'github.com',
-    'cdn.skypack.dev',
-    'esm.sh'
-];
 
 // ES Modules format — obrigatório para Cloudflare Workers (module workers)
 export default {
@@ -61,66 +51,16 @@ export default {
             });
         }
 
-        // ── 2. ROTA ESPECIAL: PROXY DINÂMICO PARA OPENTIMESTAMPS (OTS) E OUTRAS CDNs ──
+        // ── 2. ROTA ESPECIAL: PROXY PARA OPENTIMESTAMPS (OTS) ──────────────────
         const url = new URL(request.url);
         if (url.pathname === '/ots-proxy' && request.method === 'GET') {
-            // Obter a URL alvo a partir do parâmetro 'url'
-            const targetUrlParam = url.searchParams.get('url');
-            if (!targetUrlParam) {
-                return new Response(JSON.stringify({ error: 'Missing ?url parameter' }), {
-                    status: 400,
-                    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
-                });
-            }
-
-            let targetUrl;
+            const otsCdnUrl = 'https://unpkg.com/javascript-opentimestamps@0.0.12/dist/opentimestamps.min.js';
             try {
-                targetUrl = new URL(targetUrlParam);
-            } catch (_) {
-                return new Response(JSON.stringify({ error: 'Invalid URL parameter' }), {
-                    status: 400,
-                    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
-                });
-            }
-
-            // Restringir apenas a protocolos seguros e domínios autorizados
-            if (targetUrl.protocol !== 'https:' && targetUrl.protocol !== 'http:') {
-                return new Response(JSON.stringify({ error: 'Only HTTP/HTTPS allowed' }), {
-                    status: 403,
-                    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
-                });
-            }
-
-            if (!ALLOWED_OTS_DOMAINS.includes(targetUrl.hostname)) {
-                console.warn(`[UNIFED-PROXY] Domínio não autorizado no proxy OTS: ${targetUrl.hostname}`);
-                return new Response(JSON.stringify({ error: 'Domain not allowed' }), {
-                    status: 403,
-                    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
-                });
-            }
-
-            try {
-                let otsResponse = await fetch(targetUrl.toString(), {
-                    headers: {
-                        'User-Agent': 'UNIFED-Forensic-Bot/1.0'
-                    }
-                });
-
+                let otsResponse = await fetch(otsCdnUrl);
                 // Re-encapsular com cabeçalhos permissivos para evitar CORB
                 const newHeaders = new Headers(otsResponse.headers);
                 newHeaders.set('Access-Control-Allow-Origin', '*');
-                // Preservar o Content-Type original ou forçar JS quando aplicável
-                let contentType = otsResponse.headers.get('Content-Type');
-                if (!contentType || contentType.includes('text/plain')) {
-                    if (targetUrl.pathname.endsWith('.js')) {
-                        contentType = 'application/javascript';
-                    } else if (targetUrl.pathname.endsWith('.css')) {
-                        contentType = 'text/css';
-                    } else {
-                        contentType = contentType || 'application/octet-stream';
-                    }
-                }
-                newHeaders.set('Content-Type', contentType);
+                newHeaders.set('Content-Type', 'application/javascript');
                 newHeaders.set('Cache-Control', 'public, max-age=86400');
 
                 return new Response(otsResponse.body, {
@@ -128,8 +68,8 @@ export default {
                     headers: newHeaders
                 });
             } catch (err) {
-                console.error('[UNIFED-PROXY] Erro ao buscar recurso externo:', err.message);
-                return new Response(JSON.stringify({ error: 'OTS proxy fetch failed', detail: err.message }), {
+                console.error('[UNIFED-PROXY] Erro ao buscar OTS:', err.message);
+                return new Response(JSON.stringify({ error: 'OTS proxy failed' }), {
                     status: 502,
                     headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
                 });
