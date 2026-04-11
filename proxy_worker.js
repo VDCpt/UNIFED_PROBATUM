@@ -1,20 +1,20 @@
 /**
  * ============================================================================
- * UNIFED - PROBATUM · CLOUDFLARE WORKER — Anthropic API Reverse Proxy
+ * UNIFED - PROBATUM · CLOUDFLARE WORKER — Anthropic API Reverse Proxy + OTS Proxy
  * ============================================================================
  * Versão     : v13.12.0-PURE
  * Deploy URL  : https://api.unifed.com/claude-proxy
  * Rota        : POST /claude-proxy  →  forward para api.anthropic.com/v1/messages
+ *             : GET  /ots-proxy     →  forward para unpkg.com (CORS-safe)
  *
  * OBJECTIVO:
- *   Resolver o bloqueio CORS estrito da API da Anthropic quando chamada
- *   directamente a partir do browser (front-end). O browser bloqueia o pedido
- *   com "Access-Control-Allow-Origin" ausente no pre-flight OPTIONS.
+ *   Resolver o bloqueio CORS estrito da API da Anthropic e também da CDN do
+ *   OpenTimestamps, forçando cabeçalhos Access-Control-Allow-Origin: * e
+ *   Content-Type correto para evitar CORB.
  *
  * SEGURANÇA:
- *   · x-api-key NUNCA é exposto no front-end (código JS público).
- *   · A chave é lida exclusivamente da variável de ambiente ANTHROPIC_API_KEY,
- *     definida no painel do Cloudflare (Settings → Variables → Encrypt).
+ *   · x-api-key NUNCA é exposto no front-end.
+ *   · A chave é lida exclusivamente da variável de ambiente ANTHROPIC_API_KEY.
  *   · O Worker valida o Content-Type e rejeita payloads malformados.
  *   · Rate limiting recomendado via Cloudflare Rate Limiting Rules.
  *
@@ -29,7 +29,7 @@
  */
 
 /** Versão do Worker — sincronizada com o ciclo de release UNIFED-PROBATUM. */
-const VERSION = "13.5.0-PURE";
+const VERSION = "13.12.0-PURE";
 
 // ES Modules format — obrigatório para Cloudflare Workers (module workers)
 export default {
@@ -44,9 +44,6 @@ export default {
     async fetch(request, env, ctx) {
 
         // ── 1. PRE-FLIGHT CORS (OPTIONS) ──────────────────────────────────────
-        // O browser envia um pedido OPTIONS antes do POST real.
-        // Responder com os cabeçalhos CORS correctos para que o browser
-        // autorize o pedido real em cross-origin.
         if (request.method === 'OPTIONS') {
             return new Response(null, {
                 status: 204,
@@ -54,7 +51,32 @@ export default {
             });
         }
 
-        // ── 2. VALIDAÇÃO DO MÉTODO ─────────────────────────────────────────────
+        // ── 2. ROTA ESPECIAL: PROXY PARA OPENTIMESTAMPS (OTS) ──────────────────
+        const url = new URL(request.url);
+        if (url.pathname === '/ots-proxy' && request.method === 'GET') {
+            const otsCdnUrl = 'https://unpkg.com/javascript-opentimestamps@0.0.12/dist/opentimestamps.min.js';
+            try {
+                let otsResponse = await fetch(otsCdnUrl);
+                // Re-encapsular com cabeçalhos permissivos para evitar CORB
+                const newHeaders = new Headers(otsResponse.headers);
+                newHeaders.set('Access-Control-Allow-Origin', '*');
+                newHeaders.set('Content-Type', 'application/javascript');
+                newHeaders.set('Cache-Control', 'public, max-age=86400');
+
+                return new Response(otsResponse.body, {
+                    status: otsResponse.status,
+                    headers: newHeaders
+                });
+            } catch (err) {
+                console.error('[UNIFED-PROXY] Erro ao buscar OTS:', err.message);
+                return new Response(JSON.stringify({ error: 'OTS proxy failed' }), {
+                    status: 502,
+                    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+                });
+            }
+        }
+
+        // ── 3. VALIDAÇÃO DO MÉTODO (apenas POST para Anthropic) ─────────────────
         if (request.method !== 'POST') {
             return new Response(JSON.stringify({ error: 'Method Not Allowed' }), {
                 status: 405,
@@ -62,9 +84,7 @@ export default {
             });
         }
 
-        // ── 3. VALIDAÇÃO DA CHAVE DE AMBIENTE ─────────────────────────────────
-        // A chave deve estar definida nas variáveis de ambiente do Worker.
-        // Se não estiver, o Worker falha de forma explícita (não silenciosa).
+        // ── 4. VALIDAÇÃO DA CHAVE DE AMBIENTE ─────────────────────────────────
         if (!env.ANTHROPIC_API_KEY) {
             console.error('[UNIFED-PROXY] ANTHROPIC_API_KEY não configurada nas variáveis de ambiente.');
             return new Response(JSON.stringify({
@@ -76,7 +96,7 @@ export default {
             });
         }
 
-        // ── 4. PARSE E VALIDAÇÃO DO PAYLOAD ───────────────────────────────────
+        // ── 5. PARSE E VALIDAÇÃO DO PAYLOAD ───────────────────────────────────
         let body;
         try {
             body = await request.json();
@@ -88,19 +108,16 @@ export default {
         }
 
         // Guardar integralmente o payload original — apenas injectar cabeçalhos
-        // O Worker NÃO modifica o payload (modelo, max_tokens, system, messages)
         const upstreamBody = JSON.stringify(body);
 
-        // ── 5. FORWARD PARA API ANTHROPIC ─────────────────────────────────────
-        // Injeta x-api-key de forma segura (variável de ambiente — não exposta
-        // no código front-end nem nos logs de rede do browser).
+        // ── 6. FORWARD PARA API ANTHROPIC ─────────────────────────────────────
         let upstreamResponse;
         try {
             upstreamResponse = await fetch('https://api.anthropic.com/v1/messages', {
                 method:  'POST',
                 headers: {
                     'Content-Type':      'application/json',
-                    'x-api-key':         env.ANTHROPIC_API_KEY,     // ← SEGURO: variável de ambiente
+                    'x-api-key':         env.ANTHROPIC_API_KEY,
                     'anthropic-version': '2023-06-01',
                     'anthropic-beta':    'messages-2023-12-15'
                 },
@@ -117,13 +134,10 @@ export default {
             });
         }
 
-        // ── 6. REENCAMINHAR RESPOSTA + CABEÇALHOS CORS ────────────────────────
-        // Clonar a resposta da Anthropic e adicionar cabeçalhos CORS para que
-        // o browser do front-end a aceite em cross-origin.
+        // ── 7. REENCAMINHAR RESPOSTA + CABEÇALHOS CORS ────────────────────────
         const responseBody    = await upstreamResponse.arrayBuffer();
         const responseHeaders = new Headers(upstreamResponse.headers);
 
-        // Injectar cabeçalhos CORS na resposta — substitui ou adiciona
         const cors = _corsHeaders(request);
         Object.keys(cors).forEach(function(key) {
             responseHeaders.set(key, cors[key]);
@@ -167,13 +181,9 @@ function _corsHeaders(request) {
     ];
 
     // ── EARLY RETURN: Origin ausente ou não autorizada ────────────────────────
-    // Sem cabeçalho ACAO → o browser bloqueia a resposta em cross-origin.
-    // Scripts server-side sem Origin recebem resposta mas sem permissão CORS.
     const origin = (request && request.headers) ? request.headers.get('Origin') : null;
 
     if (!origin || !_ALLOWED_ORIGINS.includes(origin)) {
-        // Retornar apenas Vary: Origin para que proxies/CDN não façam cache
-        // de respostas sem ACAO para origens autorizadas subsequentes.
         return {
             'Vary': 'Origin'
         };
@@ -181,11 +191,11 @@ function _corsHeaders(request) {
 
     // ── Origem autorizada: cabeçalhos CORS completos ──────────────────────────
     return {
-        'Access-Control-Allow-Origin':      origin,       // espelhar a origem exacta (não wildcard)
-        'Access-Control-Allow-Methods':     'POST, OPTIONS',
+        'Access-Control-Allow-Origin':      origin,
+        'Access-Control-Allow-Methods':     'POST, OPTIONS, GET',
         'Access-Control-Allow-Headers':     'Content-Type, Authorization',
-        'Access-Control-Max-Age':           '86400',       // 24h cache do pre-flight
-        'Vary':                             'Origin'       // obrigatório para CDN correcta
+        'Access-Control-Max-Age':           '86400',
+        'Vary':                             'Origin'
     };
 }
 

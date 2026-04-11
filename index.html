@@ -9,11 +9,14 @@
 
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔬</text></svg>">
 
-    <!-- ══ UNIFED - PROBATUM v13.3.0-DIAMOND · OTS DYNAMIC LOADER ══════════════════ -->
+    <!-- ══ UNIFED - PROBATUM v13.12.0-PURE · OTS DYNAMIC LOADER (CORS-SAFE) ═══ -->
     <script>
     (function loadOTSWithFallback() {
-        var CDN_PRIMARY   = 'https://unpkg.com/javascript-opentimestamps@0.0.12/dist/opentimestamps.min.js';
-        var CDN_SECONDARY = 'https://cdn.jsdelivr.net/npm/javascript-opentimestamps@0.0.12/dist/opentimestamps.min.js';
+        var scripts = [
+            'https://unpkg.com/javascript-opentimestamps@0.0.12/dist/opentimestamps.min.js',
+            'https://cdn.jsdelivr.net/npm/javascript-opentimestamps@0.0.12/dist/opentimestamps.min.js'
+        ];
+        var current = 0;
 
         function normalizeOTS() {
             if (typeof window.OpenTimestamps === 'undefined') {
@@ -25,12 +28,26 @@
             }
         }
 
-        function injectScript(src, onSuccess, onError) {
+        function injectScript(url) {
             var s = document.createElement('script');
-            s.src = src;
+            s.src = url;
             s.async = true;
-            s.onload  = onSuccess;
-            s.onerror = onError;
+            s.crossOrigin = "anonymous";
+
+            s.onload = function() {
+                normalizeOTS();
+                console.info('[UNIFED-OTS] ✅ OpenTimestamps carregado via: ' + url);
+            };
+
+            s.onerror = function() {
+                console.warn('[UNIFED-OTS] ⚠️ Falha na CDN: ' + url);
+                current++;
+                if (current < scripts.length) {
+                    injectScript(scripts[current]);
+                } else {
+                    console.error('[UNIFED-OTS] ❌ Erro Crítico: Todas as CDNs falharam para OTS. Selagem de Nível 1 ativa (hash local).');
+                }
+            };
             document.head.appendChild(s);
         }
 
@@ -41,26 +58,7 @@
             return;
         }
 
-        injectScript(CDN_PRIMARY,
-            function() {
-                normalizeOTS();
-                console.log('[UNIFED-OTS] ✅ CDN primário (unpkg) — window.OpenTimestamps ✓');
-            },
-            function() {
-                console.info('[UNIFED-OTS] ⚙ Operação em Modo de Segurança Forense — CDN primário indisponível. A activar mirror jsdelivr automaticamente...');
-                injectScript(CDN_SECONDARY,
-                    function() {
-                        normalizeOTS();
-                        console.log('[UNIFED-OTS] ✅ CDN secundário (jsdelivr) — window.OpenTimestamps ✓');
-                    },
-                    function() {
-                        console.info('[UNIFED-OTS] ⚙ Operação em Modo de Segurança Forense — Nível 1 (PROBATUM INTERNAL SEAL) activo. ' +
-                            'Selagem de Nível 1 Ativa: Conformidade assegurada por Hash SHA-256 interno (Art.º 125.º CPP). ' +
-                            'OTS/Blockchain em standby até restauro de conectividade.');
-                    }
-                );
-            }
-        );
+        injectScript(scripts[current]);
     })();
     </script>
 
