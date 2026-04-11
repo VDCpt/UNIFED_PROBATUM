@@ -9,22 +9,25 @@
 
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🔬%3C/text%3E%3C/svg%3E">
 
-    <!-- Retificação v13.12.1: Removido proxy externo não funcional. Usa apenas fallback local se existir. -->
+    <!-- Retificação v13.12.1: Proxy + fallback para OpenTimestamps (CORS-safe) -->
     <script>
     (function loadOTSWithFallback() {
-        // Tentativa directa via CDN (pode ser bloqueada por CORS, mas é a única forma sem proxy)
+        var proxyUrl = 'https://api.unifed.com/ots-proxy?url=';
         var otsLib = 'https://unpkg.com/javascript-opentimestamps@0.0.12/dist/opentimestamps.min.js';
+        
         var s = document.createElement('script');
-        s.src = otsLib;
-        s.onload = function() { console.log('[UNIFED-OTS] ✅ OTS carregado via CDN (modo CORS permitido pelo unpkg).'); };
+        s.src = proxyUrl + encodeURIComponent(otsLib);
+        s.onload = function() { 
+            console.log('[UNIFED-OTS] ✅ OTS carregado via Proxy api.unifed.com.'); 
+        };
         s.onerror = function() {
-            console.warn('[UNIFED-OTS] ⚠️ CDN bloqueada (CORS/rede). Tentando fallback local...');
+            console.warn('[UNIFED-OTS] ⚠️ Proxy falhou. Tentando carregar via CDN direta...');
             var fallback = document.createElement('script');
-            fallback.src = 'js/vendor/opentimestamps.min.js';
+            fallback.src = otsLib;
             fallback.onerror = function() {
-                console.error('[UNIFED-OTS] ❌ Fallback local também falhou. Cadeia de Custódia limitada ao Nível 1 (SHA-256 interno).');
-                window.UNIFEDSystem = window.UNIFEDSystem || {};
-                window.UNIFEDSystem.otsAvailable = false;
+                console.error('[UNIFED-OTS] ❌ Falha total de conectividade OTS. Cadeia limitada ao Nível 1.');
+                window.UNIFED_OTS_FAILED = true;
+                if (window.UNIFEDSystem) window.UNIFEDSystem.otsAvailable = false;
             };
             document.head.appendChild(fallback);
         };
@@ -888,6 +891,23 @@
                     console.error('[UNIFED-PURE] Erro na carga do painel:', err);
                 });
         };
+
+        // Inicialização do sistema e vinculação do botão de caso real
+        window.addEventListener('load', function() {
+            if (typeof UNIFEDSystem !== 'undefined' && UNIFEDSystem.loadAnonymizedRealCase) {
+                console.info('[UNIFED-BOOT] Sistema pronto para Reconstituição Material.');
+            }
+            const btn = document.getElementById('demoModeBtn');
+            if (btn) {
+                btn.addEventListener('click', function() {
+                    if (typeof window.performForensicAnalysis === 'function') {
+                        setTimeout(window.performForensicAnalysis, 1500);
+                    } else {
+                        console.warn('[UNIFED] performForensicAnalysis não disponível ainda.');
+                    }
+                });
+            }
+        });
     </script>
     <script src="unifed_triada_export.js"></script>
 

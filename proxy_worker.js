@@ -2,10 +2,11 @@
  * ============================================================================
  * UNIFED - PROBATUM · CLOUDFLARE WORKER — Anthropic API Reverse Proxy + OTS Proxy
  * ============================================================================
- * Versão     : v13.12.1-FIX
+ * Versão     : v13.12.1-FIX (consolidado)
  * Deploy URL  : https://api.unifed.com/claude-proxy
- * Rota        : POST /claude-proxy  →  forward para api.anthropic.com/v1/messages
+ * Rotas       : POST /claude-proxy  →  forward para api.anthropic.com/v1/messages
  *             : GET  /ots-proxy     →  forward dinâmico para URL fornecida (CORS-safe)
+ *             : GET  /health        →  health check (retorna 200)
  *
  * OBJECTIVO:
  *   Resolver o bloqueio CORS estrito da API da Anthropic e também de CDNs externas
@@ -61,8 +62,20 @@ export default {
             });
         }
 
-        // ── 2. ROTA ESPECIAL: PROXY DINÂMICO PARA OPENTIMESTAMPS (OTS) E OUTRAS CDNs ──
+        // ── 2. HEALTH CHECK (GET /health ou GET /) ─────────────────────────────
         const url = new URL(request.url);
+        if (request.method === 'GET' && (url.pathname === '/' || url.pathname === '/health')) {
+            return new Response(JSON.stringify({
+                status: 'ok',
+                version: VERSION,
+                service: 'UNIFED-API-Gateway'
+            }), {
+                status: 200,
+                headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+            });
+        }
+
+        // ── 3. ROTA ESPECIAL: PROXY DINÂMICO PARA OPENTIMESTAMPS (OTS) E OUTRAS CDNs ──
         if (url.pathname === '/ots-proxy' && request.method === 'GET') {
             // Obter a URL alvo a partir do parâmetro 'url'
             const targetUrlParam = url.searchParams.get('url');
@@ -106,7 +119,7 @@ export default {
                     }
                 });
 
-                // Re-encapsular com cabeçalhos permissivos para evitar CORB
+                // Re-encapsular com cabeçalhos permissivos para evitar CORB e resolver net::ERR_NAME_NOT_RESOLVED
                 const newHeaders = new Headers(otsResponse.headers);
                 newHeaders.set('Access-Control-Allow-Origin', '*');
                 // Preservar o Content-Type original ou forçar JS quando aplicável
@@ -136,7 +149,7 @@ export default {
             }
         }
 
-        // ── 3. VALIDAÇÃO DO MÉTODO (apenas POST para Anthropic) ─────────────────
+        // ── 4. VALIDAÇÃO DO MÉTODO (apenas POST para Anthropic) ─────────────────
         if (request.method !== 'POST') {
             return new Response(JSON.stringify({ error: 'Method Not Allowed' }), {
                 status: 405,
@@ -144,7 +157,7 @@ export default {
             });
         }
 
-        // ── 4. VALIDAÇÃO DA CHAVE DE AMBIENTE ─────────────────────────────────
+        // ── 5. VALIDAÇÃO DA CHAVE DE AMBIENTE ─────────────────────────────────
         if (!env.ANTHROPIC_API_KEY) {
             console.error('[UNIFED-PROXY] ANTHROPIC_API_KEY não configurada nas variáveis de ambiente.');
             return new Response(JSON.stringify({
@@ -156,7 +169,7 @@ export default {
             });
         }
 
-        // ── 5. PARSE E VALIDAÇÃO DO PAYLOAD ───────────────────────────────────
+        // ── 6. PARSE E VALIDAÇÃO DO PAYLOAD ───────────────────────────────────
         let body;
         try {
             body = await request.json();
@@ -170,7 +183,7 @@ export default {
         // Guardar integralmente o payload original — apenas injectar cabeçalhos
         const upstreamBody = JSON.stringify(body);
 
-        // ── 6. FORWARD PARA API ANTHROPIC ─────────────────────────────────────
+        // ── 7. FORWARD PARA API ANTHROPIC ─────────────────────────────────────
         let upstreamResponse;
         try {
             upstreamResponse = await fetch('https://api.anthropic.com/v1/messages', {
@@ -194,7 +207,7 @@ export default {
             });
         }
 
-        // ── 7. REENCAMINHAR RESPOSTA + CABEÇALHOS CORS ────────────────────────
+        // ── 8. REENCAMINHAR RESPOSTA + CABEÇALHOS CORS ────────────────────────
         const responseBody    = await upstreamResponse.arrayBuffer();
         const responseHeaders = new Headers(upstreamResponse.headers);
 
@@ -209,7 +222,6 @@ export default {
         });
     }
 };
-
 
 // ============================================================================
 // UTILITÁRIO: _corsHeaders(request)
