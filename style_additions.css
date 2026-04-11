@@ -23,6 +23,9 @@ html, body {
 #pureDashboardWrapper {
     opacity: 1;
     transition: all 0.4s ease-in-out;
+    display: flex;
+    flex-direction: column;
+    gap: 0 !important; /* Elimina hiatos entre cards */
 }
 
 /* ── Grid de painéis ──────────────────────────────────────────────────────── */
@@ -519,7 +522,25 @@ html, body {
 }
 
 /* ============================================================================
-   ADIÇÕES v13.10.1-PURE
+   CORREÇÃO DE ADERÊNCIA DE BLOCOS – Eliminação do espaço vazio
+   ============================================================================ */
+.chart-section {
+    margin-bottom: 0 !important;
+    padding-bottom: 10px;
+}
+
+.console-section {
+    margin-top: -5px !important; /* Ajuste micrométrico de sobreposição */
+    border-top: 1px solid var(--pure-accent);
+}
+
+/* Garantia de que o wrapper não introduz gap extra */
+#pureDashboardWrapper {
+    gap: 0 !important;
+}
+
+/* ============================================================================
+   ADIÇÕES v13.10.1-PURE e v13.11.x (mantidas)
    ============================================================================ */
 #pureDashboard *:not([style*="color"]) {
     color: inherit;
@@ -648,15 +669,6 @@ html, body {
     opacity: 0.75;
 }
 
-#pure-iva-devido {
-    transition: color 0.4s ease, opacity 0.4s ease;
-}
-
-@media (max-width: 600px) {
-    .pure-metric-card { padding: 12px 14px; }
-    .pure-legal-notice { font-size: 0.58rem; }
-}
-
 /* ============================================================================
    ADIÇÕES v13.11.5-PURE
    ============================================================================ */
@@ -718,11 +730,11 @@ html, body {
    ============================================================================ */
 .chart-section {
     display: block !important;
-    min-height: 350px !important;
-    overflow: visible !important;
+    min-height: 350px;
+    opacity: 1 !important;
 }
 
-canvas#mainChart, canvas#discrepancyChart {
-    width: 100% !important;
-    height: 300px !important;
+/* GARANTIA DE REMOÇÃO DO GAP INFERIOR */
+.pure-section {
+    padding-bottom: 0 !important;
 }

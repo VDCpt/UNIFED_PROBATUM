@@ -2,23 +2,16 @@
   ============================================================================
   UNIFED - PROBATUM · v13.12.0-PURE · PAINEL DE CASO REAL ANONIMIZADO
   ============================================================================
-  CONSOLIDAÇÃO FINAL COM CORREÇÕES:
-    - Bloco de identificação do sujeito passivo sempre visível (não ocultado)
-    - Guard clause no syncMetrics para evitar erro dos 42 IDs
-    - Remoção do texto "(browser)" do selo Privacy by Design
-    - Ajuste de layout (eliminação do gap entre gráfico e log)
-    - Contadores de evidências visíveis na UI (movidos para o bloco de gestão)
-    - Escudo CORS mantido (freetsa.org)
-    - Adicionado cartão "Risco de Asfixia Financeira" (Art. 405.º C. Civil)
-    - Adicionado suporte para análise macroeconómica (7 anos · 38.000 operadores)
-    - Correcção de layout: flex-wrap ajustado para não esmagar labels
-  Conformidade: ISO/IEC 27037:2012 · Art. 125.º CPP · Art. 119.º RGIT
+  RETIFICAÇÃO FINAL v13.12.0-PURE (2026-04-11):
+    - Bloco "RISCO DE ASFIXIA FINANCEIRA" explicitamente presente
+    - Contentor do gráfico discrepancyChart garantido
+    - Todos os painéis e elementos de sincronização mantidos
   ============================================================================
 -->
 
 <section id="pureDashboard" class="pure-section" aria-label="Painel Caso Real Anonimizado v13.12.0-PURE">
 
-  <!-- ── HEADER DA SECÇÃO ────────────────────────────────────────────────── -->
+  <!-- HEADER DA SECÇÃO -->
   <div class="pure-section-header">
     <div class="pure-section-title">
       <span class="pure-badge-version" title="Versão / Version">v13.12.0-PURE</span>
@@ -28,14 +21,12 @@
       <span id="pure-session-id" class="pure-mono">UNIFED-MMLADX8Q-CV69L</span>
     </div>
     <div class="pure-session-badge">
-      <span class="pure-label"
-            data-pt="INTEGRIDADE"
-            data-en="INTEGRITY">SHA-256</span>
+      <span class="pure-label" data-pt="INTEGRIDADE" data-en="INTEGRITY">SHA-256</span>
       <span id="pure-hash-prefix" class="pure-mono pure-hash">5150e767...</span>
     </div>
   </div>
 
-  <!-- ── BLOCO DE IDENTIFICAÇÃO DO SUJEITO PASSIVO ────────────────────────── -->
+  <!-- BLOCO DE IDENTIFICAÇÃO DO SUJEITO PASSIVO -->
   <div class="pure-subject-header" style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; align-items: stretch;">
     <div class="pure-data-block" style="flex: 1 1 200px; background: rgba(255,255,255,0.03); border-radius: 6px; padding: 12px 14px;">
       <div class="pure-data-label" data-pt="Sujeito Passivo" data-en="Subject">Sujeito Passivo</div>
@@ -51,7 +42,7 @@
     </div>
   </div>
 
-  <!-- ── GESTÃO DE EVIDÊNCIAS (com contadores visíveis) ───────────────────── -->
+  <!-- GESTÃO DE EVIDÊNCIAS (contadores visíveis) -->
   <div id="pureEvidenceSection" class="evidence-management-section-solid" style="margin-bottom: 1rem; display: none;">
     <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
       <div class="evidence-management-btn-solid" style="flex: 1; cursor: default;">
@@ -75,10 +66,24 @@
     </div>
   </div>
 
-  <!-- ── GRID DE PAINÉIS (pure-card-grid) ─────────────────────────────────── -->
+  <!-- GRID DE PAINÉIS (pure-card-grid) -->
   <div class="pure-card-grid">
 
-    <!-- ── PAINEL I · RECONSTITUIÇÃO FINANCEIRA ────────────────────────────── -->
+    <!-- CARTÃO GARANTIDO: RISCO DE ASFIXIA FINANCEIRA -->
+    <div class="pure-card pure-card-warn" id="card-asfixia">
+      <div class="pure-card-title">RISCO DE ASFIXIA FINANCEIRA</div>
+      <div class="pure-card-value" id="pure-atf-score-val">--%</div>
+      <div class="pure-card-trend">Indicador de Probabilidade de Insolvência Forçada</div>
+    </div>
+
+    <!-- GRÁFICO DE DISCREPÂNCIA GARANTIDO -->
+    <div class="chart-section" id="pure-chart-container">
+      <div class="pure-chart-wrapper">
+        <canvas id="discrepancyChart"></canvas>
+      </div>
+    </div>
+
+    <!-- PAINEL I – RECONSTITUIÇÃO FINANCEIRA -->
     <div class="pure-card" id="pureFinancialCard">
       <h3 class="pure-card-title">
         <span class="pure-icon">🔬</span>
@@ -87,84 +92,40 @@
               data-en="I. RECONSTRUCTION OF MATERIAL TRUTH (STATEMENT vs SAF-T vs DAC7)">I. RECONSTITUIÇÃO DA VERDADE MATERIAL (EXTRATO vs SAF-T vs DAC7)</span>
       </h3>
       <div class="pure-data-grid pure-3col">
-
         <div class="pure-data-block">
-          <div class="pure-data-label"
-               id="pure-label-ganhos"
-               data-pt="Ganhos (Extrato Ledger)"
-               data-en="Earnings (Ledger Statement)">Ganhos (Extrato Ledger)</div>
+          <div class="pure-data-label" id="pure-label-ganhos" data-pt="Ganhos (Extrato Ledger)" data-en="Earnings (Ledger Statement)">Ganhos (Extrato Ledger)</div>
           <div id="pure-ganhos" class="pure-data-value pure-value-primary">€ 0,00</div>
-          <div class="pure-data-sub"
-               id="pure-sub-ganhos"
-               data-pt="Fonte primária · Viagens efectuadas"
-               data-en="Primary source · Trips completed">Fonte primária · Viagens efectuadas</div>
+          <div class="pure-data-sub" id="pure-sub-ganhos" data-pt="Fonte primária · Viagens efectuadas" data-en="Primary source · Trips completed">Fonte primária · Viagens efectuadas</div>
         </div>
-
         <div class="pure-data-block">
-          <div class="pure-data-label"
-               id="pure-label-despesas"
-               data-pt="Despesas / Comissões (BTOR)"
-               data-en="Expenses / Commissions (BTOR)">Despesas / Comissões (BTOR)</div>
+          <div class="pure-data-label" id="pure-label-despesas" data-pt="Despesas / Comissões (BTOR)" data-en="Expenses / Commissions (BTOR)">Despesas / Comissões (BTOR)</div>
           <div id="pure-despesas" class="pure-data-value pure-value-warn">€ 0,00</div>
-          <div class="pure-data-sub"
-               id="pure-sub-despesas"
-               data-pt="Retidas pela plataforma (extrato)"
-               data-en="Withheld by platform (statement)">Retidas pela plataforma (extrato)</div>
+          <div class="pure-data-sub" id="pure-sub-despesas" data-pt="Retidas pela plataforma (extrato)" data-en="Withheld by platform (statement)">Retidas pela plataforma (extrato)</div>
         </div>
-
         <div class="pure-data-block">
-          <div class="pure-data-label"
-               id="pure-label-liquido"
-               data-pt="Ganhos Líquidos (Extrato)"
-               data-en="Net Earnings (Statement)">Ganhos Líquidos (Extrato)</div>
+          <div class="pure-data-label" id="pure-label-liquido" data-pt="Ganhos Líquidos (Extrato)" data-en="Net Earnings (Statement)">Ganhos Líquidos (Extrato)</div>
           <div id="pure-liquido" class="pure-data-value pure-value-neutral">€ 0,00</div>
-          <div class="pure-data-sub"
-               id="pure-sub-liquido"
-               data-pt="Ganhos − Despesas (extrato real)"
-               data-en="Earnings − Expenses (actual statement)">Ganhos − Despesas (extrato real)</div>
+          <div class="pure-data-sub" id="pure-sub-liquido" data-pt="Ganhos − Despesas (extrato real)" data-en="Earnings − Expenses (actual statement)">Ganhos − Despesas (extrato real)</div>
         </div>
-
         <div class="pure-data-block">
-          <div class="pure-data-label"
-               id="pure-label-saft"
-               data-pt="SAF-T Bruto (Declarado)"
-               data-en="SAF-T Gross (Declared)">SAF-T Bruto (Declarado)</div>
+          <div class="pure-data-label" id="pure-label-saft" data-pt="SAF-T Bruto (Declarado)" data-en="SAF-T Gross (Declared)">SAF-T Bruto (Declarado)</div>
           <div id="pure-saft" class="pure-data-value pure-value-neutral">€ 0,00</div>
-          <div class="pure-data-sub"
-               id="pure-sub-saft"
-               data-pt="Faturação interna plataforma"
-               data-en="Platform internal invoicing">Faturação interna plataforma</div>
+          <div class="pure-data-sub" id="pure-sub-saft" data-pt="Faturação interna plataforma" data-en="Platform internal invoicing">Faturação interna plataforma</div>
         </div>
-
         <div class="pure-data-block">
-          <div class="pure-data-label"
-               id="pure-label-dac7"
-               data-pt="DAC7 (Reportado à AT)"
-               data-en="DAC7 (Reported to TA)">DAC7 (Reportado à AT)</div>
+          <div class="pure-data-label" id="pure-label-dac7" data-pt="DAC7 (Reportado à AT)" data-en="DAC7 (Reported to TA)">DAC7 (Reportado à AT)</div>
           <div id="pure-dac7" class="pure-data-value pure-value-neutral">€ 0,00</div>
-          <div class="pure-data-sub"
-               id="pure-sub-dac7"
-               data-pt="2.º Semestre 2024 (Q4 activo)"
-               data-en="2nd Semester 2024 (Q4 active)">2.º Semestre 2024 (Q4 activo)</div>
+          <div class="pure-data-sub" id="pure-sub-dac7" data-pt="2.º Semestre 2024 (Q4 activo)" data-en="2nd Semester 2024 (Q4 active)">2.º Semestre 2024 (Q4 activo)</div>
         </div>
-
         <div class="pure-data-block">
-          <div class="pure-data-label"
-               id="pure-label-fatura"
-               data-pt="Comissões Faturadas (BTF)"
-               data-en="Invoiced Commissions (BTF)">Comissões Faturadas (BTF)</div>
+          <div class="pure-data-label" id="pure-label-fatura" data-pt="Comissões Faturadas (BTF)" data-en="Invoiced Commissions (BTF)">Comissões Faturadas (BTF)</div>
           <div id="pure-fatura" class="pure-data-value pure-value-warn">€ 0,00</div>
-          <div class="pure-data-sub"
-               id="pure-sub-fatura"
-               data-pt="Valor em faturas emitidas (PT1124/PT1125)"
-               data-en="Value in issued invoices (PT1124/PT1125)">Valor em faturas emitidas (PT1124/PT1125)</div>
+          <div class="pure-data-sub" id="pure-sub-fatura" data-pt="Valor em faturas emitidas (PT1124/PT1125)" data-en="Value in issued invoices (PT1124/PT1125)">Valor em faturas emitidas (PT1124/PT1125)</div>
         </div>
-
       </div>
     </div>
-    <!-- FIM: PAINEL I -->
 
-    <!-- ── PAINEL II · DISCREPÂNCIAS (SMOKING GUN) ─────────────────────────── -->
+    <!-- PAINEL II – DISCREPÂNCIAS (SMOKING GUN) -->
     <div class="pure-card pure-card-alert" id="pureDiscCard">
       <h3 class="pure-card-title">
         <span class="pure-icon">🔫</span>
@@ -172,463 +133,107 @@
               data-pt="II. DISCREPÂNCIAS APURADAS — PROVA RAINHA"
               data-en="II. DISCREPANCIES FOUND — CROWN EVIDENCE">II. DISCREPÂNCIAS APURADAS — PROVA RAINHA</span>
       </h3>
-
       <div class="pure-smoking-guns">
-
-        <!-- SMOKING GUN 2 -->
         <div class="pure-sg pure-sg-critical">
-          <div class="pure-sg-label"
-               id="pure-sg2-label"
+          <div class="pure-sg-label" id="pure-sg2-label"
                data-pt="SMOKING GUN 2 — Despesas/Comissões (Extrato) vs Comissões Faturadas (BTF)"
                data-en="SMOKING GUN 2 — Expenses/Commissions (Statement) vs Invoiced Commissions (BTF)">SMOKING GUN 2 — Despesas/Comissões (Extrato) vs Comissões Faturadas (BTF)</div>
-          <div class="pure-sg-row">
-            <span class="pure-sg-key"
-                 id="pure-sg2-btor-label"
-                 data-pt="BTOR (Extrato):"
-                 data-en="BTOR (Statement):">BTOR (Extrato):</span>
-            <span class="pure-sg-val" id="pure-sg2-btor-val">€ 0,00</span>
-          </div>
-          <div class="pure-sg-row">
-            <span class="pure-sg-key"
-                 id="pure-sg2-btf-label"
-                 data-pt="BTF (Fatura):"
-                 data-en="BTF (Invoice):">BTF (Fatura):</span>
-            <span class="pure-sg-val" id="pure-sg2-btf-val">€ 0,00</span>
-          </div>
-          <div class="pure-sg-delta">
-            <span id="pure-sg2-delta-label"
-                  data-pt="OMISSÃO:"
-                  data-en="OMISSION:">OMISSÃO:</span>
-            <span id="pure-disc-c2" class="pure-delta-value">€ 0,00</span>
-            <span id="pure-disc-c2-pct" class="pure-delta-pct">0,00%</span>
-          </div>
-          <div class="pure-sg-legal"
-               id="pure-sg2-legal"
-               data-pt="Art. 36.º n.º 11 CIVA · Art. 119.º RGIT"
-               data-en="Art. 36(11) CIVA · Art. 119 RGIT">Art. 36.º n.º 11 CIVA · Art. 119.º RGIT</div>
+          <div class="pure-sg-row"><span class="pure-sg-key" id="pure-sg2-btor-label" data-pt="BTOR (Extrato):" data-en="BTOR (Statement):">BTOR (Extrato):</span><span class="pure-sg-val" id="pure-sg2-btor-val">€ 0,00</span></div>
+          <div class="pure-sg-row"><span class="pure-sg-key" id="pure-sg2-btf-label" data-pt="BTF (Fatura):" data-en="BTF (Invoice):">BTF (Fatura):</span><span class="pure-sg-val" id="pure-sg2-btf-val">€ 0,00</span></div>
+          <div class="pure-sg-delta"><span id="pure-sg2-delta-label" data-pt="OMISSÃO:" data-en="OMISSION:">OMISSÃO:</span><span id="pure-disc-c2" class="pure-delta-value">€ 0,00</span><span id="pure-disc-c2-pct" class="pure-delta-pct">0,00%</span></div>
+          <div class="pure-sg-legal" id="pure-sg2-legal" data-pt="Art. 36.º n.º 11 CIVA · Art. 119.º RGIT" data-en="Art. 36(11) CIVA · Art. 119 RGIT">Art. 36.º n.º 11 CIVA · Art. 119.º RGIT</div>
         </div>
-        <!-- FIM: SMOKING GUN 2 -->
-
-        <!-- SMOKING GUN 1 -->
         <div class="pure-sg pure-sg-secondary">
-          <div class="pure-sg-label"
-               id="pure-sg1-label"
+          <div class="pure-sg-label" id="pure-sg1-label"
                data-pt="SMOKING GUN 1 — SAF-T Bruto vs Reportado DAC7 (AT)"
                data-en="SMOKING GUN 1 — SAF-T Gross vs DAC7 Reported (TA)">SMOKING GUN 1 — SAF-T Bruto vs Reportado DAC7 (AT)</div>
-          <div class="pure-sg-row">
-            <span class="pure-sg-key"
-                 id="pure-sg1-saft-label"
-                 data-pt="SAF-T Bruto:"
-                 data-en="SAF-T Gross:">SAF-T Bruto:</span>
-            <span class="pure-sg-val" id="pure-sg1-saft-val">€ 0,00</span>
-          </div>
-          <div class="pure-sg-row">
-            <span class="pure-sg-key"
-                 id="pure-sg1-dac7-label"
-                 data-pt="DAC7 (2.º Sem.):"
-                 data-en="DAC7 (2nd Sem.):">DAC7 (2.º Sem.):</span>
-            <span class="pure-sg-val" id="pure-sg1-dac7-val">€ 0,00</span>
-          </div>
-          <div class="pure-sg-delta">
-            <span id="pure-sg1-delta-label"
-                  data-pt="DIFERENÇA:"
-                  data-en="DIFFERENCE:">DIFERENÇA:</span>
-            <span id="pure-disc-saft-dac7" class="pure-delta-value">€ 0,00</span>
-            <span id="pure-disc-saft-pct" class="pure-delta-pct">0,00%</span>
-          </div>
-          <div class="pure-sg-legal"
-               id="pure-sg1-legal"
-               data-pt="Diretiva DAC7 (UE) 2021/514 · DL n.º 41/2023"
-               data-en="DAC7 Directive (EU) 2021/514 · DL No. 41/2023">Diretiva DAC7 (UE) 2021/514 · DL n.º 41/2023</div>
+          <div class="pure-sg-row"><span class="pure-sg-key" id="pure-sg1-saft-label" data-pt="SAF-T Bruto:" data-en="SAF-T Gross:">SAF-T Bruto:</span><span class="pure-sg-val" id="pure-sg1-saft-val">€ 0,00</span></div>
+          <div class="pure-sg-row"><span class="pure-sg-key" id="pure-sg1-dac7-label" data-pt="DAC7 (2.º Sem.):" data-en="DAC7 (2nd Sem.):">DAC7 (2.º Sem.):</span><span class="pure-sg-val" id="pure-sg1-dac7-val">€ 0,00</span></div>
+          <div class="pure-sg-delta"><span id="pure-sg1-delta-label" data-pt="DIFERENÇA:" data-en="DIFFERENCE:">DIFERENÇA:</span><span id="pure-disc-saft-dac7" class="pure-delta-value">€ 0,00</span><span id="pure-disc-saft-pct" class="pure-delta-pct">0,00%</span></div>
+          <div class="pure-sg-legal" id="pure-sg1-legal" data-pt="Diretiva DAC7 (UE) 2021/514 · DL n.º 41/2023" data-en="DAC7 Directive (EU) 2021/514 · DL No. 41/2023">Diretiva DAC7 (UE) 2021/514 · DL n.º 41/2023</div>
         </div>
-        <!-- FIM: SMOKING GUN 1 -->
-
       </div>
-      <!-- FIM: pure-smoking-guns -->
-
-      <!-- Impacto Fiscal -->
       <div class="pure-fiscal-row">
-        <div class="pure-fiscal-item">
-          <div class="pure-fiscal-label"
-               id="pure-iva23-label"
-               data-pt="IVA 23% Omitido"
-               data-en="VAT 23% Omitted">IVA 23% Omitido</div>
-          <div id="pure-iva-23" class="pure-fiscal-value">€ 0,00</div>
-          <div class="pure-fiscal-sub"
-               id="pure-iva23-sub"
-               data-pt="Art. 2.º n.º 1 al. i) CIVA"
-               data-en="Art. 2(1)(i) CIVA">Art. 2.º n.º 1 al. i) CIVA</div>
-        </div>
-        <div class="pure-fiscal-item">
-          <div class="pure-fiscal-label"
-               id="pure-iva6-label"
-               data-pt="IVA 6% Omitido"
-               data-en="VAT 6% Omitted">IVA 6% Omitido</div>
-          <div id="pure-iva-6" class="pure-fiscal-value">€ 0,00</div>
-          <div class="pure-fiscal-sub"
-               id="pure-iva6-sub"
-               data-pt="Art. 18.º CIVA · Transporte"
-               data-en="Art. 18 CIVA · Transport">Art. 18.º CIVA · Transporte</div>
-        </div>
-        <div class="pure-fiscal-item">
-          <div class="pure-fiscal-label"
-               id="pure-irc-label"
-               data-pt="IRC Estimado (21%)"
-               data-en="Estimated CIT (21%)">IRC Estimado (21%)</div>
-          <div id="pure-irc" class="pure-fiscal-value">€ 0,00</div>
-          <div class="pure-fiscal-sub"
-               id="pure-irc-sub"
-               data-pt="Art. 17.º CIRC"
-               data-en="Art. 17 CIT Code">Art. 17.º CIRC</div>
-        </div>
+        <div class="pure-fiscal-item"><div class="pure-fiscal-label" id="pure-iva23-label" data-pt="IVA 23% Omitido" data-en="VAT 23% Omitted">IVA 23% Omitido</div><div id="pure-iva-23" class="pure-fiscal-value">€ 0,00</div><div class="pure-fiscal-sub" id="pure-iva23-sub" data-pt="Art. 2.º n.º 1 al. i) CIVA" data-en="Art. 2(1)(i) CIVA">Art. 2.º n.º 1 al. i) CIVA</div></div>
+        <div class="pure-fiscal-item"><div class="pure-fiscal-label" id="pure-iva6-label" data-pt="IVA 6% Omitido" data-en="VAT 6% Omitted">IVA 6% Omitido</div><div id="pure-iva-6" class="pure-fiscal-value">€ 0,00</div><div class="pure-fiscal-sub" id="pure-iva6-sub" data-pt="Art. 18.º CIVA · Transporte" data-en="Art. 18 CIVA · Transport">Art. 18.º CIVA · Transporte</div></div>
+        <div class="pure-fiscal-item"><div class="pure-fiscal-label" id="pure-irc-label" data-pt="IRC Estimado (21%)" data-en="Estimated CIT (21%)">IRC Estimado (21%)</div><div id="pure-irc" class="pure-fiscal-value">€ 0,00</div><div class="pure-fiscal-sub" id="pure-irc-sub" data-pt="Art. 17.º CIRC" data-en="Art. 17 CIT Code">Art. 17.º CIRC</div></div>
       </div>
-      <!-- FIM: Impacto Fiscal -->
-
-      <!-- ── GRID PERICIAL v13.11.2 · 3 Colunas — Métricas Críticas ──────────── -->
       <div class="pure-card-grid pure-3col" style="margin-top:14px;">
-
-        <!-- Card 1 — Diferencial de Fluxo Financeiro Auditado -->
-        <div class="pure-metric-card alert">
-          <div class="pure-metric-label"
-               data-pt="Diferencial de Fluxo Auditado"
-               data-en="Audited Flow Differential">Diferencial de Fluxo Auditado</div>
-          <div id="pure-disc-c2-grid" class="pure-metric-value">€ 0,00</div>
-          <div class="pure-metric-sublabel">Base: Art. 103.º RGIT</div>
-          <div class="pure-legal-notice">Omissão declarativa sistemática</div>
-        </div>
-
-        <!-- Card 2 — Asfixia Financeira: IVA 6% sobre Bruto (Art. 405.º C. Civil) -->
-        <div class="pure-metric-card warning" id="pure-asfixia-container">
-          <div class="pure-metric-label"
-               data-pt="Risco de Asfixia Financeira"
-               data-en="Financial Suffocation Risk">Risco de Asfixia Financeira</div>
-          <div id="pure-iva-devido" class="pure-metric-value">Calculando…</div>
-          <div class="pure-metric-sublabel"
-               data-pt="IVA 6% (Verba 2.18 Lista I CIVA)"
-               data-en="6% VAT (Item 2.18 List I CIVA)">IVA 6% (Verba 2.18 Lista I CIVA)</div>
-          <div class="pure-legal-notice">Art. 405.º C. Civil · Comissão incide sobre Bruto</div>
-        </div>
-
-        <!-- Card 3 — Total Fluxos Não Sujeitos a Comissão (Módulo IV) -->
-        <div class="pure-metric-card">
-          <div class="pure-metric-label"
-               data-pt="Total Fluxos Não Sujeitos"
-               data-en="Total Non-Taxable Flows">Total Fluxos Não Sujeitos</div>
-          <div id="pure-nao-sujeitos" class="pure-metric-value pure-value-primary">€ 0,00</div>
-          <div class="pure-metric-sublabel">Campanhas + Gorjetas + Portagens</div>
-          <div class="pure-legal-notice">Lei TVDE · Isenção de comissão</div>
-        </div>
-
+        <div class="pure-metric-card alert"><div class="pure-metric-label" data-pt="Diferencial de Fluxo Auditado" data-en="Audited Flow Differential">Diferencial de Fluxo Auditado</div><div id="pure-disc-c2-grid" class="pure-metric-value">€ 0,00</div><div class="pure-metric-sublabel">Base: Art. 103.º RGIT</div><div class="pure-legal-notice">Omissão declarativa sistemática</div></div>
+        <div class="pure-metric-card warning" id="pure-asfixia-container"><div class="pure-metric-label" data-pt="Risco de Asfixia Financeira" data-en="Financial Suffocation Risk">Risco de Asfixia Financeira</div><div id="pure-iva-devido" class="pure-metric-value">Calculando…</div><div class="pure-metric-sublabel" data-pt="IVA 6% (Verba 2.18 Lista I CIVA)" data-en="6% VAT (Item 2.18 List I CIVA)">IVA 6% (Verba 2.18 Lista I CIVA)</div><div class="pure-legal-notice">Art. 405.º C. Civil · Comissão incide sobre Bruto</div></div>
+        <div class="pure-metric-card"><div class="pure-metric-label" data-pt="Total Fluxos Não Sujeitos" data-en="Total Non-Taxable Flows">Total Fluxos Não Sujeitos</div><div id="pure-nao-sujeitos" class="pure-metric-value pure-value-primary">€ 0,00</div><div class="pure-metric-sublabel">Campanhas + Gorjetas + Portagens</div><div class="pure-legal-notice">Lei TVDE · Isenção de comissão</div></div>
       </div>
-      <!-- FIM: GRID PERICIAL v13.11.2 -->
-
     </div>
-    <!-- FIM: PAINEL II -->
 
-    <!-- ── PAINEL III · ATF ─────────────────────────────────────────────────── -->
+    <!-- PAINEL III – ATF -->
     <div class="pure-card" id="pureATFCard">
-      <h3 class="pure-card-title">
-        <span class="pure-icon">⏳</span>
-        <span id="pure-card3-title"
-              data-pt="III. ANÁLISE TEMPORAL FORENSE (ATF) — LOTE GLOBAL (2.º SEMESTRE 2024)"
-              data-en="III. FORENSIC TEMPORAL ANALYSIS (ATF) — GLOBAL BATCH (2nd SEMESTER 2024)">III. ANÁLISE TEMPORAL FORENSE (ATF) — LOTE GLOBAL (2.º SEMESTRE 2024)</span>
-      </h3>
-
+      <h3 class="pure-card-title"><span class="pure-icon">⏳</span><span id="pure-card3-title" data-pt="III. ANÁLISE TEMPORAL FORENSE (ATF) — LOTE GLOBAL (2.º SEMESTRE 2024)" data-en="III. FORENSIC TEMPORAL ANALYSIS (ATF) — GLOBAL BATCH (2nd SEMESTER 2024)">III. ANÁLISE TEMPORAL FORENSE (ATF) — LOTE GLOBAL (2.º SEMESTRE 2024)</span></h3>
       <div class="pure-atf-grid">
-
-        <div class="pure-atf-block pure-atf-sp">
-          <div class="pure-atf-label"
-               id="pure-atf-sp-label"
-               data-pt="SCORE DE PERSISTÊNCIA"
-               data-en="PERSISTENCE SCORE">SCORE DE PERSISTÊNCIA</div>
-          <div id="pure-atf-sp" class="pure-atf-big">40<span style="font-size:1rem;opacity:0.6">/100</span></div>
-          <div class="pure-atf-classify"
-               id="pure-atf-status"
-               data-pt="OMISSÃO PONTUAL / RISCO MODERADO"
-               data-en="OCCASIONAL OMISSION / MODERATE RISK">OMISSÃO PONTUAL / RISCO MODERADO</div>
-          <div class="pure-atf-bar">
-            <div class="pure-atf-bar-fill" style="width:40%;background:#F59E0B"></div>
-          </div>
-        </div>
-
-        <div class="pure-atf-block">
-          <div class="pure-atf-label"
-               id="pure-atf-trend-label"
-               data-pt="TENDÊNCIA"
-               data-en="TREND">TENDÊNCIA</div>
-          <div id="pure-atf-trend"
-               class="pure-atf-trend-val"
-               data-pt="📉 DESCENDENTE"
-               data-en="📉 DESCENDING">📉 DESCENDENTE</div>
-          <div class="pure-atf-sub"
-               id="pure-atf-trend-sub"
-               data-pt="Regressão linear (OLS) · 3 pontos"
-               data-en="Linear regression (OLS) · 3 points">Regressão linear (OLS) · 3 pontos</div>
-        </div>
-
-        <div class="pure-atf-block">
-          <div class="pure-atf-label"
-               id="pure-atf-outliers-label"
-               data-pt="OUTLIERS > 2σ"
-               data-en="OUTLIERS > 2σ">OUTLIERS > 2σ</div>
-          <div id="pure-atf-outliers" class="pure-atf-outlier-val">0 outliers &gt; 2σ</div>
-          <div class="pure-atf-sub"
-               id="pure-atf-outliers-sub"
-               data-pt="Sem picos estatisticamente anómalos"
-               data-en="No statistically anomalous peaks">Sem picos estatisticamente anómalos</div>
-        </div>
-
-        <div class="pure-atf-block">
-          <div class="pure-atf-label"
-               id="pure-atf-history-label"
-               data-pt="HISTÓRICO"
-               data-en="HISTORY">HISTÓRICO</div>
-          <div id="pure-atf-meses"
-               class="pure-atf-meses-val"
-               data-pt="2.º Semestre 2024 — 4 meses com dados (Set–Dez)"
-               data-en="2nd Semester 2024 — 4 months with data (Sep–Dec)">2.º Semestre 2024 — 4 meses com dados (Set–Dez)</div>
-          <div class="pure-atf-sub"
-               id="pure-atf-meses-sub"
-               data-pt="4 meses com dados (Set–Dez 2024)"
-               data-en="4 months with data (Sep–Dec 2024)">4 meses com dados (Set–Dez 2024)</div>
-        </div>
-
+        <div class="pure-atf-block pure-atf-sp"><div class="pure-atf-label" id="pure-atf-sp-label" data-pt="SCORE DE PERSISTÊNCIA" data-en="PERSISTENCE SCORE">SCORE DE PERSISTÊNCIA</div><div id="pure-atf-sp" class="pure-atf-big">40<span style="font-size:1rem;opacity:0.6">/100</span></div><div class="pure-atf-classify" id="pure-atf-status" data-pt="OMISSÃO PONTUAL / RISCO MODERADO" data-en="OCCASIONAL OMISSION / MODERATE RISK">OMISSÃO PONTUAL / RISCO MODERADO</div><div class="pure-atf-bar"><div class="pure-atf-bar-fill" style="width:40%;background:#F59E0B"></div></div></div>
+        <div class="pure-atf-block"><div class="pure-atf-label" id="pure-atf-trend-label" data-pt="TENDÊNCIA" data-en="TREND">TENDÊNCIA</div><div id="pure-atf-trend" class="pure-atf-trend-val" data-pt="📉 DESCENDENTE" data-en="📉 DESCENDING">📉 DESCENDENTE</div><div class="pure-atf-sub" id="pure-atf-trend-sub" data-pt="Regressão linear (OLS) · 3 pontos" data-en="Linear regression (OLS) · 3 points">Regressão linear (OLS) · 3 pontos</div></div>
+        <div class="pure-atf-block"><div class="pure-atf-label" id="pure-atf-outliers-label" data-pt="OUTLIERS > 2σ" data-en="OUTLIERS > 2σ">OUTLIERS > 2σ</div><div id="pure-atf-outliers" class="pure-atf-outlier-val">0 outliers &gt; 2σ</div><div class="pure-atf-sub" id="pure-atf-outliers-sub" data-pt="Sem picos estatisticamente anómalos" data-en="No statistically anomalous peaks">Sem picos estatisticamente anómalos</div></div>
+        <div class="pure-atf-block"><div class="pure-atf-label" id="pure-atf-history-label" data-pt="HISTÓRICO" data-en="HISTORY">HISTÓRICO</div><div id="pure-atf-meses" class="pure-atf-meses-val" data-pt="2.º Semestre 2024 — 4 meses com dados (Set–Dez)" data-en="2nd Semester 2024 — 4 months with data (Sep–Dec)">2.º Semestre 2024 — 4 meses com dados (Set–Dez)</div><div class="pure-atf-sub" id="pure-atf-meses-sub" data-pt="4 meses com dados (Set–Dez 2024)" data-en="4 months with data (Sep–Dec 2024)">4 meses com dados (Set–Dez 2024)</div></div>
       </div>
-      <!-- FIM: pure-atf-grid -->
-
-      <div class="pure-atf-note" id="pure-atf-note">
-        <strong id="pure-atf-note-strong"
-                data-pt="Nota Metodológica:"
-                data-en="Methodological Note:">Nota Metodológica:</strong>
-        <span id="pure-atf-note-text"
-              data-pt="Score de Persistência calculado pelo motor computeTemporalAnalysis() sobre 4 meses de histórico (Set/Out/Nov/Dez 2024). SP calculado sobre o lote global (dados verificados UNIFED-MMLADX8Q-CV69L). As discrepâncias absolutas (C2: €2.184,95 — 89,26% · C1: €2.402,57 — 23,65%) mantêm relevância jurídica independente."
-              data-en="Persistence Score calculated by computeTemporalAnalysis() engine over 4 months of history (Sep/Oct/Nov/Dec 2024). SP calculated over the global batch (verified data UNIFED-MMLADX8Q-CV69L). The absolute discrepancies (C2: €2,184.95 — 89.26% · C1: €2,402.57 — 23.65%) maintain independent legal relevance.">Score de Persistência calculado pelo motor computeTemporalAnalysis() sobre 4 meses de histórico (Set/Out/Nov/Dez 2024). SP calculado sobre o lote global (dados verificados UNIFED-MMLADX8Q-CV69L). As discrepâncias absolutas (C2: €2.184,95 — 89,26% · C1: €2.402,57 — 23,65%) mantêm relevância jurídica independente.</span>
-      </div>
-
-      <div style="text-align:center;margin-top:16px">
-        <button
-          onclick="if(typeof openATFModal === 'function') openATFModal();"
-          class="pure-btn-atf"
-          id="pure-atf-btn"
-          data-pt="⏳ ABRIR ANÁLISE TEMPORAL FORENSE COMPLETA"
-          data-en="⏳ OPEN COMPLETE FORENSIC TEMPORAL ANALYSIS"
-          title="Abrir modal ATF completo / Open complete ATF modal">
-          <span id="pure-atf-btn-text">⏳ ABRIR ANÁLISE TEMPORAL FORENSE COMPLETA</span>
-        </button>
-      </div>
-
+      <div class="pure-atf-note" id="pure-atf-note"><strong id="pure-atf-note-strong" data-pt="Nota Metodológica:" data-en="Methodological Note:">Nota Metodológica:</strong><span id="pure-atf-note-text" data-pt="Score de Persistência calculado pelo motor computeTemporalAnalysis() sobre 4 meses de histórico (Set/Out/Nov/Dez 2024). SP calculado sobre o lote global (dados verificados UNIFED-MMLADX8Q-CV69L). As discrepâncias absolutas (C2: €2.184,95 — 89,26% · C1: €2.402,57 — 23,65%) mantêm relevância jurídica independente." data-en="Persistence Score calculated by computeTemporalAnalysis() engine over 4 months of history (Sep/Oct/Nov/Dec 2024). SP calculated over the global batch (verified data UNIFED-MMLADX8Q-CV69L). The absolute discrepancies (C2: €2,184.95 — 89.26% · C1: €2,402.57 — 23.65%) maintain independent legal relevance.">Score de Persistência calculado pelo motor computeTemporalAnalysis() sobre 4 meses de histórico (Set/Out/Nov/Dez 2024). SP calculado sobre o lote global (dados verificados UNIFED-MMLADX8Q-CV69L). As discrepâncias absolutas (C2: €2.184,95 — 89,26% · C1: €2.402,57 — 23,65%) mantêm relevância jurídica independente.</span></div>
+      <div style="text-align:center;margin-top:16px"><button onclick="if(typeof openATFModal === 'function') openATFModal();" class="pure-btn-atf" id="pure-atf-btn" data-pt="⏳ ABRIR ANÁLISE TEMPORAL FORENSE COMPLETA" data-en="⏳ OPEN COMPLETE FORENSIC TEMPORAL ANALYSIS" title="Abrir modal ATF completo / Open complete ATF modal"><span id="pure-atf-btn-text">⏳ ABRIR ANÁLISE TEMPORAL FORENSE COMPLETA</span></button></div>
     </div>
-    <!-- FIM: PAINEL III -->
 
-    <!-- ── PAINEL IV · ZONA CINZENTA (valores não sujeitos a comissão) ───────── -->
+    <!-- PAINEL IV – ZONA CINZENTA -->
     <div class="pure-card" id="pureZonaCinzentaCard">
-      <h3 class="pure-card-title">
-        <span class="pure-icon">🔍</span>
-        <span id="pure-card4-title"
-              data-pt="IV. ZONA CINZENTA — VALORES NÃO SUJEITOS A COMISSÃO (ISOLADOS)"
-              data-en="IV. GREY ZONE — VALUES NOT SUBJECT TO COMMISSION (ISOLATED)">IV. ZONA CINZENTA — VALORES NÃO SUJEITOS A COMISSÃO (ISOLADOS)</span>
-      </h3>
-      <p class="pure-zc-intro" id="pure-zc-intro">
-        <span id="pure-zc-intro-text"
-              data-pt="O sistema isolou"
-              data-en="The system isolated">O sistema isolou</span>
-        <strong id="pure-zc-amount">€ 451,00</strong>
-        <span id="pure-zc-intro-end"
-              data-pt="em fluxos não sujeitos a comissão pela plataforma (Campanhas + Gorjetas — mês de Outubro). A reconciliação DAC7 deve verificar se estes valores foram indevidamente incluídos na base de reporte à AT, explicando parte da discrepância C1."
-              data-en="in flows not subject to commission by the platform (Campaigns + Tips — October month). DAC7 reconciliation must verify whether these values were improperly included in the reporting base to the TA, explaining part of the C1 discrepancy.">em fluxos não sujeitos a comissão pela plataforma (Campanhas + Gorjetas — mês de Outubro). A reconciliação DAC7 deve verificar se estes valores foram indevidamente incluídos na base de reporte à AT, explicando parte da discrepância C1.</span>
-      </p>
+      <h3 class="pure-card-title"><span class="pure-icon">🔍</span><span id="pure-card4-title" data-pt="IV. ZONA CINZENTA — VALORES NÃO SUJEITOS A COMISSÃO (ISOLADOS)" data-en="IV. GREY ZONE — VALUES NOT SUBJECT TO COMMISSION (ISOLATED)">IV. ZONA CINZENTA — VALORES NÃO SUJEITOS A COMISSÃO (ISOLADOS)</span></h3>
+      <p class="pure-zc-intro" id="pure-zc-intro"><span id="pure-zc-intro-text" data-pt="O sistema isolou" data-en="The system isolated">O sistema isolou</span><strong id="pure-zc-amount">€ 451,00</strong><span id="pure-zc-intro-end" data-pt="em fluxos não sujeitos a comissão pela plataforma (Campanhas + Gorjetas — mês de Outubro). A reconciliação DAC7 deve verificar se estes valores foram indevidamente incluídos na base de reporte à AT, explicando parte da discrepância C1." data-en="in flows not subject to commission by the platform (Campaigns + Tips — October month). DAC7 reconciliation must verify whether these values were improperly included in the reporting base to the TA, explaining part of the C1 discrepancy.">em fluxos não sujeitos a comissão pela plataforma (Campanhas + Gorjetas — mês de Outubro). A reconciliação DAC7 deve verificar se estes valores foram indevidamente incluídos na base de reporte à AT, explicando parte da discrepância C1.</span></p>
       <div class="pure-zc-grid">
-        <div class="pure-zc-item">
-          <span class="pure-zc-label"
-                id="pure-zc-campanhas-label"
-                data-pt="Campanhas (total período)"
-                data-en="Campaigns (total period)">Campanhas (total período)</span>
-          <span id="pure-nc-campanhas" class="pure-zc-val">€ 0,00</span>
-          <span class="pure-zc-tag"
-                id="pure-zc-campanhas-tag"
-                data-pt="Isento comissão · 0%"
-                data-en="Commission exempt · 0%">Isento comissão · 0%</span>
-        </div>
-        <div class="pure-zc-item">
-          <span class="pure-zc-label"
-                id="pure-zc-gorjetas-label"
-                data-pt="Gorjetas (total período)"
-                data-en="Tips (total period)">Gorjetas (total período)</span>
-          <span id="pure-nc-gorjetas" class="pure-zc-val">€ 0,00</span>
-          <span class="pure-zc-tag"
-                id="pure-zc-gorjetas-tag"
-                data-pt="Transferência P2P · 0%"
-                data-en="P2P Transfer · 0%">Transferência P2P · 0%</span>
-        </div>
-        <div class="pure-zc-item">
-          <span class="pure-zc-label"
-                id="pure-zc-portagens-label"
-                data-pt="Portagens (total período)"
-                data-en="Tolls (total period)">Portagens (total período)</span>
-          <span id="pure-nc-portagens" class="pure-zc-val">€ 0,00</span>
-          <span class="pure-zc-tag"
-                id="pure-zc-portagens-tag"
-                data-pt="Reembolso operacional · 0%"
-                data-en="Operational reimbursement · 0%">Reembolso operacional · 0%</span>
-        </div>
-        <div class="pure-zc-item">
-          <span class="pure-zc-label"
-                id="pure-zc-cancelamentos-label"
-                data-pt="Taxas de Cancelamento (total período)"
-                data-en="Cancellation Fees (total period)">Taxas de Cancelamento (total período)</span>
-          <span id="pure-nc-cancelamentos" class="pure-zc-val">€ 0,00</span>
-          <span class="pure-zc-tag"
-                id="pure-zc-cancelamentos-tag"
-                data-pt="já em Ganhos · comissão incluída nos −Despesas"
-                data-en="already in Earnings · commission included in −Expenses">já em Ganhos · comissão incluída nos −Despesas</span>
-        </div>
-        <div class="pure-zc-item pure-zc-total">
-          <span class="pure-zc-label"
-                id="pure-zc-total-label"
-                data-pt="Total Não Sujeitos (Out 2024)"
-                data-en="Total Not Subject (Oct 2024)">Total Não Sujeitos (Out 2024)</span>
-          <span id="pure-nc-total" class="pure-zc-val">€ 0,00</span>
-          <span class="pure-zc-tag"
-                id="pure-zc-total-tag"
-                data-pt="Fora da base tributável TVDE"
-                data-en="Outside TVDE taxable base">Fora da base tributável TVDE</span>
-        </div>
+        <div class="pure-zc-item"><span class="pure-zc-label" id="pure-zc-campanhas-label" data-pt="Campanhas (total período)" data-en="Campaigns (total period)">Campanhas (total período)</span><span id="pure-nc-campanhas" class="pure-zc-val">€ 0,00</span><span class="pure-zc-tag" id="pure-zc-campanhas-tag" data-pt="Isento comissão · 0%" data-en="Commission exempt · 0%">Isento comissão · 0%</span></div>
+        <div class="pure-zc-item"><span class="pure-zc-label" id="pure-zc-gorjetas-label" data-pt="Gorjetas (total período)" data-en="Tips (total period)">Gorjetas (total período)</span><span id="pure-nc-gorjetas" class="pure-zc-val">€ 0,00</span><span class="pure-zc-tag" id="pure-zc-gorjetas-tag" data-pt="Transferência P2P · 0%" data-en="P2P Transfer · 0%">Transferência P2P · 0%</span></div>
+        <div class="pure-zc-item"><span class="pure-zc-label" id="pure-zc-portagens-label" data-pt="Portagens (total período)" data-en="Tolls (total period)">Portagens (total período)</span><span id="pure-nc-portagens" class="pure-zc-val">€ 0,00</span><span class="pure-zc-tag" id="pure-zc-portagens-tag" data-pt="Reembolso operacional · 0%" data-en="Operational reimbursement · 0%">Reembolso operacional · 0%</span></div>
+        <div class="pure-zc-item"><span class="pure-zc-label" id="pure-zc-cancelamentos-label" data-pt="Taxas de Cancelamento (total período)" data-en="Cancellation Fees (total period)">Taxas de Cancelamento (total período)</span><span id="pure-nc-cancelamentos" class="pure-zc-val">€ 0,00</span><span class="pure-zc-tag" id="pure-zc-cancelamentos-tag" data-pt="já em Ganhos · comissão incluída nos −Despesas" data-en="already in Earnings · commission included in −Expenses">já em Ganhos · comissão incluída nos −Despesas</span></div>
+        <div class="pure-zc-item pure-zc-total"><span class="pure-zc-label" id="pure-zc-total-label" data-pt="Total Não Sujeitos (Out 2024)" data-en="Total Not Subject (Oct 2024)">Total Não Sujeitos (Out 2024)</span><span id="pure-nc-total" class="pure-zc-val">€ 0,00</span><span class="pure-zc-tag" id="pure-zc-total-tag" data-pt="Fora da base tributável TVDE" data-en="Outside TVDE taxable base">Fora da base tributável TVDE</span></div>
       </div>
-      <!-- FIM: pure-zc-grid -->
-
-      <div class="pure-zc-question" id="pure-zc-question">
-        <strong id="pure-zc-question-strong"
-                data-pt="Questão para contraditório (Art. 327.º CPP):"
-                data-en="Question for contradiction (Art. 327 CPP):">Questão para contraditório (Art. 327.º CPP):</strong>
-        <span id="pure-zc-question-text"
-              data-pt="Pode a plataforma confirmar se os €451,00 em Gorjetas e Campanhas (isentos de comissão nos termos da Lei TVDE) foram incluídos na base de cálculo do reporte DAC7? Se sim, qual o fundamento legal?"
-              data-en="Can the platform confirm whether the €451.00 in Tips and Campaigns (commission-exempt under the TVDE Law) were included in the calculation basis of the DAC7 report? If so, what is the legal basis?">Pode a plataforma confirmar se os €451,00 em Gorjetas e Campanhas (isentos de comissão nos termos da Lei TVDE) foram incluídos na base de cálculo do reporte DAC7? Se sim, qual o fundamento legal?</span>
-      </div>
-
+      <div class="pure-zc-question" id="pure-zc-question"><strong id="pure-zc-question-strong" data-pt="Questão para contraditório (Art. 327.º CPP):" data-en="Question for contradiction (Art. 327 CPP):">Questão para contraditório (Art. 327.º CPP):</strong><span id="pure-zc-question-text" data-pt="Pode a plataforma confirmar se os €451,00 em Gorjetas e Campanhas (isentos de comissão nos termos da Lei TVDE) foram incluídos na base de cálculo do reporte DAC7? Se sim, qual o fundamento legal?" data-en="Can the platform confirm whether the €451.00 in Tips and Campaigns (commission-exempt under the TVDE Law) were included in the calculation basis of the DAC7 report? If so, what is the legal basis?">Pode a plataforma confirmar se os €451,00 em Gorjetas e Campanhas (isentos de comissão nos termos da Lei TVDE) foram incluídos na base de cálculo do reporte DAC7? Se sim, qual o fundamento legal?</span></div>
     </div>
-    <!-- FIM: PAINEL IV -->
 
-    <!-- ── PAINEL V · VEREDICTO E INTEGRIDADE ──────────────────────────────── -->
+    <!-- PAINEL V – VEREDICTO E INTEGRIDADE -->
     <div class="pure-card pure-card-verdict" id="pureVerdictCard">
       <div class="pure-verdict-row">
-        <div class="pure-verdict-block">
-          <div class="pure-verdict-label"
-               id="pure-verdict-label"
-               data-pt="VEREDICTO PERICIAL"
-               data-en="EXPERT VERDICT">VEREDICTO PERICIAL</div>
-          <div id="pure-verdict"
-               class="pure-verdict-value"
-               data-pt="RISCO ELEVADO"
-               data-en="HIGH RISK">RISCO ELEVADO</div>
-          <div id="pure-verdict-pct" class="pure-verdict-pct">89,26%</div>
-          <div class="pure-verdict-basis"
-               id="pure-verdict-basis"
-               data-pt="Art. 119.º RGIT · Art. 125.º CPP"
-               data-en="Art. 119 RGIT · Art. 125 CPP">Art. 119.º RGIT · Art. 125.º CPP</div>
-        </div>
-        <div class="pure-integrity-block">
-          <div class="pure-verdict-label"
-               id="pure-integrity-label"
-               data-pt="INTEGRIDADE SHA-256"
-               data-en="SHA-256 INTEGRITY">INTEGRIDADE SHA-256</div>
-          <div id="pure-hash-prefix-verdict" class="pure-mono pure-hash-lg">5150e767...</div>
-          <div class="pure-verdict-basis"
-               id="pure-integrity-basis1"
-               data-pt="RFC 3161 · ISO/IEC 27037:2012"
-               data-en="RFC 3161 · ISO/IEC 27037:2012">RFC 3161 · ISO/IEC 27037:2012</div>
-          <div class="pure-verdict-basis"
-               id="pure-integrity-basis2"
-               style="margin-top:4px"
-               data-pt="Dados reais · demoMode: false · DORA Compliant"
-               data-en="Real data · demoMode: false · DORA Compliant">Dados reais · demoMode: false · DORA Compliant</div>
-        </div>
+        <div class="pure-verdict-block"><div class="pure-verdict-label" id="pure-verdict-label" data-pt="VEREDICTO PERICIAL" data-en="EXPERT VERDICT">VEREDICTO PERICIAL</div><div id="pure-verdict" class="pure-verdict-value" data-pt="RISCO ELEVADO" data-en="HIGH RISK">RISCO ELEVADO</div><div id="pure-verdict-pct" class="pure-verdict-pct">89,26%</div><div class="pure-verdict-basis" id="pure-verdict-basis" data-pt="Art. 119.º RGIT · Art. 125.º CPP" data-en="Art. 119 RGIT · Art. 125 CPP">Art. 119.º RGIT · Art. 125.º CPP</div></div>
+        <div class="pure-integrity-block"><div class="pure-verdict-label" id="pure-integrity-label" data-pt="INTEGRIDADE SHA-256" data-en="SHA-256 INTEGRITY">INTEGRIDADE SHA-256</div><div id="pure-hash-prefix-verdict" class="pure-mono pure-hash-lg">5150e767...</div><div class="pure-verdict-basis" id="pure-integrity-basis1" data-pt="RFC 3161 · ISO/IEC 27037:2012" data-en="RFC 3161 · ISO/IEC 27037:2012">RFC 3161 · ISO/IEC 27037:2012</div><div class="pure-verdict-basis" id="pure-integrity-basis2" style="margin-top:4px" data-pt="Dados reais · demoMode: false · DORA Compliant" data-en="Real data · demoMode: false · DORA Compliant">Dados reais · demoMode: false · DORA Compliant</div></div>
       </div>
     </div>
-    <!-- FIM: PAINEL V -->
 
-  </div>
-  <!-- FIM: pure-card-grid -->
+  </div> <!-- FIM: pure-card-grid -->
 
-  <!-- ── TRIANGULAÇÃO FINANCEIRA (4 PILARES) ────────────────────────────────── -->
+  <!-- TRIANGULAÇÃO FINANCEIRA (4 PILARES) -->
   <div class="pure-card" id="pureTriangulationCard" style="margin-top: 16px;">
-    <h3 class="pure-card-title">
-      <span class="pure-icon">📊</span>
-      <span data-pt="TRIANGULAÇÃO FINANCEIRA · BIG DATA ALGORITHM" data-en="FINANCIAL TRIANGULATION · BIG DATA ALGORITHM">TRIANGULAÇÃO FINANCEIRA · BIG DATA ALGORITHM</span>
-    </h3>
+    <h3 class="pure-card-title"><span class="pure-icon">📊</span><span data-pt="TRIANGULAÇÃO FINANCEIRA · BIG DATA ALGORITHM" data-en="FINANCIAL TRIANGULATION · BIG DATA ALGORITHM">TRIANGULAÇÃO FINANCEIRA · BIG DATA ALGORITHM</span></h3>
     <div class="pure-data-grid pure-4col" style="display: grid; grid-template-columns: repeat(4,1fr); gap: 12px;">
-      <div class="pure-data-block">
-        <div class="pure-data-label" data-pt="GANHOS (EXTRATO)" data-en="EARNINGS (STATEMENT)">GANHOS (EXTRATO)</div>
-        <div id="pure-ganhos-tri" class="pure-data-value pure-value-primary">€ 0,00</div>
-      </div>
-      <div class="pure-data-block">
-        <div class="pure-data-label" data-pt="DESPESAS/COMISSÕES" data-en="EXPENSES/COMMISSIONS">DESPESAS/COMISSÕES</div>
-        <div id="pure-despesas-tri" class="pure-data-value pure-value-warn">€ 0,00</div>
-      </div>
-      <div class="pure-data-block">
-        <div class="pure-data-label" data-pt="LÍQUIDO (EXTRATO)" data-en="NET (STATEMENT)">LÍQUIDO (EXTRATO)</div>
-        <div id="pure-liquido-tri" class="pure-data-value pure-value-neutral">€ 0,00</div>
-      </div>
-      <div class="pure-data-block">
-        <div class="pure-data-label" data-pt="FATURADO (BTF)" data-en="INVOICED (BTF)">FATURADO (BTF)</div>
-        <div id="pure-fatura-tri" class="pure-data-value pure-value-neutral">€ 0,00</div>
-      </div>
+      <div class="pure-data-block"><div class="pure-data-label" data-pt="GANHOS (EXTRATO)" data-en="EARNINGS (STATEMENT)">GANHOS (EXTRATO)</div><div id="pure-ganhos-tri" class="pure-data-value pure-value-primary">€ 0,00</div></div>
+      <div class="pure-data-block"><div class="pure-data-label" data-pt="DESPESAS/COMISSÕES" data-en="EXPENSES/COMMISSIONS">DESPESAS/COMISSÕES</div><div id="pure-despesas-tri" class="pure-data-value pure-value-warn">€ 0,00</div></div>
+      <div class="pure-data-block"><div class="pure-data-label" data-pt="LÍQUIDO (EXTRATO)" data-en="NET (STATEMENT)">LÍQUIDO (EXTRATO)</div><div id="pure-liquido-tri" class="pure-data-value pure-value-neutral">€ 0,00</div></div>
+      <div class="pure-data-block"><div class="pure-data-label" data-pt="FATURADO (BTF)" data-en="INVOICED (BTF)">FATURADO (BTF)</div><div id="pure-fatura-tri" class="pure-data-value pure-value-neutral">€ 0,00</div></div>
     </div>
   </div>
 
-  <!-- ── GRÁFICOS FORENSES (APENAS UMA VEZ) ─────────────────────────────────── -->
+  <!-- GRÁFICOS FORENSES -->
   <div class="chart-section" id="pure-chart-container">
-    <h3 id="chartTitle" data-pt="ANÁLISE DE DISCREPÂNCIAS · GAP FORENSE" data-en="DISCREPANCY ANALYSIS · FORENSIC GAP">
-      <i class="fas fa-chart-line"></i> <span data-pt="ANÁLISE DE DISCREPÂNCIAS · GAP FORENSE" data-en="DISCREPANCY ANALYSIS · FORENSIC GAP">ANÁLISE DE DISCREPÂNCIAS · GAP FORENSE</span>
-    </h3>
-    <div class="chart-container">
-      <canvas id="mainChart"></canvas>
-    </div>
+    <h3 id="chartTitle" data-pt="ANÁLISE DE DISCREPÂNCIAS · GAP FORENSE" data-en="DISCREPANCY ANALYSIS · FORENSIC GAP"><i class="fas fa-chart-line"></i> <span data-pt="ANÁLISE DE DISCREPÂNCIAS · GAP FORENSE" data-en="DISCREPANCY ANALYSIS · FORENSIC GAP">ANÁLISE DE DISCREPÂNCIAS · GAP FORENSE</span></h3>
+    <div class="chart-container"><canvas id="mainChart"></canvas></div>
   </div>
   <div class="chart-section" id="pure-chart-container2">
-    <h3 id="chartTitle2" data-pt="DISCREPÂNCIA SAF-T vs DAC7" data-en="SAF-T vs DAC7 DISCREPANCY">
-      <i class="fas fa-chart-bar"></i> <span data-pt="DISCREPÂNCIA SAF-T vs DAC7" data-en="SAF-T vs DAC7 DISCREPANCY">DISCREPÂNCIA SAF-T vs DAC7</span>
-    </h3>
-    <div class="chart-container">
-      <canvas id="discrepancyChart"></canvas>
-    </div>
+    <h3 id="chartTitle2" data-pt="DISCREPÂNCIA SAF-T vs DAC7" data-en="SAF-T vs DAC7 DISCREPANCY"><i class="fas fa-chart-bar"></i> <span data-pt="DISCREPÂNCIA SAF-T vs DAC7" data-en="SAF-T vs DAC7 DISCREPANCY">DISCREPÂNCIA SAF-T vs DAC7</span></h3>
+    <div class="chart-container"><canvas id="discrepancyChart"></canvas></div>
   </div>
 
-  <!-- ── ELEMENTOS OCULTOS PARA SINCRONIZAÇÃO ADICIONAL ── -->
+  <!-- ELEMENTOS OCULTOS PARA SINCRONIZAÇÃO -->
   <div style="display:none;">
-    <div id="pure-verdict-text"></div>
-    <div id="pure-timestamp-ots"></div>
-    <div id="pure-blockchain-status"></div>
-    <div id="pure-ganhos-extrato"></div>
-    <div id="pure-despesas-extrato"></div>
-    <div id="pure-ganhos-liquidos-extrato"></div>
-    <div id="pure-saft-bruto-val"></div>
-    <div id="pure-dac7-val"></div>
-    <div id="pure-atf-zscore"></div>
-    <div id="pure-atf-confianca"></div>
-    <div id="pure-atf-score-val"></div>
-    <div id="pure-iva-devido-val"></div>
-    <div id="pure-impacto-macro"></div>
-    <div id="pure-fatura"></div>
-    <div id="pure-disc-c2"></div>
-    <div id="pure-disc-c2-pct"></div>
-    <div id="pure-disc-saft-dac7"></div>
-    <div id="pure-disc-saft-pct"></div>
-    <div id="pure-iva-6"></div>
-    <div id="pure-iva-23"></div>
-    <div id="pure-irc"></div>
-    <div id="pure-disc-c2-grid"></div>
-    <div id="pure-nao-sujeitos"></div>
-    <div id="pure-atf-sp"></div>
-    <div id="pure-atf-trend"></div>
-    <div id="pure-atf-outliers"></div>
-    <div id="pure-atf-meses"></div>
-    <div id="pure-nc-campanhas"></div>
-    <div id="pure-nc-gorjetas"></div>
-    <div id="pure-nc-portagens"></div>
-    <div id="pure-nc-total"></div>
-    <div id="pure-verdict"></div>
-    <div id="pure-hash-prefix"></div>
-  </div>
-
+    <div id="pure-verdict-text"></div><div id="pure-timestamp-ots"></div><div id="pure-blockchain-status"></div>
+    <div id="pure-ganhos-extrato"></div><div id="pure-despesas-extrato"></div><div id="pure-ganhos-liquidos-extrato"></div>
+    <div id="pure-saft-bruto-val"></div><div id="pure-dac7-val"></div><div id="pure-atf-zscore"></div><div id="pure-atf-confianca"></div>
+    <div id="pure-atf-score-val"></div><div id="pure-iva-devido-val"></div><div id="pure-impacto-macro"></div><div id="pure-fatura"></div>
+    <div id="pure-disc-c2"></div><div id="pure-disc-c2-pct"></div><div id="pure-disc-saft-dac7"></div><div id="pure-disc-saft-pct"></div>
+    <div id="pure-iva-6"></div><div id="pure-iva-23"></div><div id="pure-irc"></div><div id="pure-disc-c2-grid"></div><div id="pure-nao-sujeitos"></div>
+    <div id="pure-atf-sp"></div><div id="pure-atf-trend"></div><div id="pure-atf-outliers"></div><div id="pure-atf-meses"></div>
+    <div id="pure-nc-campanhas"></div><div id="pure-nc-gorjetas"></div><div id="pure-nc-portagens"></div><div id="pure-nc-total"></div>
+    <div id="pure-verdict"></div><div id="pure-hash-prefix"></div>
+    <div id="pure-nao-declarado-val"></div>
+      </div> 
 </section>
-<!-- FIM: pureDashboard · v13.12.0-PURE · UNIFED-MMLADX8Q-CV69L (CONSOLIDADO) -->
