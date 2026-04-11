@@ -31,21 +31,24 @@ window.showToast = window.showToast || function(m, t) { console.log(`[Toast-Fall
 
 'use strict';
 
-// 1. CONFIGURAÇÃO DO PDF.JS (Prioridade: Local Worker para resiliência forense)
+// ============================================================================
+// 1. CONFIGURAÇÃO DO PDF.JS (Alocação Única)
+// ============================================================================
 const pdfjsLib = window['pdfjs-dist/build/pdf'];
 if (pdfjsLib) {
+    // Definir prioridade para Local Worker, mantendo a integridade em ambientes air-gapped
     pdfjsLib.GlobalWorkerOptions.workerSrc = './lib/pdf.worker.min.js';
-    // Fallback explícito caso a biblioteca local falhe:
-    // pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 }
 
-// 2. UTILITÁRIO DE LOG CENTRALIZADO
+// Definição global de logAudit (fallback)
 window.logAudit = window.logAudit || function(msg, level = 'info') {
     const prefix = '[UNIFED] ';
-    const levels = { error: 'error', warn: 'warn', success: 'info', info: 'log' };
-    console[levels[level] || 'log'](prefix + msg);
+    if (level === 'error') console.error(prefix + msg);
+    else if (level === 'warn') console.warn(prefix + msg);
+    else if (level === 'success') console.info(prefix + msg);
+    else console.log(prefix + msg);
 };
-const logAudit = window.logAudit;
+const logAudit = window.logAudit; // alias local
 
 window.showToast = window.showToast || function(m, t) { console.log(`[Toast-Fallback] ${t}: ${m}`); alert(m); };
 
@@ -60,6 +63,7 @@ window.updateAnalysisButton = function() {
     }
 };
 
+console.log('UNIFED - PROBATUM SCRIPT v13.12.0-PURE · DORA COMPLIANT · ATIVADO');
 // ============================================================================
 // 1. CONFIGURAÇÃO DO PDF.JS (RETIFICAÇÃO: Local Worker)
 // ============================================================================

@@ -12,10 +12,9 @@
  <script>
 
     (function loadOTSWithFallback() {
-        var scripts = [
-            './lib/opentimestamps.min.js', // 1. Prioridade Local (Resiliência DORA)
-            'https://unpkg.com/javascript-opentimestamps@0.0.12/dist/opentimestamps.min.js',
-            'https://cdn.jsdelivr.net/npm/javascript-opentimestamps@0.0.12/dist/opentimestamps.min.js'
+       var scripts = [
+            './lib/opentimestamps.min.js', // 1. Prioridade Local (Requer upload físico do ficheiro para a pasta lib)
+            'https://cdnjs.cloudflare.com/ajax/libs/opentimestamps/0.4.6/opentimestamps.min.js' // 2. CDN estrita com cabeçalhos ACAO validados
         ];
         var current = 0;
 
