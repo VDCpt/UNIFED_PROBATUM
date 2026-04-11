@@ -677,8 +677,10 @@
                     if (typeof removeZeroDac7Kpis === 'function') removeZeroDac7Kpis();
                     if (document.getElementById('pureDashboard')) {
                         if (typeof updateAuxiliaryUI === 'function') updateAuxiliaryUI();
-                        document.querySelectorAll('.chart-section').forEach(section => { section.style.display = 'block'; section.style.height = '400px'; });
-                    } else {
+                        document.querySelectorAll('.chart-section').forEach(section => { 
+                        section.style.display = 'block'; 
+                        section.style.height = 'auto'; // Permite que a div colapse se não tiver conteúdo
+                     });
                         if (typeof Chart === 'undefined') {
                             document.querySelectorAll('.chart-section').forEach(section => section.style.display = 'none');
                             console.warn('[UNIFED] Chart.js não disponível – secções de gráfico ocultadas.');
