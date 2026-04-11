@@ -17,6 +17,54 @@
  */
 
 'use strict';
+
+// [RETIFICAÇÃO] Centralização do Log Forense para evitar colisões
+window.logAudit = window.logAudit || function(msg, level = 'info') {
+    const prefix = '[UNIFED] ';
+    const levels = { error: 'error', warn: 'warn', success: 'info', info: 'log' };
+    console[levels[level] || 'log'](prefix + msg);
+};
+
+window.showToast = window.showToast || function(m, t) { console.log(`[Toast-Fallback] ${t}: ${m}`); };
+
+// [FIX CORRETIVO] Declaração Global Forçada
+window.updateAnalysisButton = function() {
+    const btn = document.getElementById('analyzeBtn');
+    if (btn) {
+        const sys = window.UNIFEDSystem;
+        const hasClient = !!(sys && sys.client);
+        const hasFiles = sys && sys.documents && Object.values(sys.documents).some(d => d.files?.length > 0);
+        btn.disabled = !(hasClient && hasFiles);
+    }
+};
+
+console.log('UNIFED - PROBATUM SCRIPT v13.12.0-PURE · DORA COMPLIANT · ATIVADO');
+
+// ============================================================================
+// 0. HANDSHAKE DE INFRAESTRUTURA — OpenTimestamps (Blockchain Level 3)
+// ============================================================================
+(function initOTSHandshake() {
+    window.addEventListener('load', function () {
+        const ots = window.OpenTimestamps || window.opentimestamps;
+        if (ots) {
+            window.OpenTimestamps = ots;
+            console.log('[UNIFED-OTS] ✅ Handshake OK — OTS disponível.');
+        } else {
+            console.warn('[UNIFED-OTS] ⚠️ Modo de Segurança: OTS indisponível (Bloqueio de Rede). Nível 2 Ativo.');
+        }
+    });
+})();
+
+// ============================================================================
+// 1. CONFIGURAÇÃO DO PDF.JS (RETIFICAÇÃO: Local Worker)
+// ============================================================================
+const pdfjsLib = window['pdfjs-dist/build/pdf'];
+if (pdfjsLib) {
+    // Substituir por caminho local se possível para garantir execução Offline em Juízo
+    pdfjsLib.GlobalWorkerOptions.workerSrc = './lib/pdf.worker.min.js'; 
+}
+
+'use strict';
 // Definição global de logAudit (fallback)
 window.logAudit = window.logAudit || function(msg, level = 'info') {
     const prefix = '[UNIFED] ';
