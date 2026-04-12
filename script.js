@@ -8,28 +8,24 @@
  * 3. Melhorada robustez do carregamento OTS
  * 4. Mantida a lógica de Smoking Gun (omissão declarativa)
  * 5. Adicionada função forceRevealSmokingGun() para garantir visibilidade dos módulos críticos.
- * 6. (v13.12.1-FIX) Substituição de console.error/warn por console.log com CSS (higiene de falsos positivos)
- * 7. (v13.12.1-FIX) Injeção de override forçado de visibilidade para elementos de alerta no final da auditoria
  * ====================================================================
  */
 
 'use strict';
 
 // [RETIFICAÇÃO] Centralização do Log Forense para evitar colisões
-// ============================================================================
-// TASK 1: HIGIENE DE CONSOLA - substitui console.error/warn por console.log estilizado
-// ============================================================================
 window.logAudit = window.logAudit || function(msg, level = 'info') {
     const prefix = '[UNIFED] ';
-    const levels = { error: 'error', warn: 'warn', success: 'info', info: 'log' };
-    const method = levels[level] || 'log';
-    if (method === 'error') {
-        console.log(`%c${prefix}${msg}`, 'color: #ef4444; font-weight: bold;');
-    } else if (method === 'warn') {
-        console.log(`%c${prefix}${msg}`, 'color: #f59e0b; font-weight: bold;');
-    } else {
-        console[method](prefix + msg);
-    }
+    const styles = {
+        error:   'color:#ef4444;font-weight:bold;',
+        warn:    'color:#f59e0b;font-weight:bold;',
+        success: 'color:#22c55e;font-weight:bold;',
+        info:    'color:#60a5fa;',
+    };
+    // [TASK1-FIX] Todos os níveis emitem via console.log com CSS styling.
+    // Elimina falsos positivos do browser ("Compreenda este erro") causados
+    // por console.error/warn em achados periciais de negócio.
+    console.log('%c' + prefix + msg, styles[level] || styles.info);
 };
 
 window.showToast = window.showToast || function(m, t) { console.log(`[Toast-Fallback] ${t}: ${m}`); };
@@ -45,13 +41,17 @@ if (window.pdfjsLib) {
     window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 }
 
-// Definição global de logAudit (fallback)
+// Definição global de logAudit (fallback — nunca activa em prod graças ao ||=)
+// [TASK1-FIX] Mantida em paridade com a definição primária acima.
 window.logAudit = window.logAudit || function(msg, level = 'info') {
     const prefix = '[UNIFED] ';
-    if (level === 'error') console.error(prefix + msg);
-    else if (level === 'warn') console.warn(prefix + msg);
-    else if (level === 'success') console.info(prefix + msg);
-    else console.log(prefix + msg);
+    const styles = {
+        error:   'color:#ef4444;font-weight:bold;',
+        warn:    'color:#f59e0b;font-weight:bold;',
+        success: 'color:#22c55e;font-weight:bold;',
+        info:    'color:#60a5fa;',
+    };
+    console.log('%c' + prefix + msg, styles[level] || styles.info);
 };
 const logAudit = window.logAudit; // alias local
 
@@ -4185,8 +4185,26 @@ function simulateUpload(type, count) {
 // ============================================================================
 // 22. MOTOR DE PERÍCIA FORENSE (v13.12.1) COM CORREÇÕES
 // ============================================================================
+// [TASK3-FIX] Guarda de re-entrada (mutex booleano).
+// Previne invocações recursivas despoletadas por DOM mutations ou
+// event listeners em script_injection.js/nexus.js após forensicDataSynchronization().
+// Custo: O(1). Impacto nas fórmulas: NULO.
+if (typeof window._UNIFED_AUDIT_RUNNING === 'undefined') {
+    window._UNIFED_AUDIT_RUNNING = false;
+}
+
 function performAudit() {
-    if (!UNIFEDSystem.client) return showToast(currentLang === 'en' ? 'Register the taxpayer first.' : 'Registe o sujeito passivo primeiro.', 'error');
+    // Guard de re-entrada: rejeita silenciosamente chamadas concorrentes
+    if (window._UNIFED_AUDIT_RUNNING === true) {
+        console.log('%c[UNIFED] ⚠ performAudit() bloqueada por mutex — ciclo de re-entrada prevenido.', 'color:#f59e0b;font-weight:bold;');
+        return;
+    }
+    window._UNIFED_AUDIT_RUNNING = true;
+
+    if (!UNIFEDSystem.client) {
+        window._UNIFED_AUDIT_RUNNING = false;
+        return showToast(currentLang === 'en' ? 'Register the taxpayer first.' : 'Registe o sujeito passivo primeiro.', 'error');
+    }
 
     ForensicLogger.addEntry('AUDIT_STARTED');
 
@@ -4323,28 +4341,6 @@ function performAudit() {
 
             logAudit(`✅ Perícia BIG DATA v13.12.1 concluída em ${duration}ms.`, 'success');
 
-            // ============================================================================
-            // TASK 2: OVERRIDE FORÇADO DE VISIBILIDADE (DOM) - INJECTADO AQUI
-            // ============================================================================
-            const targetNodes = [
-                '#revenueGapCard', '#expenseGapCard', '#omissaoDespesasPctCard',
-                '#quantumBox', '#bigDataAlert', '#jurosCard', '#discrepancy5Card',
-                '#agravamentoBrutoCard', '#ircCard', '#iva6Card', '#iva23Card',
-                '#asfixiaFinanceiraCard'
-            ];
-            targetNodes.forEach(selector => {
-                const el = document.querySelector(selector);
-                if (el) {
-                    el.style.setProperty('display', 'block', 'important');
-                    el.style.setProperty('opacity', '1', 'important');
-                    el.style.setProperty('visibility', 'visible', 'important');
-                }
-            });
-            // Forçar ajuste de altura do contentor pai
-            const wrapper = document.getElementById('pureDashboardWrapper');
-            if(wrapper) wrapper.style.setProperty('height', 'auto', 'important');
-            // ============================================================================
-
             ForensicLogger.addEntry('AUDIT_COMPLETED', {
                 duration,
                 discrepancy: UNIFEDSystem.analysis.crossings.discrepanciaCritica,
@@ -4364,11 +4360,14 @@ function performAudit() {
             setTimeout(() => { forceRevealSmokingGun(); }, 500);
 
         } catch (error) {
-            console.error('Erro na perícia:', error);
+            // [TASK3-FIX] Libertar mutex também no catch — evita deadlock permanente em erro de runtime
+            window._UNIFED_AUDIT_RUNNING = false;
             logAudit(`❌ ERRO CRÍTICO NA PERÍCIA: ${error.message}`, 'error');
             ForensicLogger.addEntry('AUDIT_ERROR', { error: error.message });
             showToast('Erro durante a execução da perícia. Verifique os ficheiros carregados.', 'error');
         } finally {
+            // [TASK3-FIX] Libertar mutex no finally — garante libertação em qualquer caminho de execução
+            window._UNIFED_AUDIT_RUNNING = false;
             if (analyzeBtn) {
                 analyzeBtn.disabled = false;
                 const _analyzeLbl = document.getElementById('btnAnalyze');
@@ -4545,13 +4544,15 @@ function enhanceTriangulationMatrix() {
 
 // ============================================================================
 // FORCE REVEAL SMOKING GUN (v13.12.1-FIX) - VERSÃO EXPANDIDA
+// [TASK2-FIX] Incorpora a lista completa de seletores críticos do dashboard.
 // ============================================================================
 function forceRevealSmokingGun() {
+    // — IDs de módulos críticos (por getElementById) —
     const criticalModules = [
         'pureDiscCard', 'pureZonaCinzentaCard', 'pureVerdictCard', 'card-asfixia',
         'smoking-gun-1', 'smoking-gun-2', 'triangulationMatrixContainer'
     ];
-    
+
     criticalModules.forEach(id => {
         const el = document.getElementById(id);
         if (el) {
@@ -4561,6 +4562,29 @@ function forceRevealSmokingGun() {
         }
     });
 
+    // — FORCED REVEAL HOOK v13.12.1-FIX —
+    // Seletores CSS de cards de métricas que persistem ocultos por
+    // conflito de especificidade (display:none !important no CSS base).
+    const targetNodes = [
+        '#revenueGapCard', '#expenseGapCard', '#omissaoDespesasPctCard',
+        '#quantumBox', '#bigDataAlert', '#jurosCard', '#discrepancy5Card',
+        '#agravamentoBrutoCard', '#ircCard', '#iva6Card', '#iva23Card',
+        '#asfixiaFinanceiraCard'
+    ];
+    targetNodes.forEach(selector => {
+        const el = document.querySelector(selector);
+        if (el) {
+            el.style.setProperty('display', 'block', 'important');
+            el.style.setProperty('opacity', '1', 'important');
+            el.style.setProperty('visibility', 'visible', 'important');
+        }
+    });
+
+    // — Forçar ajuste de altura do contentor pai —
+    const wrapper = document.getElementById('pureDashboardWrapper');
+    if (wrapper) wrapper.style.setProperty('height', 'auto', 'important');
+
+    // — Classes utilitárias de ocultação —
     const smokingGunWrappers = document.querySelectorAll('.smoking-gun-module, .pure-sg-critical, .pure-sg-secondary, [id*="smoking-gun"]');
     smokingGunWrappers.forEach(wrapper => {
         wrapper.style.setProperty('display', 'block', 'important');
@@ -8309,16 +8333,21 @@ window.resetAuxiliaryData = resetAuxiliaryData;
 
 // ============================================================================
 // 31.A FORCE REVEAL SMOKING GUN (v13.12.1-FIX)
+// [TASK2-FIX] Esta declaração vence por hoisting (última no ficheiro).
+// Lista completa de seletores — IDs por getElementById + CSS por querySelector.
 // ============================================================================
 function forceRevealSmokingGun() {
-    // 1. Força a exibição dos Módulos Críticos no pureDashboard
+    // 1. Módulos críticos legacy (por getElementById)
     const criticalModules = [
-        'pureDiscCard', 
-        'pureZonaCinzentaCard', 
-        'pureVerdictCard', 
-        'card-asfixia'
+        'pureDiscCard',
+        'pureZonaCinzentaCard',
+        'pureVerdictCard',
+        'card-asfixia',
+        'smoking-gun-1',
+        'smoking-gun-2',
+        'triangulationMatrixContainer'
     ];
-    
+
     criticalModules.forEach(id => {
         const el = document.getElementById(id);
         if (el) {
@@ -8328,7 +8357,35 @@ function forceRevealSmokingGun() {
         }
     });
 
-    // 2. Renderiza a lógica de alerta do Risco Fiscal (Art. 119.º)
+    // 2. FORCED REVEAL HOOK v13.12.1-FIX — cards de métricas do dashboard
+    // Sobrepõe display:none !important proveniente do CSS base.
+    const targetNodes = [
+        '#revenueGapCard', '#expenseGapCard', '#omissaoDespesasPctCard',
+        '#quantumBox', '#bigDataAlert', '#jurosCard', '#discrepancy5Card',
+        '#agravamentoBrutoCard', '#ircCard', '#iva6Card', '#iva23Card',
+        '#asfixiaFinanceiraCard'
+    ];
+    targetNodes.forEach(selector => {
+        const el = document.querySelector(selector);
+        if (el) {
+            el.style.setProperty('display', 'block', 'important');
+            el.style.setProperty('opacity', '1', 'important');
+            el.style.setProperty('visibility', 'visible', 'important');
+        }
+    });
+
+    // 3. Forçar ajuste de altura do contentor pai (evita overflow oculto)
+    const wrapper = document.getElementById('pureDashboardWrapper');
+    if (wrapper) wrapper.style.setProperty('height', 'auto', 'important');
+
+    // 4. Classes utilitárias de ocultação (Bootstrap / Tailwind / custom)
+    const hiddenByClass = document.querySelectorAll('.smoking-gun-module, .pure-sg-critical, .pure-sg-secondary, [id*="smoking-gun"]');
+    hiddenByClass.forEach(el => {
+        el.style.setProperty('display', 'block', 'important');
+        el.classList.remove('hidden', 'd-none', 'invisible');
+    });
+
+    // 5. Renderiza a lógica de alerta do Risco Fiscal (Art. 119.º RGIT)
     logAudit('[UNIFED] Módulos de Prova Material (Smoking Gun e Colarinho Branco) revelados e fixados.', 'success');
 }
 
