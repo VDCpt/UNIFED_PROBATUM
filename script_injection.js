@@ -966,3 +966,56 @@
     })();
 
 })();
+
+// ============================================================================
+// FORCE REVEAL SMOKING GUN – EXPANSÃO DE VISIBILIDADE (v13.12.2-i18n)
+// ============================================================================
+// Assegura que o módulo White-Collar e Zona Cinzenta são exibidos com !important
+if (typeof window.forceRevealSmokingGun === 'function') {
+    const originalForceReveal = window.forceRevealSmokingGun;
+    window.forceRevealSmokingGun = function() {
+        if (originalForceReveal) originalForceReveal();
+        // Expansão para módulos críticos adicionais
+        const extraModules = [
+            'pureZonaCinzentaCard',
+            'white-collar-module'
+        ];
+        extraModules.forEach(selector => {
+            const el = document.getElementById(selector);
+            if (el) {
+                el.style.setProperty('display', 'block', 'important');
+                el.style.setProperty('opacity', '1', 'important');
+                el.style.setProperty('visibility', 'visible', 'important');
+            } else {
+                // Fallback para classe CSS
+                const elsByClass = document.querySelectorAll('.' + selector);
+                elsByClass.forEach(clsEl => {
+                    clsEl.style.setProperty('display', 'block', 'important');
+                    clsEl.style.setProperty('opacity', '1', 'important');
+                    clsEl.style.setProperty('visibility', 'visible', 'important');
+                });
+            }
+        });
+        console.log('[UNIFED] forceRevealSmokingGun expandido: white-collar e zona cinzenta forçados.');
+    };
+} else {
+    window.forceRevealSmokingGun = function() {
+        const extraModules = ['pureZonaCinzentaCard', 'white-collar-module'];
+        extraModules.forEach(selector => {
+            const el = document.getElementById(selector);
+            if (el) {
+                el.style.setProperty('display', 'block', 'important');
+                el.style.setProperty('opacity', '1', 'important');
+                el.style.setProperty('visibility', 'visible', 'important');
+            } else {
+                const elsByClass = document.querySelectorAll('.' + selector);
+                elsByClass.forEach(clsEl => {
+                    clsEl.style.setProperty('display', 'block', 'important');
+                    clsEl.style.setProperty('opacity', '1', 'important');
+                    clsEl.style.setProperty('visibility', 'visible', 'important');
+                });
+            }
+        });
+        console.log('[UNIFED] forceRevealSmokingGun criado e expandido: white-collar e zona cinzenta forçados.');
+    };
+}

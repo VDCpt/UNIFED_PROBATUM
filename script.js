@@ -5034,6 +5034,35 @@ function updateDashboard() {
     }
 
     activateIntermittentAlerts(); // Agora chama a versão estática abaixo
+
+    // ============================================================================
+    // HIDRATAÇÃO DOS ELEMENTOS DO PAINEL PURE (SMOKING GUN E ZONA CINZENTA)
+    // ============================================================================
+    // Mapeamento direto dos IDs do panel.html
+    const pureMapping = {
+        'pure-sg2-btor-val': cross.btor,
+        'pure-sg2-btf-val': cross.btf,
+        'pure-disc-c2': cross.discrepanciaCritica,
+        'pure-sg1-saft-val': totals.saftBruto,
+        'pure-sg1-dac7-val': totals.dac7TotalPeriodo,
+        'pure-disc-saft-dac7': cross.discrepanciaSaftVsDac7,
+        'pure-disc-c2-pct': cross.percentagemOmissao,
+        'pure-disc-saft-pct': cross.percentagemSaftVsDac7
+    };
+    for (const [id, value] of Object.entries(pureMapping)) {
+        const el = document.getElementById(id);
+        if (el) {
+            if (typeof value === 'number') {
+                if (id.includes('pct')) {
+                    el.textContent = value.toFixed(2) + '%';
+                } else {
+                    el.textContent = formatCurrency(value);
+                }
+            } else {
+                el.textContent = value;
+            }
+        }
+    }
 }
 
 // 2. SUBSTITUIR A FUNÇÃO activateIntermittentAlerts() (AGORA ESTÁTICA)
@@ -6699,7 +6728,7 @@ window.activeForensicSession = { sessionId: UNIFEDSystem.sessionId, masterHash: 
                 currentLang === 'pt'
                     ? 'Análise Técnica: A UNIFED-PROBATUM identificou uma divergência estrutural entre o Fluxo de Caixa Real ' +
                       '(Ledger) e o Reporte Fiscal (SAF-T/DAC7). Dado que a plataforma detém o Monopólio da Emissão Documental ' +
-                      '(Art. 36.º, n.º 11 do CIVA) e o controlo exclusivo sobre o algoritmo de cálculo de comissões, o parceiro ' +
+                      '(Art. 36.º, n.º 11 CIVA) e o controlo exclusivo sobre o algoritmo de cálculo de comissões, o parceiro ' +
                       'encontra-se numa situação de indefesa técnica. A plataforma atua como "Black Box" fiscal — o sujeito ' +
                       'passivo não tem acesso ao código-fonte nem aos logs brutos de transação que geram a faturação delegada.'
                     : 'Technical Analysis: UNIFED-PROBATUM identified a structural divergence between the Real Cash Flow ' +
