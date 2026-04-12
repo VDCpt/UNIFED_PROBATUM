@@ -827,6 +827,54 @@ window.UNIFEDSystem = window.UNIFEDSystem || {};
 })();
 
 // ============================================================================
+// MÓDULO 5 · BILINGUAL INTEGRITY ENFORCER — Anti-Layout-Thrashing
+// ============================================================================
+// EV-003 · CORRIGIDO v13.12.1-FIX
+// Mecanismo de falha anterior: el.innerText !== targetText retornava sempre
+// verdadeiro devido a espaços em branco invisíveis herdados da formatação HTML,
+// forçando reescritas infinitas → cada reescrita disparava nova mutação →
+// unifed_triada_export.js repintava gráficos ATF → Layout Thrashing / "piscas".
+// Correção: (1) obs.disconnect() antes de manipular o DOM;
+//           (2) textContent.trim() imune a quebras de linha HTML;
+//           (3) obs.observe() reconecta após mutação autorizada.
+// ============================================================================
+(function _nexusBilingualIntegrity() {
+    'use strict';
+
+    const _enforceBilingualIntegrity = function() {
+        const observer = new MutationObserver((mutations, obs) => {
+            // 1. Desconectar temporariamente para evitar recursividade (Loop Break)
+            obs.disconnect();
+
+            const lang = document.documentElement.lang === 'en' ? 'en' : 'pt';
+            document.querySelectorAll('[data-' + lang + ']').forEach(el => {
+                const targetText = el.getAttribute('data-' + lang).trim();
+                // 2. Utilizar textContent.trim() para imunidade a quebras de linha HTML
+                if (el.textContent.trim() !== targetText && !el.querySelector('i')) {
+                    el.textContent = targetText;
+                }
+            });
+
+            // 3. Reconectar após a mutação autorizada
+            obs.observe(document.body, { childList: true, subtree: true });
+        });
+
+        observer.observe(document.body, { childList: true, subtree: true });
+        console.info('[NEXUS·M5] ✅ Bilingual Integrity Enforcer ativo — MutationObserver anti-recursivo (textContent.trim()).');
+    };
+
+    // Instalar após o DOM estar pronto para evitar erros de arranque
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', _enforceBilingualIntegrity);
+    } else {
+        _enforceBilingualIntegrity();
+    }
+
+    // Expor para uso externo (ex: após troca de idioma forçada via langToggleBtn)
+    window.NEXUS_enforceBilingualIntegrity = _enforceBilingualIntegrity;
+})();
+
+// ============================================================================
 // EXTENSÃO NEXUS v13.12.1-FIX · Monitorização passiva, fallback de integridade
 // ============================================================================
 (function _nexusCore() {
@@ -910,4 +958,4 @@ window.UNIFEDSystem = window.UNIFEDSystem || {};
     console.log('[NEXUS] Camada adaptativa carregada – pronta para ambiente air-gapped.');
 })();
 
-console.info('%c[NEXUS · UNIFED-PROBATUM · v13.12.1-FIX]\n' + '%c  M1 · Passive Network Observer       — Proxy Wrapper Transparente ATIVO (ISO/IEC 27037:2012)\n' + '  M2 · RAG Jurisprudencial DOCX         — Hook exportDOCX() instalado\n' + '  M3 · Motor Preditivo ATF (6M)         — Hook openATFModal() instalado\n' + '  M4 · Blockchain Evidence Explorer     — MutationObserver #custodyModal ativo\n' + '  M5 · Extensão Core v13.12.1-FIX       — Fallback de integridade e forceReveal\n' + '  M6 · Integridade Visual               — sealCanvas() disponível\n' + '  Modo: Read-Only · DORA (UE) 2022/2554 · ISO/IEC 27037:2012 · Art. 125.o CPP', 'color:#00E5FF;font-family:Courier New,monospace;font-weight:700;font-size:0.9em;', 'color:rgba(0,229,255,0.65);font-family:Courier New,monospace;font-size:0.8em;');
+console.info('%c[NEXUS · UNIFED-PROBATUM · v13.12.1-FIX]\n' + '%c  M1 · Passive Network Observer       — Proxy Wrapper Transparente ATIVO (ISO/IEC 27037:2012)\n' + '  M2 · RAG Jurisprudencial DOCX         — Hook exportDOCX() instalado\n' + '  M3 · Motor Preditivo ATF (6M)         — Hook openATFModal() instalado\n' + '  M4 · Blockchain Evidence Explorer     — MutationObserver #custodyModal ativo\n' + '  M5 · Bilingual Integrity Enforcer     — MutationObserver anti-recursivo (EV-003)\n' + '  M6 · Extensão Core v13.12.1-FIX       — Fallback de integridade e forceReveal\n' + '  M7 · Integridade Visual               — sealCanvas() disponível\n' + '  Modo: Read-Only · DORA (UE) 2022/2554 · ISO/IEC 27037:2012 · Art. 125.o CPP', 'color:#00E5FF;font-family:Courier New,monospace;font-weight:700;font-size:0.9em;', 'color:rgba(0,229,255,0.65);font-family:Courier New,monospace;font-size:0.8em;');
