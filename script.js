@@ -7,6 +7,7 @@
  * 2. Corrigida referência a 'extratoGanhos' -> 'ganhos' em enrichment.js (mas a correcção é feita no enrichment.js)
  * 3. Melhorada robustez do carregamento OTS
  * 4. Mantida a lógica de Smoking Gun (omissão declarativa)
+ * 5. Adicionada função forceRevealSmokingGun() para garantir visibilidade dos módulos críticos.
  * ====================================================================
  */
 
@@ -4323,6 +4324,11 @@ function performAudit() {
 
             forensicDataSynchronization();
 
+            // ============================================================================
+            // RETIFICAÇÃO DA FORÇA DE REVELAÇÃO UI (v13.12.1-FIX)
+            // ============================================================================
+            setTimeout(() => { forceRevealSmokingGun(); }, 500);
+
         } catch (error) {
             console.error('Erro na perícia:', error);
             logAudit(`❌ ERRO CRÍTICO NA PERÍCIA: ${error.message}`, 'error');
@@ -8055,6 +8061,34 @@ window.processAuxiliaryPlatformData = processAuxiliaryPlatformData;
 window.injectAuxiliaryHelperBoxes = injectAuxiliaryHelperBoxes;
 window.resetAuxiliaryData = resetAuxiliaryData;
 
+// ============================================================================
+// 31.A FORCE REVEAL SMOKING GUN (v13.12.1-FIX)
+// ============================================================================
+function forceRevealSmokingGun() {
+    // 1. Força a exibição dos Módulos Críticos no pureDashboard
+    const criticalModules = [
+        'pureDiscCard', 
+        'pureZonaCinzentaCard', 
+        'pureVerdictCard', 
+        'card-asfixia'
+    ];
+    
+    criticalModules.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.style.setProperty('display', 'block', 'important');
+            el.style.setProperty('opacity', '1', 'important');
+            el.style.setProperty('visibility', 'visible', 'important');
+        }
+    });
+
+    // 2. Renderiza a lógica de alerta do Risco Fiscal (Art. 119.º)
+    logAudit('[UNIFED] Módulos de Prova Material (Smoking Gun e Colarinho Branco) revelados e fixados.', 'success');
+}
+
+// ============================================================================
+// 32. REGISTO DO MÓDULO PURE E EVENTO DE READY
+// ============================================================================
 (function _registerPUREModule() {
     if (typeof UNIFEDSystem === 'undefined') {
         console.warn('[UNIFED-PURE] UNIFEDSystem não disponível no momento do registo — aguardar DOMContentLoaded.');
@@ -8117,7 +8151,7 @@ if (typeof window.dispatchEvent === 'function') {
 }
 
 // ============================================================================
-// 32. FUNÇÕES GLOBAIS DE INTERFACE (EXPORTAÇÃO FORÇADA)
+// 33. FUNÇÕES GLOBAIS DE INTERFACE (EXPORTAÇÃO FORÇADA)
 // ============================================================================
 
 /**

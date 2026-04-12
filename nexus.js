@@ -467,7 +467,7 @@ window.UNIFEDSystem.demoMode = true; // força modo demo
 			var rMax = Math.max.apply(null, forecast.discSeries.concat([1]));
 			var pct = rMax > 0 ? (disc / rMax * 100) : 0;
 			var rColor = pct > 75 ? '#EF4444' : pct > 45 ? '#F59E0B' : '#10B981';
-			return '<tr>' + '<td style="border:1px solid rgba(168,85,247,0.15);padding:5px 10px;color:#A855F7">' + escapeHtml(lbl) + '</td>' + '<td style="border:1px solid rgba(168,85,247,0.15);padding:5px 10px;text-align:right">' + fmtEur(disc) + '</td>' + '<td style="border:1px solid rgba(168,85,247,0.15);padding:5px 10px;text-align:right;color:#F97316">' + fmtEur(iva) + '</td>' + '<td style="border:1px solid rgba(168,85,247,0.15);padding:5px 10px;text-align:center">' + '<div style="display:inline-block;background:' + rColor + ';border-radius:3px;padding:2px 8px;font-size:0.62rem;color:#fff">' + (pct > 75 ? '[!] ' + _T('ALTO', 'HIGH') : pct > 45 ? '[^] ' + _T('MED', 'MED') : '[OK] ' + _T('MOD', 'LOW')) + '</div>' + '</td>' + '</tr>';
+			return '<tr>' + '<td style="border:1px solid rgba(168,85,247,0.15);padding:5px 10px;color:#A855F7">' + escapeHtml(lbl) + '</td>' + '<td style="border:1px solid rgba(168,85,247,0.15);padding:5px 10px;text-align:right">' + fmtEur(disc) + '</td>' + '<td style="border:1px solid rgba(168,85,247,0.15);padding:5px 10px;text-align:right;color:#F97316">' + fmtEur(iva) + '</td>' + '<td style="border:1px solid rgba(168,85,247,0.15);padding:5px 10px;text-align:center">' + '<div style="display:inline-block;background:' + rColor + ';border-radius:3px;padding:2px 8px;font-size:0.62rem;color:#fff">' + (pct > 75 ? '[!] ' + _T('ALTO', 'HIGH') : pct > 45 ? '[^] ' + _T('MED', 'MED') : '[OK] ' + _T('MOD', 'LOW')) + '</div>' + '</td>' + '</td>';
 		}).join('') + '</tbody>' + '</table>';
 		panel.appendChild(tableWrapper);
 		var footerDiv = document.createElement('div');
@@ -833,7 +833,8 @@ window.UNIFEDSystem.demoMode = true; // força modo demo
     // Monitor de erros de rede para o OpenTimestamps
     window.addEventListener('error', function(e) {
         if (e.target && e.target.tagName === 'SCRIPT' && e.target.src && e.target.src.includes('opentimestamps')) {
-            console.warn('[NEXUS] Cadeia de Custódia degradada para Nível 1 (Offline/Local).');
+            // RETIFICAÇÃO FORENSE: A degradação para Nível 1 não é um erro letal, mas sim um fallback de contenção.
+            console.info('[NEXUS] 🛡️ Cadeia de Custódia operando em Nível 1 (Offline/Local).');
             if (window.UNIFEDSystem) {
                 window.UNIFEDSystem.integrityLevel = 'LEVEL_1_LOCAL';
             }

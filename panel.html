@@ -1,20 +1,22 @@
 <!--
   ============================================================================
-  UNIFED - PROBATUM · v13.12.0-PURE · PAINEL DE CASO REAL ANONIMIZADO
+  UNIFED - PROBATUM · v13.12.1-FIX · PAINEL DE CASO REAL ANONIMIZADO
   ============================================================================
-  HIGIENIZAÇÃO DE CONTADORES (2026-04-11):
+  HIGIENIZAÇÃO DE CONTADORES (2026-04-12):
     - Todos os contadores (CTRL, SAF-T, FAT, EXT, DAC7) foram colocados a 0
     - Os placeholders serão preenchidos exclusivamente via script_injection.js
     - Estrutura e fecho de tags verificados e íntegros
+    - Adicionadas diretivas de visibilidade forçada (display:block !important)
+      nos módulos críticos para prevenir ocultação por scripts secundários.
   ============================================================================
 -->
 
-<section id="pureDashboard" class="pure-section" aria-label="Painel Caso Real Anonimizado v13.12.0-PURE">
+<section id="pureDashboard" class="pure-section" aria-label="Painel Caso Real Anonimizado v13.12.1-FIX">
 
   <!-- HEADER DA SECÇÃO -->
   <div class="pure-section-header">
     <div class="pure-section-title">
-      <span class="pure-badge-version" title="Versão / Version">v13.12.0-PURE</span>
+      <span class="pure-badge-version" title="Versão / Version">v13.12.1-FIX</span>
       <span id="pure-title-text"
             data-pt="RECONSTITUIÇÃO DA VERDADE MATERIAL — SESSÃO"
             data-en="RECONSTRUCTION OF MATERIAL TRUTH — SESSION">RECONSTITUIÇÃO DA VERDADE MATERIAL — SESSÃO</span>
@@ -70,7 +72,7 @@
   <div class="pure-card-grid">
 
     <!-- CARTÃO GARANTIDO: RISCO DE ASFIXIA FINANCEIRA -->
-    <div class="pure-card pure-card-warn" id="card-asfixia">
+    <div class="pure-card pure-card-warn" id="card-asfixia" style="display:block !important; opacity:1 !important;">
       <div class="pure-card-title">RISCO DE ASFIXIA FINANCEIRA</div>
       <div class="pure-card-value" id="pure-atf-score-val">--%</div>
       <div class="pure-card-trend">Indicador de Probabilidade de Insolvência Forçada</div>
@@ -126,7 +128,7 @@
     </div>
 
     <!-- PAINEL II – DISCREPÂNCIAS (SMOKING GUN) -->
-    <div class="pure-card pure-card-alert" id="pureDiscCard">
+    <div class="pure-card pure-card-alert" id="pureDiscCard" style="display:block !important; opacity:1 !important;">
       <h3 class="pure-card-title">
         <span class="pure-icon">🔫</span>
         <span id="pure-card2-title"
@@ -134,7 +136,7 @@
               data-en="II. DISCREPANCIES FOUND — CROWN EVIDENCE">II. DISCREPÂNCIAS APURADAS — PROVA RAINHA</span>
       </h3>
       <div class="pure-smoking-guns">
-        <div class="pure-sg pure-sg-critical">
+        <div class="pure-sg pure-sg-critical smoking-gun-module">
           <div class="pure-sg-label" id="pure-sg2-label"
                data-pt="SMOKING GUN 2 — Despesas/Comissões (Extrato) vs Comissões Faturadas (BTF)"
                data-en="SMOKING GUN 2 — Expenses/Commissions (Statement) vs Invoiced Commissions (BTF)">SMOKING GUN 2 — Despesas/Comissões (Extrato) vs Comissões Faturadas (BTF)</div>
@@ -143,7 +145,7 @@
           <div class="pure-sg-delta"><span id="pure-sg2-delta-label" data-pt="OMISSÃO:" data-en="OMISSION:">OMISSÃO:</span><span id="pure-disc-c2" class="pure-delta-value">€ 0,00</span><span id="pure-disc-c2-pct" class="pure-delta-pct">0,00%</span></div>
           <div class="pure-sg-legal" id="pure-sg2-legal" data-pt="Art. 36.º n.º 11 CIVA · Art. 119.º RGIT" data-en="Art. 36(11) CIVA · Art. 119 RGIT">Art. 36.º n.º 11 CIVA · Art. 119.º RGIT</div>
         </div>
-        <div class="pure-sg pure-sg-secondary">
+        <div class="pure-sg pure-sg-secondary smoking-gun-module">
           <div class="pure-sg-label" id="pure-sg1-label"
                data-pt="SMOKING GUN 1 — SAF-T Bruto vs Reportado DAC7 (AT)"
                data-en="SMOKING GUN 1 — SAF-T Gross vs DAC7 Reported (TA)">SMOKING GUN 1 — SAF-T Bruto vs Reportado DAC7 (AT)</div>
@@ -179,7 +181,7 @@
     </div>
 
     <!-- PAINEL IV – ZONA CINZENTA -->
-    <div class="pure-card" id="pureZonaCinzentaCard">
+    <div class="pure-card white-collar-module" id="pureZonaCinzentaCard" style="display:block !important; opacity:1 !important;">
       <h3 class="pure-card-title"><span class="pure-icon">🔍</span><span id="pure-card4-title" data-pt="IV. ZONA CINZENTA — VALORES NÃO SUJEITOS A COMISSÃO (ISOLADOS)" data-en="IV. GREY ZONE — VALUES NOT SUBJECT TO COMMISSION (ISOLATED)">IV. ZONA CINZENTA — VALORES NÃO SUJEITOS A COMISSÃO (ISOLADOS)</span></h3>
       <p class="pure-zc-intro" id="pure-zc-intro"><span id="pure-zc-intro-text" data-pt="O sistema isolou" data-en="The system isolated">O sistema isolou</span><strong id="pure-zc-amount">€ 451,00</strong><span id="pure-zc-intro-end" data-pt="em fluxos não sujeitos a comissão pela plataforma (Campanhas + Gorjetas — mês de Outubro). A reconciliação DAC7 deve verificar se estes valores foram indevidamente incluídos na base de reporte à AT, explicando parte da discrepância C1." data-en="in flows not subject to commission by the platform (Campaigns + Tips — October month). DAC7 reconciliation must verify whether these values were improperly included in the reporting base to the TA, explaining part of the C1 discrepancy.">em fluxos não sujeitos a comissão pela plataforma (Campanhas + Gorjetas — mês de Outubro). A reconciliação DAC7 deve verificar se estes valores foram indevidamente incluídos na base de reporte à AT, explicando parte da discrepância C1.</span></p>
       <div class="pure-zc-grid">
@@ -213,7 +215,7 @@
     </div>
   </div>
 
- <div style="display:none;" aria-hidden="true">
+  <div style="display:none;" aria-hidden="true">
     <div id="pure-verdict-text"></div>
     <div id="pure-timestamp-ots"></div>
     <div id="pure-blockchain-status"></div>
