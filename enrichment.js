@@ -1069,6 +1069,12 @@ function openATFModal() {
                         }
                     }
                 });
+                // ============================================================
+                // RETIFICAÇÃO: Aplicar selo de integridade visual no canvas do gráfico
+                // ============================================================
+                if (window.UNIFEDSystem && window.UNIFEDSystem.utils && window.UNIFEDSystem.utils.sealCanvas) {
+                    window.UNIFEDSystem.utils.sealCanvas('atfChartCanvas');
+                }
             }
         } catch (cErr) {
             console.warn('[UNIFED-ATF] \u26a0 Chart.js indisponivel:', cErr.message);

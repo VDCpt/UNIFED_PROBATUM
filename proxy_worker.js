@@ -18,6 +18,7 @@
  *   · A chave é lida exclusivamente da variável de ambiente ANTHROPIC_API_KEY.
  *   · O proxy OTS restringe os domínios permitidos (whitelist) para evitar abuso.
  *   · Rate limiting recomendado via Cloudflare Rate Limiting Rules.
+ *   · CORS com whitelist estrita (apenas domínios oficiais).
  *
  * DEPLOY:
  *   1. wrangler deploy (ou Cloudflare Dashboard → Workers → Novo Worker)
@@ -25,7 +26,7 @@
  *   3. Configurar Custom Domain: api.unifed.com → este Worker
  *   4. (Opcional) Adicionar regra de Rate Limiting: 60 req/min por IP
  *
- * CONFORMIDADE: DORA (UE) 2022/2554 · RGPD · ISO/IEC 27037:2012
+ * CONFORMIDADE: DORA (UE) 2022/2554 · RGPD · ISO/IEC 27037:2012 · eIDAS
  * ============================================================================
  */
 
@@ -40,6 +41,13 @@ const ALLOWED_OTS_DOMAINS = [
     'github.com',
     'cdn.skypack.dev',
     'esm.sh'
+];
+
+// Whitelist de origens CORS permitidas (segurança estrita)
+const ALLOWED_CORS_ORIGINS = [
+    'https://unifed.com',
+    'https://api.unifed.com'
+    // 'http://localhost:5500'   // Descomentar apenas para desenvolvimento
 ];
 
 // ES Modules format — obrigatório para Cloudflare Workers (module workers)
@@ -58,7 +66,7 @@ export default {
         if (request.method === 'OPTIONS') {
             return new Response(null, {
                 status: 204,
-                headers: _corsHeaders(request)
+                headers: getHeaders(request)
             });
         }
 
@@ -71,7 +79,10 @@ export default {
                 service: 'UNIFED-API-Gateway'
             }), {
                 status: 200,
-                headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+                headers: {
+                    ...getHeaders(request),
+                    'Content-Type': 'application/json'
+                }
             });
         }
 
@@ -82,7 +93,10 @@ export default {
             if (!targetUrlParam) {
                 return new Response(JSON.stringify({ error: 'Missing ?url parameter' }), {
                     status: 400,
-                    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+                    headers: {
+                        ...getHeaders(request),
+                        'Content-Type': 'application/json'
+                    }
                 });
             }
 
@@ -92,7 +106,10 @@ export default {
             } catch (_) {
                 return new Response(JSON.stringify({ error: 'Invalid URL parameter' }), {
                     status: 400,
-                    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+                    headers: {
+                        ...getHeaders(request),
+                        'Content-Type': 'application/json'
+                    }
                 });
             }
 
@@ -100,7 +117,10 @@ export default {
             if (targetUrl.protocol !== 'https:' && targetUrl.protocol !== 'http:') {
                 return new Response(JSON.stringify({ error: 'Only HTTP/HTTPS allowed' }), {
                     status: 403,
-                    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+                    headers: {
+                        ...getHeaders(request),
+                        'Content-Type': 'application/json'
+                    }
                 });
             }
 
@@ -108,7 +128,10 @@ export default {
                 console.warn(`[UNIFED-PROXY] Domínio não autorizado no proxy OTS: ${targetUrl.hostname}`);
                 return new Response(JSON.stringify({ error: 'Domain not allowed' }), {
                     status: 403,
-                    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+                    headers: {
+                        ...getHeaders(request),
+                        'Content-Type': 'application/json'
+                    }
                 });
             }
 
@@ -119,9 +142,12 @@ export default {
                     }
                 });
 
-                // Re-encapsular com cabeçalhos permissivos para evitar CORB e resolver net::ERR_NAME_NOT_RESOLVED
+                // Re-encapsular com cabeçalhos permissivos e seguros
                 const newHeaders = new Headers(otsResponse.headers);
-                newHeaders.set('Access-Control-Allow-Origin', '*');
+                const corsHeaders = getHeaders(request);
+                Object.keys(corsHeaders).forEach(key => {
+                    newHeaders.set(key, corsHeaders[key]);
+                });
                 // Preservar o Content-Type original ou forçar JS quando aplicável
                 let contentType = otsResponse.headers.get('Content-Type');
                 if (!contentType || contentType.includes('text/plain')) {
@@ -144,7 +170,10 @@ export default {
                 console.error('[UNIFED-PROXY] Erro ao buscar recurso externo:', err.message);
                 return new Response(JSON.stringify({ error: 'OTS proxy fetch failed', detail: err.message }), {
                     status: 502,
-                    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+                    headers: {
+                        ...getHeaders(request),
+                        'Content-Type': 'application/json'
+                    }
                 });
             }
         }
@@ -153,7 +182,10 @@ export default {
         if (request.method !== 'POST') {
             return new Response(JSON.stringify({ error: 'Method Not Allowed' }), {
                 status: 405,
-                headers: { ..._corsHeaders(request), 'Content-Type': 'application/json' }
+                headers: {
+                    ...getHeaders(request),
+                    'Content-Type': 'application/json'
+                }
             });
         }
 
@@ -165,7 +197,10 @@ export default {
                 hint: 'Set ANTHROPIC_API_KEY in Cloudflare Worker environment variables.'
             }), {
                 status: 503,
-                headers: { ..._corsHeaders(request), 'Content-Type': 'application/json' }
+                headers: {
+                    ...getHeaders(request),
+                    'Content-Type': 'application/json'
+                }
             });
         }
 
@@ -176,7 +211,10 @@ export default {
         } catch (_parseErr) {
             return new Response(JSON.stringify({ error: 'Invalid JSON payload.' }), {
                 status: 400,
-                headers: { ..._corsHeaders(request), 'Content-Type': 'application/json' }
+                headers: {
+                    ...getHeaders(request),
+                    'Content-Type': 'application/json'
+                }
             });
         }
 
@@ -203,15 +241,18 @@ export default {
                 detail: fetchErr.message
             }), {
                 status: 502,
-                headers: { ..._corsHeaders(request), 'Content-Type': 'application/json' }
+                headers: {
+                    ...getHeaders(request),
+                    'Content-Type': 'application/json'
+                }
             });
         }
 
-        // ── 8. REENCAMINHAR RESPOSTA + CABEÇALHOS CORS ────────────────────────
+        // ── 8. REENCAMINHAR RESPOSTA + CABEÇALHOS CORS E SEGURANÇA ────────────
         const responseBody    = await upstreamResponse.arrayBuffer();
         const responseHeaders = new Headers(upstreamResponse.headers);
 
-        const cors = _corsHeaders(request);
+        const cors = getHeaders(request);
         Object.keys(cors).forEach(function(key) {
             responseHeaders.set(key, cors[key]);
         });
@@ -224,50 +265,40 @@ export default {
 };
 
 // ============================================================================
-// UTILITÁRIO: _corsHeaders(request)
-// Gera os cabeçalhos CORS correctos com Whitelisting estrito de origens.
+// UTILITÁRIO: getHeaders(request)
+// Gera os cabeçalhos CORS correctos com Whitelisting estrito de origens
+// e adiciona cabeçalhos de segurança OWASP.
 //
-// CORS HARDENING (Achado A7 — Auditoria AUDIT-2ND-2026-04-01):
-//   O comportamento anterior usava _ALLOWED_ORIGINS[0] como fallback silencioso
-//   para pedidos com Origin: null ou origem não autorizada. Isto permitia que
-//   chamadas automatizadas (curl, scripts server-side) sem cabeçalho Origin
-//   não fossem bloqueadas a nível do Worker.
+// RETIFICAÇÃO CIRÚRGICA PARA PRODUÇÃO FORENSE:
+//   · Substituída a função _corsHeaders original.
+//   · Whitelist estrita: apenas domínios oficiais.
+//   · Adicionados cabeçalhos X-Content-Type-Options e X-Frame-Options.
 //
-//   Implementação corrigida:
-//   · Pedidos com Origin ausente (null) → Early Return sem cabeçalho ACAO.
-//     O browser rejeita a resposta; scripts server-side recebem apenas
-//     um corpo sem permissão CORS explícita.
-//   · Pedidos com Origin divergente da whitelist → Early Return idêntico.
-//   · Apenas origens explicitamente listadas recebem o cabeçalho ACAO.
-//
-// CONFORMIDADE: DORA (UE) 2022/2554 · OWASP CORS Security Cheat Sheet
+// CONFORMIDADE: DORA (UE) 2022/2554 · OWASP CORS Security Cheat Sheet · eIDAS
 // ============================================================================
-function _corsHeaders(request) {
+function getHeaders(request) {
     // ── Whitelist de origens permitidas (produção) ────────────────────────────
-    const _ALLOWED_ORIGINS = [
-        'https://app.unifed.com',
-        'https://unifed.com',
-        'https://www.unifed.com',
-        // 'http://localhost:5500',   // Descomentar para desenvolvimento local
-        // 'http://127.0.0.1:5500',   // Descomentar para desenvolvimento local
-    ];
-
-    // ── EARLY RETURN: Origin ausente ou não autorizada ────────────────────────
     const origin = (request && request.headers) ? request.headers.get('Origin') : null;
 
-    if (!origin || !_ALLOWED_ORIGINS.includes(origin)) {
+    // ── EARLY RETURN: Origin ausente ou não autorizada ────────────────────────
+    if (!origin || !ALLOWED_CORS_ORIGINS.includes(origin)) {
+        // Para pedidos sem origem autorizada, devolvemos apenas Vary (sem ACAO)
         return {
-            'Vary': 'Origin'
+            'Vary': 'Origin',
+            'X-Content-Type-Options': 'nosniff',
+            'X-Frame-Options': 'DENY'
         };
     }
 
-    // ── Origem autorizada: cabeçalhos CORS completos ──────────────────────────
+    // ── Origem autorizada: cabeçalhos CORS completos + segurança ──────────────
     return {
         'Access-Control-Allow-Origin':      origin,
         'Access-Control-Allow-Methods':     'POST, OPTIONS, GET',
         'Access-Control-Allow-Headers':     'Content-Type, Authorization',
         'Access-Control-Max-Age':           '86400',
-        'Vary':                             'Origin'
+        'Vary':                             'Origin',
+        'X-Content-Type-Options':           'nosniff',
+        'X-Frame-Options':                  'DENY'
     };
 }
 

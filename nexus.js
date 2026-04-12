@@ -17,7 +17,7 @@
 // MÓDULO 1 · PASSIVE NETWORK OBSERVER — Proxy Wrapper Transparente
 // ============================================================================
 window.UNIFEDSystem = window.UNIFEDSystem || {};
-window.UNIFEDSystem.demoMode = true; // força modo demo
+// window.UNIFEDSystem.demoMode = true; // <--- ELIMINADO: estado agora gerido exclusivamente pelos triggers de UI
 (function _nexusForensicProxy() {
 	if(window.fetch.__isNexusProxy) {
 		console.info('[NEXUS·M1] Proxy Wrapper já está activo. Nenhuma acção tomada.');
@@ -461,7 +461,7 @@ window.UNIFEDSystem.demoMode = true; // força modo demo
 		panel.appendChild(kpiGrid);
 		var tableWrapper = document.createElement('div');
 		tableWrapper.style.cssText = 'overflow-x:auto';
-		tableWrapper.innerHTML = '<table style="width:100%;border-collapse:collapse;font-size:0.7rem;color:rgba(255,255,255,0.8)">' + '<thead><tr>' + '<th style="border:1px solid rgba(168,85,247,0.25);padding:6px 10px;background:rgba(168,85,247,0.15);color:#A855F7;text-align:left">' + _T('Período', 'Period') + '</th>' + '<th style="border:1px solid rgba(168,85,247,0.25);padding:6px 10px;background:rgba(168,85,247,0.15);color:#A855F7;text-align:right">' + _T('Omissão Proj.', 'Proj. Omission') + '</th>' + '<th style="border:1px solid rgba(168,85,247,0.25);padding:6px 10px;background:rgba(168,85,247,0.15);color:#F97316;text-align:right">' + _T('IVA 23% Proj.', 'VAT 23% Proj.') + '</th>' + '<th style="border:1px solid rgba(168,85,247,0.25);padding:6px 10px;background:rgba(168,85,247,0.15);color:rgba(255,255,255,0.5);text-align:center">' + _T('Risco', 'Risk') + '</th>' + '</tr>' + '</thead>' + '<tbody>' + forecast.labels.map(function(lbl, i) {
+		tableWrapper.innerHTML = '<table style="width:100%;border-collapse:collapse;font-size:0.7rem;color:rgba(255,255,255,0.8)">' + '<thead><tr>' + '<th style="border:1px solid rgba(168,85,247,0.25);padding:6px 10px;background:rgba(168,85,247,0.15);color:#A855F7;text-align:left">' + _T('Período', 'Period') + '</th>' + '<th style="border:1px solid rgba(168,85,247,0.25);padding:6px 10px;background:rgba(168,85,247,0.15);color:#A855F7;text-align:right">' + _T('Omissão Proj.', 'Proj. Omission') + '</th>' + '<th style="border:1px solid rgba(168,85,247,0.25);padding:6px 10px;background:rgba(168,85,247,0.15);color:#F97316;text-align:right">' + _T('IVA 23% Proj.', 'VAT 23% Proj.') + '</th>' + '<th style="border:1px solid rgba(168,85,247,0.25);padding:6px 10px;background:rgba(168,85,247,0.15);color:rgba(255,255,255,0.5);text-align:center">' + _T('Risco', 'Risk') + '</th>' + '</table>' + '</thead>' + '<tbody>' + forecast.labels.map(function(lbl, i) {
 			var disc = forecast.discSeries[i] || 0;
 			var iva = forecast.ivaSeries[i] || 0;
 			var rMax = Math.max.apply(null, forecast.discSeries.concat([1]));
@@ -867,7 +867,47 @@ window.UNIFEDSystem.demoMode = true; // força modo demo
         }
     };
 
+    // ────────────────────────────────────────────────────────────────────────
+    // RETIFICAÇÃO: Hook de Integridade Visual — Selo de Custódia em Canvas
+    // ────────────────────────────────────────────────────────────────────────
+    if (window.UNIFEDSystem && window.UNIFEDSystem.utils) {
+        window.UNIFEDSystem.utils.sealCanvas = function(canvasId) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+
+            const ctx = canvas.getContext('2d');
+            const sessionHash = window.UNIFEDSystem.masterHash || 'UNIFED-FIX-PENDING';
+            
+            ctx.save();
+            ctx.font = '8px "JetBrains Mono", "Courier New", monospace';
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.fillText(`CUSTÓDIA: ${sessionHash.substring(0, 16)}...`, 5, canvas.height - 5);
+            ctx.restore();
+            
+            if (typeof window.logAudit === 'function') {
+                window.logAudit(`Selo de integridade aplicado ao artefacto visual: ${canvasId}`, 'success');
+            } else {
+                console.log(`[NEXUS] Selo de integridade aplicado ao artefacto visual: ${canvasId}`);
+            }
+        };
+    } else {
+        // Fallback seguro: criar utils e definir a função
+        if (!window.UNIFEDSystem) window.UNIFEDSystem = {};
+        if (!window.UNIFEDSystem.utils) window.UNIFEDSystem.utils = {};
+        window.UNIFEDSystem.utils.sealCanvas = function(canvasId) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const sessionHash = window.UNIFEDSystem.masterHash || 'UNIFED-FIX-PENDING';
+            ctx.save();
+            ctx.font = '8px "JetBrains Mono", "Courier New", monospace';
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.fillText(`CUSTÓDIA: ${sessionHash.substring(0, 16)}...`, 5, canvas.height - 5);
+            ctx.restore();
+        };
+    }
+
     console.log('[NEXUS] Camada adaptativa carregada – pronta para ambiente air-gapped.');
 })();
 
-console.info('%c[NEXUS · UNIFED-PROBATUM · v13.12.1-FIX]\n' + '%c  M1 · Passive Network Observer       — Proxy Wrapper Transparente ATIVO (ISO/IEC 27037:2012)\n' + '  M2 · RAG Jurisprudencial DOCX         — Hook exportDOCX() instalado\n' + '  M3 · Motor Preditivo ATF (6M)         — Hook openATFModal() instalado\n' + '  M4 · Blockchain Evidence Explorer     — MutationObserver #custodyModal ativo\n' + '  M5 · Extensão Core v13.12.1-FIX       — Fallback de integridade e forceReveal\n' + '  Modo: Read-Only · DORA (UE) 2022/2554 · ISO/IEC 27037:2012 · Art. 125.o CPP', 'color:#00E5FF;font-family:Courier New,monospace;font-weight:700;font-size:0.9em;', 'color:rgba(0,229,255,0.65);font-family:Courier New,monospace;font-size:0.8em;');
+console.info('%c[NEXUS · UNIFED-PROBATUM · v13.12.1-FIX]\n' + '%c  M1 · Passive Network Observer       — Proxy Wrapper Transparente ATIVO (ISO/IEC 27037:2012)\n' + '  M2 · RAG Jurisprudencial DOCX         — Hook exportDOCX() instalado\n' + '  M3 · Motor Preditivo ATF (6M)         — Hook openATFModal() instalado\n' + '  M4 · Blockchain Evidence Explorer     — MutationObserver #custodyModal ativo\n' + '  M5 · Extensão Core v13.12.1-FIX       — Fallback de integridade e forceReveal\n' + '  M6 · Integridade Visual               — sealCanvas() disponível\n' + '  Modo: Read-Only · DORA (UE) 2022/2554 · ISO/IEC 27037:2012 · Art. 125.o CPP', 'color:#00E5FF;font-family:Courier New,monospace;font-weight:700;font-size:0.9em;', 'color:rgba(0,229,255,0.65);font-family:Courier New,monospace;font-size:0.8em;');

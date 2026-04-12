@@ -404,14 +404,16 @@
 
         const _observer = new MutationObserver((_mutations) => {
             const container = document.getElementById('export-tools-container');
-            // [AÇÃO3-FIX] Guard: se já injectado, não re-inicializar
+            
+            // GUARD CRÍTICO: Evita Layout Thrashing e Recalculate Style redundante
             if (container && container.getAttribute('data-triada-injected') === 'true') {
-                return;
+                return; 
             }
-            // Reinicializa apenas se o container estiver vazio (após reset/limpeza)
+
             if (container && container.children.length === 0) {
                 initInterface();
-                _log('Interface re-inicializada via MutationObserver (DOM vazio detectado).');
+                container.setAttribute('data-triada-injected', 'true');
+                _log('Interface injetada e selada contra re-inicializações cíclicas.');
             }
         });
 
@@ -420,7 +422,6 @@
             subtree:   true
         });
 
-        // REMOVIDO: timeout de 15s que desconectava o observer
         _log('MutationObserver em modo persistente para garantir integridade após reset.');
     }
 

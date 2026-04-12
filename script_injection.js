@@ -622,6 +622,26 @@
     })();
 
     // =========================================================================
+    // Função de correção de índices romanos (extraída de panel.html)
+    // =========================================================================
+    function correctRomanIndices() {
+        const titles = document.querySelectorAll('#pureDashboard .pure-card-title span, .pure-card-title, .verdict-title');
+        titles.forEach(el => {
+            let txt = el.textContent;
+            const maps = {
+                'IV. IMPACTO FISCAL': 'V. IMPACTO FISCAL',
+                'V. CADEIA DE CUSTÓDIA': 'VI. CADEIA DE CUSTÓDIA',
+                'VI. CONCLUSÃO': 'VII. CONCLUSÃO',
+                'IV. ANÁLISE DE RISCO SISTÉMICO (MIS)': 'V. ANÁLISE DE RISCO SISTÉMICO (MIS)'
+            };
+            for (let key in maps) {
+                if (txt.includes(key)) el.textContent = txt.replace(key, maps[key]);
+            }
+        });
+    }
+    window.correctRomanIndices = correctRomanIndices;
+
+    // =========================================================================
     // Inicialização Principal com Re-init Hook e transição de estados
     // =========================================================================
     (function() {
@@ -731,8 +751,6 @@
         // verificado dentro do próprio handler do botão original.
         // =====================================================================
         function setupRealCaseButton() {
-            let _buttonMutex = false; // Mutex de botão — escopo desta função
-
             let targetButton = document.getElementById('demoModeBtn');
             if (!targetButton) {
                 const buttons = document.querySelectorAll('button, .btn, [role="button"]');
@@ -749,8 +767,7 @@
                     const el = e.target.closest('button, .btn, [role="button"]');
                     if (el && el.textContent.includes('CASO REAL ANONIMIZADO')) {
                         e.preventDefault();
-                        if (_initializing || _buttonMutex) return; // dupla guarda
-                        _buttonMutex = true;
+                        if (_initializing) return;
                         try {
                             if (typeof window._activatePurePanel === 'function') {
                                 await window._activatePurePanel();
@@ -760,20 +777,27 @@
                             await new Promise(r => setTimeout(r, 100));
                             window.UNIFED_INTERNAL.syncMetrics();
                             await initializeFullWithEvidence();
-                        } finally {
-                            _buttonMutex = false;
+                            // Aplicar correção de índices após o DOM estar pronto
+                            if (typeof window.correctRomanIndices === 'function') {
+                                window.correctRomanIndices();
+                            }
+                        } catch (err) {
+                            console.error('[UNIFED] Erro na ativação do caso real:', err);
                         }
                     }
                 });
                 return;
             }
 
-            // [AÇÃO1-FIX] Listener adicionado directamente sobre o botão original.
-            // Sem cloneNode/replaceChild — os listeners do script.js permanecem intactos.
+            // Impedir duplicação de listeners sem clonar o nó (preserva integridade do DOM)
+            if (targetButton.getAttribute('data-unifed-active') === 'true') return;
+
             targetButton.addEventListener('click', async function(e) {
                 e.preventDefault();
-                if (_initializing || _buttonMutex) return; // dupla guarda
-                _buttonMutex = true;
+                if (_initializing) return;
+
+                logAudit('Iniciando transição para Caso Real Anonimizado...', 'info');
+
                 try {
                     if (typeof window._activatePurePanel === 'function') {
                         await window._activatePurePanel();
@@ -783,10 +807,18 @@
                     await new Promise(r => setTimeout(r, 100));
                     window.UNIFED_INTERNAL.syncMetrics();
                     await initializeFullWithEvidence();
-                } finally {
-                    _buttonMutex = false;
+
+                    // Aplicar correção de índices após a garantia de injeção no DOM
+                    if (typeof window.correctRomanIndices === 'function') {
+                        window.correctRomanIndices();
+                    }
+                    logAudit('Interface harmonizada (Índices Romanos V-VII).', 'success');
+                } catch (err) {
+                    console.error('[UNIFED] Erro na ativação do caso real:', err);
                 }
-            });
+            }, { capture: true });
+
+            targetButton.setAttribute('data-unifed-active', 'true');
             console.log('[UNIFED] Listener associado ao botão "CASO REAL ANONIMIZADO" com espera assíncrona.');
         }
 
@@ -803,40 +835,6 @@
             container.setAttribute('data-tooltip', 'Clique para verificar a cadeia de custódia completa');
         }
         window.generateQRCode = generateQRCode;
-
-        // =====================================================================
-        // [AÇÃO2-FIX] correctRomanIndices — extraída de panel.html
-        // Corrige numeração romana de títulos do painel (IV→V, V→VI, VI→VII).
-        // Exposta em window para invocação pelo .then() de _activatePurePanel.
-        // =====================================================================
-        function correctRomanIndices() {
-            const possibleTitles = document.querySelectorAll(
-                '#pureMacroCard .pure-card-title span, .pure-card-title, .verdict-title, .pdf-section-title'
-            );
-            possibleTitles.forEach(function(el) {
-                if (!el) return;
-                let text = el.textContent;
-                if (text.includes('IV. IMPACTO FISCAL')) {
-                    el.textContent = text.replace('IV. IMPACTO FISCAL', 'V. IMPACTO FISCAL');
-                    text = el.textContent;
-                }
-                if (text.includes('V. CADEIA DE CUSTÓDIA')) {
-                    el.textContent = text.replace('V. CADEIA DE CUSTÓDIA', 'VI. CADEIA DE CUSTÓDIA');
-                    text = el.textContent;
-                }
-                if (text.includes('VI. CONCLUSÃO')) {
-                    el.textContent = text.replace('VI. CONCLUSÃO', 'VII. CONCLUSÃO');
-                    text = el.textContent;
-                }
-                if (text.includes('IV. ANÁLISE DE RISCO SISTÉMICO (MIS)')) {
-                    el.textContent = text.replace(
-                        'IV. ANÁLISE DE RISCO SISTÉMICO (MIS)',
-                        'V. ANÁLISE DE RISCO SISTÉMICO (MIS)'
-                    );
-                }
-            });
-        }
-        window.correctRomanIndices = correctRomanIndices;
 
         function startApplication() {
             return new Promise((resolve) => {
