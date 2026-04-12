@@ -582,13 +582,16 @@
     <link rel="stylesheet" href="style_additions.css">
     <script src="script_injection.js"></script>
     <script>
+        // ======================================================================
+        // RETIFICAÇÃO v13.12.1-FIX: _activatePurePanel agora retorna Promise
+        // ======================================================================
         window._activatePurePanel = function() {
             const wrapper = document.getElementById('pureDashboardWrapper');
             if (wrapper) { 
                 wrapper.innerHTML = ''; 
                 wrapper.style.display = 'none'; 
             }
-            fetch('panel.html')
+            return fetch('panel.html')
                 .then(function(r) { return r.text(); })
                 .then(function(html) {
                     if (wrapper) {
@@ -603,9 +606,8 @@
                             window._translatePurePanel(window.currentLang || 'pt');
                         }
                         
-                        // ========== BLOCO DE CORREÇÃO DE INTERFACE (LAYOUT SHIFT, SMOKING GUNS, METADADOS) ==========
+                        // ========== BLOCO DE CORREÇÃO DE INTERFACE ==========
                         (function() {
-                            // 1. Re-trigger da força de revelação
                             if (typeof window.forceRevealSmokingGun === 'function') {
                                 window.forceRevealSmokingGun();
                             } else {
@@ -620,7 +622,6 @@
                                 });
                             }
 
-                            // 2. Garantir visibilidade dos Smoking Guns
                             const smokingGuns = document.querySelectorAll('.smoking-gun-module, .pure-sg-critical, .pure-sg-secondary');
                             smokingGuns.forEach(sg => {
                                 sg.style.setProperty('display', 'block', 'important');
@@ -628,7 +629,6 @@
                                 sg.style.setProperty('z-index', '20', 'important');
                             });
 
-                            // 3. Correção do wrapper principal (remove layout shift)
                             const wrapperEl = document.getElementById('pureDashboardWrapper');
                             if (wrapperEl) {
                                 wrapperEl.style.setProperty('height', 'auto', 'important');
@@ -636,21 +636,18 @@
                                 wrapperEl.style.setProperty('min-height', '0', 'important');
                             }
 
-                            // 4. Ajuste de margin-bottom nas .chart-section
                             const chartSections = document.querySelectorAll('.chart-section');
                             chartSections.forEach(chart => {
                                 chart.style.setProperty('margin-bottom', '0', 'important');
                                 chart.style.setProperty('padding-bottom', '0', 'important');
                             });
 
-                            // 5. Ajuste do container do console
                             const consoleSection = document.querySelector('.console-section');
                             if (consoleSection) {
                                 consoleSection.style.setProperty('margin-top', '0', 'important');
                                 consoleSection.style.setProperty('clear', 'both', 'important');
                             }
 
-                            // 6. Atualização de metadados do perito (eIDAS)
                             const operatorSpan = document.querySelector('.pure-operator-badge .pure-value-warn');
                             if (operatorSpan) {
                                 operatorSpan.textContent = 'UNIFED-A.S.-9W3HI [VALIDADO/eIDAS]';
@@ -666,7 +663,6 @@
                                 }
                             }
 
-                            // 7. Atualização do selo temporal
                             const tsaAnchor = document.getElementById('pure-tsa-anchor');
                             if (tsaAnchor) {
                                 tsaAnchor.innerHTML = 'Selo de Tempo Local (ISO 27037): <span style="color: #10b981; font-weight: bold;">ATIVO — CUSTÓDIA NÍVEL 1</span>';
@@ -677,7 +673,6 @@
                                 }
                             }
 
-                            // 8. Injeção do GAP DE CONCILIAÇÃO (C1) na Zona Cinzenta
                             const zonaCinzentaCard = document.getElementById('pureZonaCinzentaCard');
                             if (zonaCinzentaCard && !document.getElementById('gap-c1-injected')) {
                                 const totalNaoSujeitosBlock = zonaCinzentaCard.querySelector('.pure-zc-total, .pure-zc-item:last-child');
@@ -691,27 +686,36 @@
                                 }
                             }
 
-                            // 9. Forçar redesenho de gráficos
                             if (typeof window.renderChart === 'function') window.renderChart();
                             if (typeof window.renderDiscrepancyChart === 'function') window.renderDiscrepancyChart();
 
-                            console.log('[UNIFED-FIX] Correções de interface aplicadas (layout shift eliminado, smoking guns revelados, metadados atualizados).');
+                            console.log('[UNIFED-FIX] Correções de interface aplicadas.');
                         })();
-                        // ======================================================================================
+                        // ======================================================================
                     }
                 })
                 .catch(function(err) {
                     console.error('[UNIFED-PURE] Erro na carga do painel:', err);
+                    throw err;
                 });
         };
 
+        // ======================================================================
+        // RETIFICAÇÃO v13.12.1-FIX: Botão CASO REAL com verificação recursiva
+        // ======================================================================
         window.addEventListener('load', function() {
             const btn = document.getElementById('demoModeBtn');
             if (btn) {
                 btn.addEventListener('click', function() {
-                    if (typeof window.performForensicAnalysis === 'function') {
-                        setTimeout(window.performForensicAnalysis, 1500);
-                    }
+                    const runAnalysis = () => {
+                        if (typeof window.performForensicAnalysis === 'function') {
+                            window.performForensicAnalysis();
+                        } else {
+                            console.warn('[UNIFED] Sistema ainda não carregado. Re-tentando em 500ms...');
+                            setTimeout(runAnalysis, 500);
+                        }
+                    };
+                    runAnalysis();
                 });
             }
         });

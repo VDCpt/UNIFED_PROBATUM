@@ -2,22 +2,19 @@
  * UNIFED - PROBATUM · v13.12.0-PURE · MÓDULO DE EXPORTAÇÃO — TRÍADE DOCUMENTAL
  * ============================================================================
  * Ficheiro      : unifed_triada_export.js
- * Versão        : 1.0.18-TRIADA-FINAL (Rectificação Sintaxe + QR Code)
+ * Versão        : 1.0.19-TRIADA-PERSISTENT (Rectificação Observer + Race Condition)
  * ============================================================================
- * RECTIFICAÇÕES v1.0.18-TRIADA (2026-04-06):
- *   [FIX-E] Estratégia robusta de 3 camadas de inicialização (UNIFED_CORE_READY, DOMContentLoaded, MutationObserver).
- *   [FIX-E2] Labels PT/EN dos botões reflectem currentLang dinamicamente via _resolveLabels().
- *   [FIX-E3] ID do container mantido: 'export-tools-container'.
- *   [FIX-PDF] Rodapé centralizado com Master Hash SHA-256 em todas as páginas do PDF.
- *   [FIX-QR] QR Code de integridade injetado na última página do relatório pericial.
- *   [FIX-SYNTAX] Corrigido bloco try/catch e uso de await no gerarAnexoCustodia.
+ * RECTIFICAÇÕES v1.0.19-TRIADA (2026-04-12):
+ *   [FIX-OBS] MutationObserver persistente (sem disconnect automático).
+ *   [FIX-RACE] Substituído setTimeout por verificação recursiva no clique do botão.
+ *   [FIX-REINIT] Re-inicialização garantida após reset do console.
  * ============================================================================
  */
 
 'use strict';
 
 (function _unifedTriadaModule() {
-    const _VERSION = '1.0.18-TRIADA-FINAL';
+    const _VERSION = '1.0.19-TRIADA-PERSISTENT';
 
     // ── UTILITÁRIO DE LOG ────────────────────────────────────────────────────
     function _log(msg, type = 'log') {
@@ -217,7 +214,6 @@
             const qrCanvas  = document.createElement('canvas');
 
             if (typeof QRCode !== 'undefined') {
-                // Criar um elemento div temporário para gerar o QR Code
                 const tmpDiv = document.createElement('div');
                 tmpDiv.style.cssText = 'position:absolute;left:-9999px;top:-9999px;';
                 document.body.appendChild(tmpDiv);
@@ -229,7 +225,6 @@
                     colorLight: '#ffffff',
                     correctLevel: QRCode.CorrectLevel.L
                 });
-                // Aguardar a renderização (usar setTimeout, sem await dentro de loop síncrono)
                 await new Promise((resolve) => {
                     setTimeout(() => {
                         const canvas = tmpDiv.querySelector('canvas');
@@ -383,7 +378,7 @@
         return true;
     }
 
-    // ── ESTRATÉGIA ROBUSTA DE 3 CAMADAS DE INICIALIZAÇÃO ─────────────────────
+    // ── ESTRATÉGIA ROBUSTA COM MUTATION OBSERVER PERSISTENTE ─────────────────
     window.addEventListener('UNIFED_CORE_READY', () => {
         if (initInterface()) return;
 
@@ -404,12 +399,12 @@
             return;
         }
 
-        const _observer = new MutationObserver((_mutations, obs) => {
+        const _observer = new MutationObserver((_mutations) => {
             const container = document.getElementById('export-tools-container');
-            if (container) {
-                obs.disconnect();
+            // Reinicializa se o container estiver vazio (após reset/limpeza)
+            if (container && container.children.length === 0) {
                 initInterface();
-                _log('Interface inicializada via MutationObserver (DOM tardio detectado).');
+                _log('Interface re-inicializada via MutationObserver (DOM vazio detectado).');
             }
         });
 
@@ -418,10 +413,8 @@
             subtree:   true
         });
 
-        setTimeout(() => {
-            _observer.disconnect();
-            _log('MutationObserver desligado após timeout de segurança (15s).', 'warn');
-        }, 15000);
+        // REMOVIDO: timeout de 15s que desconectava o observer
+        _log('MutationObserver em modo persistente para garantir integridade após reset.');
     }
 
     window.gerarAnexoCustodia   = gerarAnexoCustodia;

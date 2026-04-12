@@ -1,14 +1,14 @@
 /**
- * UNIFED - PROBATUM · CASO REAL ANONIMIZADO v13.12.0-PURE (COMPLETO)
+ * UNIFED - PROBATUM · CASO REAL ANONIMIZADO v13.12.1-FIX (ASYNC + PERSIST)
  * ============================================================================
  * Missão: Injeção Forense e Reconstituição da Verdade Material
  * Conformidade: DORA (UE) 2022/2554 · Art. 125.º CPP · ISO/IEC 27037:2012
  * ============================================================================
- * RETIFICAÇÕES v13.12.0-PURE (2026-04-11):
- * - Removida inicialização automática de initializeCoreDashboard() do startApplication()
- * - initializeCoreDashboard() passou a ser chamada exclusivamente no clique do botão
- * - forceRenderFix ajustada para não disparar inicialização prematura
- * - Contadores do _PDF_CASE colocados a zero (higienização total)
+ * RETIFICAÇÕES v13.12.1-FIX (2026-04-12):
+ * - Aguarda Promise de _activatePurePanel antes de inicializar o dashboard.
+ * - Previne sobreposição de eventos com flag _initializing.
+ * - MutationObserver persistente (já corrigido no triada_export.js).
+ * - Re-init Hook documentado para transição entre estados estático (3 botões) e enriquecido (6 botões).
  * ============================================================================
  */
 
@@ -25,8 +25,6 @@
     const logAudit = window.logAudit;
 
     // 1. DATASET MESTRE (OBJETO IMUTÁVEL) — VALORES REAIS ORIGINAIS + MACRO + COUNTS
-    // NOTA: Todos os contadores foram colocados a 0 para evitar exposição prematura.
-    // Os valores reais (4,2,4,1) serão carregados apenas após o clique no botão.
     const _PDF_CASE = Object.freeze({
         sessionId:  "UNIFED-MNGFN3C0-X57MO",
         masterHash: "a3f8c9e2d5b6a7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1",
@@ -82,26 +80,23 @@
             disclaimer: "Os valores de impacto sistémico constituem contexto macroeconómico e não prova direta de ilícito alheio, nos termos do Art. 128.º do CPP."
         },
         meta: {
-            lastUpdate: "2026-04-11",
+            lastUpdate: "2026-04-12",
             forensicIntegrity: true
         }
-    }); // Fecho correto do Object.freeze
+    });
 
-    // GATILHO DE RENDERIZAÇÃO: Apenas ajusta visibilidade do gráfico (sem inicializar dashboard)
     function forceRenderFix() {
         const charts = document.querySelectorAll('.chart-section');
         charts.forEach(c => {
             c.style.display = 'block';
             c.style.opacity = '1';
-            c.style.minHeight = '350px'; // Impede o colapso visual
+            c.style.minHeight = '350px';
         });
-        window.dispatchEvent(new Event('resize')); // Força o Chart.js a recalcular o tamanho
+        window.dispatchEvent(new Event('resize'));
     }
     window.addEventListener('load', forceRenderFix);
 
-    // =========================================================================
     // 2. ESCUDO SILENCIOSO PARA CORS (TSA / FREETSA FALLBACK)
-    // =========================================================================
     (function _installCORSSilentShield() {
         const targetUrl = 'freetsa.org';
         const originalFetch = window.fetch;
@@ -142,7 +137,6 @@
         console.log('[UNIFED] Escudo CORS silencioso instalado para FreeTSA e api.unifed.com.');
     })();
 
-    // 3. UTILITÁRIOS DE FORMATAÇÃO E ACESSO AO DOM
     const _fmt = (v) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v);
     const _set = (id, val) => {
         const el = document.getElementById(id);
@@ -317,7 +311,7 @@
             const monthlyLoss = (macro.sector_drivers || 38000) * (macro.avg_monthly_discrepancy || 546.24);
             const cardHtml = `
             <div class="pure-card pure-card-macro" id="pureMacroCard">
-                <h3 class="pure-card-title"><span class="pure-icon">🌍</span><span id="pure-macro-title" data-pt="IV. ANÁLISE DE RISCO SISTÉMICO (MIS)" data-en="IV. SYSTEMIC RISK ANALYSIS (MIS)">IV. ANÁLISE DE RISCO SISTÉMICO (MIS)</span></h3>
+                <h3 class="pure-card-title"><span class="pure-icon">🌍</span><span id="pure-macro-title" data-pt="V. ANÁLISE DE RISCO SISTÉMICO (MIS)" data-en="V. SYSTEMIC RISK ANALYSIS (MIS)">V. ANÁLISE DE RISCO SISTÉMICO (MIS)</span></h3>
                 <div class="pure-macro-grid" style="display:flex; flex-wrap:wrap; gap:1rem; justify-content:space-between;">
                     <div class="pure-macro-item" style="flex:1; min-width:160px; background:rgba(255,255,255,0.03); padding:12px; border-radius:6px;">
                         <div class="pure-macro-label" style="font-size:0.65rem; color:#94a3b8; text-transform:uppercase;" data-pt="Universo de Operadores" data-en="Operators Universe">Universo de Operadores</div>
@@ -628,12 +622,15 @@
     })();
 
     // =========================================================================
-    // Inicialização Principal (sem chamada automática do dashboard)
+    // Inicialização Principal com Re-init Hook e transição de estados
     // =========================================================================
     (function() {
         if (!window.UNIFED_INTERNAL) return;
         const { data, fmt, set, syncMetrics, renderMatrix } = window.UNIFED_INTERNAL;
         const { injectAuxiliaryBoxesCSS, injectMacroCard, updateAuxiliaryUI, forcePlatformReadOnly, removeZeroDac7Kpis, simulateEvidenceUpload, updateEvidenceCountersAndShow } = window.UNIFED_INTERNAL;
+
+        // Flag para evitar múltiplas inicializações concorrentes
+        let _initializing = false;
 
         function showClientIdentificationBlock() {
             let block = document.getElementById('clientIdentificationBlock');
@@ -665,7 +662,16 @@
             });
         }
 
+        // =====================================================================
+        // Re-init Hook: Garante a transição entre o estado estático (3 botões)
+        // e o estado enriquecido (6 botões) após reset ou reinicialização.
+        // =====================================================================
         function initializeCoreDashboard() {
+            if (_initializing) {
+                console.warn('[UNIFED] Inicialização já em curso, ignorando chamada duplicada.');
+                return;
+            }
+            _initializing = true;
             waitForPureDashboard().then(() => {
                 setTimeout(() => {
                     if (typeof window.injectAuxiliaryHelperBoxes === 'function') window.injectAuxiliaryHelperBoxes();
@@ -678,17 +684,21 @@
                     if (document.getElementById('pureDashboard')) {
                         if (typeof updateAuxiliaryUI === 'function') updateAuxiliaryUI();
                         document.querySelectorAll('.chart-section').forEach(section => { 
-                        section.style.display = 'block'; 
-                        section.style.height = 'auto'; // Permite que a div colapse se não tiver conteúdo
-                     });
+                            section.style.display = 'block'; 
+                            section.style.height = 'auto';
+                        });
                         if (typeof Chart === 'undefined') {
                             document.querySelectorAll('.chart-section').forEach(section => section.style.display = 'none');
                             console.warn('[UNIFED] Chart.js não disponível – secções de gráfico ocultadas.');
                         }
                     }
                     console.log('[UNIFED] Core dashboard inicializado com sucesso após injeção do painel.');
+                    _initializing = false;
                 }, 100);
-            }).catch(err => console.warn('[UNIFED] Erro ao aguardar #pureDashboard', err));
+            }).catch(err => {
+                console.warn('[UNIFED] Erro ao aguardar #pureDashboard', err);
+                _initializing = false;
+            });
         }
 
         async function initializeFullWithEvidence() {
@@ -713,6 +723,10 @@
             }
         }
 
+        // =====================================================================
+        // Event Listener Overlap Prevention: substitui o botão para evitar duplicação
+        // e aguarda a Promise de _activatePurePanel (fetch + injeção) antes de prosseguir.
+        // =====================================================================
         function setupRealCaseButton() {
             let targetButton = document.getElementById('demoModeBtn');
             if (!targetButton) {
@@ -730,10 +744,13 @@
                     const el = e.target.closest('button, .btn, [role="button"]');
                     if (el && el.textContent.includes('CASO REAL ANONIMIZADO')) {
                         e.preventDefault();
-                        if (typeof window._activatePurePanel === 'function') window._activatePurePanel();
+                        if (_initializing) return;
+                        // Aguarda a Promise do fetch de panel.html
+                        if (typeof window._activatePurePanel === 'function') {
+                            await window._activatePurePanel();
+                        }
                         await waitForPureDashboard();
-                        // Inicializa o dashboard APENAS quando o botão é clicado
-                        if (typeof initializeCoreDashboard === 'function') initializeCoreDashboard();
+                        initializeCoreDashboard();
                         await new Promise(r => setTimeout(r, 100));
                         window.UNIFED_INTERNAL.syncMetrics();
                         initializeFullWithEvidence();
@@ -741,19 +758,23 @@
                 });
                 return;
             }
+            // Clona o botão para remover qualquer listener antigo
             const newBtn = targetButton.cloneNode(true);
             targetButton.parentNode.replaceChild(newBtn, targetButton);
             newBtn.addEventListener('click', async function(e) {
                 e.preventDefault();
-                if (typeof window._activatePurePanel === 'function') window._activatePurePanel();
+                if (_initializing) return;
+                // Aguarda a Promise do fetch de panel.html
+                if (typeof window._activatePurePanel === 'function') {
+                    await window._activatePurePanel();
+                }
                 await waitForPureDashboard();
-                // Inicializa o dashboard APENAS quando o botão é clicado
-                if (typeof initializeCoreDashboard === 'function') initializeCoreDashboard();
+                initializeCoreDashboard();
                 await new Promise(r => setTimeout(r, 100));
                 window.UNIFED_INTERNAL.syncMetrics();
                 initializeFullWithEvidence();
             });
-            console.log('[UNIFED] Listener associado ao botão "CASO REAL ANONIMIZADO".');
+            console.log('[UNIFED] Listener associado ao botão "CASO REAL ANONIMIZADO" com espera assíncrona.');
         }
 
         function generateQRCode() {
@@ -778,9 +799,9 @@
                     resolve();
                 }
             }).then(() => {
-                // REMOVIDO: initializeCoreDashboard(); <-- Esta linha causava a injeção precoce
-                setupRealCaseButton(); // Mantemos apenas o listener do botão
+                setupRealCaseButton(); // Apenas configura o botão, não inicializa o dashboard automaticamente
                 console.log('[UNIFED] ✅ Sistema em standby. Aguardando ativação por "CASO REAL ANONIMIZADO".');
+                console.log('[UNIFED] NOTA: Estado estático (3 botões) → após clique, estado enriquecido (6 botões). Re-init Hook ativo.');
             }).catch(err => {
                 console.error('[UNIFED] Erro Crítico na Sequência de Início:', err);
             });
