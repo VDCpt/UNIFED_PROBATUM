@@ -1091,5 +1091,68 @@ canvas#pure-discrepancia-saf-t-dac7 {
 }
 
 /* ============================================================================
+   CORREÇÕES DE LAYOUT v13.12.1-FIX (Layout Shift, Smoking Gun, Matriz)
+   ============================================================================ */
+
+/* Correção do layout shift: eliminação do espaço azul */
+#pureDashboard {
+    display: flex !important;
+    flex-direction: column !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+}
+
+/* Garantir que todos os wrappers de gráficos tenham overflow visível */
+.chart-section,
+.chart-container,
+.pure-chart-wrapper,
+canvas {
+    overflow: visible !important;
+    min-height: auto !important;
+}
+
+/* Classe para realce de linhas críticas na Matriz de Triangulação */
+.pure-matrix-alert {
+    background-color: rgba(239, 68, 68, 0.15) !important;
+    border-left: 3px solid #ef4444 !important;
+    transition: all 0.2s ease;
+}
+
+.pure-matrix-alert td:first-child {
+    font-weight: 700;
+    color: #ef4444;
+}
+
+/* Garantir visibilidade dos Smoking Guns mesmo se classes ancestrais tentarem ocultar */
+.smoking-gun-module,
+.pure-sg-critical,
+.pure-sg-secondary,
+[id*="smoking-gun"] {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    z-index: 20 !important;
+}
+
+/* Ajuste para o container da Matriz de Triangulação */
+#triangulationMatrixContainer {
+    width: 100% !important;
+    overflow-x: auto !important;
+    margin: 16px 0 !important;
+    background: #1e293b !important;
+    border-radius: 8px !important;
+}
+
+/* Forçar redesenho do canvas ATF */
+#atfChartCanvas {
+    width: 100% !important;
+    height: auto !important;
+    max-height: 320px !important;
+    background: #0f172a !important;
+    border-radius: 6px !important;
+}
+
+/* ============================================================================
    FIM — UNIFED PROBATUM v13.12.1-FIX CONSOLIDADO
    ============================================================================ */

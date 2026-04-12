@@ -4345,6 +4345,218 @@ function performAudit() {
     }, 1000);
 }
 
+// ============================================================================
+// FUNÇÕES AUXILIARES PARA SMOKING GUN, ATF E MATRIZ (v13.12.1-FIX)
+// ============================================================================
+
+/**
+ * Atualiza os elementos UI dos Smoking Guns com os valores calculados
+ */
+function updateSmokingGunUI() {
+    const cross = UNIFEDSystem.analysis.crossings;
+    if (!cross) return;
+
+    const sg2Value = cross.discrepanciaCritica || 0;
+    const sg2Percent = cross.percentagemOmissao || 0;
+    const sg2Element = document.getElementById('smoking-gun-2-value');
+    const sg2PercentElement = document.getElementById('smoking-gun-2-percent');
+    if (sg2Element) {
+        sg2Element.textContent = formatCurrency(sg2Value);
+        sg2Element.style.color = '#ef4444';
+        sg2Element.style.fontWeight = 'bold';
+    }
+    if (sg2PercentElement) {
+        sg2PercentElement.textContent = sg2Percent.toFixed(2) + '%';
+        sg2PercentElement.style.color = '#ef4444';
+    }
+
+    const sg1Value = cross.discrepanciaSaftVsDac7 || 0;
+    const sg1Percent = cross.percentagemSaftVsDac7 || 0;
+    const sg1Element = document.getElementById('smoking-gun-1-value');
+    const sg1PercentElement = document.getElementById('smoking-gun-1-percent');
+    if (sg1Element) {
+        sg1Element.textContent = formatCurrency(sg1Value);
+        sg1Element.style.color = '#f59e0b';
+        sg1Element.style.fontWeight = 'bold';
+    }
+    if (sg1PercentElement) {
+        sg1PercentElement.textContent = sg1Percent.toFixed(2) + '%';
+        sg1PercentElement.style.color = '#f59e0b';
+    }
+
+    const sg1Container = document.getElementById('smoking-gun-1');
+    const sg2Container = document.getElementById('smoking-gun-2');
+    if (sg1Container) sg1Container.style.display = 'block';
+    if (sg2Container) sg2Container.style.display = 'block';
+
+    logAudit(`🔫 Smoking Gun UI atualizado: SG2 = ${formatCurrency(sg2Value)} (${sg2Percent.toFixed(2)}%) | SG1 = ${formatCurrency(sg1Value)} (${sg1Percent.toFixed(2)}%)`, 'info');
+}
+
+/**
+ * Renderiza o gráfico temporal ATF com base nos dados calculados
+ * @param {Object} atfData - Resultado de computeTemporalAnalysis()
+ */
+function renderTemporalChart(atfData) {
+    const canvas = document.getElementById('atfChartCanvas');
+    if (!canvas) {
+        console.warn('[ATF] Canvas #atfChartCanvas não encontrado');
+        return;
+    }
+
+    if (window.atfChartInstance && typeof window.atfChartInstance.destroy === 'function') {
+        window.atfChartInstance.destroy();
+    }
+
+    if (!atfData || !atfData.months || atfData.months.length === 0) {
+        console.warn('[ATF] Sem dados para renderizar gráfico');
+        return;
+    }
+
+    const months = atfData.months.map(m => m.length === 6 ? m.substring(0,4) + '/' + m.substring(4) : m);
+    const discrepancySeries = atfData.discrepancySeries || [];
+
+    const n = discrepancySeries.length;
+    let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
+    discrepancySeries.forEach((y, i) => {
+        sumX += i;
+        sumY += y;
+        sumXY += i * y;
+        sumX2 += i * i;
+    });
+    const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+    const intercept = (sumY - slope * sumX) / n;
+    const trendLine = discrepancySeries.map((_, i) => slope * i + intercept);
+
+    window.atfChartInstance = new Chart(canvas.getContext('2d'), {
+        type: 'line',
+        data: {
+            labels: months,
+            datasets: [
+                {
+                    label: currentLang === 'pt' ? 'Discrepância Mensal' : 'Monthly Discrepancy',
+                    data: discrepancySeries,
+                    borderColor: '#F59E0B',
+                    backgroundColor: 'rgba(245,158,11,0.1)',
+                    borderWidth: 2,
+                    tension: 0.3,
+                    pointRadius: 5,
+                    pointBackgroundColor: discrepancySeries.map((v, i) => atfData.outlierMonths && atfData.outlierMonths.includes(atfData.months[i]) ? '#EF4444' : '#F59E0B')
+                },
+                {
+                    label: currentLang === 'pt' ? 'Tendência (Regressão Linear)' : 'Trend (Linear Regression)',
+                    data: trendLine,
+                    borderColor: '#A855F7',
+                    borderDash: [5, 5],
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    fill: false
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: (context) => context.dataset.label + ': ' + formatCurrency(context.raw)
+                    }
+                },
+                legend: { labels: { color: '#f8fafc' } }
+            },
+            scales: {
+                y: {
+                    ticks: { callback: (v) => formatCurrency(v), color: '#94a3b8' },
+                    grid: { color: 'rgba(255,255,255,0.1)' }
+                },
+                x: {
+                    ticks: { color: '#94a3b8' },
+                    grid: { color: 'rgba(255,255,255,0.05)' }
+                }
+            }
+        }
+    });
+
+    logAudit(`📈 Gráfico ATF renderizado - Score: ${atfData.persistenceScore}/100, Tendência: ${atfData.trend}`, 'success');
+}
+
+/**
+ * Converte a Matriz de Triangulação para DOM Object e aplica classe de alerta (Colarinho Branco)
+ */
+function enhanceTriangulationMatrix() {
+    const matrixContainer = document.getElementById('triangulationMatrixContainer');
+    if (!matrixContainer) {
+        console.warn('[MATRIX] Elemento #triangulationMatrixContainer não encontrado');
+        return;
+    }
+
+    const rows = matrixContainer.querySelectorAll('tr');
+    if (rows.length === 0) return;
+
+    rows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        if (cells.length < 2) return;
+        const cellText = cells[0]?.innerText || '';
+        if (cellText.includes('Δ C1') || cellText.includes('Δ C2') || 
+            cellText.includes('Δ C3') || cellText.includes('Δ C4') ||
+            cellText.includes('DISCREPÂNCIA') || cellText.includes('OMISSÃO')) {
+            row.classList.add('pure-matrix-alert');
+            row.style.backgroundColor = 'rgba(239,68,68,0.15)';
+            row.style.borderLeft = '3px solid #ef4444';
+        }
+    });
+
+    logAudit('[MATRIX] Matriz de Triangulação atualizada com realce de alerta (Colarinho Branco)', 'info');
+}
+
+// ============================================================================
+// FORCE REVEAL SMOKING GUN (v13.12.1-FIX) - VERSÃO EXPANDIDA
+// ============================================================================
+function forceRevealSmokingGun() {
+    const criticalModules = [
+        'pureDiscCard', 'pureZonaCinzentaCard', 'pureVerdictCard', 'card-asfixia',
+        'smoking-gun-1', 'smoking-gun-2', 'triangulationMatrixContainer'
+    ];
+    
+    criticalModules.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.style.setProperty('display', 'block', 'important');
+            el.style.setProperty('opacity', '1', 'important');
+            el.style.setProperty('visibility', 'visible', 'important');
+        }
+    });
+
+    const smokingGunWrappers = document.querySelectorAll('.smoking-gun-module, .pure-sg-critical, .pure-sg-secondary, [id*="smoking-gun"]');
+    smokingGunWrappers.forEach(wrapper => {
+        wrapper.style.setProperty('display', 'block', 'important');
+        wrapper.classList.remove('hidden', 'd-none', 'invisible');
+    });
+
+    updateSmokingGunUI();
+
+    const monthlyData = window.UNIFEDSystem?.monthlyData;
+    if (monthlyData && Object.keys(monthlyData).length > 0) {
+        const atfData = computeTemporalAnalysis(monthlyData, window.UNIFEDSystem?.analysis);
+        if (atfData && atfData.persistenceScore > 0) {
+            renderTemporalChart(atfData);
+        }
+    }
+
+    enhanceTriangulationMatrix();
+
+    logAudit('[UNIFED] Módulos de Prova Material (Smoking Gun e Colarinho Branco) revelados e fixados.', 'success');
+}
+
+// ============================================================================
+// EXPOSIÇÃO GLOBAL DAS FUNÇÕES (CORREÇÃO Nexus.js:866)
+// ============================================================================
+window.performForensicAnalysis = performAudit;
+window.updateSmokingGunUI = updateSmokingGunUI;
+window.renderTemporalChart = renderTemporalChart;
+window.enhanceTriangulationMatrix = enhanceTriangulationMatrix;
+window.forceRevealSmokingGun = forceRevealSmokingGun;
+
 function validateConsistency() {
     const totals = UNIFEDSystem.analysis.totals;
 

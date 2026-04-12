@@ -14,6 +14,7 @@
     2. Reconciliação da Zona Cinzenta (GAP C1) – 1.951,42 €
     3. Correção de índices romanos (IV → V, V → VI, VI → VII) via script
     4. Selo temporal atualizado: "Selo de Tempo Local (ISO 27037): ATIVO — CUSTÓDIA NÍVEL 1"
+    5. Adição de elementos específicos para Smoking Gun e ATF
   ============================================================================
 -->
 
@@ -166,6 +167,17 @@
           <div class="pure-sg-legal" id="pure-sg1-legal" data-pt="Diretiva DAC7 (UE) 2021/514 · DL n.º 41/2023" data-en="DAC7 Directive (EU) 2021/514 · DL No. 41/2023">Diretiva DAC7 (UE) 2021/514 · DL n.º 41/2023</div>
         </div>
       </div>
+
+      <!-- ELEMENTOS ADICIONAIS PARA SMOKING GUN (valores específicos) -->
+      <div id="smoking-gun-1" class="smoking-gun-module" style="display:none;">
+        <div class="pure-sg-label">SMOKING GUN 1 — SAF-T Bruto vs DAC7</div>
+        <div class="pure-sg-delta">Valor: <span id="smoking-gun-1-value">€ 0,00</span> (<span id="smoking-gun-1-percent">0,00%</span>)</div>
+      </div>
+      <div id="smoking-gun-2" class="smoking-gun-module" style="display:none;">
+        <div class="pure-sg-label">SMOKING GUN 2 — Despesas/Comissões vs Fatura</div>
+        <div class="pure-sg-delta">Valor: <span id="smoking-gun-2-value">€ 0,00</span> (<span id="smoking-gun-2-percent">0,00%</span>)</div>
+      </div>
+
       <div class="pure-fiscal-row">
         <div class="pure-fiscal-item"><div class="pure-fiscal-label" id="pure-iva23-label" data-pt="IVA 23% Omitido" data-en="VAT 23% Omitted">IVA 23% Omitido</div><div id="pure-iva-23" class="pure-fiscal-value">€ 0,00</div><div class="pure-fiscal-sub" id="pure-iva23-sub" data-pt="Art. 2.º n.º 1 al. i) CIVA" data-en="Art. 2(1)(i) CIVA">Art. 2.º n.º 1 al. i) CIVA</div></div>
         <div class="pure-fiscal-item"><div class="pure-fiscal-label" id="pure-iva6-label" data-pt="IVA 6% Omitido" data-en="VAT 6% Omitted">IVA 6% Omitido</div><div id="pure-iva-6" class="pure-fiscal-value">€ 0,00</div><div class="pure-fiscal-sub" id="pure-iva6-sub" data-pt="Art. 18.º CIVA · Transporte" data-en="Art. 18 CIVA · Transport">Art. 18.º CIVA · Transporte</div></div>
@@ -229,6 +241,11 @@
       <div class="pure-data-block"><div class="pure-data-label" data-pt="LÍQUIDO (EXTRATO)" data-en="NET (STATEMENT)">LÍQUIDO (EXTRATO)</div><div id="pure-liquido-tri" class="pure-data-value pure-value-neutral">€ 0,00</div></div>
       <div class="pure-data-block"><div class="pure-data-label" data-pt="FATURADO (BTF)" data-en="INVOICED (BTF)">FATURADO (BTF)</div><div id="pure-fatura-tri" class="pure-data-value pure-value-neutral">€ 0,00</div></div>
     </div>
+  </div>
+
+  <!-- CANVAS PARA O GRÁFICO ATF -->
+  <div class="pure-atf-chart" style="margin-top: 16px;">
+    <canvas id="atfChartCanvas" width="800" height="300" style="width:100%; height:auto; max-height:300px;"></canvas>
   </div>
 
   <!-- SELO TEMPORAL -->
