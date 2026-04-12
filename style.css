@@ -1,10 +1,10 @@
 /* =====================================================================
-   UNIFED - PROBATUM SISTEMA DE PERITAGEM FORENSE · v13.12.0-PURE · DORA COMPLIANT · COURT READY · PURE
+   UNIFED - PROBATUM SISTEMA DE PERITAGEM FORENSE · v13.12.2-i18n · DORA COMPLIANT · COURT READY · PURE
    ESTÉTICA: PANORAMIC SPLASH + CRUZAMENTO LASER H+V + GLASSMORPHISM
    BIG DATA ACCUMULATOR · ALERTAS INTERMITENTES · NOVAS BOXES
    ESTILO FBI/INTERPOL/CSI · QR CODE · PAGINAÇÃO PDF
    PORTUGUÊS DE PORTUGAL
-   + v13.1.0-GOLD: LED blink classes, box-despesas-blink, DORA Compliant badges
+   + v13.12.2-i18n: suporte completo a atributos data-pt/data-en para alternância dinâmica de idioma
    ===================================================================== */
 
 /* ---------------------------------------------------------------------
@@ -49,10 +49,10 @@
     --presentation-font-size-base: 1.1rem;
     --presentation-font-size-large: 2rem;
 
-    /* ── v13.12.0-PURE — Aliases periciais (compatibilidade style_additions) ── */
+    /* ── v13.12.2-i18n — Aliases periciais (compatibilidade style_additions) ── */
     --pure-accent:  #00E5FF;
     --pure-warn:    #EF4444;
-    --pure-version: "v13.12.0-PURE";
+    --pure-version: "v13.12.2-i18n";
 }
 
 *,
@@ -930,11 +930,6 @@ body {
     color: var(--success-primary);
     display: block;
     font-size: 0.8rem;
-}
-
-/* CORREÇÃO: Removido o texto "(browser)" do selo Privacy by Design (a remoção efectiva está no HTML) */
-.privacy-badge span[data-pt="Processamento 100% local (browser)"]::after {
-    display: none;
 }
 
 .btn-wipe {
@@ -2361,7 +2356,7 @@ body.dual-screen .stat-card p {
 }
 
 /* ---------------------------------------------------------------------
-   13. PRINT (PDF) - OTIMIZADO PARA ESTILO JURÍDICO v13.1.0-GOLD
+   13. PRINT (PDF) - OTIMIZADO PARA ESTILO JURÍDICO v13.12.2-i18n
    --------------------------------------------------------------------- */
 @media print {
     /* Ocultar todos os elementos da interface */
@@ -2506,7 +2501,7 @@ body.dual-screen .stat-card p {
 }
 
 /* =====================================================================
-   14. LED STATUS & DORA v13.1.0-GOLD
+   14. LED STATUS & DORA v13.12.2-i18n
    --------------------------------------------------------------------- */
 
 /* LED base */
@@ -2633,7 +2628,7 @@ body.dual-screen .stat-card p {
    ===================================================================== */
 
 /* ═══════════════════════════════════════════════════════════════════════
-   MÓDULO: CADEIA DE CUSTÓDIA FORENSE — v13.1.0-GOLD-CHAIN
+   MÓDULO: CADEIA DE CUSTÓDIA FORENSE — v13.12.2-i18n-CHAIN
    UNIFED - PROBATUM · DORA COMPLIANT · SHA-256 · RFC 3161 MOCK
    ═══════════════════════════════════════════════════════════════════════ */
 
@@ -3139,7 +3134,7 @@ body.dual-screen .stat-card p {
 }
 
 
-/* ── UNIFED - PROBATUM · Tipografia Splash Screen · v13.2.1-GOLD ── */
+/* ── UNIFED - PROBATUM · Tipografia Splash Screen · v13.12.2-i18n ── */
 .splash-content h1,
 .glitch {
     font-size: 4rem;
@@ -3158,11 +3153,11 @@ body.dual-screen .stat-card p {
     letter-spacing: 0.3rem;
     text-transform: uppercase;
 }
-/* ═══ FIM — Cadeia de Custódia CSS · v13.2.1-GOLD-CHAIN · UNIFED - PROBATUM ═══ */
+/* ═══ FIM — Cadeia de Custódia CSS · v13.12.2-i18n-CHAIN · UNIFED - PROBATUM ═══ */
 
 /* ═══════════════════════════════════════════════════════════════════════════════
    MÓDULO AUXILIAR PERICIAL — INDICAÇÃO DE APOIO PERICIAL
-   UNIFED - PROBATUM v13.2.1-GOLD-AUX
+   UNIFED - PROBATUM v13.12.2-i18n-AUX
    Non-Interfering UI Components — Encapsulamento total da main-grid
    Lei TVDE · Art. 125.º CPP · ISO/IEC 27037:2012 · DORA (UE) 2022/2554
    ═══════════════════════════════════════════════════════════════════════════════ */
@@ -3417,12 +3412,12 @@ body.dual-screen .stat-card p {
     }
 }
 
-/* ═══ FIM — Módulo Auxiliar Pericial · v13.2.1-GOLD-AUX · UNIFED - PROBATUM ═══ */
+/* ═══ FIM — Módulo Auxiliar Pericial · v13.12.2-i18n-AUX · UNIFED - PROBATUM ═══ */
 
 
 /* ============================================================================
    REALCE FORENSE — CAMPO ADAPTADO 2025 (PORTAGENS → REEMBOLSOS DE DESPESAS)
-   Protocolo UNIFED-GOLD v13.2 · Art. 125.º CPP · Identificação Visual Pericial
+   Protocolo UNIFED-GOLD v13.12.2-i18n · Art. 125.º CPP · Identificação Visual Pericial
    Permite que o advogado e o juiz identifiquem a adaptação técnica ao novo
    formato de reporte da plataforma (alteração anual de nomenclatura do Ledger).
    ============================================================================ */
@@ -3489,15 +3484,15 @@ body.dual-screen .stat-card p {
 }
 
 /* ============================================================================
-   UNIFED - PROBATUM · v13.12.0-PURE · ESTILOS INTEGRADOS
+   UNIFED - PROBATUM · v13.12.2-i18n · ESTILOS INTEGRADOS
    ============================================================================
    Nota: Os estilos completos do painel #pureDashboard estão em
-   style_additions_v13.12.0-PURE.css (ficheiro externo, carregado em index.html).
+   style_additions_v13.12.2-i18n.css (ficheiro externo, carregado em index.html).
    Este bloco contém apenas os overrides de versão e animações globais
-   que afectam componentes existentes actualizados para v13.12.0-PURE.
+   que afectam componentes existentes actualizados para v13.12.2-i18n.
    ============================================================================ */
 
-/* ── Actualização de badges de versão para v13.12.0-PURE ──────────────────── */
+/* ── Actualização de badges de versão para v13.12.2-i18n ──────────────────── */
 .version-badge {
     /* Sobrepõe cor dourada GOLD → ciano PURE */
     background: linear-gradient(135deg, rgba(0,229,255,0.15), rgba(14,165,233,0.12));
@@ -3550,7 +3545,7 @@ body.dual-screen .stat-card p {
     transform: translateY(0);
 }
 
-/* ── Blink class para SP ≥ 90% (v13.12.0-PURE não atinge — reservado) ─────── */
+/* ── Blink class para SP ≥ 90% (v13.12.2-i18n não atinge — reservado) ─────── */
 .led-pure-amber {
     animation: pure-amber-blink 1.8s infinite;
 }
@@ -3560,10 +3555,10 @@ body.dual-screen .stat-card p {
     50%       { color: #FCD34D; text-shadow: 0 0 18px rgba(245,158,11,0.9); }
 }
 
-/* ══ FIM — v13.12.0-PURE CSS Integration · UNIFED - PROBATUM ══════════════ */
+/* ══ FIM — v13.12.2-i18n CSS Integration · UNIFED - PROBATUM ══════════════ */
 
 /* ============================================================================
-   RETIFICAÇÃO CIRÚRGICA v13.10.1 — Módulo DAC7 e Wrapper
+   RETIFICAÇÃO CIRÚRGICA v13.12.2-i18n — Módulo DAC7 e Wrapper
    ============================================================================ */
 #pure-dac7-module, .pure-card-dac7 {
     height: auto !important;
