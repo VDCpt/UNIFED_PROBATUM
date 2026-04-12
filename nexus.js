@@ -10,6 +10,7 @@
  *   2. RAG JURISPRUDENCIAL AVANÇADO — DOCX Upgrade (Citações + Acórdãos STA)
  *   3. MOTOR PREDITIVO ATF          — Forecasting 6M (Regressão Linear + Chart.js)
  *   4. BLOCKCHAIN EVIDENCE EXPLORER — OTS Individual por Ficheiro (SHA-256 + DOM UI)
+ *   5. ENFORCE BILINGUAL INTEGRITY — Loop breaker para evitar piscas (EV-003)
  * ============================================================================
  */
 'use strict';
@@ -901,4 +902,42 @@ window.UNIFEDSystem = window.UNIFEDSystem || {};
     console.log('[NEXUS] Camada adaptativa carregada – pronta para ambiente air-gapped.');
 })();
 
-console.info('%c[NEXUS · UNIFED-PROBATUM · v13.12.1-FIX]\n' + '%c  M1 · Passive Network Observer       — Proxy Wrapper Transparente ATIVO (ISO/IEC 27037:2012)\n' + '  M2 · RAG Jurisprudencial DOCX         — Hook exportDOCX() instalado\n' + '  M3 · Motor Preditivo ATF (6M)         — Hook openATFModal() instalado\n' + '  M4 · Blockchain Evidence Explorer     — MutationObserver #custodyModal ativo\n' + '  M5 · Extensão Core v13.12.1-FIX       — Fallback de integridade e forceReveal\n' + '  M6 · Integridade Visual               — sealCanvas() disponível\n' + '  Modo: Read-Only · DORA (UE) 2022/2554 · ISO/IEC 27037:2012 · Art. 125.o CPP', 'color:#00E5FF;font-family:Courier New,monospace;font-weight:700;font-size:0.9em;', 'color:rgba(0,229,255,0.65);font-family:Courier New,monospace;font-size:0.8em;');
+// ============================================================================
+// MÓDULO 5 · ENFORCE BILINGUAL INTEGRITY (EV-003) — Loop breaker para evitar piscas
+// ============================================================================
+(function _enforceBilingualIntegrity() {
+    // Garantir que o MutationObserver é aplicado apenas uma vez
+    if (window.__nexusBilingualObserverActive) return;
+    window.__nexusBilingualObserverActive = true;
+
+    const _enforceBilingualIntegrity = function() {
+        const observer = new MutationObserver((mutations, obs) => {
+            // Desconectar temporariamente para evitar recursividade (Loop Break)
+            obs.disconnect(); 
+            
+            const lang = document.documentElement.lang === 'en' ? 'en' : 'pt';
+            document.querySelectorAll('[data-' + lang + ']').forEach(el => {
+                const targetText = el.getAttribute('data-' + lang).trim();
+                // Utilizar textContent.trim() para imunidade a quebras de linha HTML
+                if (el.textContent.trim() !== targetText && !el.querySelector('i')) {
+                    el.textContent = targetText;
+                }
+            });
+            
+            // Reconectar após a mutação autorizada
+            obs.observe(document.body, { childList: true, subtree: true });
+        });
+
+        observer.observe(document.body, { childList: true, subtree: true });
+        console.info('[NEXUS·M5] ✅ Bilingual Integrity Observer activo — correcção de piscas (EV-003)');
+    };
+
+    // Aguardar DOM estar pronto
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', _enforceBilingualIntegrity);
+    } else {
+        _enforceBilingualIntegrity();
+    }
+})();
+
+console.info('%c[NEXUS · UNIFED-PROBATUM · v13.12.1-FIX]\n' + '%c  M1 · Passive Network Observer       — Proxy Wrapper Transparente ATIVO (ISO/IEC 27037:2012)\n' + '  M2 · RAG Jurisprudencial DOCX         — Hook exportDOCX() instalado\n' + '  M3 · Motor Preditivo ATF (6M)         — Hook openATFModal() instalado\n' + '  M4 · Blockchain Evidence Explorer     — MutationObserver #custodyModal ativo\n' + '  M5 · Bilingual Integrity (EV-003)    — Loop breaker activo\n' + '  M6 · Extensão Core v13.12.1-FIX       — Fallback de integridade e forceReveal\n' + '  M7 · Integridade Visual               — sealCanvas() disponível\n' + '  Modo: Read-Only · DORA (UE) 2022/2554 · ISO/IEC 27037:2012 · Art. 125.o CPP', 'color:#00E5FF;font-family:Courier New,monospace;font-weight:700;font-size:0.9em;', 'color:rgba(0,229,255,0.65);font-family:Courier New,monospace;font-size:0.8em;');
