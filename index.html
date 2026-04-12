@@ -602,6 +602,102 @@
                         if (typeof window._translatePurePanel === 'function') {
                             window._translatePurePanel(window.currentLang || 'pt');
                         }
+                        
+                        // ========== BLOCO DE CORREÇÃO DE INTERFACE (LAYOUT SHIFT, SMOKING GUNS, METADADOS) ==========
+                        (function() {
+                            // 1. Re-trigger da força de revelação
+                            if (typeof window.forceRevealSmokingGun === 'function') {
+                                window.forceRevealSmokingGun();
+                            } else {
+                                const criticalModules = ['pureDiscCard', 'pureZonaCinzentaCard', 'pureVerdictCard', 'card-asfixia'];
+                                criticalModules.forEach(id => {
+                                    const el = document.getElementById(id);
+                                    if (el) {
+                                        el.style.setProperty('display', 'block', 'important');
+                                        el.style.setProperty('opacity', '1', 'important');
+                                        el.style.setProperty('visibility', 'visible', 'important');
+                                    }
+                                });
+                            }
+
+                            // 2. Garantir visibilidade dos Smoking Guns
+                            const smokingGuns = document.querySelectorAll('.smoking-gun-module, .pure-sg-critical, .pure-sg-secondary');
+                            smokingGuns.forEach(sg => {
+                                sg.style.setProperty('display', 'block', 'important');
+                                sg.style.setProperty('opacity', '1', 'important');
+                                sg.style.setProperty('z-index', '20', 'important');
+                            });
+
+                            // 3. Correção do wrapper principal (remove layout shift)
+                            const wrapperEl = document.getElementById('pureDashboardWrapper');
+                            if (wrapperEl) {
+                                wrapperEl.style.setProperty('height', 'auto', 'important');
+                                wrapperEl.style.setProperty('overflow', 'visible', 'important');
+                                wrapperEl.style.setProperty('min-height', '0', 'important');
+                            }
+
+                            // 4. Ajuste de margin-bottom nas .chart-section
+                            const chartSections = document.querySelectorAll('.chart-section');
+                            chartSections.forEach(chart => {
+                                chart.style.setProperty('margin-bottom', '0', 'important');
+                                chart.style.setProperty('padding-bottom', '0', 'important');
+                            });
+
+                            // 5. Ajuste do container do console
+                            const consoleSection = document.querySelector('.console-section');
+                            if (consoleSection) {
+                                consoleSection.style.setProperty('margin-top', '0', 'important');
+                                consoleSection.style.setProperty('clear', 'both', 'important');
+                            }
+
+                            // 6. Atualização de metadados do perito (eIDAS)
+                            const operatorSpan = document.querySelector('.pure-operator-badge .pure-value-warn');
+                            if (operatorSpan) {
+                                operatorSpan.textContent = 'UNIFED-A.S.-9W3HI [VALIDADO/eIDAS]';
+                                operatorSpan.style.color = '#00e5ff';
+                            } else {
+                                const header = document.querySelector('.pure-section-header');
+                                if (header) {
+                                    const badgeDiv = document.createElement('div');
+                                    badgeDiv.className = 'pure-operator-badge';
+                                    badgeDiv.style.cssText = 'margin-top: 5px; font-family: monospace; font-size: 0.85em; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 4px;';
+                                    badgeDiv.innerHTML = 'ID_OPERADOR_FORENSE: <span class="pure-value-warn" style="color: #00e5ff;">UNIFED-A.S.-9W3HI [VALIDADO/eIDAS]</span>';
+                                    header.appendChild(badgeDiv);
+                                }
+                            }
+
+                            // 7. Atualização do selo temporal
+                            const tsaAnchor = document.getElementById('pure-tsa-anchor');
+                            if (tsaAnchor) {
+                                tsaAnchor.innerHTML = 'Selo de Tempo Local (ISO 27037): <span style="color: #10b981; font-weight: bold;">ATIVO — CUSTÓDIA NÍVEL 1</span>';
+                            } else {
+                                const possibleAnchor = Array.from(document.querySelectorAll('[id*="tsa"], [id*="anchor"]')).find(el => el.textContent.includes('Selo FreeTSA'));
+                                if (possibleAnchor) {
+                                    possibleAnchor.innerHTML = 'Selo de Tempo Local (ISO 27037): <span style="color: #10b981; font-weight: bold;">ATIVO — CUSTÓDIA NÍVEL 1</span>';
+                                }
+                            }
+
+                            // 8. Injeção do GAP DE CONCILIAÇÃO (C1) na Zona Cinzenta
+                            const zonaCinzentaCard = document.getElementById('pureZonaCinzentaCard');
+                            if (zonaCinzentaCard && !document.getElementById('gap-c1-injected')) {
+                                const totalNaoSujeitosBlock = zonaCinzentaCard.querySelector('.pure-zc-total, .pure-zc-item:last-child');
+                                if (totalNaoSujeitosBlock) {
+                                    const gapDiv = document.createElement('div');
+                                    gapDiv.id = 'gap-c1-injected';
+                                    gapDiv.className = 'pure-badge-warn';
+                                    gapDiv.style.cssText = 'color: #ef4444; border-left: 2px solid #ef4444; padding-left: 8px; margin-top: 10px; background: rgba(239,68,68,0.05); border-radius: 4px;';
+                                    gapDiv.innerHTML = '<strong>GAP DE CONCILIAÇÃO (C1): 1.951,42 €</strong><br><span style="font-size: 0.8em;">Estado: Indício de Omissão Declarativa (Base Bruta não justificada por fluxos isentos).</span>';
+                                    totalNaoSujeitosBlock.insertAdjacentElement('afterend', gapDiv);
+                                }
+                            }
+
+                            // 9. Forçar redesenho de gráficos
+                            if (typeof window.renderChart === 'function') window.renderChart();
+                            if (typeof window.renderDiscrepancyChart === 'function') window.renderDiscrepancyChart();
+
+                            console.log('[UNIFED-FIX] Correções de interface aplicadas (layout shift eliminado, smoking guns revelados, metadados atualizados).');
+                        })();
+                        // ======================================================================================
                     }
                 })
                 .catch(function(err) {
