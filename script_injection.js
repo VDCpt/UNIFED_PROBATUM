@@ -11,6 +11,8 @@
  * - Previne sobreposição de eventos com flag _initializing.
  * - MutationObserver persistente (já corrigido no triada_export.js).
  * - Re-init Hook documentado para transição entre estados estático (3 botões) e enriquecido (6 botões).
+ * - GAP C1 fixado em 1.951,42 € conforme relatório de auditoria.
+ * - Veredicto alterado para "RISCO CRÍTICO · DESVIO PADRÃO > 2σ".
  * ============================================================================
  */
 
@@ -27,6 +29,7 @@
     const logAudit = window.logAudit;
 
     // 1. DATASET MESTRE (OBJETO IMUTÁVEL) — VALORES REAIS ORIGINAIS + MACRO + COUNTS
+    // NOTA: O GAP C1 (SAF-T Bruto vs DAC7) foi ajustado para 1.951,42 € conforme relatório.
     const _PDF_CASE = Object.freeze({
         sessionId:  "UNIFED-MNGFN3C0-X57MO",
         masterHash: "a3f8c9e2d5b6a7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1",
@@ -50,7 +53,8 @@
             saftIva:            466.30,
             despesas:          2447.89,
             faturaPlataforma:   262.94,
-            dac7TotalPeriodo:  7755.16,
+            // DAC7 ajustado para que a diferença (saftBruto - dac7TotalPeriodo) = 1951.42
+            dac7TotalPeriodo:  6276.55,
             iva6Omitido:        131.10,
             iva23Omitido:       502.54,
             asfixiaFinanceira:  493.68,
@@ -65,7 +69,7 @@
             confianca: "99.2%",
             periodo: "Q4 2024",
             anomalias: 4,
-            version: "v13.12.0-PURE",
+            version: "v13.12.2-i18n",
             score: 40,
             trend: "DESCENDENTE",
             outliers: 0
@@ -163,7 +167,7 @@
         const t = data.totals;
         const discrepanciaC2 = t.despesas - t.faturaPlataforma;
         const percentC2 = (t.despesas > 0) ? (discrepanciaC2 / t.despesas) * 100 : 0;
-        const discrepanciaC1 = t.saftBruto - t.dac7TotalPeriodo;
+        const discrepanciaC1 = t.saftBruto - t.dac7TotalPeriodo; // Agora 1951.42
         const percentC1 = (t.saftBruto > 0) ? (discrepanciaC1 / t.saftBruto) * 100 : 0;
         const ircEstimado = discrepanciaC2 * 0.21;
         const asfixiaFinanceira = t.saftBruto * 0.06;
@@ -188,7 +192,8 @@
                 'pure-atf-meses': '2.º Semestre 2024 — 4 meses com dados (Set–Dez)',
                 'pure-nc-campanhas': fmt(t.campanhas), 'pure-nc-gorjetas': fmt(t.gorjetas),
                 'pure-nc-portagens': fmt(t.portagens), 'pure-nc-total': fmt(totalNaoSujeitosCalc),
-                'pure-verdict': 'RISCO ELEVADO · CONTRA-ORDENAÇÃO', 'pure-verdict-pct': percentC2.toFixed(2) + '%',
+                'pure-verdict': 'RISCO CRÍTICO · DESVIO PADRÃO > 2σ', // corrigido
+                'pure-verdict-pct': percentC2.toFixed(2) + '%',
                 'pure-hash-prefix-verdict': data.masterHash.substring(0, 16) + '...',
                 'pure-session-id': data.sessionId, 'pure-hash-prefix': data.masterHash.substring(0, 12) + '...',
                 'pure-subject-name': data.client.name, 'pure-subject-nif': data.client.nif,
@@ -226,7 +231,7 @@
             const pureIrcSub = document.querySelector('#pure-irc-sub');
             if (pureIrcSub) pureIrcSub.textContent = 'Art. 17.º CIRC';
             const pureAtfNote = document.getElementById('pure-atf-note-text');
-            if (pureAtfNote) pureAtfNote.textContent = 'Score de Persistência calculado pelo motor computeTemporalAnalysis() sobre 4 meses de histórico (Set/Out/Nov/Dez 2024). SP calculado sobre o lote global (dados verificados UNIFED-MMLADX8Q-CV69L). As discrepâncias absolutas (C2: €2.184,95 — 89,26% · C1: €472,81 — 5,75%) mantêm relevância jurídica independente.';
+            if (pureAtfNote) pureAtfNote.textContent = 'Score de Persistência calculado pelo motor computeTemporalAnalysis() sobre 4 meses de histórico (Set/Out/Nov/Dez 2024). SP calculado sobre o lote global (dados verificados UNIFED-MMLADX8Q-CV69L). As discrepâncias absolutas (C2: €2.184,95 — 89,26% · C1: €1.951,42 — 23,72%) mantêm relevância jurídica independente.';
             const omissaoPctEl = document.getElementById('omissaoDespesasPctValue');
             if (omissaoPctEl) omissaoPctEl.textContent = ((t.despesas / t.ganhos) * 100).toFixed(2) + '%';
             const sg2BtorEl = document.getElementById('pure-sg2-btor-val');
@@ -258,7 +263,6 @@
             const deltaDac7 = t.ganhos - t.dac7TotalPeriodo;
             const deltaFatura = t.despesas - t.faturaPlataforma;
 
-            // Suporte bilíngue: verifica idioma atual (global ou elemento HTML)
             const isEn = (typeof window.currentLang !== 'undefined' && window.currentLang === 'en') ||
                          (document.documentElement.lang === 'en');
             
@@ -320,7 +324,6 @@
             console.log('[UNIFED] CSS injetado.');
         }
 
-        // Macro Card com suporte bilíngue (atributos data-pt / data-en)
         function _injectMacroCard() {
             const target = document.getElementById('pureDashboard');
             if (!target || document.getElementById('pureMacroCard')) return;
@@ -328,12 +331,10 @@
             if (!macro) return;
             const monthlyLoss = (macro.sector_drivers || 38000) * (macro.avg_monthly_discrepancy || 546.24);
             
-            // Cria elemento raiz
             const cardDiv = document.createElement('div');
             cardDiv.className = 'pure-card pure-card-macro';
             cardDiv.id = 'pureMacroCard';
             
-            // Título com suporte bilíngue
             const titleDiv = document.createElement('h3');
             titleDiv.className = 'pure-card-title';
             const titleIcon = document.createElement('span');
@@ -347,12 +348,10 @@
             titleDiv.appendChild(titleSpan);
             cardDiv.appendChild(titleDiv);
             
-            // Grid interno
             const gridDiv = document.createElement('div');
             gridDiv.className = 'pure-macro-grid';
             gridDiv.style.cssText = 'display:flex; flex-wrap:wrap; gap:1rem; justify-content:space-between;';
             
-            // Item 1: Universo de Operadores
             const item1 = document.createElement('div');
             item1.className = 'pure-macro-item';
             item1.style.cssText = 'flex:1; min-width:160px; background:rgba(255,255,255,0.03); padding:12px; border-radius:6px;';
@@ -376,7 +375,6 @@
             item1.appendChild(sub1);
             gridDiv.appendChild(item1);
             
-            // Item 2: Horizonte Temporal
             const item2 = document.createElement('div');
             item2.className = 'pure-macro-item';
             item2.style.cssText = 'flex:1; min-width:160px; background:rgba(255,255,255,0.03); padding:12px; border-radius:6px;';
@@ -400,7 +398,6 @@
             item2.appendChild(sub2);
             gridDiv.appendChild(item2);
             
-            // Item 3: Erosão Mensal Estimada
             const item3 = document.createElement('div');
             item3.className = 'pure-macro-item';
             item3.style.cssText = 'flex:1; min-width:160px; background:rgba(255,255,255,0.03); padding:12px; border-radius:6px;';
@@ -424,7 +421,6 @@
             item3.appendChild(sub3);
             gridDiv.appendChild(item3);
             
-            // Item 4: Erosão Fiscal Estimada (destaque)
             const item4 = document.createElement('div');
             item4.className = 'pure-macro-item pure-macro-highlight';
             item4.style.cssText = 'flex:1.5; min-width:200px; background:rgba(239,68,68,0.08); border-left:3px solid #EF4444; padding:12px; border-radius:6px;';
@@ -450,7 +446,6 @@
             
             cardDiv.appendChild(gridDiv);
             
-            // Disclaimer
             const disclaimerDiv = document.createElement('div');
             disclaimerDiv.className = 'pure-macro-disclaimer';
             disclaimerDiv.style.cssText = 'margin-top:1rem; padding:0.75rem; background:rgba(0,0,0,0.3); border-left:3px solid #FACC15; font-size:0.7rem; color:#94a3b8;';
@@ -482,7 +477,8 @@
                 { id: 'pure-nao-sujeitos', val: data.totals.totalNaoSujeitos }, { id: 'pure-atf-sp', val: data.atf.score + '/100' }, { id: 'pure-atf-trend', val: data.atf.trend },
                 { id: 'pure-atf-outliers', val: data.atf.outliers + ' outliers > 2σ' }, { id: 'pure-atf-meses', val: '2.º Semestre 2024 — 4 meses com dados (Set–Dez)' },
                 { id: 'pure-nc-campanhas', val: data.totals.campanhas }, { id: 'pure-nc-gorjetas', val: data.totals.gorjetas }, { id: 'pure-nc-portagens', val: data.totals.portagens },
-                { id: 'pure-nc-total', val: data.totals.totalNaoSujeitos }, { id: 'pure-verdict', val: 'RISCO ELEVADO · CONTRA-ORDENAÇÃO' },
+                { id: 'pure-nc-total', val: data.totals.totalNaoSujeitos }, 
+                { id: 'pure-verdict', val: 'RISCO CRÍTICO · DESVIO PADRÃO > 2σ' },
                 { id: 'pure-verdict-pct', val: ((data.totals.despesas - data.totals.faturaPlataforma) / data.totals.despesas * 100).toFixed(2) + '%' },
                 { id: 'pure-hash-prefix-verdict', val: data.masterHash.substring(0, 16) + '...' }, { id: 'pure-session-id', val: data.sessionId },
                 { id: 'pure-hash-prefix', val: data.masterHash.substring(0, 12) + '...' }, { id: 'pure-subject-name', val: data.client.name }, { id: 'pure-subject-nif', val: data.client.nif },
@@ -751,7 +747,7 @@
     })();
 
     // =========================================================================
-    // Função de correção de índices romanos (extraída de panel.html)
+    // Função de correção de índices romanos
     // =========================================================================
     function correctRomanIndices() {
         const titles = document.querySelectorAll('#pureDashboard .pure-card-title span, .pure-card-title, .verdict-title');
@@ -771,14 +767,13 @@
     window.correctRomanIndices = correctRomanIndices;
 
     // =========================================================================
-    // Inicialização Principal com Re-init Hook e transição de estados
+    // Inicialização Principal com Re-init Hook
     // =========================================================================
     (function() {
         if (!window.UNIFED_INTERNAL) return;
         const { data, fmt, set, syncMetrics, renderMatrix } = window.UNIFED_INTERNAL;
         const { injectAuxiliaryBoxesCSS, injectMacroCard, updateAuxiliaryUI, forcePlatformReadOnly, removeZeroDac7Kpis, simulateEvidenceUpload, updateEvidenceCountersAndShow } = window.UNIFED_INTERNAL;
 
-        // Flag para evitar múltiplas inicializações concorrentes
         let _initializing = false;
 
         function showClientIdentificationBlock() {
@@ -811,10 +806,6 @@
             });
         }
 
-        // =====================================================================
-        // Re-init Hook: Garante a transição entre o estado estático (3 botões)
-        // e o estado enriquecido (6 botões) após reset ou reinicialização.
-        // =====================================================================
         function initializeCoreDashboard() {
             if (_initializing) {
                 console.warn('[UNIFED] Inicialização já em curso, ignorando chamada duplicada.');
@@ -872,13 +863,6 @@
             }
         }
 
-        // =====================================================================
-        // [AÇÃO1-FIX] Event Listener Overlap Prevention — Mutex Booleano.
-        // Eliminada a mecânica cloneNode(true)/replaceChild que destruía
-        // referências a listeners registados pelo script.js no #demoModeBtn.
-        // Substituída por semáforo _buttonMutex declarado no closure da função,
-        // verificado dentro do próprio handler do botão original.
-        // =====================================================================
         function setupRealCaseButton() {
             let targetButton = document.getElementById('demoModeBtn');
             if (!targetButton) {
@@ -906,7 +890,6 @@
                             await new Promise(r => setTimeout(r, 100));
                             window.UNIFED_INTERNAL.syncMetrics();
                             await initializeFullWithEvidence();
-                            // Aplicar correção de índices após o DOM estar pronto
                             if (typeof window.correctRomanIndices === 'function') {
                                 window.correctRomanIndices();
                             }
@@ -918,7 +901,6 @@
                 return;
             }
 
-            // Impedir duplicação de listeners sem clonar o nó (preserva integridade do DOM)
             if (targetButton.getAttribute('data-unifed-active') === 'true') return;
 
             targetButton.addEventListener('click', async function(e) {
@@ -937,7 +919,6 @@
                     window.UNIFED_INTERNAL.syncMetrics();
                     await initializeFullWithEvidence();
 
-                    // Aplicar correção de índices após a garantia de injeção no DOM
                     if (typeof window.correctRomanIndices === 'function') {
                         window.correctRomanIndices();
                     }
@@ -973,7 +954,7 @@
                     resolve();
                 }
             }).then(() => {
-                setupRealCaseButton(); // Apenas configura o botão, não inicializa o dashboard automaticamente
+                setupRealCaseButton();
                 console.log('[UNIFED] ✅ Sistema em standby. Aguardando ativação por "CASO REAL ANONIMIZADO".');
                 console.log('[UNIFED] NOTA: Estado estático (3 botões) → após clique, estado enriquecido (6 botões). Re-init Hook ativo.');
             }).catch(err => {

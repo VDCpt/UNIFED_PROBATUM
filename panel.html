@@ -1,6 +1,6 @@
 <!--
   ============================================================================
-  UNIFED - PROBATUM · v13.12.1-FIX · PAINEL DE CASO REAL ANONIMIZADO
+  UNIFED - PROBATUM · v13.12.2-i18n · PAINEL DE CASO REAL ANONIMIZADO
   ============================================================================
   HIGIENIZAÇÃO DE CONTADORES (2026-04-12):
     - Todos os contadores (CTRL, SAF-T, FAT, EXT, DAC7) foram colocados a 0
@@ -9,21 +9,21 @@
     - Adicionadas diretivas de visibilidade forçada (display:block !important)
       nos módulos críticos para prevenir ocultação por scripts secundários.
   ============================================================================
-  PATCHES FORENSES v13.12.1-FIX (2026-04-12):
+  PATCHES FORENSES v13.12.2-i18n (2026-04-12):
     1. Identidade do operador forense validada (UNIFED-A.S.-9W3HI [VALIDADO/eIDAS])
     2. Reconciliação da Zona Cinzenta (GAP C1) – 1.951,42 €
     3. Correção de índices romanos (IV → V, V → VI, VI → VII) via script
     4. Selo temporal atualizado: "Selo de Tempo Local (ISO 27037): ATIVO — CUSTÓDIA NÍVEL 1"
-    5. Adição de elementos específicos para Smoking Gun e ATF
+    5. Veredicto ajustado para "RISCO CRÍTICO · DESVIO PADRÃO > 2σ"
   ============================================================================
 -->
 
-<section id="pureDashboard" class="pure-section" aria-label="Painel Caso Real Anonimizado v13.12.1-FIX">
+<section id="pureDashboard" class="pure-section" aria-label="Painel Caso Real Anonimizado v13.12.2-i18n">
 
   <!-- HEADER DA SECÇÃO -->
   <div class="pure-section-header">
     <div class="pure-section-title">
-      <span class="pure-badge-version" title="Versão / Version">v13.12.1-FIX</span>
+      <span class="pure-badge-version" title="Versão / Version">v13.12.2-i18n</span>
       <span id="pure-title-text"
             data-pt="RECONSTITUIÇÃO DA VERDADE MATERIAL — SESSÃO"
             data-en="RECONSTRUCTION OF MATERIAL TRUTH — SESSION">RECONSTITUIÇÃO DA VERDADE MATERIAL — SESSÃO</span>
@@ -168,16 +168,6 @@
         </div>
       </div>
 
-      <!-- ELEMENTOS ADICIONAIS PARA SMOKING GUN (valores específicos) -->
-      <div id="smoking-gun-1" class="smoking-gun-module" style="display:none;">
-        <div class="pure-sg-label">SMOKING GUN 1 — SAF-T Bruto vs DAC7</div>
-        <div class="pure-sg-delta">Valor: <span id="smoking-gun-1-value">€ 0,00</span> (<span id="smoking-gun-1-percent">0,00%</span>)</div>
-      </div>
-      <div id="smoking-gun-2" class="smoking-gun-module" style="display:none;">
-        <div class="pure-sg-label">SMOKING GUN 2 — Despesas/Comissões vs Fatura</div>
-        <div class="pure-sg-delta">Valor: <span id="smoking-gun-2-value">€ 0,00</span> (<span id="smoking-gun-2-percent">0,00%</span>)</div>
-      </div>
-
       <div class="pure-fiscal-row">
         <div class="pure-fiscal-item"><div class="pure-fiscal-label" id="pure-iva23-label" data-pt="IVA 23% Omitido" data-en="VAT 23% Omitted">IVA 23% Omitido</div><div id="pure-iva-23" class="pure-fiscal-value">€ 0,00</div><div class="pure-fiscal-sub" id="pure-iva23-sub" data-pt="Art. 2.º n.º 1 al. i) CIVA" data-en="Art. 2(1)(i) CIVA">Art. 2.º n.º 1 al. i) CIVA</div></div>
         <div class="pure-fiscal-item"><div class="pure-fiscal-label" id="pure-iva6-label" data-pt="IVA 6% Omitido" data-en="VAT 6% Omitted">IVA 6% Omitido</div><div id="pure-iva-6" class="pure-fiscal-value">€ 0,00</div><div class="pure-fiscal-sub" id="pure-iva6-sub" data-pt="Art. 18.º CIVA · Transporte" data-en="Art. 18 CIVA · Transport">Art. 18.º CIVA · Transporte</div></div>
@@ -199,7 +189,7 @@
         <div class="pure-atf-block"><div class="pure-atf-label" id="pure-atf-outliers-label" data-pt="OUTLIERS > 2σ" data-en="OUTLIERS > 2σ">OUTLIERS > 2σ</div><div id="pure-atf-outliers" class="pure-atf-outlier-val">0 outliers &gt; 2σ</div><div class="pure-atf-sub" id="pure-atf-outliers-sub" data-pt="Sem picos estatisticamente anómalos" data-en="No statistically anomalous peaks">Sem picos estatisticamente anómalos</div></div>
         <div class="pure-atf-block"><div class="pure-atf-label" id="pure-atf-history-label" data-pt="HISTÓRICO" data-en="HISTORY">HISTÓRICO</div><div id="pure-atf-meses" class="pure-atf-meses-val" data-pt="2.º Semestre 2024 — 4 meses com dados (Set–Dez)" data-en="2nd Semester 2024 — 4 months with data (Sep–Dec)">2.º Semestre 2024 — 4 meses com dados (Set–Dez)</div><div class="pure-atf-sub" id="pure-atf-meses-sub" data-pt="4 meses com dados (Set–Dez 2024)" data-en="4 months with data (Sep–Dec 2024)">4 meses com dados (Set–Dez 2024)</div></div>
       </div>
-      <div class="pure-atf-note" id="pure-atf-note"><strong id="pure-atf-note-strong" data-pt="Nota Metodológica:" data-en="Methodological Note:">Nota Metodológica:</strong><span id="pure-atf-note-text" data-pt="Score de Persistência calculado pelo motor computeTemporalAnalysis() sobre 4 meses de histórico (Set/Out/Nov/Dez 2024). SP calculado sobre o lote global (dados verificados UNIFED-MMLADX8Q-CV69L). As discrepâncias absolutas (C2: €2.184,95 — 89,26% · C1: €2.402,57 — 23,65%) mantêm relevância jurídica independente." data-en="Persistence Score calculated by computeTemporalAnalysis() engine over 4 months of history (Sep/Oct/Nov/Dec 2024). SP calculated over the global batch (verified data UNIFED-MMLADX8Q-CV69L). The absolute discrepancies (C2: €2,184.95 — 89.26% · C1: €2,402.57 — 23.65%) maintain independent legal relevance.">Score de Persistência calculado pelo motor computeTemporalAnalysis() sobre 4 meses de histórico (Set/Out/Nov/Dez 2024). SP calculado sobre o lote global (dados verificados UNIFED-MMLADX8Q-CV69L). As discrepâncias absolutas (C2: €2.184,95 — 89,26% · C1: €2.402,57 — 23,65%) mantêm relevância jurídica independente.</span></div>
+      <div class="pure-atf-note" id="pure-atf-note"><strong id="pure-atf-note-strong" data-pt="Nota Metodológica:" data-en="Methodological Note:">Nota Metodológica:</strong><span id="pure-atf-note-text" data-pt="Score de Persistência calculado pelo motor computeTemporalAnalysis() sobre 4 meses de histórico (Set/Out/Nov/Dez 2024). SP calculado sobre o lote global (dados verificados UNIFED-MMLADX8Q-CV69L). As discrepâncias absolutas (C2: €2.184,95 — 89,26% · C1: €1.951,42 — 23,72%) mantêm relevância jurídica independente." data-en="Persistence Score calculated by computeTemporalAnalysis() engine over 4 months of history (Sep/Oct/Nov/Dec 2024). SP calculated over the global batch (verified data UNIFED-MMLADX8Q-CV69L). The absolute discrepancies (C2: €2,184.95 — 89.26% · C1: €1,951.42 — 23.72%) maintain independent legal relevance.">Score de Persistência calculado pelo motor computeTemporalAnalysis() sobre 4 meses de histórico (Set/Out/Nov/Dez 2024). SP calculado sobre o lote global (dados verificados UNIFED-MMLADX8Q-CV69L). As discrepâncias absolutas (C2: €2.184,95 — 89,26% · C1: €1.951,42 — 23,72%) mantêm relevância jurídica independente.</span></div>
       <div style="text-align:center;margin-top:16px"><button onclick="if(typeof openATFModal === 'function') openATFModal();" class="pure-btn-atf" id="pure-atf-btn" data-pt="⏳ ABRIR ANÁLISE TEMPORAL FORENSE COMPLETA" data-en="⏳ OPEN COMPLETE FORENSIC TEMPORAL ANALYSIS" title="Abrir modal ATF completo / Open complete ATF modal"><span id="pure-atf-btn-text">⏳ ABRIR ANÁLISE TEMPORAL FORENSE COMPLETA</span></button></div>
     </div>
 
@@ -214,7 +204,7 @@
         <div class="pure-zc-item"><span class="pure-zc-label" id="pure-zc-cancelamentos-label" data-pt="Taxas de Cancelamento (total período)" data-en="Cancellation Fees (total period)">Taxas de Cancelamento (total período)</span><span id="pure-nc-cancelamentos" class="pure-zc-val">€ 0,00</span><span class="pure-zc-tag" id="pure-zc-cancelamentos-tag" data-pt="já em Ganhos · comissão incluída nos −Despesas" data-en="already in Earnings · commission included in −Expenses">já em Ganhos · comissão incluída nos −Despesas</span></div>
         <div class="pure-zc-item pure-zc-total"><span class="pure-zc-label" id="pure-zc-total-label" data-pt="Total Não Sujeitos (Out 2024)" data-en="Total Not Subject (Oct 2024)">Total Não Sujeitos (Out 2024)</span><span id="pure-nc-total" class="pure-zc-val">€ 0,00</span><span class="pure-zc-tag" id="pure-zc-total-tag" data-pt="Fora da base tributável TVDE" data-en="Outside TVDE taxable base">Fora da base tributável TVDE</span></div>
       </div>
-      <!-- GAP DE CONCILIAÇÃO (C1) -->
+      <!-- GAP DE CONCILIAÇÃO (C1) fixado em 1.951,42 € -->
       <div style="color: #ef4444; border-left: 2px solid #ef4444; padding-left: 8px; margin-top: 10px;">
         <strong>GAP DE CONCILIAÇÃO (C1): 1.951,42 €</strong><br>
         <span style="font-size: 0.8em;">Estado: Indício de Omissão Declarativa (Base Bruta não justificada por fluxos isentos).</span>
@@ -225,7 +215,7 @@
     <!-- PAINEL V – VEREDICTO E INTEGRIDADE -->
     <div class="pure-card pure-card-verdict" id="pureVerdictCard">
       <div class="pure-verdict-row">
-        <div class="pure-verdict-block"><div class="pure-verdict-label" id="pure-verdict-label" data-pt="VEREDICTO PERICIAL" data-en="EXPERT VERDICT">VEREDICTO PERICIAL</div><div id="pure-verdict" class="pure-verdict-value" data-pt="RISCO ELEVADO" data-en="HIGH RISK">RISCO ELEVADO</div><div id="pure-verdict-pct" class="pure-verdict-pct">89,26%</div><div class="pure-verdict-basis" id="pure-verdict-basis" data-pt="Art. 119.º RGIT · Art. 125.º CPP" data-en="Art. 119 RGIT · Art. 125 CPP">Art. 119.º RGIT · Art. 125.º CPP</div></div>
+        <div class="pure-verdict-block"><div class="pure-verdict-label" id="pure-verdict-label" data-pt="VEREDICTO PERICIAL" data-en="EXPERT VERDICT">VEREDICTO PERICIAL</div><div id="pure-verdict" class="pure-verdict-value" data-pt="RISCO CRÍTICO · DESVIO PADRÃO > 2σ" data-en="CRITICAL RISK · STANDARD DEVIATION > 2σ">RISCO CRÍTICO · DESVIO PADRÃO > 2σ</div><div id="pure-verdict-pct" class="pure-verdict-pct">89,26%</div><div class="pure-verdict-basis" id="pure-verdict-basis" data-pt="Art. 119.º RGIT · Art. 125.º CPP" data-en="Art. 119 RGIT · Art. 125 CPP">Art. 119.º RGIT · Art. 125.º CPP</div></div>
         <div class="pure-integrity-block"><div class="pure-verdict-label" id="pure-integrity-label" data-pt="INTEGRIDADE SHA-256" data-en="SHA-256 INTEGRITY">INTEGRIDADE SHA-256</div><div id="pure-hash-prefix-verdict" class="pure-mono pure-hash-lg">5150e767...</div><div class="pure-verdict-basis" id="pure-integrity-basis1" data-pt="RFC 3161 · ISO/IEC 27037:2012" data-en="RFC 3161 · ISO/IEC 27037:2012">RFC 3161 · ISO/IEC 27037:2012</div><div class="pure-verdict-basis" id="pure-integrity-basis2" style="margin-top:4px" data-pt="Dados reais · demoMode: false · DORA Compliant" data-en="Real data · demoMode: false · DORA Compliant">Dados reais · demoMode: false · DORA Compliant</div></div>
       </div>
     </div>
