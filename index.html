@@ -708,12 +708,8 @@
         };
 
         // ======================================================================
-        // EV-001 · CORRIGIDO v13.12.1-FIX: Listener de #demoModeBtn
-        // Delegação exclusiva ao script_injection.js (Princípio da Atomicidade).
-        // O bloco duplicado foi expurgado para eliminar a condição de corrida
-        // que disparava window.performForensicAnalysis() antes da injeção do
-        // Sujeito Passivo em memória global, gerando 3x "registo o sujeito
-        // passivo primeiro".
+        // EV-001 · CORRIGIDO v13.12.1-FIX: NÃO EXISTE LISTENER DUPLICADO PARA #demoModeBtn
+        // A gestão do evento é delegada exclusivamente ao script_injection.js
         // ======================================================================
     </script>
     <script src="unifed_triada_export.js"></script>
