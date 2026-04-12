@@ -13,6 +13,9 @@
  * - Re-init Hook documentado para transição entre estados estático (3 botões) e enriquecido (6 botões).
  * - GAP C1 fixado em 1.951,42 € conforme relatório de auditoria.
  * - Veredicto alterado para "RISCO CRÍTICO · DESVIO PADRÃO > 2σ".
+ * - [FIX] syncMetrics(): priorização de UNIFEDSystem dinâmico (Hash/Sessão/Contadores).
+ * - [FIX] syncMetrics(): contadores de evidências extraídos de UNIFEDSystem.documents.
+ * - [FIX] initializeFullWithEvidence(): re-sync após simulateEvidenceUpload().
  * ============================================================================
  */
 
@@ -158,7 +161,7 @@
     console.log('[UNIFED] Camada 1: OK.');
 
     // =========================================================================
-    // Camada 2 – Sincronização de Métricas (syncMetrics)
+    // Camada 2 – Sincronização de Métricas (syncMetrics) - REFATORADA
     // =========================================================================
     (function() {
         if (!window.UNIFED_INTERNAL) return;
@@ -180,6 +183,16 @@
 
             console.log('[UNIFED] Iniciando Sincronização Forense...');
             const totalNaoSujeitosCalc = (t.campanhas || 0) + (t.gorjetas || 0) + (t.portagens || 0);
+            
+            // [AÇÃO 1 e 2] Mapeamento dinâmico priorizando UNIFEDSystem
+            const sys = window.UNIFEDSystem;
+            const getCounter = (docType, fallback) => {
+                if (sys && sys.documents && sys.documents[docType] && sys.documents[docType].totals) {
+                    return sys.documents[docType].totals.records.toString();
+                }
+                return fallback;
+            };
+
             const mapping = {
                 'pure-ganhos': fmt(t.ganhos), 'pure-despesas': fmt(t.despesas), 'pure-liquido': fmt(t.ganhosLiquidos),
                 'pure-saft': fmt(t.saftBruto), 'pure-dac7': fmt(t.dac7TotalPeriodo), 'pure-fatura': fmt(t.faturaPlataforma),
@@ -194,8 +207,10 @@
                 'pure-nc-portagens': fmt(t.portagens), 'pure-nc-total': fmt(totalNaoSujeitosCalc),
                 'pure-verdict': 'RISCO CRÍTICO · DESVIO PADRÃO > 2σ', // corrigido
                 'pure-verdict-pct': percentC2.toFixed(2) + '%',
-                'pure-hash-prefix-verdict': data.masterHash.substring(0, 16) + '...',
-                'pure-session-id': data.sessionId, 'pure-hash-prefix': data.masterHash.substring(0, 12) + '...',
+                // Hash e Sessão dinâmicos com fallback para data estático
+                'pure-session-id': (sys && sys.sessionId) ? sys.sessionId : data.sessionId,
+                'pure-hash-prefix': (sys && sys.masterHash) ? sys.masterHash.substring(0, 12).toUpperCase() + '...' : data.masterHash.substring(0, 12) + '...',
+                'pure-hash-prefix-verdict': (sys && sys.masterHash) ? sys.masterHash.substring(0, 16).toUpperCase() + '...' : data.masterHash.substring(0, 16) + '...',
                 'pure-subject-name': data.client.name, 'pure-subject-nif': data.client.nif,
                 'pure-subject-platform': data.client.platform, 'pure-ganhos-extrato': fmt(t.ganhos),
                 'pure-despesas-extrato': fmt(t.despesas), 'pure-ganhos-liquidos-extrato': fmt(t.ganhosLiquidos),
@@ -203,11 +218,22 @@
                 'pure-atf-zscore': data.atf.zScore.toString(), 'pure-atf-confianca': data.atf.confianca,
                 'pure-atf-score-val': data.atf.score + '/100', 'pure-iva-devido-val': fmt(asfixiaFinanceira),
                 'pure-impacto-macro': fmt(data.macro_analysis.estimated_systemic_gap),
-                'pure-ctrl-qty': data.counts.ctrl.toString(), 'pure-saft-qty': data.counts.saft.toString(),
-                'pure-fat-qty': data.counts.fat.toString(), 'pure-ext-qty': data.counts.ext.toString(),
-                'pure-dac7-qty': data.counts.dac7.toString(), 'pure-ganhos-tri': fmt(t.ganhos),
-                'pure-despesas-tri': fmt(t.despesas), 'pure-liquido-tri': fmt(t.ganhosLiquidos),
-                'pure-fatura-tri': fmt(t.faturaPlataforma)
+                // Contadores dinâmicos extraídos de UNIFEDSystem.documents
+                'pure-ctrl-qty': getCounter('control', data.counts.ctrl.toString()),
+                'pure-saft-qty': getCounter('saft', data.counts.saft.toString()),
+                'pure-fat-qty': getCounter('invoices', data.counts.fat.toString()),
+                'pure-ext-qty': getCounter('statements', data.counts.ext.toString()),
+                'pure-dac7-qty': getCounter('dac7', data.counts.dac7.toString()),
+                'pure-ganhos-tri': fmt(t.ganhos),
+                'pure-despesas-tri': fmt(t.despesas),
+                'pure-liquido-tri': fmt(t.ganhosLiquidos),
+                'pure-fatura-tri': fmt(t.faturaPlataforma),
+                // Contadores para .counters-compact (se existirem)
+                'pure-counter-ctrl': getCounter('control', '0'),
+                'pure-counter-saft': getCounter('saft', '0'),
+                'pure-counter-fat': getCounter('invoices', '0'),
+                'pure-counter-ext': getCounter('statements', '0'),
+                'pure-counter-dac7': getCounter('dac7', '0')
             };
             Object.entries(mapping).forEach(([id, value]) => {
                 const el = document.getElementById(id);
@@ -849,6 +875,12 @@
                 updateEvidenceCountersAndShow();
                 if (typeof window.injectAuxiliaryHelperBoxes === 'function') window.injectAuxiliaryHelperBoxes();
                 if (typeof updateAuxiliaryUI === 'function') updateAuxiliaryUI();
+                
+                // [AÇÃO 3] Re-sincronização após upload e geração de hash
+                if (typeof window.UNIFED_INTERNAL.syncMetrics === 'function') {
+                    window.UNIFED_INTERNAL.syncMetrics();
+                }
+                
                 if (window.UNIFEDSystem && window.UNIFEDSystem.masterHash) {
                     const hashEl = document.getElementById('masterHashValue');
                     if (hashEl) hashEl.textContent = window.UNIFEDSystem.masterHash;
