@@ -4920,6 +4920,7 @@ function showTwoAxisAlerts() {
 
 let _nifafAlertedHash = null;
 
+// 1. SUBSTITUIR A FUNÇÃO updateDashboard()
 function updateDashboard() {
     const totals = UNIFEDSystem.analysis.totals;
     const cross = UNIFEDSystem.analysis.crossings;
@@ -4965,74 +4966,45 @@ function updateDashboard() {
     if (quantumBreakdownEl) {
         const _qT = (pt, en) => currentLang === 'en' ? en : pt;
         quantumBreakdownEl.innerHTML = `
-            <div class="quantum-breakdown-item">
-                <span>${_qT('BTOR (Despesas/Comissões Extrato):', 'BTOR (Expenses/Commissions Statement):')}</span>
-                <span>${formatCurrency(cross.btor)}</span>
-            </div>
-            <div class="quantum-breakdown-item">
-                <span>${_qT('BTF (Faturas):', 'BTF (Invoices):')}</span>
-                <span>${formatCurrency(cross.btf)}</span>
-            </div>
+            <div class="quantum-breakdown-item"><span>${_qT('BTOR (Despesas/Comissões Extrato):', 'BTOR (Expenses/Commissions Statement):')}</span><span>${formatCurrency(cross.btor)}</span></div>
+            <div class="quantum-breakdown-item"><span>${_qT('BTF (Faturas):', 'BTF (Invoices):')}</span><span>${formatCurrency(cross.btf)}</span></div>
             <div class="quantum-breakdown-item" style="border-top: 1px solid rgba(0,229,255,0.3); margin-top:0.3rem; padding-top:0.3rem;">
-                <span>${_qT('DISCREPÂNCIA DESPESAS/COMISSÕES:', 'EXPENSE/COMMISSION DISCREPANCY:')}</span>
-                <span style="color:var(--warn-primary);">${formatCurrency(cross.discrepanciaCritica)} (${cross.percentagemOmissao.toFixed(2)}%)</span>
+                <span>${_qT('DISCREPÂNCIA DESPESAS/COMISSÕES:', 'EXPENSE/COMMISSION DISCREPANCY:')}</span><span style="color:var(--warn-primary);">${formatCurrency(cross.discrepanciaCritica)} (${cross.percentagemOmissao.toFixed(2)}%)</span>
             </div>
-            <div class="quantum-breakdown-item">
-                <span>${_qT('Ganhos (Extrato):', 'Earnings (Statement):')}</span>
-                <span>${formatCurrency(totals.ganhos)}</span>
-            </div>
-            <div class="quantum-breakdown-item">
-                <span>${_qT('SAF-T Bruto:', 'SAF-T Gross:')}</span>
-                <span>${formatCurrency(totals.saftBruto)}</span>
-            </div>
-            <div class="quantum-breakdown-item">
-                <span>DAC7 (${UNIFEDSystem.selectedPeriodo}):</span>
-                <span>${formatCurrency(totals.dac7TotalPeriodo)}</span>
-            </div>
+            <div class="quantum-breakdown-item"><span>${_qT('Ganhos (Extrato):', 'Earnings (Statement):')}</span><span>${formatCurrency(totals.ganhos)}</span></div>
+            <div class="quantum-breakdown-item"><span>${_qT('SAF-T Bruto:', 'SAF-T Gross:')}</span><span>${formatCurrency(totals.saftBruto)}</span></div>
+            <div class="quantum-breakdown-item"><span>DAC7 (${UNIFEDSystem.selectedPeriodo}):</span><span>${formatCurrency(totals.dac7TotalPeriodo)}</span></div>
             <div class="quantum-breakdown-item" style="border-top: 1px solid rgba(245,158,11,0.3); margin-top:0.3rem; padding-top:0.3rem;">
-                <span>${_qT('DISCREPÂNCIA SAF-T vs DAC7:', 'SAF-T vs DAC7 DISCREPANCY:')}</span>
-                <span style="color:var(--warn-secondary);">${formatCurrency(cross.discrepanciaSaftVsDac7)} (${cross.percentagemSaftVsDac7.toFixed(2)}%)</span>
+                <span>${_qT('DISCREPÂNCIA SAF-T vs DAC7:', 'SAF-T vs DAC7 DISCREPANCY:')}</span><span style="color:var(--warn-secondary);">${formatCurrency(cross.discrepanciaSaftVsDac7)} (${cross.percentagemSaftVsDac7.toFixed(2)}%)</span>
             </div>
-            <div class="quantum-breakdown-item">
-                <span>${_qT('Meses com dados:', 'Months with data:')}</span>
-                <span>${mesesDados}</span>
-            </div>
-            <div class="quantum-breakdown-item">
-                <span>${_qT('Média mensal:', 'Monthly average:')}</span>
-                <span>${formatCurrency(cross.discrepanciaCritica / mesesDados)}</span>
-            </div>
+            <div class="quantum-breakdown-item"><span>${_qT('Meses com dados:', 'Months with data:')}</span><span>${mesesDados}</span></div>
+            <div class="quantum-breakdown-item"><span>${_qT('Média mensal:', 'Monthly average:')}</span><span>${formatCurrency(cross.discrepanciaCritica / mesesDados)}</span></div>
             <div class="quantum-breakdown-item" style="border-top: 1px solid rgba(0,229,255,0.3); margin-top:0.3rem; padding-top:0.3rem;">
-                <span>${_qT('Impacto Mensal Mercado (38k):', 'Monthly Market Impact (38k):')}</span>
-                <span>${formatCurrency(cross.impactoMensalMercado)}</span>
+                <span>${_qT('Impacto Mensal Mercado (38k):', 'Monthly Market Impact (38k):')}</span><span>${formatCurrency(cross.impactoMensalMercado)}</span>
             </div>
-            <div class="quantum-breakdown-item">
-                <span>${_qT('Impacto Anual Mercado:', 'Annual Market Impact:')}</span>
-                <span>${formatCurrency(cross.impactoAnualMercado)}</span>
-            </div>
-            <div class="quantum-breakdown-item">
-                <span>${_qT('IMPACTO 7 ANOS:', '7-YEAR IMPACT:')}</span>
-                <span style="color:var(--accent-primary); font-weight:800;">${formatCurrency(cross.impactoSeteAnosMercado)}</span>
-            </div>
+            <div class="quantum-breakdown-item"><span>${_qT('Impacto Anual Mercado:', 'Annual Market Impact:')}</span><span>${formatCurrency(cross.impactoAnualMercado)}</span></div>
+            <div class="quantum-breakdown-item"><span>${_qT('IMPACTO 7 ANOS:', '7-YEAR IMPACT:')}</span><span style="color:var(--accent-primary); font-weight:800;">${formatCurrency(cross.impactoSeteAnosMercado)}</span></div>
         `;
     }
 
     const jurosCard = document.getElementById('jurosCard');
     if (jurosCard) {
         jurosCard.style.display = (Math.abs(cross.discrepanciaCritica) > 0) ? 'block' : 'none';
+        // RETIFICAÇÃO CIRÚRGICA: Forçar remoção de pisca
+        jurosCard.classList.remove('box-border-blink', 'alert-intermitent');
         if (Math.abs(cross.discrepanciaCritica) > 0) {
-            jurosCard.classList.add('box-border-blink');
-        } else {
-            jurosCard.classList.remove('box-border-blink');
+            jurosCard.style.borderLeftColor = '#ef4444';
+            jurosCard.style.boxShadow = 'inset 0 0 5px rgba(255,0,0,0.2)';
         }
     }
 
     const discrepancy5Card = document.getElementById('discrepancy5Card');
     if (discrepancy5Card) {
         discrepancy5Card.style.display = (Math.abs(cross.discrepanciaSaftVsDac7) > 0) ? 'block' : 'none';
+        // RETIFICAÇÃO CIRÚRGICA: Forçar remoção de pisca
+        discrepancy5Card.classList.remove('box-border-blink', 'alert-intermitent');
         if (Math.abs(cross.discrepanciaSaftVsDac7) > 0) {
-            discrepancy5Card.classList.add('box-border-blink');
-        } else {
-            discrepancy5Card.classList.remove('box-border-blink');
+            discrepancy5Card.style.borderLeftColor = '#f59e0b';
         }
     }
 
@@ -5061,78 +5033,67 @@ function updateDashboard() {
         }
     }
 
-    activateIntermittentAlerts();
+    activateIntermittentAlerts(); // Agora chama a versão estática abaixo
 }
 
+// 2. SUBSTITUIR A FUNÇÃO activateIntermittentAlerts() (AGORA ESTÁTICA)
 function activateIntermittentAlerts() {
     const cross = UNIFEDSystem.analysis.crossings;
     const twoAxis = UNIFEDSystem.analysis.twoAxis;
 
     const kpiInvCard = document.getElementById('kpiInvCard');
     if (kpiInvCard) {
+        kpiInvCard.classList.remove('alert-intermitent', 'box-despesas-blink');
         if (Math.abs(cross.discrepanciaCritica) > 0.01) {
-            kpiInvCard.classList.add('alert-intermitent');
-        } else {
-            kpiInvCard.classList.remove('alert-intermitent');
+            kpiInvCard.style.borderTopColor = '#ef4444';
         }
     }
 
     const kpiCommCard = document.getElementById('kpiCommCard');
     if (kpiCommCard) {
+        kpiCommCard.classList.remove('alert-intermitent', 'box-despesas-blink');
         if (Math.abs(cross.discrepanciaCritica) > 0.01) {
-            kpiCommCard.classList.add('alert-intermitent');
-        } else {
-            kpiCommCard.classList.remove('alert-intermitent');
+            kpiCommCard.style.borderTopColor = '#ef4444';
         }
     }
 
     const revenueGapCard = document.getElementById('revenueGapCard');
     if (revenueGapCard) {
+        revenueGapCard.classList.remove('alert-intermitent', 'box-despesas-blink');
         if (Math.abs(twoAxis.revenueGap) > 100) {
-            revenueGapCard.classList.add('alert-intermitent');
-        } else {
-            revenueGapCard.classList.remove('alert-intermitent');
+            revenueGapCard.style.borderLeftColor = '#f59e0b';
         }
     }
 
     const expenseGapCard = document.getElementById('expenseGapCard');
     if (expenseGapCard) {
+        expenseGapCard.classList.remove('alert-intermitent', 'box-despesas-blink');
         if (Math.abs(twoAxis.expenseGap) > 50) {
-            expenseGapCard.classList.add('alert-intermitent');
-            expenseGapCard.classList.add('box-despesas-blink');
-        } else {
-            expenseGapCard.classList.remove('alert-intermitent');
-            expenseGapCard.classList.remove('box-despesas-blink');
+            expenseGapCard.style.borderLeftColor = '#ef4444';
         }
     }
 
     document.querySelectorAll('.led-status').forEach(led => {
-        if (Math.abs(cross.discrepanciaCritica) > 0.01) {
-            led.className = 'led-status led-red-blink';
-        } else if (Math.abs(twoAxis.revenueGap) > 100) {
-            led.className = 'led-status led-yellow-blink';
-        }
+        led.className = 'led-status led-off'; 
     });
 
     const statCommCard = document.getElementById('statCommCard');
     if (statCommCard) {
+        statCommCard.classList.remove('alert-intermitent', 'box-despesas-blink');
         if (Math.abs(cross.discrepanciaCritica) > 0.01) {
-            statCommCard.classList.add('alert-intermitent');
-            statCommCard.classList.add('box-despesas-blink');
-            statCommCard.style.borderColor = 'rgba(255,0,0,0.9)';
-            statCommCard.style.boxShadow = '0 0 18px rgba(255,0,0,0.55), inset 0 0 8px rgba(255,0,0,0.15)';
+            statCommCard.style.borderColor = '#ef4444';
+            statCommCard.style.boxShadow = '0 0 10px rgba(239,68,68,0.3)';
         } else {
-            statCommCard.classList.remove('alert-intermitent');
-            statCommCard.classList.remove('box-despesas-blink');
             statCommCard.style.borderColor = '';
             statCommCard.style.boxShadow = '';
         }
     }
 
-    if (cross.percentagemOmissao > 25) {
-        document.querySelectorAll('.led-status').forEach(led => {
-            led.className = 'led-status led-red-blink';
-        });
+    const bigDataAlert = document.getElementById('bigDataAlert');
+    if (bigDataAlert) {
+        bigDataAlert.classList.remove('alert-active');
+        bigDataAlert.style.border = '2px solid #ef4444';
+        bigDataAlert.style.boxShadow = '0 0 15px rgba(239,68,68,0.3)';
     }
 }
 
