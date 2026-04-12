@@ -1,10 +1,12 @@
 /**
- * UNIFED - PROBATUM · CASO REAL ANONIMIZADO v13.12.1-FIX (ASYNC + PERSIST)
+ * UNIFED - PROBATUM · CASO REAL ANONIMIZADO v13.12.2-i18n (ASYNC + PERSIST)
  * ============================================================================
  * Missão: Injeção Forense e Reconstituição da Verdade Material
  * Conformidade: DORA (UE) 2022/2554 · Art. 125.º CPP · ISO/IEC 27037:2012
  * ============================================================================
- * RETIFICAÇÕES v13.12.1-FIX (2026-04-12):
+ * RETIFICAÇÕES v13.12.2-i18n (2026-04-12):
+ * - Matriz de Triangulação: substituição de strings fixas por suporte bilíngue.
+ * - Cartão Macro: injetado com atributos data-pt / data-en para tradução dinâmica.
  * - Aguarda Promise de _activatePurePanel antes de inicializar o dashboard.
  * - Previne sobreposição de eventos com flag _initializing.
  * - MutationObserver persistente (já corrigido no triada_export.js).
@@ -242,7 +244,7 @@
     })();
 
     // =========================================================================
-    // Camada 3 – Matriz de Triangulação (renderMatrix)
+    // Camada 3 – Matriz de Triangulação (renderMatrix) – v13.12.2-i18n
     // =========================================================================
     (function() {
         if (!window.UNIFED_INTERNAL) return;
@@ -255,20 +257,35 @@
             const deltaSaft = t.ganhos - t.saftBruto;
             const deltaDac7 = t.ganhos - t.dac7TotalPeriodo;
             const deltaFatura = t.despesas - t.faturaPlataforma;
+
+            // Suporte bilíngue: verifica idioma atual (global ou elemento HTML)
+            const isEn = (typeof window.currentLang !== 'undefined' && window.currentLang === 'en') ||
+                         (document.documentElement.lang === 'en');
+            
+            const labels = {
+                title: isEn ? "FORENSIC TRIANGULATION MATRIX (ART. 119 RGIT)" : "MATRIZ DE TRIANGULAÇÃO FORENSE (ART. 119.º RGIT)",
+                colSource: isEn ? "EVIDENCE SOURCE" : "FONTE DE PROVA",
+                colValue: isEn ? "AMOUNT" : "VALOR",
+                colDisc: isEn ? "DISCREPANCY" : "DISCREPÂNCIA",
+                footnote: isEn ? "Methodological Note:" : "Nota Metodológica:",
+                footnoteText: isEn ? "The divergence between the invoiced value (SAF-T/DAC7) and the actual credited value (Ledger) evidences an omission of taxable base of " : "A divergência entre o valor faturado (SAF-T/DAC7) e o valor real creditado (Ledger) evidencia uma omissão de base tributável de ",
+                footnoteConfig: isEn ? "in retained platform commissions, constituting a tax offense under Art. 119 RGIT." : "nas comissões retidas pela plataforma, configurando contra-ordenação tributária nos termos do Art. 119.º RGIT."
+            };
+
             const matrixHtml = `
             <div id="triangulationMatrixContainer" class="pure-triangulation-box" style="margin:30px 0; border:1px solid #00E5FF; background:rgba(15,23,42,0.95); padding:20px; border-radius:12px;">
-                <h3 style="color:#00E5FF; margin-top:0; font-size:1rem;">🔍 MATRIZ DE TRIANGULAÇÃO FORENSE (ART. 119.º RGIT)</h3>
+                <h3 style="color:#00E5FF; margin-top:0; font-size:1rem;">${labels.title}</h3>
                 <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
-                    <thead><tr style="border-bottom:1px solid rgba(255,255,255,0.2);"><th style="text-align:left; padding:10px;">FONTE DE PROVA</th><th style="text-align:right; padding:10px;">VALOR</th><th style="text-align:right; padding:10px; color:#EF4444;">DISCREPÂNCIA</th></tr></thead>
+                    <thead><tr style="border-bottom:1px solid rgba(255,255,255,0.2);"><th style="text-align:left; padding:10px;">${labels.colSource}</th><th style="text-align:right; padding:10px;">${labels.colValue}</th><th style="text-align:right; padding:10px; color:#EF4444;">${labels.colDisc}</th></tr></thead>
                     <tbody>
-                        <tr><td style="padding:10px;">📄 SAF-T PT (Faturação)</td><td style="padding:10px; text-align:right;">${fmt(t.saftBruto)}</td><td style="padding:10px; text-align:right;">-${fmt(deltaSaft)}</td></tr>
+                        <tr><td style="padding:10px;">📄 SAF-T PT (${isEn ? 'Invoicing' : 'Faturação'})</td><td style="padding:10px; text-align:right;">${fmt(t.saftBruto)}</td><td style="padding:10px; text-align:right;">-${fmt(deltaSaft)}</td></tr>
                         <tr style="background:rgba(239,68,68,0.08);"><td style="padding:10px;">🌐 DAC7 (Plataforma A)</td><td style="padding:10px; text-align:right;">${fmt(t.dac7TotalPeriodo)}</td><td style="padding:10px; text-align:right;">-${fmt(deltaDac7)}</td></tr>
-                        <tr><td style="padding:10px;">📑 Faturas BTF (Comissões)</td><td style="padding:10px; text-align:right;">${fmt(t.faturaPlataforma)}</td><td style="padding:10px; text-align:right;">-${fmt(deltaFatura)}</td></tr>
-                        <tr style="border-top:2px solid #00E5FF;"><td style="padding:10px; font-weight:bold;">💰 LEDGER (Ganhos Reais)</td><td style="padding:10px; text-align:right; font-weight:bold;">${fmt(t.ganhos)}</td><td style="padding:10px; text-align:right;">---</td></tr>
+                        <tr><td style="padding:10px;">📑 ${isEn ? 'BTF Invoices (Commissions)' : 'Faturas BTF (Comissões)'}</td><td style="padding:10px; text-align:right;">${fmt(t.faturaPlataforma)}</td><td style="padding:10px; text-align:right;">-${fmt(deltaFatura)}</td></tr>
+                        <tr style="border-top:2px solid #00E5FF;"><td style="padding:10px; font-weight:bold;">💰 ${isEn ? 'LEDGER (Actual Earnings)' : 'LEDGER (Ganhos Reais)'}</td><td style="padding:10px; text-align:right; font-weight:bold;">${fmt(t.ganhos)}</td><td style="padding:10px; text-align:right;">---</td></tr>
                     </tbody>
                 </table>
                 <div style="margin-top: 15px; font-size: 0.7rem; color: #94a3b8; border-top: 1px solid rgba(0,229,255,0.2); padding-top: 10px;">
-                    <strong>Nota Metodológica:</strong> A divergência entre o valor faturado (SAF-T/DAC7) e o valor real creditado (Ledger) evidencia uma omissão de base tributável de ${fmt(deltaFatura)} (${((deltaFatura/t.despesas)*100).toFixed(2)}%) nas comissões retidas pela plataforma, configurando contra-ordenação tributária nos termos do Art. 119.º RGIT.
+                    <strong>${labels.footnote}</strong> ${labels.footnoteText}${fmt(deltaFatura)} (${((deltaFatura/t.despesas)*100).toFixed(2)}%) ${labels.footnoteConfig}
                 </div>
             </div>`;
             target.insertAdjacentHTML('beforeend', matrixHtml);
@@ -277,7 +294,7 @@
     })();
 
     // =========================================================================
-    // Camada 4 – Injeção de CSS, Macro Card e UI Auxiliar
+    // Camada 4 – Injeção de CSS, Macro Card e UI Auxiliar – v13.12.2-i18n
     // =========================================================================
     (function() {
         if (!window.UNIFED_INTERNAL) return;
@@ -303,42 +320,154 @@
             console.log('[UNIFED] CSS injetado.');
         }
 
+        // Macro Card com suporte bilíngue (atributos data-pt / data-en)
         function _injectMacroCard() {
             const target = document.getElementById('pureDashboard');
             if (!target || document.getElementById('pureMacroCard')) return;
             const macro = data.macro_analysis;
             if (!macro) return;
             const monthlyLoss = (macro.sector_drivers || 38000) * (macro.avg_monthly_discrepancy || 546.24);
-            const cardHtml = `
-            <div class="pure-card pure-card-macro" id="pureMacroCard">
-                <h3 class="pure-card-title"><span class="pure-icon">🌍</span><span id="pure-macro-title" data-pt="V. ANÁLISE DE RISCO SISTÉMICO (MIS)" data-en="V. SYSTEMIC RISK ANALYSIS (MIS)">V. ANÁLISE DE RISCO SISTÉMICO (MIS)</span></h3>
-                <div class="pure-macro-grid" style="display:flex; flex-wrap:wrap; gap:1rem; justify-content:space-between;">
-                    <div class="pure-macro-item" style="flex:1; min-width:160px; background:rgba(255,255,255,0.03); padding:12px; border-radius:6px;">
-                        <div class="pure-macro-label" style="font-size:0.65rem; color:#94a3b8; text-transform:uppercase;" data-pt="Universo de Operadores" data-en="Operators Universe">Universo de Operadores</div>
-                        <div id="pure-macro-universe" class="pure-macro-value" style="font-size:1.4rem; font-weight:700; color:#00E5FF;">${macro.sector_drivers.toLocaleString('pt-PT')}</div>
-                        <div class="pure-macro-sub" style="font-size:0.6rem; color:#64748b;">Sector TVDE Portugal</div>
-                    </div>
-                    <div class="pure-macro-item" style="flex:1; min-width:160px; background:rgba(255,255,255,0.03); padding:12px; border-radius:6px;">
-                        <div class="pure-macro-label" style="font-size:0.65rem; color:#94a3b8; text-transform:uppercase;" data-pt="Horizonte Temporal" data-en="Time Horizon">Horizonte Temporal</div>
-                        <div id="pure-macro-horizon" class="pure-macro-value" style="font-size:1.4rem; font-weight:700; color:#00E5FF;">${macro.operational_years} Anos</div>
-                        <div class="pure-macro-sub" style="font-size:0.6rem; color:#64748b;">2019–2026</div>
-                    </div>
-                    <div class="pure-macro-item" style="flex:1; min-width:160px; background:rgba(255,255,255,0.03); padding:12px; border-radius:6px;">
-                        <div class="pure-macro-label" style="font-size:0.65rem; color:#94a3b8; text-transform:uppercase;" data-pt="Erosão Mensal Estimada" data-en="Estimated Monthly Erosion">Erosão Mensal Estimada</div>
-                        <div id="pure-macro-monthly-loss" class="pure-macro-value" style="font-size:1.4rem; font-weight:700; color:#F59E0B;">${_fmt(monthlyLoss)}</div>
-                        <div class="pure-macro-sub" style="font-size:0.6rem; color:#64748b;">Art. 119.º RGIT</div>
-                    </div>
-                    <div class="pure-macro-item pure-macro-highlight" style="flex:1.5; min-width:200px; background:rgba(239,68,68,0.08); border-left:3px solid #EF4444; padding:12px; border-radius:6px;">
-                        <div class="pure-macro-label" style="font-size:0.65rem; color:#94a3b8; text-transform:uppercase;" data-pt="Erosão Fiscal Estimada (7 Anos)" data-en="Estimated Tax Erosion (7 Years)">Erosão Fiscal Estimada (7 Anos)</div>
-                        <div id="pure-macro-total-loss" class="pure-macro-value" style="font-size:1.6rem; font-weight:900; color:#EF4444;">${_fmt(macro.estimated_systemic_gap)}</div>
-                        <div class="pure-macro-sub" style="font-size:0.6rem; color:#EF4444;">Art. 119.º RGIT (Iteração)</div>
-                    </div>
-                </div>
-                <div class="pure-macro-disclaimer" style="margin-top:1rem; padding:0.75rem; background:rgba(0,0,0,0.3); border-left:3px solid #FACC15; font-size:0.7rem; color:#94a3b8;">
-                    <i class="fas fa-gavel"></i> <span data-pt="Os valores de impacto sistémico constituem contexto macroeconómico e não prova directa de ilícito alheio, nos termos do Art. 128.º do CPP." data-en="Systemic impact values constitute macroeconomic context and not direct proof of third-party wrongdoing, under Art. 128 CPP.">Os valores de impacto sistémico constituem contexto macroeconómico e não prova directa de ilícito alheio, nos termos do Art. 128.º do CPP.</span>
-                </div>
-            </div>`;
-            target.insertAdjacentHTML('beforeend', cardHtml);
+            
+            // Cria elemento raiz
+            const cardDiv = document.createElement('div');
+            cardDiv.className = 'pure-card pure-card-macro';
+            cardDiv.id = 'pureMacroCard';
+            
+            // Título com suporte bilíngue
+            const titleDiv = document.createElement('h3');
+            titleDiv.className = 'pure-card-title';
+            const titleIcon = document.createElement('span');
+            titleIcon.className = 'pure-icon';
+            titleIcon.innerHTML = '🌍';
+            const titleSpan = document.createElement('span');
+            titleSpan.setAttribute('data-pt', 'V. ANÁLISE DE RISCO SISTÉMICO (MIS)');
+            titleSpan.setAttribute('data-en', 'V. SYSTEMIC RISK ANALYSIS (MIS)');
+            titleSpan.textContent = (typeof window.currentLang !== 'undefined' && window.currentLang === 'en') ? 'V. SYSTEMIC RISK ANALYSIS (MIS)' : 'V. ANÁLISE DE RISCO SISTÉMICO (MIS)';
+            titleDiv.appendChild(titleIcon);
+            titleDiv.appendChild(titleSpan);
+            cardDiv.appendChild(titleDiv);
+            
+            // Grid interno
+            const gridDiv = document.createElement('div');
+            gridDiv.className = 'pure-macro-grid';
+            gridDiv.style.cssText = 'display:flex; flex-wrap:wrap; gap:1rem; justify-content:space-between;';
+            
+            // Item 1: Universo de Operadores
+            const item1 = document.createElement('div');
+            item1.className = 'pure-macro-item';
+            item1.style.cssText = 'flex:1; min-width:160px; background:rgba(255,255,255,0.03); padding:12px; border-radius:6px;';
+            const label1 = document.createElement('div');
+            label1.className = 'pure-macro-label';
+            label1.style.cssText = 'font-size:0.65rem; color:#94a3b8; text-transform:uppercase;';
+            label1.setAttribute('data-pt', 'Universo de Operadores');
+            label1.setAttribute('data-en', 'Operators Universe');
+            label1.textContent = (typeof window.currentLang !== 'undefined' && window.currentLang === 'en') ? 'Operators Universe' : 'Universo de Operadores';
+            const value1 = document.createElement('div');
+            value1.id = 'pure-macro-universe';
+            value1.className = 'pure-macro-value';
+            value1.style.cssText = 'font-size:1.4rem; font-weight:700; color:#00E5FF;';
+            value1.textContent = macro.sector_drivers.toLocaleString('pt-PT');
+            const sub1 = document.createElement('div');
+            sub1.className = 'pure-macro-sub';
+            sub1.style.cssText = 'font-size:0.6rem; color:#64748b;';
+            sub1.textContent = 'Sector TVDE Portugal';
+            item1.appendChild(label1);
+            item1.appendChild(value1);
+            item1.appendChild(sub1);
+            gridDiv.appendChild(item1);
+            
+            // Item 2: Horizonte Temporal
+            const item2 = document.createElement('div');
+            item2.className = 'pure-macro-item';
+            item2.style.cssText = 'flex:1; min-width:160px; background:rgba(255,255,255,0.03); padding:12px; border-radius:6px;';
+            const label2 = document.createElement('div');
+            label2.className = 'pure-macro-label';
+            label2.style.cssText = 'font-size:0.65rem; color:#94a3b8; text-transform:uppercase;';
+            label2.setAttribute('data-pt', 'Horizonte Temporal');
+            label2.setAttribute('data-en', 'Time Horizon');
+            label2.textContent = (typeof window.currentLang !== 'undefined' && window.currentLang === 'en') ? 'Time Horizon' : 'Horizonte Temporal';
+            const value2 = document.createElement('div');
+            value2.id = 'pure-macro-horizon';
+            value2.className = 'pure-macro-value';
+            value2.style.cssText = 'font-size:1.4rem; font-weight:700; color:#00E5FF;';
+            value2.textContent = macro.operational_years + ' Anos';
+            const sub2 = document.createElement('div');
+            sub2.className = 'pure-macro-sub';
+            sub2.style.cssText = 'font-size:0.6rem; color:#64748b;';
+            sub2.textContent = '2019–2026';
+            item2.appendChild(label2);
+            item2.appendChild(value2);
+            item2.appendChild(sub2);
+            gridDiv.appendChild(item2);
+            
+            // Item 3: Erosão Mensal Estimada
+            const item3 = document.createElement('div');
+            item3.className = 'pure-macro-item';
+            item3.style.cssText = 'flex:1; min-width:160px; background:rgba(255,255,255,0.03); padding:12px; border-radius:6px;';
+            const label3 = document.createElement('div');
+            label3.className = 'pure-macro-label';
+            label3.style.cssText = 'font-size:0.65rem; color:#94a3b8; text-transform:uppercase;';
+            label3.setAttribute('data-pt', 'Erosão Mensal Estimada');
+            label3.setAttribute('data-en', 'Estimated Monthly Erosion');
+            label3.textContent = (typeof window.currentLang !== 'undefined' && window.currentLang === 'en') ? 'Estimated Monthly Erosion' : 'Erosão Mensal Estimada';
+            const value3 = document.createElement('div');
+            value3.id = 'pure-macro-monthly-loss';
+            value3.className = 'pure-macro-value';
+            value3.style.cssText = 'font-size:1.4rem; font-weight:700; color:#F59E0B;';
+            value3.textContent = _fmt(monthlyLoss);
+            const sub3 = document.createElement('div');
+            sub3.className = 'pure-macro-sub';
+            sub3.style.cssText = 'font-size:0.6rem; color:#64748b;';
+            sub3.textContent = 'Art. 119.º RGIT';
+            item3.appendChild(label3);
+            item3.appendChild(value3);
+            item3.appendChild(sub3);
+            gridDiv.appendChild(item3);
+            
+            // Item 4: Erosão Fiscal Estimada (destaque)
+            const item4 = document.createElement('div');
+            item4.className = 'pure-macro-item pure-macro-highlight';
+            item4.style.cssText = 'flex:1.5; min-width:200px; background:rgba(239,68,68,0.08); border-left:3px solid #EF4444; padding:12px; border-radius:6px;';
+            const label4 = document.createElement('div');
+            label4.className = 'pure-macro-label';
+            label4.style.cssText = 'font-size:0.65rem; color:#94a3b8; text-transform:uppercase;';
+            label4.setAttribute('data-pt', 'Erosão Fiscal Estimada (7 Anos)');
+            label4.setAttribute('data-en', 'Estimated Tax Erosion (7 Years)');
+            label4.textContent = (typeof window.currentLang !== 'undefined' && window.currentLang === 'en') ? 'Estimated Tax Erosion (7 Years)' : 'Erosão Fiscal Estimada (7 Anos)';
+            const value4 = document.createElement('div');
+            value4.id = 'pure-macro-total-loss';
+            value4.className = 'pure-macro-value';
+            value4.style.cssText = 'font-size:1.6rem; font-weight:900; color:#EF4444;';
+            value4.textContent = _fmt(macro.estimated_systemic_gap);
+            const sub4 = document.createElement('div');
+            sub4.className = 'pure-macro-sub';
+            sub4.style.cssText = 'font-size:0.6rem; color:#EF4444;';
+            sub4.textContent = 'Art. 119.º RGIT (Iteração)';
+            item4.appendChild(label4);
+            item4.appendChild(value4);
+            item4.appendChild(sub4);
+            gridDiv.appendChild(item4);
+            
+            cardDiv.appendChild(gridDiv);
+            
+            // Disclaimer
+            const disclaimerDiv = document.createElement('div');
+            disclaimerDiv.className = 'pure-macro-disclaimer';
+            disclaimerDiv.style.cssText = 'margin-top:1rem; padding:0.75rem; background:rgba(0,0,0,0.3); border-left:3px solid #FACC15; font-size:0.7rem; color:#94a3b8;';
+            const disclaimerIcon = document.createElement('i');
+            disclaimerIcon.className = 'fas fa-gavel';
+            const disclaimerSpan = document.createElement('span');
+            disclaimerSpan.setAttribute('data-pt', 'Os valores de impacto sistémico constituem contexto macroeconómico e não prova directa de ilícito alheio, nos termos do Art. 128.º do CPP.');
+            disclaimerSpan.setAttribute('data-en', 'Systemic impact values constitute macroeconomic context and not direct proof of third-party wrongdoing, under Art. 128 CPP.');
+            disclaimerSpan.textContent = (typeof window.currentLang !== 'undefined' && window.currentLang === 'en') 
+                ? 'Systemic impact values constitute macroeconomic context and not direct proof of third-party wrongdoing, under Art. 128 CPP.'
+                : 'Os valores de impacto sistémico constituem contexto macroeconómico e não prova directa de ilícito alheio, nos termos do Art. 128.º do CPP.';
+            disclaimerDiv.appendChild(disclaimerIcon);
+            disclaimerDiv.appendChild(document.createTextNode(' '));
+            disclaimerDiv.appendChild(disclaimerSpan);
+            cardDiv.appendChild(disclaimerDiv);
+            
+            target.appendChild(cardDiv);
         }
 
         function _updateAuxiliaryUI() {
