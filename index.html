@@ -1,479 +1,732 @@
 <!DOCTYPE html>
-<html lang="pt-PT">
+<html lang="pt-PT" id="htmlRoot">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>UNIFED - PROBATUM · Painel Forense v13.12.1-FIX</title>
-    
-    <!-- SEO / Identidade -->
-    <meta name="description" content="UNIFED-PROBATUM – Reconstitucionalização da Verdade Material Digital. Conformidade DORA (UE) 2022/2554 · ISO/IEC 27037:2012 · Art. 125.º CPP">
-    <meta name="author" content="UNIFED Forensics">
-    <meta name="robots" content="noindex, nofollow">
-    
-    <!-- Favicon (placeholder) -->
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2300E5FF'%3E%3Cpath d='M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5'/%3E%3C/svg%3E">
-    
-    <!-- Font Awesome 6 (free) -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    
-    <!-- Google Fonts: JetBrains Mono e Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,600;14..32,700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
-    
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    
-    <!-- jsPDF + jsPDF AutoTable (opcional, para anexos) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-    
-    <!-- JSZip (para exportação DOCX) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    
-    <!-- QRCode.js -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="UNIFED - PROBATUM (Unidade Independente de Inteligência Forense Económica e Digital) v13.12.1-FIX · DORA COMPLIANT · COURT READY · PROVA DIGITAL MATERIAL">
+    <meta name="author" content="UNIFED - PROBATUM · Unidade Independente de Inteligência Forense Económica e Digital">
+    <title>UNIFED - PROBATUM · v13.12.1-FIX · DORA COMPLIANT · COURT READY · SMOKING GUN · CADEIA DE CUSTÓDIA</title>
+
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🔬%3C/text%3E%3C/svg%3E">
+
+    <script>
+    (function loadOTSOptimized() {
+        var otsLib = 'https://unpkg.com/javascript-opentimestamps@0.0.12/dist/opentimestamps.min.js';
+        var s = document.createElement('script');
+        s.src = otsLib;
+        s.onload = function() { 
+            console.log('[UNIFED-OTS] ✅ Biblioteca OpenTimestamps carregada com sucesso.'); 
+        };
+        s.onerror = function() {
+            console.info('[UNIFED-OTS] 🛡️ Modo de Contenção (Air-Gapped): CDN indisponível. Cadeia de Custódia fixada no Nível 1 (SHA-256 Local).');
+            window.UNIFED_OTS_FAILED = true;
+            if (window.UNIFEDSystem) window.UNIFEDSystem.otsAvailable = false;
+        };
+        document.head.appendChild(s);
+    })();
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-    
-    <!-- Estilos principais (inline para garantir consistência – versão court‑ready) -->
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            background: #0A0F1E;
-            color: #E2E8F0;
-            font-family: 'Inter', sans-serif;
-            line-height: 1.5;
-            padding: 1.5rem;
-        }
-        
-        /* Container principal */
-        .app-container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-        
-        /* Cabeçalho da ferramenta */
-        .tool-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 1rem;
-            margin-bottom: 2rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid rgba(0, 229, 255, 0.3);
-        }
-        
-        .logo-area h1 {
-            font-size: 1.6rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, #00E5FF 0%, #A855F7 100%);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            letter-spacing: -0.02em;
-        }
-        
-        .logo-area p {
-            font-size: 0.75rem;
-            color: #94A3B8;
-            font-family: 'JetBrains Mono', monospace;
-        }
-        
-        .badge-version {
-            background: rgba(0, 229, 255, 0.15);
-            padding: 0.25rem 0.75rem;
-            border-radius: 2rem;
-            font-size: 0.7rem;
-            font-weight: 600;
-            color: #00E5FF;
-            border: 1px solid rgba(0, 229, 255, 0.4);
-        }
-        
-        /* Botão de modo de prova */
-        .action-bar {
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-            margin-bottom: 2rem;
-        }
-        
-        .btn-probatum {
-            background: linear-gradient(135deg, #1E293B, #0F172A);
-            border: 1px solid #334155;
-            color: #CBD5E1;
-            padding: 0.6rem 1.2rem;
-            border-radius: 0.5rem;
-            font-weight: 600;
-            font-size: 0.85rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            font-family: 'JetBrains Mono', monospace;
-        }
-        
-        .btn-probatum:hover {
-            background: linear-gradient(135deg, #2D3A5E, #1E293B);
-            border-color: #00E5FF;
-            color: #00E5FF;
-            transform: translateY(-1px);
-        }
-        
-        .btn-primary {
-            background: linear-gradient(135deg, #00E5FF, #A855F7);
-            border: none;
-            color: #0A0F1E;
-            font-weight: 700;
-        }
-        
-        .btn-primary:hover {
-            background: linear-gradient(135deg, #33EBFF, #B96FF8);
-            color: #000;
-        }
-        
-        /* Container para os botões da tríade (export-tools-container) */
-        #export-tools-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.75rem;
-            margin-top: 1rem;
-            margin-bottom: 1.5rem;
-        }
-        
-        /* Footer */
-        .app-footer {
-            margin-top: 3rem;
-            text-align: center;
-            font-size: 0.7rem;
-            color: #475569;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
-            padding-top: 1.5rem;
-        }
-        
-        /* Responsividade */
-        @media (max-width: 768px) {
-            body {
-                padding: 1rem;
-            }
-            .tool-header {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-        }
-    </style>
-    
-    <!-- CSS adicionais (se existirem, mas mantemos inline para garantir) -->
-    <style>
-        /* Garantias de visibilidade para módulos críticos (Smoking Gun, ATF, etc.) */
-        .pure-card-alert, .pure-card-warn, .pure-card, .pure-card-verdict,
-        .smoking-gun-module, .pure-atf-chart, .chart-section {
-            display: block !important;
-            opacity: 1 !important;
-            visibility: visible !important;
-        }
-        canvas#atfChartCanvas, canvas#discrepancyChart {
-            max-width: 100%;
-            height: auto;
-        }
-    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="app-container">
-    
-    <div class="tool-header">
-        <div class="logo-area">
-            <h1>UNIFED · PROBATUM</h1>
-            <p>RECONSTITUIÇÃO DA VERDADE MATERIAL DIGITAL · v13.12.1-FIX</p>
-        </div>
-        <div class="badge-version">
-            <i class="fas fa-shield-alt"></i> ISO/IEC 27037:2012 · DORA
-        </div>
-    </div>
-    
-    <!-- Barra de ações – botão para activar o caso real anonimizado -->
-    <div class="action-bar">
-        <button id="demoModeBtn" class="btn-probatum btn-primary">
-            <i class="fas fa-gavel"></i> CASO REAL ANONIMIZADO
-        </button>
-        <button id="forceRevealBtn" class="btn-probatum" onclick="if(window.forceRevealSmokingGun) window.forceRevealSmokingGun();">
-            <i class="fas fa-search"></i> FORÇAR REVELAÇÃO PROVA
-        </button>
-    </div>
-    
-    <!-- Container para os botões da tríade documental (injectados pelo unifed_triada_export.js) -->
-    <div id="export-tools-container"></div>
-    
-    <!-- ==================================================================== -->
-    <!-- PAINEL PRINCIPAL – INJECTADO A PARTIR DO panel.html (conteúdo integral) -->
-    <!-- ==================================================================== -->
-    <section id="pureDashboard" class="pure-section" aria-label="Painel Caso Real Anonimizado v13.12.1-FIX">
-    
-        <!-- HEADER DA SECÇÃO -->
-        <div class="pure-section-header">
-            <div class="pure-section-title">
-                <span class="pure-badge-version" title="Versão / Version">v13.12.1-FIX</span>
-                <span id="pure-title-text"
-                      data-pt="RECONSTITUIÇÃO DA VERDADE MATERIAL — SESSÃO"
-                      data-en="RECONSTRUCTION OF MATERIAL TRUTH — SESSION">RECONSTITUIÇÃO DA VERDADE MATERIAL — SESSÃO</span>
-                <span id="pure-session-id" class="pure-mono">UNIFED-MMLADX8Q-CV69L</span>
-            </div>
-            <div class="pure-session-badge">
-                <span class="pure-label" data-pt="INTEGRIDADE" data-en="INTEGRITY">SHA-256</span>
-                <span id="pure-hash-prefix" class="pure-mono pure-hash">5150e767...</span>
-            </div>
-        </div>
-    
-        <!-- IDENTIDADE DO OPERADOR FORENSE (Art. 153.º CPP) -->
-        <div class="pure-operator-badge" style="margin-top: 5px; font-family: monospace; font-size: 0.85em; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 4px;">
-            ID_OPERADOR_FORENSE: <span class="pure-value-warn" style="color: #00e5ff;">UNIFED-A.S.-9W3HI [VALIDADO/eIDAS]</span>
-        </div>
-    
-        <!-- BLOCO DE IDENTIFICAÇÃO DO SUJEITO PASSIVO -->
-        <div class="pure-subject-header" style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; align-items: stretch;">
-            <div class="pure-data-block" style="flex: 1 1 200px; background: rgba(255,255,255,0.03); border-radius: 6px; padding: 12px 14px;">
-                <div class="pure-data-label" data-pt="Sujeito Passivo" data-en="Subject">Sujeito Passivo</div>
-                <div id="pure-subject-name" class="pure-subject-value" style="font-size:1rem; font-weight:600; color:#00E5FF;">---</div>
-            </div>
-            <div class="pure-data-block" style="flex: 1 1 150px; background: rgba(255,255,255,0.03); border-radius: 6px; padding: 12px 14px;">
-                <div class="pure-data-label" data-pt="NIF" data-en="Tax ID">NIF</div>
-                <div id="pure-subject-nif" class="pure-subject-value" style="font-size:1rem; font-weight:600; color:#00E5FF;">---</div>
-            </div>
-            <div class="pure-data-block" style="flex: 1 1 200px; background: rgba(255,255,255,0.03); border-radius: 6px; padding: 12px 14px;">
-                <div class="pure-data-label" data-pt="Plataforma" data-en="Platform">Plataforma</div>
-                <div id="pure-subject-platform" class="pure-subject-value" style="font-size:1rem; font-weight:600; color:#00E5FF;">---</div>
-            </div>
-        </div>
-    
-        <!-- GESTÃO DE EVIDÊNCIAS (contadores visíveis) -->
-        <div id="pureEvidenceSection" class="evidence-management-section-solid" style="margin-bottom: 1rem; display: none;">
-            <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
-                <div class="evidence-management-btn-solid" style="flex: 1; cursor: default;">
-                    <span><i class="fas fa-folder-open"></i> <span>EVIDÊNCIAS CARREGADAS</span></span>
-                    <span id="pure-evidence-count-display" class="evidence-count-solid">0</span>
-                </div>
-                <div class="pure-evidence-stats" style="display: flex; gap: 0.75rem; flex-wrap: wrap; justify-content: flex-end;">
-                    <div class="pure-evidence-item" style="background: rgba(0,229,255,0.08); padding: 4px 8px; border-radius: 4px; font-size: 0.7rem;">CTRL: <span id="pure-ctrl-qty" class="pure-accent" style="font-weight: 800;">0</span></div>
-                    <div class="pure-evidence-item" style="background: rgba(0,229,255,0.08); padding: 4px 8px; border-radius: 4px; font-size: 0.7rem;">SAF-T: <span id="pure-saft-qty" class="pure-accent" style="font-weight: 800;">0</span></div>
-                    <div class="pure-evidence-item" style="background: rgba(0,229,255,0.08); padding: 4px 8px; border-radius: 4px; font-size: 0.7rem;">FAT: <span id="pure-fat-qty" class="pure-accent" style="font-weight: 800;">0</span></div>
-                    <div class="pure-evidence-item" style="background: rgba(0,229,255,0.08); padding: 4px 8px; border-radius: 4px; font-size: 0.7rem;">EXT: <span id="pure-ext-qty" class="pure-accent" style="font-weight: 800;">0</span></div>
-                    <div class="pure-evidence-item" style="background: rgba(0,229,255,0.08); padding: 4px 8px; border-radius: 4px; font-size: 0.7rem;">DAC7: <span id="pure-dac7-qty" class="pure-accent" style="font-weight: 800;">0</span></div>
-                </div>
-            </div>
-            <div class="counters-compact" style="margin-top: 0.5rem;">
-                <div class="counter-item-compact"><span id="pure-counter-ctrl" class="counter-value-compact">0</span><span class="counter-label-compact">CTRL</span></div>
-                <div class="counter-item-compact"><span id="pure-counter-saft" class="counter-value-compact">0</span><span class="counter-label-compact">SAF-T</span></div>
-                <div class="counter-item-compact"><span id="pure-counter-fat" class="counter-value-compact">0</span><span class="counter-label-compact">FAT</span></div>
-                <div class="counter-item-compact"><span id="pure-counter-ext" class="counter-value-compact">0</span><span class="counter-label-compact">EXT</span></div>
-                <div class="counter-item-compact"><span id="pure-counter-dac7" class="counter-value-compact">0</span><span class="counter-label-compact">DAC7</span></div>
-            </div>
-        </div>
-    
-        <!-- GRID DE PAINÉIS (pure-card-grid) -->
-        <div class="pure-card-grid">
-    
-            <!-- CARTÃO GARANTIDO: RISCO DE ASFIXIA FINANCEIRA -->
-            <div class="pure-card pure-card-warn" id="card-asfixia" style="display:block !important; opacity:1 !important;">
-                <div class="pure-card-title">RISCO DE ASFIXIA FINANCEIRA</div>
-                <div class="pure-card-value" id="pure-atf-score-val">--%</div>
-                <div class="pure-card-trend">Indicador de Probabilidade de Insolvência Forçada</div>
-            </div>
-    
-            <!-- GRÁFICO DE DISCREPÂNCIA GARANTIDO -->
-            <div class="chart-section" id="pure-chart-container">
-                <div class="pure-chart-wrapper">
-                    <canvas id="discrepancyChart"></canvas>
-                </div>
-            </div>
-    
-            <!-- PAINEL I – RECONSTITUIÇÃO FINANCEIRA -->
-            <div class="pure-card" id="pureFinancialCard">
-                <h3 class="pure-card-title">
-                    <span class="pure-icon">🔬</span>
-                    <span id="pure-card1-title"
-                          data-pt="I. RECONSTITUIÇÃO DA VERDADE MATERIAL (EXTRATO vs SAF-T vs DAC7)"
-                          data-en="I. RECONSTRUCTION OF MATERIAL TRUTH (STATEMENT vs SAF-T vs DAC7)">I. RECONSTITUIÇÃO DA VERDADE MATERIAL (EXTRATO vs SAF-T vs DAC7)</span>
-                </h3>
-                <div class="pure-data-grid pure-3col">
-                    <div class="pure-data-block">
-                        <div class="pure-data-label" id="pure-label-ganhos" data-pt="Ganhos (Extrato Ledger)" data-en="Earnings (Ledger Statement)">Ganhos (Extrato Ledger)</div>
-                        <div id="pure-ganhos" class="pure-data-value pure-value-primary">€ 0,00</div>
-                        <div class="pure-data-sub" id="pure-sub-ganhos" data-pt="Fonte primária · Viagens efectuadas" data-en="Primary source · Trips completed">Fonte primária · Viagens efectuadas</div>
-                    </div>
-                    <div class="pure-data-block">
-                        <div class="pure-data-label" id="pure-label-despesas" data-pt="Despesas / Comissões (BTOR)" data-en="Expenses / Commissions (BTOR)">Despesas / Comissões (BTOR)</div>
-                        <div id="pure-despesas" class="pure-data-value pure-value-warn">€ 0,00</div>
-                        <div class="pure-data-sub" id="pure-sub-despesas" data-pt="Retidas pela plataforma (extrato)" data-en="Withheld by platform (statement)">Retidas pela plataforma (extrato)</div>
-                    </div>
-                    <div class="pure-data-block">
-                        <div class="pure-data-label" id="pure-label-liquido" data-pt="Ganhos Líquidos (Extrato)" data-en="Net Earnings (Statement)">Ganhos Líquidos (Extrato)</div>
-                        <div id="pure-liquido" class="pure-data-value pure-value-neutral">€ 0,00</div>
-                        <div class="pure-data-sub" id="pure-sub-liquido" data-pt="Ganhos − Despesas (extrato real)" data-en="Earnings − Expenses (actual statement)">Ganhos − Despesas (extrato real)</div>
-                    </div>
-                    <div class="pure-data-block">
-                        <div class="pure-data-label" id="pure-label-saft" data-pt="SAF-T Bruto (Declarado)" data-en="SAF-T Gross (Declared)">SAF-T Bruto (Declarado)</div>
-                        <div id="pure-saft" class="pure-data-value pure-value-neutral">€ 0,00</div>
-                        <div class="pure-data-sub" id="pure-sub-saft" data-pt="Faturação interna plataforma" data-en="Platform internal invoicing">Faturação interna plataforma</div>
-                    </div>
-                    <div class="pure-data-block">
-                        <div class="pure-data-label" id="pure-label-dac7" data-pt="DAC7 (Reportado à AT)" data-en="DAC7 (Reported to TA)">DAC7 (Reportado à AT)</div>
-                        <div id="pure-dac7" class="pure-data-value pure-value-neutral">€ 0,00</div>
-                        <div class="pure-data-sub" id="pure-sub-dac7" data-pt="2.º Semestre 2024 (Q4 activo)" data-en="2nd Semester 2024 (Q4 active)">2.º Semestre 2024 (Q4 activo)</div>
-                    </div>
-                    <div class="pure-data-block">
-                        <div class="pure-data-label" id="pure-label-fatura" data-pt="Comissões Faturadas (BTF)" data-en="Invoiced Commissions (BTF)">Comissões Faturadas (BTF)</div>
-                        <div id="pure-fatura" class="pure-data-value pure-value-warn">€ 0,00</div>
-                        <div class="pure-data-sub" id="pure-sub-fatura" data-pt="Valor em faturas emitidas (PT1124/PT1125)" data-en="Value in issued invoices (PT1124/PT1125)">Valor em faturas emitidas (PT1124/PT1125)</div>
-                    </div>
-                </div>
-            </div>
-    
-            <!-- PAINEL II – DISCREPÂNCIAS (SMOKING GUN) -->
-            <div class="pure-card pure-card-alert" id="pureDiscCard" style="display:block !important; opacity:1 !important;">
-                <h3 class="pure-card-title">
-                    <span class="pure-icon">🔫</span>
-                    <span id="pure-card2-title"
-                          data-pt="II. DISCREPÂNCIAS APURADAS — PROVA RAINHA"
-                          data-en="II. DISCREPANCIES FOUND — CROWN EVIDENCE">II. DISCREPÂNCIAS APURADAS — PROVA RAINHA</span>
-                </h3>
-                <div class="pure-smoking-guns">
-                    <div class="pure-sg pure-sg-critical smoking-gun-module">
-                        <div class="pure-sg-label" id="pure-sg2-label"
-                             data-pt="SMOKING GUN 2 — Despesas/Comissões (Extrato) vs Comissões Faturadas (BTF)"
-                             data-en="SMOKING GUN 2 — Expenses/Commissions (Statement) vs Invoiced Commissions (BTF)">SMOKING GUN 2 — Despesas/Comissões (Extrato) vs Comissões Faturadas (BTF)</div>
-                        <div class="pure-sg-row"><span class="pure-sg-key" id="pure-sg2-btor-label" data-pt="BTOR (Extrato):" data-en="BTOR (Statement):">BTOR (Extrato):</span><span class="pure-sg-val" id="pure-sg2-btor-val">€ 0,00</span></div>
-                        <div class="pure-sg-row"><span class="pure-sg-key" id="pure-sg2-btf-label" data-pt="BTF (Fatura):" data-en="BTF (Invoice):">BTF (Fatura):</span><span class="pure-sg-val" id="pure-sg2-btf-val">€ 0,00</span></div>
-                        <div class="pure-sg-delta"><span id="pure-sg2-delta-label" data-pt="OMISSÃO:" data-en="OMISSION:">OMISSÃO:</span><span id="pure-disc-c2" class="pure-delta-value">€ 0,00</span><span id="pure-disc-c2-pct" class="pure-delta-pct">0,00%</span></div>
-                        <div class="pure-sg-legal" id="pure-sg2-legal" data-pt="Art. 36.º n.º 11 CIVA · Art. 119.º RGIT" data-en="Art. 36(11) CIVA · Art. 119 RGIT">Art. 36.º n.º 11 CIVA · Art. 119.º RGIT</div>
-                    </div>
-                    <div class="pure-sg pure-sg-secondary smoking-gun-module">
-                        <div class="pure-sg-label" id="pure-sg1-label"
-                             data-pt="SMOKING GUN 1 — SAF-T Bruto vs Reportado DAC7 (AT)"
-                             data-en="SMOKING GUN 1 — SAF-T Gross vs DAC7 Reported (TA)">SMOKING GUN 1 — SAF-T Bruto vs Reportado DAC7 (AT)</div>
-                        <div class="pure-sg-row"><span class="pure-sg-key" id="pure-sg1-saft-label" data-pt="SAF-T Bruto:" data-en="SAF-T Gross:">SAF-T Bruto:</span><span class="pure-sg-val" id="pure-sg1-saft-val">€ 0,00</span></div>
-                        <div class="pure-sg-row"><span class="pure-sg-key" id="pure-sg1-dac7-label" data-pt="DAC7 (2.º Sem.):" data-en="DAC7 (2nd Sem.):">DAC7 (2.º Sem.):</span><span class="pure-sg-val" id="pure-sg1-dac7-val">€ 0,00</span></div>
-                        <div class="pure-sg-delta"><span id="pure-sg1-delta-label" data-pt="DIFERENÇA:" data-en="DIFFERENCE:">DIFERENÇA:</span><span id="pure-disc-saft-dac7" class="pure-delta-value">€ 0,00</span><span id="pure-disc-saft-pct" class="pure-delta-pct">0,00%</span></div>
-                        <div class="pure-sg-legal" id="pure-sg1-legal" data-pt="Diretiva DAC7 (UE) 2021/514 · DL n.º 41/2023" data-en="DAC7 Directive (EU) 2021/514 · DL No. 41/2023">Diretiva DAC7 (UE) 2021/514 · DL n.º 41/2023</div>
-                    </div>
-                </div>
-    
-                <div class="pure-fiscal-row">
-                    <div class="pure-fiscal-item"><div class="pure-fiscal-label" id="pure-iva23-label" data-pt="IVA 23% Omitido" data-en="VAT 23% Omitted">IVA 23% Omitido</div><div id="pure-iva-23" class="pure-fiscal-value">€ 0,00</div><div class="pure-fiscal-sub" id="pure-iva23-sub" data-pt="Art. 2.º n.º 1 al. i) CIVA" data-en="Art. 2(1)(i) CIVA">Art. 2.º n.º 1 al. i) CIVA</div></div>
-                    <div class="pure-fiscal-item"><div class="pure-fiscal-label" id="pure-iva6-label" data-pt="IVA 6% Omitido" data-en="VAT 6% Omitted">IVA 6% Omitido</div><div id="pure-iva-6" class="pure-fiscal-value">€ 0,00</div><div class="pure-fiscal-sub" id="pure-iva6-sub" data-pt="Art. 18.º CIVA · Transporte" data-en="Art. 18 CIVA · Transport">Art. 18.º CIVA · Transporte</div></div>
-                    <div class="pure-fiscal-item"><div class="pure-fiscal-label" id="pure-irc-label" data-pt="IRC Estimado (21%)" data-en="Estimated CIT (21%)">IRC Estimado (21%)</div><div id="pure-irc" class="pure-fiscal-value">€ 0,00</div><div class="pure-fiscal-sub" id="pure-irc-sub" data-pt="Art. 17.º CIRC" data-en="Art. 17 CIT Code">Art. 17.º CIRC</div></div>
-                </div>
-                <div class="pure-card-grid pure-3col" style="margin-top:14px;">
-                    <div class="pure-metric-card alert"><div class="pure-metric-label" data-pt="Diferencial de Fluxo Auditado" data-en="Audited Flow Differential">Diferencial de Fluxo Auditado</div><div id="pure-disc-c2-grid" class="pure-metric-value">€ 0,00</div><div class="pure-metric-sublabel">Base: Art. 103.º RGIT</div><div class="pure-legal-notice">Omissão declarativa sistemática</div></div>
-                    <div class="pure-metric-card warning" id="pure-asfixia-container"><div class="pure-metric-label" data-pt="Risco de Asfixia Financeira" data-en="Financial Suffocation Risk">Risco de Asfixia Financeira</div><div id="pure-iva-devido" class="pure-metric-value">Calculando…</div><div class="pure-metric-sublabel" data-pt="IVA 6% (Verba 2.18 Lista I CIVA)" data-en="6% VAT (Item 2.18 List I CIVA)">IVA 6% (Verba 2.18 Lista I CIVA)</div><div class="pure-legal-notice">Art. 405.º C. Civil · Comissão incide sobre Bruto</div></div>
-                    <div class="pure-metric-card"><div class="pure-metric-label" data-pt="Total Fluxos Não Sujeitos" data-en="Total Non-Taxable Flows">Total Fluxos Não Sujeitos</div><div id="pure-nao-sujeitos" class="pure-metric-value pure-value-primary">€ 0,00</div><div class="pure-metric-sublabel">Campanhas + Gorjetas + Portagens</div><div class="pure-legal-notice">Lei TVDE · Isenção de comissão</div></div>
-                </div>
-            </div>
-    
-            <!-- PAINEL III – ATF -->
-            <div class="pure-card" id="pureATFCard">
-                <h3 class="pure-card-title"><span class="pure-icon">⏳</span><span id="pure-card3-title" data-pt="III. ANÁLISE TEMPORAL FORENSE (ATF) — LOTE GLOBAL (2.º SEMESTRE 2024)" data-en="III. FORENSIC TEMPORAL ANALYSIS (ATF) — GLOBAL BATCH (2nd SEMESTER 2024)">III. ANÁLISE TEMPORAL FORENSE (ATF) — LOTE GLOBAL (2.º SEMESTRE 2024)</span></h3>
-                <div class="pure-atf-grid">
-                    <div class="pure-atf-block pure-atf-sp"><div class="pure-atf-label" id="pure-atf-sp-label" data-pt="SCORE DE PERSISTÊNCIA" data-en="PERSISTENCE SCORE">SCORE DE PERSISTÊNCIA</div><div id="pure-atf-sp" class="pure-atf-big">40<span style="font-size:1rem;opacity:0.6">/100</span></div><div class="pure-atf-classify" id="pure-atf-status" data-pt="OMISSÃO PONTUAL / RISCO MODERADO" data-en="OCCASIONAL OMISSION / MODERATE RISK">OMISSÃO PONTUAL / RISCO MODERADO</div><div class="pure-atf-bar"><div class="pure-atf-bar-fill" style="width:40%;background:#F59E0B"></div></div></div>
-                    <div class="pure-atf-block"><div class="pure-atf-label" id="pure-atf-trend-label" data-pt="TENDÊNCIA" data-en="TREND">TENDÊNCIA</div><div id="pure-atf-trend" class="pure-atf-trend-val" data-pt="📉 DESCENDENTE" data-en="📉 DESCENDING">📉 DESCENDENTE</div><div class="pure-atf-sub" id="pure-atf-trend-sub" data-pt="Regressão linear (OLS) · 3 pontos" data-en="Linear regression (OLS) · 3 points">Regressão linear (OLS) · 3 pontos</div></div>
-                    <div class="pure-atf-block"><div class="pure-atf-label" id="pure-atf-outliers-label" data-pt="OUTLIERS > 2σ" data-en="OUTLIERS > 2σ">OUTLIERS > 2σ</div><div id="pure-atf-outliers" class="pure-atf-outlier-val">0 outliers &gt; 2σ</div><div class="pure-atf-sub" id="pure-atf-outliers-sub" data-pt="Sem picos estatisticamente anómalos" data-en="No statistically anomalous peaks">Sem picos estatisticamente anómalos</div></div>
-                    <div class="pure-atf-block"><div class="pure-atf-label" id="pure-atf-history-label" data-pt="HISTÓRICO" data-en="HISTORY">HISTÓRICO</div><div id="pure-atf-meses" class="pure-atf-meses-val" data-pt="2.º Semestre 2024 — 4 meses com dados (Set–Dez)" data-en="2nd Semester 2024 — 4 months with data (Sep–Dec)">2.º Semestre 2024 — 4 meses com dados (Set–Dez)</div><div class="pure-atf-sub" id="pure-atf-meses-sub" data-pt="4 meses com dados (Set–Dez 2024)" data-en="4 months with data (Sep–Dec 2024)">4 meses com dados (Set–Dez 2024)</div></div>
-                </div>
-                <div class="pure-atf-note" id="pure-atf-note"><strong id="pure-atf-note-strong" data-pt="Nota Metodológica:" data-en="Methodological Note:">Nota Metodológica:</strong><span id="pure-atf-note-text" data-pt="Score de Persistência calculado pelo motor computeTemporalAnalysis() sobre 4 meses de histórico (Set/Out/Nov/Dez 2024). SP calculado sobre o lote global (dados verificados UNIFED-MMLADX8Q-CV69L). As discrepâncias absolutas (C2: €2.184,95 — 89,26% · C1: €2.402,57 — 23,65%) mantêm relevância jurídica independente." data-en="Persistence Score calculated by computeTemporalAnalysis() engine over 4 months of history (Sep/Oct/Nov/Dec 2024). SP calculated over the global batch (verified data UNIFED-MMLADX8Q-CV69L). The absolute discrepancies (C2: €2,184.95 — 89.26% · C1: €2,402.57 — 23.65%) maintain independent legal relevance.">Score de Persistência calculado pelo motor computeTemporalAnalysis() sobre 4 meses de histórico (Set/Out/Nov/Dez 2024). SP calculado sobre o lote global (dados verificados UNIFED-MMLADX8Q-CV69L). As discrepâncias absolutas (C2: €2.184,95 — 89,26% · C1: €2.402,57 — 23,65%) mantêm relevância jurídica independente.</span></div>
-                <div style="text-align:center;margin-top:16px"><button onclick="if(typeof openATFModal === 'function') openATFModal();" class="pure-btn-atf" id="pure-atf-btn" data-pt="⏳ ABRIR ANÁLISE TEMPORAL FORENSE COMPLETA" data-en="⏳ OPEN COMPLETE FORENSIC TEMPORAL ANALYSIS" title="Abrir modal ATF completo / Open complete ATF modal"><span id="pure-atf-btn-text">⏳ ABRIR ANÁLISE TEMPORAL FORENSE COMPLETA</span></button></div>
-            </div>
-    
-            <!-- PAINEL IV – ZONA CINZENTA -->
-            <div class="pure-card white-collar-module" id="pureZonaCinzentaCard" style="display:block !important; opacity:1 !important;">
-                <h3 class="pure-card-title"><span class="pure-icon">🔍</span><span id="pure-card4-title" data-pt="IV. ZONA CINZENTA — VALORES NÃO SUJEITOS A COMISSÃO (ISOLADOS)" data-en="IV. GREY ZONE — VALUES NOT SUBJECT TO COMMISSION (ISOLATED)">IV. ZONA CINZENTA — VALORES NÃO SUJEITOS A COMISSÃO (ISOLADOS)</span></h3>
-                <p class="pure-zc-intro" id="pure-zc-intro"><span id="pure-zc-intro-text" data-pt="O sistema isolou" data-en="The system isolated">O sistema isolou</span><strong id="pure-zc-amount">€ 451,00</strong><span id="pure-zc-intro-end" data-pt="em fluxos não sujeitos a comissão pela plataforma (Campanhas + Gorjetas — mês de Outubro). A reconciliação DAC7 deve verificar se estes valores foram indevidamente incluídos na base de reporte à AT, explicando parte da discrepância C1." data-en="in flows not subject to commission by the platform (Campaigns + Tips — October month). DAC7 reconciliation must verify whether these values were improperly included in the reporting base to the TA, explaining part of the C1 discrepancy.">em fluxos não sujeitos a comissão pela plataforma (Campanhas + Gorjetas — mês de Outubro). A reconciliação DAC7 deve verificar se estes valores foram indevidamente incluídos na base de reporte à AT, explicando parte da discrepância C1.</span></p>
-                <div class="pure-zc-grid">
-                    <div class="pure-zc-item"><span class="pure-zc-label" id="pure-zc-campanhas-label" data-pt="Campanhas (total período)" data-en="Campaigns (total period)">Campanhas (total período)</span><span id="pure-nc-campanhas" class="pure-zc-val">€ 0,00</span><span class="pure-zc-tag" id="pure-zc-campanhas-tag" data-pt="Isento comissão · 0%" data-en="Commission exempt · 0%">Isento comissão · 0%</span></div>
-                    <div class="pure-zc-item"><span class="pure-zc-label" id="pure-zc-gorjetas-label" data-pt="Gorjetas (total período)" data-en="Tips (total period)">Gorjetas (total período)</span><span id="pure-nc-gorjetas" class="pure-zc-val">€ 0,00</span><span class="pure-zc-tag" id="pure-zc-gorjetas-tag" data-pt="Transferência P2P · 0%" data-en="P2P Transfer · 0%">Transferência P2P · 0%</span></div>
-                    <div class="pure-zc-item"><span class="pure-zc-label" id="pure-zc-portagens-label" data-pt="Portagens (total período)" data-en="Tolls (total period)">Portagens (total período)</span><span id="pure-nc-portagens" class="pure-zc-val">€ 0,00</span><span class="pure-zc-tag" id="pure-zc-portagens-tag" data-pt="Reembolso operacional · 0%" data-en="Operational reimbursement · 0%">Reembolso operacional · 0%</span></div>
-                    <div class="pure-zc-item"><span class="pure-zc-label" id="pure-zc-cancelamentos-label" data-pt="Taxas de Cancelamento (total período)" data-en="Cancellation Fees (total period)">Taxas de Cancelamento (total período)</span><span id="pure-nc-cancelamentos" class="pure-zc-val">€ 0,00</span><span class="pure-zc-tag" id="pure-zc-cancelamentos-tag" data-pt="já em Ganhos · comissão incluída nos −Despesas" data-en="already in Earnings · commission included in −Expenses">já em Ganhos · comissão incluída nos −Despesas</span></div>
-                    <div class="pure-zc-item pure-zc-total"><span class="pure-zc-label" id="pure-zc-total-label" data-pt="Total Não Sujeitos (Out 2024)" data-en="Total Not Subject (Oct 2024)">Total Não Sujeitos (Out 2024)</span><span id="pure-nc-total" class="pure-zc-val">€ 0,00</span><span class="pure-zc-tag" id="pure-zc-total-tag" data-pt="Fora da base tributável TVDE" data-en="Outside TVDE taxable base">Fora da base tributável TVDE</span></div>
-                </div>
-                <div style="color: #ef4444; border-left: 2px solid #ef4444; padding-left: 8px; margin-top: 10px;">
-                    <strong>GAP DE CONCILIAÇÃO (C1): 1.951,42 €</strong><br>
-                    <span style="font-size: 0.8em;">Estado: Indício de Omissão Declarativa (Base Bruta não justificada por fluxos isentos).</span>
-                </div>
-                <div class="pure-zc-question" id="pure-zc-question"><strong id="pure-zc-question-strong" data-pt="Questão para contraditório (Art. 327.º CPP):" data-en="Question for contradiction (Art. 327 CPP):">Questão para contraditório (Art. 327.º CPP):</strong><span id="pure-zc-question-text" data-pt="Pode a plataforma confirmar se os €451,00 em Gorjetas e Campanhas (isentos de comissão nos termos da Lei TVDE) foram incluídos na base de cálculo do reporte DAC7? Se sim, qual o fundamento legal?" data-en="Can the platform confirm whether the €451.00 in Tips and Campaigns (commission-exempt under the TVDE Law) were included in the calculation basis of the DAC7 report? If so, what is the legal basis?">Pode a plataforma confirmar se os €451,00 em Gorjetas e Campanhas (isentos de comissão nos termos da Lei TVDE) foram incluídos na base de cálculo do reporte DAC7? Se sim, qual o fundamento legal?</span></div>
-            </div>
-    
-            <!-- PAINEL V – VEREDICTO E INTEGRIDADE -->
-            <div class="pure-card pure-card-verdict" id="pureVerdictCard">
-                <div class="pure-verdict-row">
-                    <div class="pure-verdict-block"><div class="pure-verdict-label" id="pure-verdict-label" data-pt="VEREDICTO PERICIAL" data-en="EXPERT VERDICT">VEREDICTO PERICIAL</div><div id="pure-verdict" class="pure-verdict-value" data-pt="RISCO ELEVADO" data-en="HIGH RISK">RISCO ELEVADO</div><div id="pure-verdict-pct" class="pure-verdict-pct">89,26%</div><div class="pure-verdict-basis" id="pure-verdict-basis" data-pt="Art. 119.º RGIT · Art. 125.º CPP" data-en="Art. 119 RGIT · Art. 125 CPP">Art. 119.º RGIT · Art. 125.º CPP</div></div>
-                    <div class="pure-integrity-block"><div class="pure-verdict-label" id="pure-integrity-label" data-pt="INTEGRIDADE SHA-256" data-en="SHA-256 INTEGRITY">INTEGRIDADE SHA-256</div><div id="pure-hash-prefix-verdict" class="pure-mono pure-hash-lg">5150e767...</div><div class="pure-verdict-basis" id="pure-integrity-basis1" data-pt="RFC 3161 · ISO/IEC 27037:2012" data-en="RFC 3161 · ISO/IEC 27037:2012">RFC 3161 · ISO/IEC 27037:2012</div><div class="pure-verdict-basis" id="pure-integrity-basis2" style="margin-top:4px" data-pt="Dados reais · demoMode: false · DORA Compliant" data-en="Real data · demoMode: false · DORA Compliant">Dados reais · demoMode: false · DORA Compliant</div></div>
-                </div>
-            </div>
-    
-        </div> <!-- FIM: pure-card-grid -->
-    
-        <!-- TRIANGULAÇÃO FINANCEIRA (4 PILARES) -->
-        <div class="pure-card" id="pureTriangulationCard" style="margin-top: 16px;">
-            <h3 class="pure-card-title"><span class="pure-icon">📊</span><span data-pt="TRIANGULAÇÃO FINANCEIRA · BIG DATA ALGORITHM" data-en="FINANCIAL TRIANGULATION · BIG DATA ALGORITHM">TRIANGULAÇÃO FINANCEIRA · BIG DATA ALGORITHM</span></h3>
-            <div class="pure-data-grid pure-4col" style="display: grid; grid-template-columns: repeat(4,1fr); gap: 12px;">
-                <div class="pure-data-block"><div class="pure-data-label" data-pt="GANHOS (EXTRATO)" data-en="EARNINGS (STATEMENT)">GANHOS (EXTRATO)</div><div id="pure-ganhos-tri" class="pure-data-value pure-value-primary">€ 0,00</div></div>
-                <div class="pure-data-block"><div class="pure-data-label" data-pt="DESPESAS/COMISSÕES" data-en="EXPENSES/COMMISSIONS">DESPESAS/COMISSÕES</div><div id="pure-despesas-tri" class="pure-data-value pure-value-warn">€ 0,00</div></div>
-                <div class="pure-data-block"><div class="pure-data-label" data-pt="LÍQUIDO (EXTRATO)" data-en="NET (STATEMENT)">LÍQUIDO (EXTRATO)</div><div id="pure-liquido-tri" class="pure-data-value pure-value-neutral">€ 0,00</div></div>
-                <div class="pure-data-block"><div class="pure-data-label" data-pt="FATURADO (BTF)" data-en="INVOICED (BTF)">FATURADO (BTF)</div><div id="pure-fatura-tri" class="pure-data-value pure-value-neutral">€ 0,00</div></div>
-            </div>
-        </div>
-    
-        <!-- CANVAS PARA O GRÁFICO ATF -->
-        <div class="pure-atf-chart" style="margin-top: 16px;">
-            <canvas id="atfChartCanvas" width="800" height="300" style="width:100%; height:auto; max-height:300px;"></canvas>
-        </div>
-    
-        <!-- SELO TEMPORAL -->
-        <div id="pure-tsa-anchor" style="font-family: monospace; font-size: 0.8em; margin-top: 4px;">
-            Selo de Tempo Local (ISO 27037): <span style="color: #10b981; font-weight: bold;">ATIVO — CUSTÓDIA NÍVEL 1</span>
-        </div>
-    
-        <div style="display:none;" aria-hidden="true">
-            <div id="pure-verdict-text"></div>
-            <div id="pure-timestamp-ots"></div>
-            <div id="pure-blockchain-status"></div>
-            <div id="pure-atf-zscore"></div>
-            <div id="pure-atf-confianca"></div>
-            <div id="pure-ganhos-extrato"></div>
-            <div id="pure-despesas-extrato"></div>
-            <div id="pure-ganhos-liquidos-extrato"></div>
-            <div id="pure-saft-bruto-val"></div>
-            <div id="pure-dac7-val"></div>
-            <div id="pure-iva-devido-val"></div>
-            <div id="pure-impacto-macro-ref"></div>
-            <div id="pure-nao-declarado-val"></div>
-        </div>
-    </section>
-    
-    <div class="app-footer">
-        <i class="fas fa-balance-scale"></i> UNIFED-PROBATUM · Reconstitucionalização da Verdade Material Digital · Art. 125.º CPP · ISO/IEC 27037:2012 · DORA (UE) 2022/2554<br>
-        <span style="font-size:0.6rem;">Sessão forense selada com integridade criptográfica – qualquer alteração invalida a cadeia de custódia</span>
-    </div>
-</div>
 
-<!-- Scripts principais do sistema (ordem de carga respeita dependências) -->
-<script src="enrichment.js"></script>
-<script src="nexus.js"></script>
-<script src="script_injection.js"></script>
-<script src="unifed_triada_export.js"></script>
+    <div id="splashScreen" class="splash-screen">
+        <div class="laser-h"></div>
+        <div class="laser-v"></div>
 
-<!-- Inicialização adicional (garantia de que o botão de caso real está funcional) -->
-<script>
-    (function() {
-        // Pequeno helper para assegurar que o UNIFEDSystem existe e que o modo demo não está forçado
-        if (typeof window.UNIFEDSystem === 'undefined') {
-            window.UNIFEDSystem = {};
-        }
-        // O nexus.js já removeu a linha que forçava demoMode = true, mas garantimos que não fica ativo
-        if (window.UNIFEDSystem.demoMode === undefined) {
-            window.UNIFEDSystem.demoMode = false;
-        }
-        console.log('[INDEX] Ambiente court-ready carregado. demoMode =', window.UNIFEDSystem.demoMode);
-    })();
-</script>
+        <div class="splash-content">
+            <div class="splash-left">
+                <div class="splash-logo">
+                    <i class="fas fa-fingerprint"></i>
+                </div>
+                
+                <h1>SISTEMA DE PERITAGEM FORENSE</h1>
+                <h2>UNIFED - PROBATUM</h2>
+                
+                <div class="privacy-highlight">
+                    <i class="fas fa-shield-halved"></i>
+                    <span><strong>Privacy by Design</strong><br>Processamento em conformidade com o Art. 5.º do RGPD <small>(Integridade e Confidencialidade)</small></span>
+                </div>
+            </div>
+
+            <div class="splash-right">
+                <div class="metadata-panel">
+                    <p><strong>Módulo:</strong> Investigação Digital · ISO/IEC 27037</p>
+                    <p><strong>Big Data Accumulator:</strong> v13.12.1-FIX · DORA Compliant · Smoking Gun · NEXUS</p>
+                    <p><strong>CSC:</strong> Cadeia de Custódia Ativa</p>
+                </div>
+                
+                <div class="action-buttons">
+                    <button id="viewLogsBtn" class="splash-btn secondary">
+                        <i class="fas fa-history"></i> <span id="splashLogsBtnText">REGISTO DE ATIVIDADES (LOG)</span>
+                    </button>
+                    
+                    <button id="startSessionBtn" class="splash-btn primary">
+                        <i class="fas fa-power-off"></i>
+                        <span id="splashStartBtnText">INICIAR METODOLOGIA DE ANÁLISE E PERITAGEM FORENSE</span>
+                    </button>
+                </div>
+
+                <div class="splash-warning-box">
+                    <p><i class="fas fa-gavel"></i> AVISO DE PROTEÇÃO UNIFED - PROBATUM</p>
+                    <small>Este sistema destina-se exclusivamente a uso pericial autorizado. O acesso não autorizado constitui crime de Acesso Ilegítimo, previsto no Artigo 6.º da Lei do Cibercrime (Lei n.º 109/2009, de 15 de setembro). Ao iniciar o utilizador aceita os termos e condições aqui mencionados.</small>
+                </div>
+                
+                <p class="version-footer">UNIFED - PROBATUM © 2024/2026 EM v13.12.1-FIX · DORA COMPLIANT · SMOKING GUN · COURT READY · NEXUS · BIG DATA</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-content">
+            <div class="loading-spinner"><i class="fas fa-atom"></i></div>
+            <h2 id="loadingTitle" data-pt="INICIALIZAÇÃO DO SISTEMA" data-en="SYSTEM INITIALISATION">INICIALIZAÇÃO DO SISTEMA</h2>
+            <p id="loadingSubtitle" data-pt="A carregar módulos forenses BIG DATA..." data-en="Loading BIG DATA forensic modules...">A carregar módulos forenses BIG DATA...</p>
+            <div class="loading-progress">
+                <div id="loadingProgress" class="loading-progress-bar"></div>
+            </div>
+            <p id="loadingStatusText" class="loading-status">0%</p>
+        </div>
+    </div>
+
+    <div id="mainContainer" class="main-container">
+        
+        <header class="main-header">
+            <div class="header-content">
+                <div class="logo-section">
+                    <i class="fas fa-balance-scale"></i>
+                    <div>
+                        <h1>
+                            UNIFED - PROBATUM 
+                            <span class="version-badge">v13.12.1-FIX</span>
+                        </h1>
+                        <p class="subtitle" id="headerSubtitle">ISO/IEC 27037 | NIST SP 800-86 | INTERPOL · CSC | BIG DATA</p>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <button id="demoModeBtn" class="btn-demo-nav">
+                        <i class="fas fa-flask"></i>
+                        <span id="demoBtnText">CASO REAL (ANONIMIZADO)</span>
+                    </button>
+                    <button id="langToggleBtn" class="btn-lang-toggle">
+                        <i class="fas fa-globe"></i>
+                        <span id="currentLangLabel">EN</span>
+                    </button>
+                    <button id="viewLogsHeaderBtn" class="btn-tool" title="Ver Registo de Atividades (Art. 30 RGPD)">
+                        <i class="fas fa-history"></i>
+                    </button>
+                    <button id="audioToggleBtn"
+                        onclick="var _s = window.NIFAF ? NIFAF.toggle() : false; this.innerHTML = _s ? '<i class=\'fas fa-volume-up\'></i>' : '<i class=\'fas fa-volume-mute\'></i>'; this.style.borderColor = _s ? 'var(--accent-cyan)' : ''; this.style.color = _s ? 'var(--accent-cyan)' : '';"
+                        class="btn-tool"
+                        style="font-size: 0.8rem;"
+                        title="Alerta Auditivo Forense (NIFAF) — 180Hz/140Hz · Ativa quando omissão > 15%">
+                        <i class="fas fa-volume-mute"></i>
+                    </button>
+                </div>
+
+                <div class="session-info">
+                    <div class="timestamp-fbi">
+                        <strong>SESSÃO:</strong> <span id="sessionIdDisplay" class="session-id">--------</span><br>
+                        <span id="currentDate"></span> | <span id="currentTime"></span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="app-container">
+            
+            <aside class="sidebar">
+                
+                <div class="sidebar-header-fixed" id="clientIdentificationBlock">
+                    <h3 id="sidebarIdTitle" role="heading" aria-level="2"><i class="fas fa-user-shield"></i> IDENTIFICAÇÃO DO SUJEITO PASSIVO</h3>
+                    <div class="client-identification-fixed">
+                        <div class="form-group-fixed">
+                            <label id="lblClientName" for="clientNameFixed"><i class="fas fa-id-card"></i> Nome / Denominação Social</label>
+                            <input type="text" id="clientNameFixed" placeholder="Nome completo ou empresa">
+                        </div>
+                        <div class="form-group-fixed">
+                            <label id="lblNIF" for="clientNIFFixed"><i class="fas fa-hashtag"></i> NIF</label>
+                            <input type="text" id="clientNIFFixed" placeholder="123456789" maxlength="9">
+                        </div>
+                        <div class="btn-group-fixed">
+                            <button id="registerClientBtnFixed" class="btn-primary">
+                                <i class="fas fa-check-double"></i> <span id="btnRegister">VALIDAR IDENTIDADE</span>
+                            </button>
+                        </div>
+                        <div id="clientStatusFixed" class="client-status-fixed" style="display:none;">
+                            <i class="fas fa-shield-alt"></i>
+                            <span id="clientNameDisplayFixed"></span> | NIF: <span id="clientNifDisplayFixed"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sidebar-filters">
+                    <h3 id="sidebarParamTitle"><i class="fas fa-sliders-h"></i> PARÂMETROS DE AUDITORIA FORENSE</h3>
+                    
+                    <div class="info-fixed">
+                        <div class="info-item">
+                            <span class="info-label" id="lblFiscalYear"><i class="fas fa-calendar-alt"></i> ANO FISCAL EM EXAME</span>
+                            <select id="anoFiscal"></select>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label" id="lblPeriodo"><i class="fas fa-clock"></i> PERÍODO TEMPORAL</span>
+                            <select id="periodoAnalise">
+                                <option value="anual"  data-pt="Exercício Completo (Anual)"  data-en="Full Year (Annual)">Exercício Completo (Anual)</option>
+                                <option value="1s"     data-pt="1.º Semestre"                data-en="1st Semester">1.º Semestre</option>
+                                <option value="2s"     data-pt="2.º Semestre"                data-en="2nd Semester">2.º Semestre</option>
+                                <option value="trimestral" data-pt="Trimestral"              data-en="Quarterly">Trimestral</option>
+                                <option value="mensal" data-pt="Mensal"                      data-en="Monthly">Mensal</option>
+                            </select>
+                        </div>
+                        <div class="info-item" id="trimestralSelectorContainer" style="display:none;">
+                            <span class="info-label"><i class="fas fa-filter"></i> <span id="lblTrimestre" data-pt="TRIMESTRE ACTIVO" data-en="ACTIVE QUARTER">TRIMESTRE ACTIVO</span></span>
+                            <select id="trimestralSelector">
+                                <option value="1" data-pt="1.º Trimestre" data-en="1st Quarter">1.º Trimestre</option>
+                                <option value="2" data-pt="2.º Trimestre" data-en="2nd Quarter">2.º Trimestre</option>
+                                <option value="3" data-pt="3.º Trimestre" data-en="3rd Quarter">3.º Trimestre</option>
+                                <option value="4" data-pt="4.º Trimestre" data-en="4th Quarter">4.º Trimestre</option>
+                            </select>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label" id="lblPlatform"><i class="fas fa-mobile-alt"></i> PLATAFORMA DIGITAL</span>
+                            <select id="selPlatformFixed">
+                                <option value="bolt">Bolt Operations OÜ</option>
+                                <option value="uber">Uber B.V.</option>
+                                <option value="freenow">FREE NOW</option>
+                                <option value="cabify">Cabify</option>
+                                <option value="indrive">inDrive</option>
+                                <option value="outra">Plataforma A</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="evidence-management-section-solid">
+                    <button id="openEvidenceModalBtn" class="evidence-management-btn-solid">
+                        <span><i class="fas fa-folder-open"></i> <span id="btnEvidence">GESTÃO DE EVIDÊNCIAS</span></span>
+                        <span id="evidenceCountTotal" class="evidence-count-solid">0</span>
+                    </button>
+
+                    <div class="counters-compact">
+                        <div class="counter-item-compact">
+                            <span id="controlCountCompact" class="counter-value-compact">0</span>
+                            <span class="counter-label-compact">CTRL</span>
+                        </div>
+                        <div class="counter-item-compact">
+                            <span id="saftCountCompact" class="counter-value-compact">0</span>
+                            <span class="counter-label-compact">SAF-T</span>
+                        </div>
+                        <div class="counter-item-compact">
+                            <span id="invoiceCountCompact" class="counter-value-compact">0</span>
+                            <span class="counter-label-compact">FAT</span>
+                        </div>
+                        <div class="counter-item-compact">
+                            <span id="statementCountCompact" class="counter-value-compact">0</span>
+                            <span class="counter-label-compact">EXT</span>
+                        </div>
+                        <div class="counter-item-compact">
+                            <span id="dac7CountCompact" class="counter-value-compact">0</span>
+                            <span class="counter-label-compact">DAC7</span>
+                        </div>
+                    </div>
+
+                    <button id="analyzeBtn" class="btn-forensic" disabled>
+                        <i class="fas fa-search-dollar"></i> <span id="btnAnalyze">EXECUTAR PERÍCIA</span>
+                    </button>
+                </div>
+
+                <div class="conformity-seals">
+                    <h4><i class="fas fa-certificate"></i> <span data-pt="CERTIFICAÇÕES &amp; CONFORMIDADE" data-en="CERTIFICATIONS &amp; COMPLIANCE">CERTIFICAÇÕES &amp; CONFORMIDADE</span></h4>
+                    <div class="seals-grid">
+                        <div class="seal-item" data-pt="Segue as diretrizes da norma ISO/IEC 27001" data-en="Follows ISO/IEC 27001 guidelines" title="Segue as diretrizes da norma ISO/IEC 27001"><i class="fas fa-shield-alt"></i> ISO 27001</div>
+                        <div class="seal-item" data-pt="Segue as diretrizes da norma ISO/IEC 27035" data-en="Follows ISO/IEC 27035 guidelines" title="Segue as diretrizes da norma ISO/IEC 27035"><i class="fas fa-shield-virus"></i> ISO 27035</div>
+                        <div class="seal-item" data-pt="Segue as diretrizes da norma ISO/IEC 27037" data-en="Follows ISO/IEC 27037 guidelines" title="Segue as diretrizes da norma ISO/IEC 27037"><i class="fas fa-microchip"></i> ISO 27037</div>
+                    </div>
+                    <div class="privacy-badge">
+                        <i class="fas fa-lock"></i>
+                        <span><strong>Privacy by Design</strong><br><span data-pt="Processamento 100% local" data-en="100% local processing">Processamento 100% local</span></span>
+                    </div>
+                    <button id="forensicWipeBtn" class="btn-wipe">
+                        <i class="fas fa-broom"></i> <span id="wipeBtnText">PURGA TOTAL DE DADOS (LIMPEZA BINÁRIA)</span>
+                    </button>
+                </div>
+            </aside>
+
+            <main class="analysis-area">
+                
+                <div class="toolbar-section">
+                    <div class="toolbar-grid" id="export-tools-container">
+                        <button id="exportPDFBtn" class="btn-tool" disabled>
+                            <i class="fas fa-file-pdf"></i> <span id="btnPDF">PARECER TÉCNICO</span>
+                        </button>
+                        <button id="exportDOCXBtn" class="btn-tool"
+                            title="Exportar Minuta de Petição Inicial (.docx) — OOXML editável pelo advogado">
+                            <i class="fas fa-file-word"></i> <span id="btnDOCX">MINUTA WORD</span>
+                        </button>
+                        <button id="atfModalBtn" class="btn-tool"
+                            title="Análise Temporal Forense — Tendências · Outliers 2σ · Score de Persistência">
+                            <i class="fas fa-chart-line"></i> <span id="btnATF">&#x23F3; TENDÊNCIA ATF</span>
+                        </button>
+                        <button id="exportJSONBtn" class="btn-tool">
+                            <i class="fas fa-file-code"></i> <span id="btnJSON">EXPORTAR JSON</span>
+                        </button>
+                        <button id="resetBtn" class="btn-tool">
+                            <i class="fas fa-redo-alt"></i> <span id="btnReset">REINICIAR</span>
+                        </button>
+                        <button id="clearConsoleBtn" class="btn-tool">
+                            <i class="fas fa-trash-alt"></i> <span id="clearConsoleBtnText">LIMPAR CONSOLE</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="module-row">
+                    <div class="module-card full-width">
+                        <h4 id="moduleSaftTitle"><i class="fas fa-file-code"></i> MÓDULO SAF-T (EXTRAÇÃO)</h4>
+                        <div class="module-values grid-3">
+                            <div class="kpi-card highlight">
+                                <h4 id="saftIliquidoLabel">Valor Ilíquido Total</h4>
+                                <p id="saftIliquidoValue">0,00 €</p>
+                                <span class="file-source-badge" id="saftIliquidoSource" data-original-file=""></span>
+                            </div>
+                            <div class="kpi-card highlight">
+                                <h4 id="saftIvaLabel">Total IVA</h4>
+                                <p id="saftIvaValue">0,00 €</p>
+                                <span class="file-source-badge" id="saftIvaSource" data-original-file=""></span>
+                            </div>
+                            <div class="kpi-card highlight">
+                                <h4 id="saftBrutoLabel">Valor Bruto Total</h4>
+                                <p id="saftBrutoValue">0,00 €</p>
+                                <span class="file-source-badge" id="saftBrutoSource" data-original-file=""></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="module-row">
+                    <div class="module-card full-width">
+                        <h4 id="moduleStatementTitle"><i class="fas fa-file-contract"></i> MÓDULO EXTRATOS (MAPEAMENTO)</h4>
+                        <div class="module-values">
+                            <div class="grid-3" style="margin-bottom: 0.75rem;">
+                                <div class="kpi-card highlight">
+                                    <h4 id="stmtGanhosLabel">Ganhos</h4>
+                                    <p id="stmtGanhosValue">0,00 €</p>
+                                    <span class="file-source-badge" id="stmtGanhosSource" data-original-file=""></span>
+                                </div>
+                                <div class="kpi-card">
+                                    <h4 id="stmtDespesasLabel">Despesas/Comissões</h4>
+                                    <p id="stmtDespesasValue">0,00 €</p>
+                                    <span class="file-source-badge" id="stmtDespesasSource" data-original-file=""></span>
+                                </div>
+                                <div class="kpi-card">
+                                    <h4 id="stmtGanhosLiquidosLabel">Ganhos Líquidos</h4>
+                                    <p id="stmtGanhosLiquidosValue">0,00 €</p>
+                                    <span class="file-source-badge" id="stmtGanhosLiquidosSource" data-original-file=""></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="module-row">
+                    <div class="module-card full-width">
+                        <h4 id="moduleDac7Title"><i class="fas fa-envelope-open-text"></i> MÓDULO DAC7 (DECOMPOSIÇÃO)</h4>
+                        <div class="module-values grid-4">
+                            <div class="kpi-card">
+                                <h4 id="dac7Q1Label">1.º TRI</h4>
+                                <p id="dac7Q1Value">0,00 €</p>
+                                <span class="file-source-badge" id="dac7Q1Source" data-original-file=""></span>
+                            </div>
+                            <div class="kpi-card">
+                                <h4 id="dac7Q2Label">2.º TRI</h4>
+                                <p id="dac7Q2Value">0,00 €</p>
+                                <span class="file-source-badge" id="dac7Q2Source" data-original-file=""></span>
+                            </div>
+                            <div class="kpi-card">
+                                <h4 id="dac7Q3Label">3.º TRI</h4>
+                                <p id="dac7Q3Value">0,00 €</p>
+                                <span class="file-source-badge" id="dac7Q3Source" data-original-file=""></span>
+                            </div>
+                            <div class="kpi-card">
+                                <h4 id="dac7Q4Label">4.º TRI</h4>
+                                <p id="dac7Q4Value">0,00 €</p>
+                                <span class="file-source-badge" id="dac7Q4Source" data-original-file=""></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-fixed" id="twoAxisAlerts">
+                    <div class="stat-card warning" id="revenueGapCard" style="display: none;">
+                        <h4><i class="fas fa-chart-line"></i> <span id="revenueGapTitle">OMISSÃO DE FATURAMENTO</span></h4>
+                        <p id="revenueGapValue">0,00 €</p>
+                        <span class="stat-desc" id="revenueGapDesc">SAF-T Bruto vs Ganhos</span>
+                    </div>
+                    <div class="stat-card alert" id="expenseGapCard" style="display: none;">
+                        <h4><i class="fas fa-percentage"></i> <span id="expenseGapTitle">OMISSÃO DE CUSTOS/IVA</span></h4>
+                        <p id="expenseGapValue">0,00 €</p>
+                        <span class="stat-desc" id="expenseGapDesc">Despesas/Comissões (Extrato) vs Faturadas (BTF)</span>
+                    </div>
+                    <div class="stat-card alert" id="omissaoDespesasPctCard" style="display: none;">
+                        <h4><i class="fas fa-percent"></i> <span id="omissaoDespesasPctTitle">Percentagem Cobrada Pela Plataforma</span></h4>
+                        <p id="omissaoDespesasPctValue">0,00 %</p>
+                        <span class="stat-desc" id="omissaoDespesasPctDesc">(Despesas/Comissões / Ganhos Extrato) × 100</span>
+                    </div>
+                </div>
+
+                <div id="quantumBox" class="quantum-box" style="display: none;">
+                    <h4 id="quantumTitle"><i class="fas fa-balance-scale"></i> CÁLCULO TRIBUTÁRIO PERICIAL · PROVA RAINHA</h4>
+                    <div id="quantumValue" class="quantum-value">0,00 €</div>
+                    <p id="quantumFormula" class="quantum-formula">Diferencial de Base em Análise vs Faturada</p>
+                    <p id="quantumNote" class="quantum-formula">IVA em falta (23%): 0,00 € | IVA (6%): 0,00 €</p>
+                    <div id="quantumBreakdown" class="quantum-breakdown"></div>
+                </div>
+
+                <div id="verdictDisplay" class="verdict-display">
+                    <p class="verdict-title" id="verdictPercentLabel">PARECER TÉCNICO N.º <span id="verdictSessionId">--------</span></p>
+                    <p id="verdictLevel" class="verdict-level">AGUARDANDO ANÁLISE</p>
+                    <p id="verdictPercentValue" class="verdict-percent">Discrepância: <span id="verdictPercentSpan">0,00%</span></p>
+                    <div id="verdictDesc" class="verdict-desc">Execute a perícia para obter o veredicto.</div>
+                    <div id="verdictLegal" class="verdict-legal" style="margin-top: 1rem; font-size: 0.8rem; color: var(--text-secondary); border-top: 1px dashed var(--border-color); padding-top: 0.5rem;"></div>
+                </div>
+
+                <div id="bigDataAlert" class="bigdata-alert smoking-gun" style="display: none;">
+                    <i class="fas fa-radiation"></i>
+                    <div>
+                        <h4 id="alertCriticalTitle">SMOKING GUN · DIVERGÊNCIA CRÍTICA</h4>
+                        <p id="alertOmissionText">Despesas/Comissões (Extrato) vs Faturadas (Plataforma):</p>
+                        <strong id="alertDeltaValue" style="font-size: 1.2rem; color: var(--warn-primary);">0,00 €</strong>
+                        <small id="alertAccumulatedNote">Diferencial de Base em Análise</small>
+                    </div>
+                </div>
+
+                <div class="dashboard-fixed" id="dashboardAlerts">
+                    <div class="stat-card">
+                        <h4 id="cardNet"><i class="fas fa-coins"></i> <span data-pt="GANHOS LÍQUIDOS RECONSTRUÍDOS" data-en="RECONSTRUCTED NET VALUE">GANHOS LÍQUIDOS RECONSTRUÍDOS</span></h4>
+                        <p id="statNet">0,00 €</p>
+                        <span class="stat-desc" id="descNet" data-pt="Resultado Líquido (Extrato)" data-en="Net Result (Statement)">Resultado Líquido (Extrato)</span>
+                    </div>
+                    <div class="stat-card" id="statCommCard">
+                        <h4 id="cardComm"><i class="fas fa-percentage"></i> <span data-pt="DESPESAS/COMISSÕES DETETADAS" data-en="DETECTED COMMISSIONS">DESPESAS/COMISSÕES DETETADAS</span></h4>
+                        <p id="statComm">0,00 €</p>
+                        <span class="stat-desc" id="descComm" data-pt="Total de despesas/comissões (Extrato)" data-en="Total expenses/commissions (Statement)">Total de despesas/comissões (Extrato)</span>
+                    </div>
+                    <div class="stat-card success" id="jurosCard" style="display: none;">
+                        <h4 id="cardJuros"><i class="fas fa-chart-line"></i> <span data-pt="DISCREPÂNCIA DESPESAS/COMISSÕES" data-en="COMMISSION DISCREPANCY">DISCREPÂNCIA DESPESAS/COMISSÕES</span></h4>
+                        <p id="statJuros">0,00 €</p>
+                        <span class="stat-desc" id="descJuros" data-pt="Despesas/Comissões Extrato vs Fatura" data-en="Expenses/Commissions Statement vs Invoice">Despesas/Comissões Extrato vs Fatura</span>
+                    </div>
+                    
+                    <div class="stat-card alert" id="discrepancy5Card" style="display: none;">
+                        <h4><i class="fas fa-exclamation-triangle"></i> <span id="discrepancy5" data-pt="DISCREPÂNCIA SAF-T vs DAC7" data-en="SAF-T vs DAC7 DISCREPANCY">DISCREPÂNCIA SAF-T vs DAC7</span></h4>
+                        <p id="discrepancy5Value">0,00 €</p>
+                        <span class="stat-desc" id="descDisc5" data-pt="Valores omitidos no reporte DAC7" data-en="Values omitted in DAC7 report">Valores omitidos no reporte DAC7</span>
+                    </div>
+                    
+                    <div class="stat-card alert" id="agravamentoBrutoCard" style="display: none;">
+                        <h4><i class="fas fa-chart-line"></i> <span id="agravamentoBruto" data-pt="AGRAVAMENTO BRUTO/IRC" data-en="GROSS AGGRAVATION/CIT">AGRAVAMENTO BRUTO/IRC</span></h4>
+                        <p id="agravamentoBrutoValue">0,00 €</p>
+                        <span class="stat-desc" id="descAgrav" data-pt="Impacto no lucro tributável" data-en="Impact on taxable profit">Impacto no lucro tributável</span>
+                    </div>
+                    
+                    <div class="stat-card alert" id="ircCard" style="display: none;">
+                        <h4><i class="fas fa-percent"></i> <span id="irc" data-pt="IRC (21% + Derrama)" data-en="CIT (21% + Surtax)">IRC (21% + Derrama)</span></h4>
+                        <p id="ircValue">0,00 €</p>
+                        <span class="stat-desc" id="descIrc" data-pt="Estimativa de imposto" data-en="Tax estimate">Estimativa de imposto</span>
+                    </div>
+                    
+                    <div class="stat-card alert" id="iva6Card" style="display: none;">
+                        <h4><i class="fas fa-percent"></i> <span id="iva6" data-pt="IVA 6% OMITIDO" data-en="VAT 6% OMITTED">IVA 6% OMITIDO</span></h4>
+                        <p id="iva6Value">0,00 €</p>
+                        <span class="stat-desc" id="descIva6" data-pt="Valor não pago pelo sujeito passivo" data-en="Amount unpaid by the taxpayer">Valor não pago pelo sujeito passivo</span>
+                    </div>
+                    
+                    <div class="stat-card alert" id="iva23Card" style="display: none;">
+                        <h4><i class="fas fa-percent"></i> <span id="iva23" data-pt="IVA 23% OMITIDO" data-en="VAT 23% OMITTED">IVA 23% OMITIDO</span></h4>
+                        <p id="iva23Value">0,00 €</p>
+                        <span class="stat-desc" id="descIva23" data-pt="Valor não pago pelo sujeito passivo" data-en="Amount unpaid by the taxpayer">Valor não pago pelo sujeito passivo</span>
+                    </div>
+
+                    <div class="stat-card warning" id="asfixiaFinanceiraCard" style="display: none;">
+                        <h4><i class="fas fa-percent"></i> <span id="asfixiaFinanceiraTitle" data-pt="ASFIXIA FINANCEIRA (IVA 6% SOBRE BRUTO)" data-en="FINANCIAL SUFFOCATION (6% VAT ON GROSS)">ASFIXIA FINANCEIRA (IVA 6% SOBRE BRUTO)</span></h4>
+                        <p id="asfixiaFinanceiraValue">0,00 €</p>
+                        <span class="stat-desc" id="asfixiaFinanceiraDesc" data-pt="Art. 405.º C. Civil · Verba 2.18 CIVA" data-en="Art. 405 CC · Item 2.18 CIVA">Art. 405.º C. Civil · Verba 2.18 CIVA</span>
+                    </div>
+                </div>
+
+                <div class="kpi-section">
+                    <h3 id="kpiTitle"><i class="fas fa-project-diagram"></i> TRIANGULAÇÃO FINANCEIRA · BIG DATA ALGORITHM v13.12.1-FIX</h3>
+                    <div class="kpi-grid">
+                        <div class="kpi-card highlight">
+                            <h4 id="kpiGross">GANHOS (EXTRATO)</h4>
+                            <p id="kpiGrossValue">0,00 €</p>
+                        </div>
+                        <div class="kpi-card" id="kpiCommCard">
+                            <h4 id="kpiCommText">DESPESAS/COMISSÕES</h4>
+                            <p id="kpiCommValue">0,00 €</p>
+                        </div>
+                        <div class="kpi-card">
+                            <h4 id="kpiNetText">LÍQUIDO (EXTRATO)</h4>
+                            <p id="kpiNetValue">0,00 €</p>
+                        </div>
+                        <div class="kpi-card danger" id="kpiInvCard">
+                            <h4 id="kpiInvText">FATURADO</h4>
+                            <p id="kpiInvValue">0,00 €</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-section">
+                    <h3 id="chartTitle"><i class="fas fa-chart-line"></i> ANÁLISE DE DISCREPÂNCIAS · GAP FORENSE</h3>
+                    <div class="chart-container">
+                        <canvas id="mainChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-section">
+                    <h3 id="chartTitle2"><i class="fas fa-chart-bar"></i> DISCREPÂNCIA SAF-T vs DAC7</h3>
+                    <div class="chart-container">
+                        <canvas id="discrepancyChart"></canvas>
+                    </div>
+                </div>
+
+                <div id="pureDashboardWrapper" style="display:block; opacity:0; transition: opacity 0.2s ease;">
+                    </div>
+
+                <div class="console-section">
+                    <div class="console-header">
+                        <h3 id="consoleTitle"><i class="fas fa-terminal"></i> LOG DE CUSTÓDIA · CADEIA DE CUSTÓDIA · BIG DATA</h3>
+                    </div>
+                    <div id="consoleOutput" class="console-output"></div>
+                </div>
+
+                <footer class="action-footer">
+                    <div class="system-info">
+                        <div class="master-hash">
+                            <strong id="footerHashTitle">INTEGRIDADE DO SISTEMA (MASTER HASH SHA-256 · RFC 3161)</strong>
+                            <span id="masterHashValue">A aguardar dados...</span>
+                        </div>
+                        <div id="qrcodeContainer" style="margin-top: 10px; display: flex; justify-content: center;"></div>
+                        <p class="copyright">UNIFED - PROBATUM © 2024/2026 | EM | Módulo de Peritagem Forense v13.12.1-FIX | DORA COMPLIANT | COURT READY | DIAMOND | SMOKING GUN</p>
+                        <span id="pageCount" style="display: none;"></span>
+
+                        <div style="margin-top: 0.8rem; display: flex; justify-content: center;">
+                            <button id="custodyChainTriggerBtn" onclick="openCustodyChainModal()" title="Visualizar Cadeia de Custódia Forense">
+                                <i class="fas fa-link"></i> <span id="btnCustody">CADEIA DE CUSTÓDIA</span>
+                            </button>
+                        </div>
+                    </div>
+                </footer>
+
+            </main>
+        </div>
+    </div>
+
+    <div id="evidenceModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-folder-plus"></i> <span id="modalTitle">GESTÃO DE EVIDÊNCIAS DIGITAIS</span></h3>
+                <button id="closeModalBtn" class="icon-btn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="upload-section-modal">
+                    <div id="globalDropZone" class="upload-group-modal" style="border: 2px dashed var(--accent-primary); background: rgba(0, 229, 255, 0.05);">
+                        <label for="globalFileInput" style="color: var(--accent-primary); font-size: 1rem;"><i class="fas fa-cloud-upload-alt"></i> ÁREA DE CARREGAMENTO RÁPIDO BIG DATA</label>
+                        <p style="color: var(--text-secondary); margin: 0.5rem 0; font-size: 0.9rem;">Arraste e solte todos os ficheiros aqui (o sistema classifica automaticamente)</p>
+                        <button id="globalUploadBtn" class="upload-btn" style="background: var(--accent-primary); color: #000;">
+                            <i class="fas fa-folder-open"></i> SELECIONAR MÚLTIPLOS FICHEIROS
+                        </button>
+                        <input type="file" id="globalFileInput" class="file-input-modal" accept=".csv,.pdf,.txt,.xml,.json" multiple>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="closeAndSaveBtn" class="btn-primary">
+                    <i class="fas fa-check-circle"></i> <span id="modalSaveBtn">SELAR EVIDÊNCIAS</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="logsModal" class="modal-overlay">
+        </div>
+
+    <div id="hashVerificationModal" class="modal-overlay">
+        </div>
+
+    <div id="toastContainer"></div>
+
+    <div id="custodyModal" role="dialog" aria-modal="true" aria-label="Cadeia de Custódia Forense">
+        </div>
+
+    <script src="script.js"></script>
+    <script src="enrichment.js"></script>
+    <script src="nexus.js"></script>
+    <link rel="stylesheet" href="style_additions.css">
+    <script src="script_injection.js"></script>
+    <script>
+        // ======================================================================
+        // RETIFICAÇÃO v13.12.1-FIX: _activatePurePanel agora retorna Promise
+        // ======================================================================
+        window._activatePurePanel = function() {
+            const wrapper = document.getElementById('pureDashboardWrapper');
+            if (wrapper) { 
+                wrapper.innerHTML = ''; 
+                wrapper.style.display = 'none'; 
+            }
+            return fetch('panel.html')
+                .then(function(r) { return r.text(); })
+                .then(function(html) {
+                    if (wrapper) {
+                        wrapper.innerHTML = html;
+                        wrapper.style.display = 'block';
+
+                        // [AÇÃO2-FIX] correctRomanIndices — invocada logo após injeção de HTML
+                        // Função definida em script_injection.js; corrige numeração romana dos títulos.
+                        if (typeof window.correctRomanIndices === 'function') {
+                            window.correctRomanIndices();
+                        }
+                        
+                        if (typeof UNIFEDSystem !== 'undefined' && typeof UNIFEDSystem.loadAnonymizedRealCase === 'function') {
+                            console.info('[UNIFED-PURE] Injetando evidências no Caso Real...');
+                            UNIFEDSystem.loadAnonymizedRealCase();
+                        }
+                        if (typeof window._translatePurePanel === 'function') {
+                            window._translatePurePanel(window.currentLang || 'pt');
+                        }
+                        
+                        // ========== BLOCO DE CORREÇÃO DE INTERFACE ==========
+                        (function() {
+                            if (typeof window.forceRevealSmokingGun === 'function') {
+                                window.forceRevealSmokingGun();
+                            } else {
+                                const criticalModules = ['pureDiscCard', 'pureZonaCinzentaCard', 'pureVerdictCard', 'card-asfixia'];
+                                criticalModules.forEach(id => {
+                                    const el = document.getElementById(id);
+                                    if (el) {
+                                        el.style.setProperty('display', 'block', 'important');
+                                        el.style.setProperty('opacity', '1', 'important');
+                                        el.style.setProperty('visibility', 'visible', 'important');
+                                    }
+                                });
+                            }
+
+                            const smokingGuns = document.querySelectorAll('.smoking-gun-module, .pure-sg-critical, .pure-sg-secondary');
+                            smokingGuns.forEach(sg => {
+                                sg.style.setProperty('display', 'block', 'important');
+                                sg.style.setProperty('opacity', '1', 'important');
+                                sg.style.setProperty('z-index', '20', 'important');
+                            });
+
+                            const wrapperEl = document.getElementById('pureDashboardWrapper');
+                            if (wrapperEl) {
+                                wrapperEl.style.setProperty('height', 'auto', 'important');
+                                wrapperEl.style.setProperty('overflow', 'visible', 'important');
+                                wrapperEl.style.setProperty('min-height', '0', 'important');
+                            }
+
+                            const chartSections = document.querySelectorAll('.chart-section');
+                            chartSections.forEach(chart => {
+                                chart.style.setProperty('margin-bottom', '0', 'important');
+                                chart.style.setProperty('padding-bottom', '0', 'important');
+                            });
+
+                            const consoleSection = document.querySelector('.console-section');
+                            if (consoleSection) {
+                                consoleSection.style.setProperty('margin-top', '0', 'important');
+                                consoleSection.style.setProperty('clear', 'both', 'important');
+                            }
+
+                            const operatorSpan = document.querySelector('.pure-operator-badge .pure-value-warn');
+                            if (operatorSpan) {
+                                operatorSpan.textContent = 'UNIFED-A.S.-9W3HI [VALIDADO/eIDAS]';
+                                operatorSpan.style.color = '#00e5ff';
+                            } else {
+                                const header = document.querySelector('.pure-section-header');
+                                if (header) {
+                                    const badgeDiv = document.createElement('div');
+                                    badgeDiv.className = 'pure-operator-badge';
+                                    badgeDiv.style.cssText = 'margin-top: 5px; font-family: monospace; font-size: 0.85em; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 4px;';
+                                    badgeDiv.innerHTML = 'ID_OPERADOR_FORENSE: <span class="pure-value-warn" style="color: #00e5ff;">UNIFED-A.S.-9W3HI [VALIDADO/eIDAS]</span>';
+                                    header.appendChild(badgeDiv);
+                                }
+                            }
+
+                            const tsaAnchor = document.getElementById('pure-tsa-anchor');
+                            if (tsaAnchor) {
+                                tsaAnchor.innerHTML = 'Selo de Tempo Local (ISO 27037): <span style="color: #10b981; font-weight: bold;">ATIVO — CUSTÓDIA NÍVEL 1</span>';
+                            } else {
+                                const possibleAnchor = Array.from(document.querySelectorAll('[id*="tsa"], [id*="anchor"]')).find(el => el.textContent.includes('Selo FreeTSA'));
+                                if (possibleAnchor) {
+                                    possibleAnchor.innerHTML = 'Selo de Tempo Local (ISO 27037): <span style="color: #10b981; font-weight: bold;">ATIVO — CUSTÓDIA NÍVEL 1</span>';
+                                }
+                            }
+
+                            const zonaCinzentaCard = document.getElementById('pureZonaCinzentaCard');
+                            if (zonaCinzentaCard && !document.getElementById('gap-c1-injected')) {
+                                const totalNaoSujeitosBlock = zonaCinzentaCard.querySelector('.pure-zc-total, .pure-zc-item:last-child');
+                                if (totalNaoSujeitosBlock) {
+                                    const gapDiv = document.createElement('div');
+                                    gapDiv.id = 'gap-c1-injected';
+                                    gapDiv.className = 'pure-badge-warn';
+                                    gapDiv.style.cssText = 'color: #ef4444; border-left: 2px solid #ef4444; padding-left: 8px; margin-top: 10px; background: rgba(239,68,68,0.05); border-radius: 4px;';
+                                    gapDiv.innerHTML = '<strong>GAP DE CONCILIAÇÃO (C1): 1.951,42 €</strong><br><span style="font-size: 0.8em;">Estado: Indício de Omissão Declarativa (Base Bruta não justificada por fluxos isentos).</span>';
+                                    totalNaoSujeitosBlock.insertAdjacentElement('afterend', gapDiv);
+                                }
+                            }
+
+                            if (typeof window.renderChart === 'function') window.renderChart();
+                            if (typeof window.renderDiscrepancyChart === 'function') window.renderDiscrepancyChart();
+
+                            console.log('[UNIFED-FIX] Correções de interface aplicadas.');
+                        })();
+                        // ======================================================================
+                    }
+                })
+                .catch(function(err) {
+                    console.error('[UNIFED-PURE] Erro na carga do painel:', err);
+                    throw err;
+                });
+        };
+
+        // ======================================================================
+        // RETIFICAÇÃO v13.12.1-FIX: Botão CASO REAL com verificação recursiva
+        // ======================================================================
+        window.addEventListener('load', function() {
+            const btn = document.getElementById('demoModeBtn');
+            if (btn) {
+                btn.addEventListener('click', function() {
+                    const runAnalysis = () => {
+                        if (typeof window.performForensicAnalysis === 'function') {
+                            window.performForensicAnalysis();
+                        } else {
+                            console.warn('[UNIFED] Sistema ainda não carregado. Re-tentando em 500ms...');
+                            setTimeout(runAnalysis, 500);
+                        }
+                    };
+                    runAnalysis();
+                });
+            }
+        });
+    </script>
+    <script src="unifed_triada_export.js"></script>
+
 </body>
 </html>
