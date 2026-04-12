@@ -1,5 +1,5 @@
 /**
- * UNIFED - PROBATUM · NEXUS LAYER · v13.12.1-FIX
+ * UNIFED - PROBATUM · NEXUS LAYER · v13.12.2-i18n
  * ============================================================================
  * Arquitetura : Adaptive Extension Layer — carregado APÓS enrichment.js
  * Padrão      : Read-Only sobre UNIFEDSystem · Nenhum cálculo fiscal alterado
@@ -176,7 +176,7 @@ window.UNIFEDSystem = window.UNIFEDSystem || {};
 			_para('', false),
 			_hr(),
 			_para('', false),
-			_para('VI. JURISPRUDENCIA APLICAVEL — CRUZAMENTO RAG · NEXUS v13.12.1-FIX', true, '26', '003366'),
+			_para('VI. JURISPRUDENCIA APLICAVEL — CRUZAMENTO RAG · NEXUS v13.12.2-i18n', true, '26', '003366'),
 			_para('Modulo de Jurisprud\u00eancia Pericial \u2014 Cita\u00e7\u00f5es injectadas com base nas anomalias detetadas e qualificacao legal apurada', false, '16', '888888'),
 			_para('', false),
 			_para('VI.1 · BASE LEGAL DIRETAMENTE APLICAVEL', true, '22', '003366'),
@@ -198,7 +198,7 @@ window.UNIFEDSystem = window.UNIFEDSystem || {};
 			_para('VI.3 · NOTA DE QUALIFICACAO JURIDICA NEXUS', true, '22', 'CC0000'),
 			_para('A conjugacao das discrepancias apuradas com o padrao de sistematicidade documentado configura, prima facie, ' + 'o elemento objetivo do tipo de ilicito de fraude fiscal qualificada (Art. 104.o RGIT), ' + 'por verificacao cumulativa de: (i) omissao de base tributavel superior ao limiar de 15.000 EUR, ' + '(ii) utilizacao de mecanismo de faturacao opaco (Art. 36.o n.o 11 CIVA — faturacao por terceiros), e ' + '(iii) ausencia de regularizacao voluntaria nos termos do Art. 78.o CIVA. ' + 'A jurisprudencia do STA consolidada nos Acordaos listados na Tabela VI.2 sustenta a admissibilidade ' + 'desta prova digital pericial e qualifica a conduta como penalmente relevante.', false, '20', '333333'),
 			_para('', false),
-			_para('[Secao gerada automaticamente pelo Modulo RAG Jurisprudencial — NEXUS v13.12.1-FIX · Art. 125.o CPP]', false, '16', '999999'),
+			_para('[Secao gerada automaticamente pelo Modulo RAG Jurisprudencial — NEXUS v13.12.2-i18n · Art. 125.o CPP]', false, '16', '999999'),
 			_para('', false)
 		].join('');
 	}
@@ -665,7 +665,7 @@ window.UNIFEDSystem = window.UNIFEDSystem || {};
 		var enriched = await Promise.all(registry.map(async function(item) {
 			if(!item.hash) {
 				item.hash = await _sha256Nexus(item.filename + (item.ts || Date.now()));
-				item.otsStatus = 'PENDENTE — Hash gerado localmente (NEXUS v13.12.1-FIX)';
+				item.otsStatus = 'PENDENTE — Hash gerado localmente (NEXUS v13.12.2-i18n)';
 			}
 			return item;
 		}));
@@ -681,7 +681,7 @@ window.UNIFEDSystem = window.UNIFEDSystem || {};
 		modalInner.style.cssText = 'background:linear-gradient(135deg,#080D1E 0%,#0D1525 100%);border:1px solid rgba(0,229,255,0.25);border-radius:8px;width:100%;max-width:760px;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 0 60px rgba(0,229,255,0.08),0 0 120px rgba(168,85,247,0.05);overflow:hidden;';
 		var header = document.createElement('div');
 		header.style.cssText = 'padding:16px 20px;border-bottom:1px solid rgba(0,229,255,0.15);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;background:rgba(0,229,255,0.04);';
-		header.innerHTML = '<div><div style="color:#00E5FF;font-size:0.85rem;font-weight:700;letter-spacing:0.08em">⛓️ BLOCKCHAIN EVIDENCE EXPLORER · NEXUS v13.12.1-FIX</div>' + '<div style="color:rgba(255,255,255,0.4);font-size:0.62rem;margin-top:2px">' + _T('SHA-256 Individual · OTS Status · Cadeia de Custódia · ', 'SHA-256 Individual · OTS Status · Chain of Custody · ') + enriched.length + ' ' + _T('documento', 'document') + (enriched.length !== 1 ? 's' : '') + '</div></div>' + '<button id="nexusExplorerCloseBtn" style="background:transparent;border:1px solid rgba(0,229,255,0.3);color:#00E5FF;cursor:pointer;padding:5px 14px;font-family:inherit;font-size:0.72rem;letter-spacing:1px;border-radius:3px;transition:background 0.2s;" onmouseover="this.style.background=\'rgba(0,229,255,0.1)\'" onmouseout="this.style.background=\'transparent\'">✕ FECHAR</button>';
+		header.innerHTML = '<div><div style="color:#00E5FF;font-size:0.85rem;font-weight:700;letter-spacing:0.08em">⛓️ BLOCKCHAIN EVIDENCE EXPLORER · NEXUS v13.12.2-i18n</div>' + '<div style="color:rgba(255,255,255,0.4);font-size:0.62rem;margin-top:2px">' + _T('SHA-256 Individual · OTS Status · Cadeia de Custódia · ', 'SHA-256 Individual · OTS Status · Chain of Custody · ') + enriched.length + ' ' + _T('documento', 'document') + (enriched.length !== 1 ? 's' : '') + '</div></div>' + '<button id="nexusExplorerCloseBtn" style="background:transparent;border:1px solid rgba(0,229,255,0.3);color:#00E5FF;cursor:pointer;padding:5px 14px;font-family:inherit;font-size:0.72rem;letter-spacing:1px;border-radius:3px;transition:background 0.2s;" onmouseover="this.style.background=\'rgba(0,229,255,0.1)\'" onmouseout="this.style.background=\'transparent\'">✕ FECHAR</button>';
 		modalInner.appendChild(header);
 		var legend = document.createElement('div');
 		legend.style.cssText = 'padding:8px 20px;background:rgba(0,0,0,0.2);font-size:0.62rem;color:rgba(255,255,255,0.35);display:flex;gap:20px;flex-wrap:wrap';
@@ -828,13 +828,12 @@ window.UNIFEDSystem = window.UNIFEDSystem || {};
 })();
 
 // ============================================================================
-// EXTENSÃO NEXUS v13.12.1-FIX · Monitorização passiva, fallback de integridade
+// EXTENSÃO NEXUS v13.12.2-i18n · Monitorização passiva, fallback de integridade
 // ============================================================================
 (function _nexusCore() {
     // Monitor de erros de rede para o OpenTimestamps
     window.addEventListener('error', function(e) {
         if (e.target && e.target.tagName === 'SCRIPT' && e.target.src && e.target.src.includes('opentimestamps')) {
-            // RETIFICAÇÃO FORENSE: A degradação para Nível 1 não é um erro letal, mas sim um fallback de contenção.
             console.info('[NEXUS] 🛡️ Cadeia de Custódia operando em Nível 1 (Offline/Local).');
             if (window.UNIFEDSystem) {
                 window.UNIFEDSystem.integrityLevel = 'LEVEL_1_LOCAL';
@@ -848,7 +847,6 @@ window.UNIFEDSystem = window.UNIFEDSystem || {};
         window.fetch = function(...args) {
             const url = args[0];
             if (typeof url === 'string' && url.includes('api.unifed.com')) {
-                // Silencia erros de CORS para não poluir o console
                 return originalFetch.apply(this, args).catch(err => {
                     console.debug('[NEXUS] Requisição para api.unifed.com falhou (CORS esperado).', err.message);
                     throw err;
@@ -859,23 +857,18 @@ window.UNIFEDSystem = window.UNIFEDSystem || {};
         window.fetch.__nexusWrapped = true;
     }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // RETIFICAÇÃO: Hook de Integridade Visual — Selo de Custódia em Canvas
-    // ────────────────────────────────────────────────────────────────────────
+    // Hook de Integridade Visual — Selo de Custódia em Canvas
     if (window.UNIFEDSystem && window.UNIFEDSystem.utils) {
         window.UNIFEDSystem.utils.sealCanvas = function(canvasId) {
             const canvas = document.getElementById(canvasId);
             if (!canvas) return;
-
             const ctx = canvas.getContext('2d');
             const sessionHash = window.UNIFEDSystem.masterHash || 'UNIFED-FIX-PENDING';
-            
             ctx.save();
             ctx.font = '8px "JetBrains Mono", "Courier New", monospace';
             ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
             ctx.fillText(`CUSTÓDIA: ${sessionHash.substring(0, 16)}...`, 5, canvas.height - 5);
             ctx.restore();
-            
             if (typeof window.logAudit === 'function') {
                 window.logAudit(`Selo de integridade aplicado ao artefacto visual: ${canvasId}`, 'success');
             } else {
@@ -883,7 +876,6 @@ window.UNIFEDSystem = window.UNIFEDSystem || {};
             }
         };
     } else {
-        // Fallback seguro: criar utils e definir a função
         if (!window.UNIFEDSystem) window.UNIFEDSystem = {};
         if (!window.UNIFEDSystem.utils) window.UNIFEDSystem.utils = {};
         window.UNIFEDSystem.utils.sealCanvas = function(canvasId) {
@@ -906,33 +898,25 @@ window.UNIFEDSystem = window.UNIFEDSystem || {};
 // MÓDULO 5 · ENFORCE BILINGUAL INTEGRITY (EV-003) — Loop breaker para evitar piscas
 // ============================================================================
 (function _enforceBilingualIntegrity() {
-    // Garantir que o MutationObserver é aplicado apenas uma vez
     if (window.__nexusBilingualObserverActive) return;
     window.__nexusBilingualObserverActive = true;
 
     const _enforceBilingualIntegrity = function() {
         const observer = new MutationObserver((mutations, obs) => {
-            // Desconectar temporariamente para evitar recursividade (Loop Break)
             obs.disconnect(); 
-            
             const lang = document.documentElement.lang === 'en' ? 'en' : 'pt';
             document.querySelectorAll('[data-' + lang + ']').forEach(el => {
                 const targetText = el.getAttribute('data-' + lang).trim();
-                // Utilizar textContent.trim() para imunidade a quebras de linha HTML
                 if (el.textContent.trim() !== targetText && !el.querySelector('i')) {
                     el.textContent = targetText;
                 }
             });
-            
-            // Reconectar após a mutação autorizada
             obs.observe(document.body, { childList: true, subtree: true });
         });
-
         observer.observe(document.body, { childList: true, subtree: true });
         console.info('[NEXUS·M5] ✅ Bilingual Integrity Observer activo — correcção de piscas (EV-003)');
     };
 
-    // Aguardar DOM estar pronto
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', _enforceBilingualIntegrity);
     } else {
@@ -940,4 +924,4 @@ window.UNIFEDSystem = window.UNIFEDSystem || {};
     }
 })();
 
-console.info('%c[NEXUS · UNIFED-PROBATUM · v13.12.1-FIX]\n' + '%c  M1 · Passive Network Observer       — Proxy Wrapper Transparente ATIVO (ISO/IEC 27037:2012)\n' + '  M2 · RAG Jurisprudencial DOCX         — Hook exportDOCX() instalado\n' + '  M3 · Motor Preditivo ATF (6M)         — Hook openATFModal() instalado\n' + '  M4 · Blockchain Evidence Explorer     — MutationObserver #custodyModal ativo\n' + '  M5 · Bilingual Integrity (EV-003)    — Loop breaker activo\n' + '  M6 · Extensão Core v13.12.1-FIX       — Fallback de integridade e forceReveal\n' + '  M7 · Integridade Visual               — sealCanvas() disponível\n' + '  Modo: Read-Only · DORA (UE) 2022/2554 · ISO/IEC 27037:2012 · Art. 125.o CPP', 'color:#00E5FF;font-family:Courier New,monospace;font-weight:700;font-size:0.9em;', 'color:rgba(0,229,255,0.65);font-family:Courier New,monospace;font-size:0.8em;');
+console.info('%c[NEXUS · UNIFED-PROBATUM · v13.12.2-i18n]\n' + '%c  M1 · Passive Network Observer       — Proxy Wrapper Transparente ATIVO (ISO/IEC 27037:2012)\n' + '  M2 · RAG Jurisprudencial DOCX         — Hook exportDOCX() instalado\n' + '  M3 · Motor Preditivo ATF (6M)         — Hook openATFModal() instalado\n' + '  M4 · Blockchain Evidence Explorer     — MutationObserver #custodyModal ativo\n' + '  M5 · Bilingual Integrity (EV-003)    — Loop breaker activo\n' + '  M6 · Extensão Core v13.12.2-i18n      — Fallback de integridade e forceReveal\n' + '  M7 · Integridade Visual               — sealCanvas() disponível\n' + '  Modo: Read-Only · DORA (UE) 2022/2554 · ISO/IEC 27037:2012 · Art. 125.o CPP', 'color:#00E5FF;font-family:Courier New,monospace;font-weight:700;font-size:0.9em;', 'color:rgba(0,229,255,0.65);font-family:Courier New,monospace;font-size:0.8em;');
