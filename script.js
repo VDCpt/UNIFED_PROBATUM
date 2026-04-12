@@ -16,8 +16,16 @@
 // [RETIFICAÇÃO] Centralização do Log Forense para evitar colisões
 window.logAudit = window.logAudit || function(msg, level = 'info') {
     const prefix = '[UNIFED] ';
-    const levels = { error: 'error', warn: 'warn', success: 'info', info: 'log' };
-    console[levels[level] || 'log'](prefix + msg);
+    const styles = {
+        error:   'color:#ef4444;font-weight:bold;',
+        warn:    'color:#f59e0b;font-weight:bold;',
+        success: 'color:#22c55e;font-weight:bold;',
+        info:    'color:#60a5fa;',
+    };
+    // [TASK1-FIX] Todos os níveis emitem via console.log com CSS styling.
+    // Elimina falsos positivos do browser ("Compreenda este erro") causados
+    // por console.error/warn em achados periciais de negócio.
+    console.log('%c' + prefix + msg, styles[level] || styles.info);
 };
 
 window.showToast = window.showToast || function(m, t) { console.log(`[Toast-Fallback] ${t}: ${m}`); };
@@ -33,13 +41,17 @@ if (window.pdfjsLib) {
     window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 }
 
-// Definição global de logAudit (fallback)
+// Definição global de logAudit (fallback — nunca activa em prod graças ao ||=)
+// [TASK1-FIX] Mantida em paridade com a definição primária acima.
 window.logAudit = window.logAudit || function(msg, level = 'info') {
     const prefix = '[UNIFED] ';
-    if (level === 'error') console.error(prefix + msg);
-    else if (level === 'warn') console.warn(prefix + msg);
-    else if (level === 'success') console.info(prefix + msg);
-    else console.log(prefix + msg);
+    const styles = {
+        error:   'color:#ef4444;font-weight:bold;',
+        warn:    'color:#f59e0b;font-weight:bold;',
+        success: 'color:#22c55e;font-weight:bold;',
+        info:    'color:#60a5fa;',
+    };
+    console.log('%c' + prefix + msg, styles[level] || styles.info);
 };
 const logAudit = window.logAudit; // alias local
 
@@ -4511,13 +4523,15 @@ function enhanceTriangulationMatrix() {
 
 // ============================================================================
 // FORCE REVEAL SMOKING GUN (v13.12.1-FIX) - VERSÃO EXPANDIDA
+// [TASK2-FIX] Incorpora a lista completa de seletores críticos do dashboard.
 // ============================================================================
 function forceRevealSmokingGun() {
+    // — IDs de módulos críticos (por getElementById) —
     const criticalModules = [
         'pureDiscCard', 'pureZonaCinzentaCard', 'pureVerdictCard', 'card-asfixia',
         'smoking-gun-1', 'smoking-gun-2', 'triangulationMatrixContainer'
     ];
-    
+
     criticalModules.forEach(id => {
         const el = document.getElementById(id);
         if (el) {
@@ -4527,6 +4541,29 @@ function forceRevealSmokingGun() {
         }
     });
 
+    // — FORCED REVEAL HOOK v13.12.1-FIX —
+    // Seletores CSS de cards de métricas que persistem ocultos por
+    // conflito de especificidade (display:none !important no CSS base).
+    const targetNodes = [
+        '#revenueGapCard', '#expenseGapCard', '#omissaoDespesasPctCard',
+        '#quantumBox', '#bigDataAlert', '#jurosCard', '#discrepancy5Card',
+        '#agravamentoBrutoCard', '#ircCard', '#iva6Card', '#iva23Card',
+        '#asfixiaFinanceiraCard'
+    ];
+    targetNodes.forEach(selector => {
+        const el = document.querySelector(selector);
+        if (el) {
+            el.style.setProperty('display', 'block', 'important');
+            el.style.setProperty('opacity', '1', 'important');
+            el.style.setProperty('visibility', 'visible', 'important');
+        }
+    });
+
+    // — Forçar ajuste de altura do contentor pai —
+    const wrapper = document.getElementById('pureDashboardWrapper');
+    if (wrapper) wrapper.style.setProperty('height', 'auto', 'important');
+
+    // — Classes utilitárias de ocultação —
     const smokingGunWrappers = document.querySelectorAll('.smoking-gun-module, .pure-sg-critical, .pure-sg-secondary, [id*="smoking-gun"]');
     smokingGunWrappers.forEach(wrapper => {
         wrapper.style.setProperty('display', 'block', 'important');
@@ -8275,16 +8312,21 @@ window.resetAuxiliaryData = resetAuxiliaryData;
 
 // ============================================================================
 // 31.A FORCE REVEAL SMOKING GUN (v13.12.1-FIX)
+// [TASK2-FIX] Esta declaração vence por hoisting (última no ficheiro).
+// Lista completa de seletores — IDs por getElementById + CSS por querySelector.
 // ============================================================================
 function forceRevealSmokingGun() {
-    // 1. Força a exibição dos Módulos Críticos no pureDashboard
+    // 1. Módulos críticos legacy (por getElementById)
     const criticalModules = [
-        'pureDiscCard', 
-        'pureZonaCinzentaCard', 
-        'pureVerdictCard', 
-        'card-asfixia'
+        'pureDiscCard',
+        'pureZonaCinzentaCard',
+        'pureVerdictCard',
+        'card-asfixia',
+        'smoking-gun-1',
+        'smoking-gun-2',
+        'triangulationMatrixContainer'
     ];
-    
+
     criticalModules.forEach(id => {
         const el = document.getElementById(id);
         if (el) {
@@ -8294,7 +8336,35 @@ function forceRevealSmokingGun() {
         }
     });
 
-    // 2. Renderiza a lógica de alerta do Risco Fiscal (Art. 119.º)
+    // 2. FORCED REVEAL HOOK v13.12.1-FIX — cards de métricas do dashboard
+    // Sobrepõe display:none !important proveniente do CSS base.
+    const targetNodes = [
+        '#revenueGapCard', '#expenseGapCard', '#omissaoDespesasPctCard',
+        '#quantumBox', '#bigDataAlert', '#jurosCard', '#discrepancy5Card',
+        '#agravamentoBrutoCard', '#ircCard', '#iva6Card', '#iva23Card',
+        '#asfixiaFinanceiraCard'
+    ];
+    targetNodes.forEach(selector => {
+        const el = document.querySelector(selector);
+        if (el) {
+            el.style.setProperty('display', 'block', 'important');
+            el.style.setProperty('opacity', '1', 'important');
+            el.style.setProperty('visibility', 'visible', 'important');
+        }
+    });
+
+    // 3. Forçar ajuste de altura do contentor pai (evita overflow oculto)
+    const wrapper = document.getElementById('pureDashboardWrapper');
+    if (wrapper) wrapper.style.setProperty('height', 'auto', 'important');
+
+    // 4. Classes utilitárias de ocultação (Bootstrap / Tailwind / custom)
+    const hiddenByClass = document.querySelectorAll('.smoking-gun-module, .pure-sg-critical, .pure-sg-secondary, [id*="smoking-gun"]');
+    hiddenByClass.forEach(el => {
+        el.style.setProperty('display', 'block', 'important');
+        el.classList.remove('hidden', 'd-none', 'invisible');
+    });
+
+    // 5. Renderiza a lógica de alerta do Risco Fiscal (Art. 119.º RGIT)
     logAudit('[UNIFED] Módulos de Prova Material (Smoking Gun e Colarinho Branco) revelados e fixados.', 'success');
 }
 
