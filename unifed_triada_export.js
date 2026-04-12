@@ -1,20 +1,22 @@
 /**
- * UNIFED - PROBATUM · v13.12.0-PURE · MÓDULO DE EXPORTAÇÃO — TRÍADE DOCUMENTAL
+ * UNIFED - PROBATUM · v13.12.1-FIX · MÓDULO DE EXPORTAÇÃO — TRÍADE DOCUMENTAL
  * ============================================================================
  * Ficheiro      : unifed_triada_export.js
- * Versão        : 1.0.19-TRIADA-PERSISTENT (Rectificação Observer + Race Condition)
+ * Versão        : 1.0.20-TRIADA-STABLE (Rectificação Observer + Race Condition)
  * ============================================================================
- * RECTIFICAÇÕES v1.0.19-TRIADA (2026-04-12):
+ * RECTIFICAÇÕES v1.0.20-TRIADA (2026-04-12):
  *   [FIX-OBS] MutationObserver persistente (sem disconnect automático).
  *   [FIX-RACE] Substituído setTimeout por verificação recursiva no clique do botão.
  *   [FIX-REINIT] Re-inicialização garantida após reset do console.
+ *   [FIX-IGNORE] MutationObserver ignora mutações de gráficos (atfChartCanvas) e badges.
+ *   [FIX-DEACTIVATE] Observer desliga-se automaticamente após ativação do painel (window._panelActivated).
  * ============================================================================
  */
 
 'use strict';
 
 (function _unifedTriadaModule() {
-    const _VERSION = '1.0.19-TRIADA-PERSISTENT';
+    const _VERSION = '1.0.20-TRIADA-STABLE';
 
     // ── UTILITÁRIO DE LOG ────────────────────────────────────────────────────
     function _log(msg, type = 'log') {
@@ -295,6 +297,9 @@
         const container = document.getElementById('export-tools-container');
         if (!container) return false;
 
+        // Evita múltiplas injeções
+        if (container.getAttribute('data-triada-injected') === 'true') return true;
+
         container.innerHTML = '';
         const labels = _resolveLabels();
 
@@ -374,14 +379,12 @@
             if (old) old.style.display = 'none';
         });
 
-        // [AÇÃO3-FIX] Marcar o container como já injectado para prevenir
-        // re-inicializações redundantes pelo MutationObserver persistente.
         container.setAttribute('data-triada-injected', 'true');
         _log(`Interface Tríade Documental ${_VERSION} activada.`);
         return true;
     }
 
-    // ── ESTRATÉGIA ROBUSTA COM MUTATION OBSERVER PERSISTENTE ─────────────────
+    // ── ESTRATÉGIA ROBUSTA COM MUTATION OBSERVER PERSISTENTE (CORRIGIDO) ─────
     window.addEventListener('UNIFED_CORE_READY', () => {
         if (initInterface()) return;
 
@@ -402,31 +405,60 @@
             return;
         }
 
-        const _observer = new MutationObserver((_mutations) => {
+        let observer = null;
+        
+        const mutationCallback = function(mutations) {
+            // CORREÇÃO CRÍTICA: Ignorar mutações de elementos de gráfico ou badges
+            const shouldIgnore = mutations.some(m => {
+                const target = m.target;
+                return (target && target.id === 'atfChartCanvas') ||
+                       (target && target.classList && target.classList.contains('pure-data-value')) ||
+                       (target && target.classList && target.classList.contains('pure-metric-value')) ||
+                       (target && target.id === 'discrepancyChart') ||
+                       (target && target.id === 'mainChart');
+            });
+            
+            if (shouldIgnore) {
+                _log('MutationObserver ignorou mutação de gráfico ou badge.', 'info');
+                return;
+            }
+            
             const container = document.getElementById('export-tools-container');
             
-            // GUARD CRÍTICO: Evita Layout Thrashing e Recalculate Style redundante
-            if (container && container.getAttribute('data-triada-injected') === 'true') {
-                return; 
+            // Se o painel já foi ativado, desliga o observer para evitar loops
+            if (window._panelActivated === true) {
+                if (observer) {
+                    observer.disconnect();
+                    _log('MutationObserver desligado após ativação do painel.', 'info');
+                }
+                return;
             }
-
+            
+            if (container && container.getAttribute('data-triada-injected') === 'true') {
+                return;
+            }
+            
             if (container && container.children.length === 0) {
                 initInterface();
                 container.setAttribute('data-triada-injected', 'true');
                 _log('Interface injetada e selada contra re-inicializações cíclicas.');
             }
-        });
+        };
 
-        _observer.observe(document.body || document.documentElement, {
+        observer = new MutationObserver(mutationCallback);
+        observer.observe(document.body || document.documentElement, {
             childList: true,
             subtree:   true
         });
 
-        _log('MutationObserver em modo persistente para garantir integridade após reset.');
+        _log('MutationObserver em modo persistente (com filtro de gráficos) para garantir integridade após reset.');
     }
 
+    // Exposição global
     window.gerarAnexoCustodia   = gerarAnexoCustodia;
     window.initTriadaButtons    = initInterface;
     window.UNIFEDSystem         = window.UNIFEDSystem || {};
     window.UNIFEDSystem.triadaUpdateLabels = initInterface;
+    
+    _log(`Módulo Tríade Documental ${_VERSION} carregado com sucesso.`, 'success');
 })();
