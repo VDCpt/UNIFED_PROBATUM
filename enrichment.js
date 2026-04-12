@@ -1,11 +1,14 @@
 /**
- * UNIFED - PROBATUM · OUTPUT ENRICHMENT LAYER · v13.12.1-FIX
+ * UNIFED - PROBATUM · OUTPUT ENRICHMENT LAYER · v13.12.1-FIX-STABLE
  * ============================================================================
  * Arquitetura: Asynchronous Post-Computation Orchestration
  * Padrão:      Read-Only Data Consumption sobre UNIFEDSystem.analysis
  * Conformidade: DORA (UE) 2022/2554 · RGPD · ISO/IEC 27037:2012
  *
- * ALTERAÇÕES v13.12.1-FIX (2026-04-06):
+ * ALTERAÇÕES v13.12.1-FIX-STABLE (2026-04-12):
+ * · Adicionada flag _isGraphRendering para evitar loops de re-renderização.
+ * · Função renderATFChart() com controle de mutex.
+ * · Estabilização do gráfico ATF no modal.
  * · Garantia de que todas as funções expõem logs para o ForensicLogger.
  * · Nenhuma alteração estrutural – apenas consistência de auditoria.
  * · CORREÇÃO CRÍTICA: removido bloco de código solto após generateLegalNarrative.
@@ -895,6 +898,120 @@ async function generateTemporalChartImage(monthlyData, analysis) {
 }
 window.generateTemporalChartImage = generateTemporalChartImage;
 
+// ============================================================================
+// 7.1 renderATFChart() — Função estável com flag de mutex
+// ============================================================================
+window._isGraphRendering = false;
+
+window.renderATFChart = function(data) {
+    if (!data || !data.months || data.months.length === 0) {
+        console.warn('[UNIFED-ATF] renderATFChart: dados inválidos ou vazios.');
+        return;
+    }
+    if (window._isGraphRendering) {
+        console.log('[UNIFED-ATF] Renderização já em curso. Aguardando...');
+        return;
+    }
+    window._isGraphRendering = true;
+
+    const canvas = document.getElementById('atfChartCanvas');
+    if (!canvas) {
+        window._isGraphRendering = false;
+        console.warn('[UNIFED-ATF] Canvas #atfChartCanvas não encontrado.');
+        return;
+    }
+
+    // Destruir instância anterior se existir
+    if (window.atfChartInstance && typeof window.atfChartInstance.destroy === 'function') {
+        window.atfChartInstance.destroy();
+        window.atfChartInstance = null;
+    }
+
+    const ctx = canvas.getContext('2d');
+    const lang = (typeof window.currentLang !== 'undefined') ? window.currentLang : 'pt';
+    const labelGanhos = lang === 'en' ? 'Earnings' : 'Ganhos';
+    const labelDespesas = lang === 'en' ? 'Expenses' : 'Despesas';
+    const labelDiscrepancia = lang === 'en' ? 'Discrepancy' : 'Discrepância';
+
+    window.atfChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: data.months,
+            datasets: [
+                {
+                    label: labelGanhos,
+                    data: data.ganhosSeries,
+                    borderColor: '#3B82F6',
+                    backgroundColor: 'rgba(59,130,246,0.1)',
+                    borderWidth: 2,
+                    tension: 0.3,
+                    pointRadius: 4
+                },
+                {
+                    label: labelDespesas,
+                    data: data.despesasSeries,
+                    borderColor: '#10B981',
+                    backgroundColor: 'rgba(16,185,129,0.1)',
+                    borderWidth: 2,
+                    tension: 0.3,
+                    pointRadius: 4
+                },
+                {
+                    label: labelDiscrepancia,
+                    data: data.discrepancySeries,
+                    borderColor: '#F59E0B',
+                    backgroundColor: 'rgba(245,158,11,0.15)',
+                    borderWidth: 3,
+                    tension: 0.3,
+                    pointRadius: 5,
+                    pointBackgroundColor: data.discrepancySeries.map((v, i) => 
+                        data.outlierMonths && data.outlierMonths.includes(data.months[i]) ? '#EF4444' : '#F59E0B'
+                    )
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: { duration: 800, easing: 'easeOutQuart' },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': ' + window.UNIFEDSystem.utils.formatCurrency(context.raw);
+                        }
+                    }
+                },
+                legend: { labels: { color: '#f8fafc', font: { family: 'JetBrains Mono' } } }
+            },
+            scales: {
+                y: {
+                    ticks: { 
+                        color: '#94a3b8', 
+                        callback: function(v) { return window.UNIFEDSystem.utils.formatCurrency(v); }
+                    },
+                    grid: { color: 'rgba(255,255,255,0.05)' }
+                },
+                x: {
+                    ticks: { color: '#94a3b8' },
+                    grid: { display: false }
+                }
+            }
+        }
+    });
+
+    // Aplicar selo de integridade visual, se disponível
+    if (window.UNIFEDSystem && window.UNIFEDSystem.utils && window.UNIFEDSystem.utils.sealCanvas) {
+        window.UNIFEDSystem.utils.sealCanvas('atfChartCanvas');
+    }
+
+    setTimeout(function() {
+        window._isGraphRendering = false;
+    }, 1500);
+
+    console.log('[UNIFED-ATF] Gráfico ATF renderizado com sucesso.');
+};
+
 function openATFModal() {
     var sys = window.UNIFEDSystem;
     if (!sys) { console.warn('[UNIFED-ATF] UNIFEDSystem nao disponivel.'); return; }
@@ -1023,61 +1140,64 @@ function openATFModal() {
         }
     });
     if (months.length > 0 && typeof Chart !== 'undefined') {
-        try {
-            var cvs = document.getElementById('atfChartCanvas');
-            if (cvs) {
-                var _existingChart = Chart.getChart(cvs);
-                if (_existingChart) {
-                    _existingChart.destroy();
-                }
-                var mean2s = atf.mean + 2 * atf.stdDev;
-                new Chart(cvs, {
-                    type: 'line',
-                    data: {
-                        labels: monthLabels,
-                        datasets: [
-                            { label: _T('Ganhos','Earnings'),    data: atf.ganhosSeries,    borderColor: '#3B82F6', backgroundColor: 'rgba(59,130,246,0.1)',  borderWidth: 2, tension: 0.3, pointRadius: 4 },
-                            { label: _T('Despesas','Expenses'),  data: atf.despesasSeries,  borderColor: '#10B981', backgroundColor: 'rgba(16,185,129,0.1)',  borderWidth: 2, tension: 0.3, pointRadius: 4 },
-                            {
-                                label: _T('Discrepância','Discrepancy'), data: atf.discrepancySeries, borderColor: '#F59E0B',
-                                backgroundColor: 'rgba(245,158,11,0.15)', borderWidth: 3, tension: 0.3,
-                                pointRadius: atf.discrepancySeries.map(function(v, i) { return atf.outlierMonths.indexOf(months[i]) !== -1 ? 9 : 5; }),
-                                pointBackgroundColor: atf.discrepancySeries.map(function(v, i) { return atf.outlierMonths.indexOf(months[i]) !== -1 ? '#EF4444' : '#F59E0B'; }),
-                                pointBorderColor: atf.discrepancySeries.map(function(v, i) { return atf.outlierMonths.indexOf(months[i]) !== -1 ? '#FFFFFF' : '#F59E0B'; }),
-                                pointBorderWidth: atf.discrepancySeries.map(function(v, i) { return atf.outlierMonths.indexOf(months[i]) !== -1 ? 2 : 1; })
-                            },
-                            { label: _T('Limiar 2σ', 'Threshold 2σ'), data: Array(months.length).fill(mean2s), borderColor: 'rgba(239,68,68,0.5)', borderDash: [5,5], borderWidth: 1.5, pointRadius: 0, fill: false }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        interaction: { mode: 'index', intersect: false },
-                        plugins: {
-                            legend: { labels: { color: 'rgba(255,255,255,0.7)', font: { family: 'Courier New' } } },
-                            tooltip: {
-                                backgroundColor: 'rgba(8,18,36,0.95)', titleColor: '#00E5FF', bodyColor: 'rgba(255,255,255,0.8)',
-                                callbacks: { label: function(c2) { var _loc = (typeof window.currentLang !== 'undefined' && window.currentLang === 'en') ? 'en-GB' : 'pt-PT'; return ' ' + c2.dataset.label + ': ' + new Intl.NumberFormat(_loc,{style:'currency',currency:'EUR'}).format(c2.raw||0); } }
-                            }
+        // Usar a nova função estável de renderização
+        if (typeof window.renderATFChart === 'function') {
+            window.renderATFChart(atf);
+        } else {
+            // Fallback para o código original (caso a função não exista)
+            try {
+                var cvs = document.getElementById('atfChartCanvas');
+                if (cvs) {
+                    var _existingChart = Chart.getChart(cvs);
+                    if (_existingChart) {
+                        _existingChart.destroy();
+                    }
+                    var mean2s = atf.mean + 2 * atf.stdDev;
+                    new Chart(cvs, {
+                        type: 'line',
+                        data: {
+                            labels: monthLabels,
+                            datasets: [
+                                { label: _T('Ganhos','Earnings'),    data: atf.ganhosSeries,    borderColor: '#3B82F6', backgroundColor: 'rgba(59,130,246,0.1)',  borderWidth: 2, tension: 0.3, pointRadius: 4 },
+                                { label: _T('Despesas','Expenses'),  data: atf.despesasSeries,  borderColor: '#10B981', backgroundColor: 'rgba(16,185,129,0.1)',  borderWidth: 2, tension: 0.3, pointRadius: 4 },
+                                {
+                                    label: _T('Discrepância','Discrepancy'), data: atf.discrepancySeries, borderColor: '#F59E0B',
+                                    backgroundColor: 'rgba(245,158,11,0.15)', borderWidth: 3, tension: 0.3,
+                                    pointRadius: atf.discrepancySeries.map(function(v, i) { return atf.outlierMonths.indexOf(months[i]) !== -1 ? 9 : 5; }),
+                                    pointBackgroundColor: atf.discrepancySeries.map(function(v, i) { return atf.outlierMonths.indexOf(months[i]) !== -1 ? '#EF4444' : '#F59E0B'; }),
+                                    pointBorderColor: atf.discrepancySeries.map(function(v, i) { return atf.outlierMonths.indexOf(months[i]) !== -1 ? '#FFFFFF' : '#F59E0B'; }),
+                                    pointBorderWidth: atf.discrepancySeries.map(function(v, i) { return atf.outlierMonths.indexOf(months[i]) !== -1 ? 2 : 1; })
+                                },
+                                { label: _T('Limiar 2σ', 'Threshold 2σ'), data: Array(months.length).fill(mean2s), borderColor: 'rgba(239,68,68,0.5)', borderDash: [5,5], borderWidth: 1.5, pointRadius: 0, fill: false }
+                            ]
                         },
-                        scales: {
-                            x: { ticks: { color: 'rgba(255,255,255,0.5)', font: { family: 'Courier New', size: 11 } }, grid: { color: 'rgba(255,255,255,0.05)' } },
-                            y: {
-                                ticks: { color: 'rgba(255,255,255,0.5)', font: { family: 'Courier New', size: 11 },
-                                    callback: function(v2) { var _loc = (typeof window.currentLang !== 'undefined' && window.currentLang === 'en') ? 'en-GB' : 'pt-PT'; return new Intl.NumberFormat(_loc,{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(v2); } },
-                                grid: { color: 'rgba(255,255,255,0.05)' }
+                        options: {
+                            responsive: true,
+                            interaction: { mode: 'index', intersect: false },
+                            plugins: {
+                                legend: { labels: { color: 'rgba(255,255,255,0.7)', font: { family: 'Courier New' } } },
+                                tooltip: {
+                                    backgroundColor: 'rgba(8,18,36,0.95)', titleColor: '#00E5FF', bodyColor: 'rgba(255,255,255,0.8)',
+                                    callbacks: { label: function(c2) { var _loc = (typeof window.currentLang !== 'undefined' && window.currentLang === 'en') ? 'en-GB' : 'pt-PT'; return ' ' + c2.dataset.label + ': ' + new Intl.NumberFormat(_loc,{style:'currency',currency:'EUR'}).format(c2.raw||0); } }
+                                }
+                            },
+                            scales: {
+                                x: { ticks: { color: 'rgba(255,255,255,0.5)', font: { family: 'Courier New', size: 11 } }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                                y: {
+                                    ticks: { color: 'rgba(255,255,255,0.5)', font: { family: 'Courier New', size: 11 },
+                                        callback: function(v2) { var _loc = (typeof window.currentLang !== 'undefined' && window.currentLang === 'en') ? 'en-GB' : 'pt-PT'; return new Intl.NumberFormat(_loc,{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(v2); } },
+                                    grid: { color: 'rgba(255,255,255,0.05)' }
+                                }
                             }
                         }
+                    });
+                    if (window.UNIFEDSystem && window.UNIFEDSystem.utils && window.UNIFEDSystem.utils.sealCanvas) {
+                        window.UNIFEDSystem.utils.sealCanvas('atfChartCanvas');
                     }
-                });
-                // ============================================================
-                // RETIFICAÇÃO: Aplicar selo de integridade visual no canvas do gráfico
-                // ============================================================
-                if (window.UNIFEDSystem && window.UNIFEDSystem.utils && window.UNIFEDSystem.utils.sealCanvas) {
-                    window.UNIFEDSystem.utils.sealCanvas('atfChartCanvas');
                 }
+            } catch (cErr) {
+                console.warn('[UNIFED-ATF] \u26a0 Chart.js indisponivel:', cErr.message);
             }
-        } catch (cErr) {
-            console.warn('[UNIFED-ATF] \u26a0 Chart.js indisponivel:', cErr.message);
         }
     }
 }
@@ -1185,4 +1305,5 @@ console.log('[UNIFED-ENRICHMENT]   . generateTemporalChartImage() - ATF Grafico 
 console.log('[UNIFED-ENRICHMENT]   . computeTemporalAnalysis()    - ATF Analytics (2sigma SP Outliers)');
 console.log('[UNIFED-ENRICHMENT]   . openATFModal()               - ATF Dashboard Modal (Chart.js)');
 console.log('[UNIFED-ENRICHMENT]   . renderDiscrepancyCharts()    - Gráfico simplificado SAF-T vs DAC7');
+console.log('[UNIFED-ENRICHMENT]   . renderATFChart()             - Estabilização de gráfico ATF com mutex');
 console.log('[UNIFED-ENRICHMENT]   . Modo: Read-Only - Fonte: UNIFEDSystem.analysis + monthlyData');
