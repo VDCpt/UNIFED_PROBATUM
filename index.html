@@ -597,6 +597,12 @@
                     if (wrapper) {
                         wrapper.innerHTML = html;
                         wrapper.style.display = 'block';
+
+                        // [AÇÃO2-FIX] correctRomanIndices — invocada logo após injeção de HTML
+                        // Função definida em script_injection.js; corrige numeração romana dos títulos.
+                        if (typeof window.correctRomanIndices === 'function') {
+                            window.correctRomanIndices();
+                        }
                         
                         if (typeof UNIFEDSystem !== 'undefined' && typeof UNIFEDSystem.loadAnonymizedRealCase === 'function') {
                             console.info('[UNIFED-PURE] Injetando evidências no Caso Real...');

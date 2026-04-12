@@ -374,6 +374,9 @@
             if (old) old.style.display = 'none';
         });
 
+        // [AÇÃO3-FIX] Marcar o container como já injectado para prevenir
+        // re-inicializações redundantes pelo MutationObserver persistente.
+        container.setAttribute('data-triada-injected', 'true');
         _log(`Interface Tríade Documental ${_VERSION} activada.`);
         return true;
     }
@@ -401,7 +404,11 @@
 
         const _observer = new MutationObserver((_mutations) => {
             const container = document.getElementById('export-tools-container');
-            // Reinicializa se o container estiver vazio (após reset/limpeza)
+            // [AÇÃO3-FIX] Guard: se já injectado, não re-inicializar
+            if (container && container.getAttribute('data-triada-injected') === 'true') {
+                return;
+            }
+            // Reinicializa apenas se o container estiver vazio (após reset/limpeza)
             if (container && container.children.length === 0) {
                 initInterface();
                 _log('Interface re-inicializada via MutationObserver (DOM vazio detectado).');
