@@ -913,15 +913,19 @@
                 if (typeof updateAuxiliaryUI === 'function') updateAuxiliaryUI();
                 
                 // Re-sincronização após upload e geração de hash
-                if (typeof window.UNIFED_INTERNAL.syncMetrics === 'function') {
-                    window.UNIFED_INTERNAL.syncMetrics();
-                }
-                
-                if (window.UNIFEDSystem && window.UNIFEDSystem.masterHash) {
-                    const hashEl = document.getElementById('masterHashValue');
-                    if (hashEl) hashEl.textContent = window.UNIFEDSystem.masterHash;
-                    if (typeof generateQRCode === 'function') generateQRCode();
-                }
+                // dentro de initializeFullWithEvidence()
+		if (typeof window.UNIFED_INTERNAL.syncMetrics === 'function') {
+   		 window.UNIFED_INTERNAL.syncMetrics();
+		}
+		if (typeof window.forceRevealSmokingGun === 'function') {
+  		  window.forceRevealSmokingGun();
+		}
+		if (window.UNIFEDSystem && window.UNIFEDSystem.masterHash) {
+  		  const hashEl = document.getElementById('masterHashValue');
+  		  if (hashEl) hashEl.textContent = window.UNIFEDSystem.masterHash;
+   		 if (typeof generateQRCode === 'function') generateQRCode();
+		}
+
                 showClientIdentificationBlock();
                 if (typeof window.renderChart === 'function') window.renderChart();
                 if (typeof window.renderDiscrepancyChart === 'function') window.renderDiscrepancyChart();

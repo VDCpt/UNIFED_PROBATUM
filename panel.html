@@ -9,13 +9,6 @@
     - Adicionadas diretivas de visibilidade forçada (display:block !important)
       nos módulos críticos para prevenir ocultação por scripts secundários.
   ============================================================================
-  PATCHES FORENSES v13.12.2-i18n (2026-04-12):
-    1. Identidade do operador forense validada (UNIFED-A.S.-9W3HI [VALIDADO/eIDAS])
-    2. Reconciliação da Zona Cinzenta (GAP C1) – 1.951,42 €
-    3. Correção de índices romanos (IV → V, V → VI, VI → VII) via script
-    4. Selo temporal atualizado: "Selo de Tempo Local (ISO 27037): ATIVO — CUSTÓDIA NÍVEL 1"
-    5. Veredicto ajustado para "RISCO CRÍTICO · DESVIO PADRÃO > 2σ"
-  ============================================================================
 -->
 
 <section id="pureDashboard" class="pure-section" aria-label="Painel Caso Real Anonimizado v13.12.2-i18n">
@@ -139,7 +132,7 @@
       </div>
     </div>
 
-    <!-- PAINEL II – DISCREPÂNCIAS (SMOKING GUN) -->
+    <!-- PAINEL II – DISCREPÂNCIAS (SMOKING GUN) - VISIBILIDADE FORÇADA -->
     <div class="pure-card pure-card-alert" id="pureDiscCard" style="display:block !important; opacity:1 !important;">
       <h3 class="pure-card-title">
         <span class="pure-icon">🔫</span>
@@ -193,7 +186,7 @@
       <div style="text-align:center;margin-top:16px"><button onclick="if(typeof openATFModal === 'function') openATFModal();" class="pure-btn-atf" id="pure-atf-btn" data-pt="⏳ ABRIR ANÁLISE TEMPORAL FORENSE COMPLETA" data-en="⏳ OPEN COMPLETE FORENSIC TEMPORAL ANALYSIS" title="Abrir modal ATF completo / Open complete ATF modal"><span id="pure-atf-btn-text">⏳ ABRIR ANÁLISE TEMPORAL FORENSE COMPLETA</span></button></div>
     </div>
 
-    <!-- PAINEL IV – ZONA CINZENTA -->
+    <!-- PAINEL IV – ZONA CINZENTA - VISIBILIDADE FORÇADA -->
     <div class="pure-card white-collar-module" id="pureZonaCinzentaCard" style="display:block !important; opacity:1 !important;">
       <h3 class="pure-card-title"><span class="pure-icon">🔍</span><span id="pure-card4-title" data-pt="IV. ZONA CINZENTA — VALORES NÃO SUJEITOS A COMISSÃO (ISOLADOS)" data-en="IV. GREY ZONE — VALUES NOT SUBJECT TO COMMISSION (ISOLATED)">IV. ZONA CINZENTA — VALORES NÃO SUJEITOS A COMISSÃO (ISOLADOS)</span></h3>
       <p class="pure-zc-intro" id="pure-zc-intro"><span id="pure-zc-intro-text" data-pt="O sistema isolou" data-en="The system isolated">O sistema isolou</span><strong id="pure-zc-amount">€ 451,00</strong><span id="pure-zc-intro-end" data-pt="em fluxos não sujeitos a comissão pela plataforma (Campanhas + Gorjetas — mês de Outubro). A reconciliação DAC7 deve verificar se estes valores foram indevidamente incluídos na base de reporte à AT, explicando parte da discrepância C1." data-en="in flows not subject to commission by the platform (Campaigns + Tips — October month). DAC7 reconciliation must verify whether these values were improperly included in the reporting base to the TA, explaining part of the C1 discrepancy.">em fluxos não sujeitos a comissão pela plataforma (Campanhas + Gorjetas — mês de Outubro). A reconciliação DAC7 deve verificar se estes valores foram indevidamente incluídos na base de reporte à AT, explicando parte da discrepância C1.</span></p>

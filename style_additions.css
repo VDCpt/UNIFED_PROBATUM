@@ -1153,6 +1153,22 @@ canvas {
     border-radius: 6px !important;
 }
 
+/* CORREÇÃO BUG 2 – Remover espaço vazio entre gráfico e console */
+.chart-section:last-of-type {
+    margin-bottom: 0 !important;
+}
+.console-section {
+    margin-top: 0 !important;
+    clear: both;
+}
+.pure-card-grid .pure-card:last-of-type {
+    margin-bottom: 0;
+}
+#pureDashboardWrapper {
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
 /* ============================================================================
    FIM — UNIFED PROBATUM v13.12.1-FIX CONSOLIDADO
    ============================================================================ */

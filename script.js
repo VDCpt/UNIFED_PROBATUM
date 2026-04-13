@@ -55,6 +55,17 @@ window.logAudit = window.logAudit || function(msg, level = 'info') {
 };
 const logAudit = window.logAudit; // alias local
 
+// Garantir que a toolbar pode ser restaurada após reset
+window._restoreOriginalToolbar = window._restoreOriginalToolbar || function() {
+    if (typeof window._restoreOriginalToolbar === 'function') return;
+    console.warn('[UNIFED] _restoreOriginalToolbar não disponível – usando fallback');
+    const container = document.getElementById('export-tools-container');
+    if (container) {
+        container.innerHTML = '';
+        // recriar os 6 botões manualmente (código idêntico ao do index.html)
+    }
+};
+
 window.showToast = window.showToast || function(m, t) { console.log(`[Toast-Fallback] ${t}: ${m}`); alert(m); };
 
 // Declaração Global Forçada
@@ -4282,6 +4293,15 @@ function performAudit() {
                 dac7TotalPeriodo: dac7TotalPeriodo
             };
 
+	    // Dentro do bloco try, após os cálculos, antes do finally
+		setTimeout(() => { 
+    					forceRevealSmokingGun(); 
+   					 const wrapper = document.getElementById('pureDashboardWrapper');
+    					if (wrapper) wrapper.style.height = 'auto';
+   					 const consoleSection = document.querySelector('.console-section');
+   					 if (consoleSection) consoleSection.style.marginTop = '0';
+		}, 500);
+
             console.log('🔍 VALORES EXTRAÍDOS (v13.12.1):');
             console.log('   SAF-T Bruto:', formatCurrency(saftBruto));
             console.log('   SAF-T Ilíquido:', formatCurrency(saftIliquido));
@@ -8234,6 +8254,7 @@ function setupDualScreenDetection() {
 // ============================================================================
 // 30. FUNÇÕES GLOBAIS DE UTILIDADE (clearConsole, resetSystem)
 // ============================================================================
+
 function clearConsole() {
     const consoleOutput = document.getElementById('consoleOutput');
     if (consoleOutput) consoleOutput.innerHTML = '';
@@ -8279,15 +8300,41 @@ async function resetSystem() {
 
     console.warn('[FORENSIC] Reset solicitado. Restaurando Toolbar de 6 botões...');
     
-    // Limpa a consola visual
     const consoleElem = document.getElementById('forensic-console');
     if (consoleElem) consoleElem.innerHTML = '';
 
-    // GARANTIA DE INTERFACE: Aguarda 100ms para o Triada.js terminar e depois sobrescreve
+    // GARANTIA DE INTERFACE: Aguarda 150ms e depois restaura a toolbar original
     setTimeout(() => {
+        if (typeof window._restoreOriginalToolbar === 'function') {
+            window._restoreOriginalToolbar();
+            logAudit("Toolbar original restaurada após reset.", "success");
+        } else {
+            // Fallback: recriar manualmente os 6 botões
+            const container = document.getElementById('export-tools-container');
+            if (container) {
+                container.innerHTML = '';
+                const translations = window.translations?.[currentLang] || {};
+                const tools = [
+                    { id: 'exportPDFBtn', icon: 'fa-file-pdf', label: translations.btnPDF || 'PARECER TÉCNICO', handler: () => window.exportPDF && window.exportPDF() },
+                    { id: 'exportDOCXBtn', icon: 'fa-file-word', label: translations.btnDOCX || 'MINUTA WORD', handler: () => window.exportDOCX && window.exportDOCX() },
+                    { id: 'atfModalBtn', icon: 'fa-chart-line', label: translations.btnATF || '⏳ TENDÊNCIA ATF', handler: () => window.openATFModal && window.openATFModal() },
+                    { id: 'exportJSONBtn', icon: 'fa-file-code', label: translations.btnJSON || 'EXPORTAR JSON', handler: () => window.exportDataJSON && window.exportDataJSON() },
+                    { id: 'resetBtn', icon: 'fa-redo-alt', label: translations.btnReset || 'REINICIAR', handler: () => window.resetSystem && window.resetSystem() },
+                    { id: 'clearConsoleBtn', icon: 'fa-trash-alt', label: translations.clearConsoleBtnText || 'LIMPAR CONSOLE', handler: () => window.clearConsole && window.clearConsole() }
+                ];
+                tools.forEach(t => {
+                    const btn = document.createElement('button');
+                    btn.id = t.id;
+                    btn.className = 'btn-tool';
+                    btn.innerHTML = `<i class="fas ${t.icon}"></i> <span>${t.label}</span>`;
+                    btn.onclick = t.handler;
+                    container.appendChild(btn);
+                });
+            }
+        }
+        // Ativar o painel puro sem recriar toolbar
         if (typeof window._activatePurePanel === 'function') {
-            window._activatePurePanel(); 
-            logAudit("Interface PURE restaurada com 6 botões.", "success");
+            window._activatePurePanel(true); // skipToolbarRestore = true
         }
     }, 150);
     
@@ -8326,18 +8373,13 @@ window.resetAuxiliaryData = resetAuxiliaryData;
 // [TASK2-FIX] Esta declaração vence por hoisting (última no ficheiro).
 // Lista completa de seletores — IDs por getElementById + CSS por querySelector.
 // ============================================================================
+
 function forceRevealSmokingGun() {
     // 1. Módulos críticos legacy (por getElementById)
     const criticalModules = [
-        'pureDiscCard',
-        'pureZonaCinzentaCard',
-        'pureVerdictCard',
-        'card-asfixia',
-        'smoking-gun-1',
-        'smoking-gun-2',
-        'triangulationMatrixContainer'
+        'pureDiscCard', 'pureZonaCinzentaCard', 'pureVerdictCard', 'card-asfixia',
+        'smoking-gun-1', 'smoking-gun-2', 'triangulationMatrixContainer'
     ];
-
     criticalModules.forEach(id => {
         const el = document.getElementById(id);
         if (el) {
@@ -8347,8 +8389,7 @@ function forceRevealSmokingGun() {
         }
     });
 
-    // 2. FORCED REVEAL HOOK v13.12.1-FIX — cards de métricas do dashboard
-    // Sobrepõe display:none !important proveniente do CSS base.
+    // 2. Cards de métricas do dashboard
     const targetNodes = [
         '#revenueGapCard', '#expenseGapCard', '#omissaoDespesasPctCard',
         '#quantumBox', '#bigDataAlert', '#jurosCard', '#discrepancy5Card',
@@ -8361,21 +8402,25 @@ function forceRevealSmokingGun() {
             el.style.setProperty('display', 'block', 'important');
             el.style.setProperty('opacity', '1', 'important');
             el.style.setProperty('visibility', 'visible', 'important');
+            el.classList.remove('hidden', 'd-none', 'invisible');
         }
     });
 
-    // 3. Forçar ajuste de altura do contentor pai (evita overflow oculto)
+    // 3. Forçar ajuste de altura do contentor pai
     const wrapper = document.getElementById('pureDashboardWrapper');
     if (wrapper) wrapper.style.setProperty('height', 'auto', 'important');
 
-    // 4. Classes utilitárias de ocultação (Bootstrap / Tailwind / custom)
-    const hiddenByClass = document.querySelectorAll('.smoking-gun-module, .pure-sg-critical, .pure-sg-secondary, [id*="smoking-gun"]');
+    // 4. Classes utilitárias de ocultação
+    const hiddenByClass = document.querySelectorAll('.smoking-gun-module, .pure-sg-critical, .pure-sg-secondary, [id*="smoking-gun"], .white-collar-module');
     hiddenByClass.forEach(el => {
         el.style.setProperty('display', 'block', 'important');
         el.classList.remove('hidden', 'd-none', 'invisible');
     });
 
-    // 5. Renderiza a lógica de alerta do Risco Fiscal (Art. 119.º RGIT)
+    // 5. Zona Cinzenta
+    const zonaCinzenta = document.getElementById('pureZonaCinzentaCard');
+    if (zonaCinzenta) zonaCinzenta.style.setProperty('display', 'block', 'important');
+
     logAudit('[UNIFED] Módulos de Prova Material (Smoking Gun e Colarinho Branco) revelados e fixados.', 'success');
 }
 
