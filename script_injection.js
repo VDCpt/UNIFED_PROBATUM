@@ -1140,6 +1140,11 @@ if (typeof window.forceRevealSmokingGun === 'function') {
                 });
             }
         });
-        console.log('[UNIFED] forceRevealSmokingGun criado e expandido: white-collar e zona cinzenta forçados.');
+       console.log('[UNIFED] forceRevealSmokingGun criado e expandido: white-collar e zona cinzenta forçados.');
     };
 }
+
+// ============================================================================
+// FECHO DA IIFE E INICIALIZAÇÃO (FIX v13.12.2-i18n)
+// ============================================================================
+})(); // <--- O erro "Unexpected end of input" ocorre pela ausência deste fecho.
