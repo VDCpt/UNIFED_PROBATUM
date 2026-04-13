@@ -1099,11 +1099,7 @@ if (typeof window.forceRevealSmokingGun === 'function') {
     const originalForceReveal = window.forceRevealSmokingGun;
     window.forceRevealSmokingGun = function() {
         if (originalForceReveal) originalForceReveal();
-        // Expansão para módulos críticos adicionais
-        const extraModules = [
-            'pureZonaCinzentaCard',
-            'white-collar-module'
-        ];
+        const extraModules = ['pureZonaCinzentaCard', 'white-collar-module'];
         extraModules.forEach(selector => {
             const el = document.getElementById(selector);
             if (el) {
@@ -1111,7 +1107,6 @@ if (typeof window.forceRevealSmokingGun === 'function') {
                 el.style.setProperty('opacity', '1', 'important');
                 el.style.setProperty('visibility', 'visible', 'important');
             } else {
-                // Fallback para classe CSS
                 const elsByClass = document.querySelectorAll('.' + selector);
                 elsByClass.forEach(clsEl => {
                     clsEl.style.setProperty('display', 'block', 'important');
@@ -1123,43 +1118,41 @@ if (typeof window.forceRevealSmokingGun === 'function') {
         console.log('[UNIFED] forceRevealSmokingGun expandido: white-collar e zona cinzenta forçados.');
     };
 } else {
- // ... (código anterior)
-
-        window.forceRevealSmokingGun = function() {
-            const extraModules = ['pureZonaCinzentaCard', 'white-collar-module'];
-            extraModules.forEach(selector => {
-                const el = document.getElementById(selector);
-                if (el) {
-                    el.style.setProperty('display', 'block', 'important');
-                    el.style.setProperty('opacity', '1', 'important');
-                    el.style.setProperty('visibility', 'visible', 'important');
-                } else {
-                    const elsByClass = document.querySelectorAll('.' + selector);
-                    elsByClass.forEach(clsEl => {
-                        clsEl.style.setProperty('display', 'block', 'important');
-                        clsEl.style.setProperty('opacity', '1', 'important');
-                        clsEl.style.setProperty('visibility', 'visible', 'important');
-                    });
-                }
-            });
-            console.log('[UNIFED] forceRevealSmokingGun executado: Visibilidade forçada.');
-        };
-    }
-
-    // ============================================================================
-    // CAMADA DE RESILIÊNCIA FINAL (WATCHDOG)
-    // ============================================================================
-    const _recoveryInterval = setInterval(() => {
-        const isDataReady = window.UNIFEDSystem && window.UNIFEDSystem.analysis;
-        const isUIReady = document.getElementById('pureDashboard');
-
-        if (isDataReady && isUIReady) {
-            if (typeof window.UNIFED_INTERNAL.syncMetrics === 'function') {
-                window.UNIFED_INTERNAL.syncMetrics();
-                window.UNIFED_INTERNAL.renderMatrix();
-                console.info('[UNIFED] Hidratação de emergência concluída pelo Watchdog.');
-                clearInterval(_recoveryInterval);
+    window.forceRevealSmokingGun = function() {
+        const extraModules = ['pureZonaCinzentaCard', 'white-collar-module'];
+        extraModules.forEach(selector => {
+            const el = document.getElementById(selector);
+            if (el) {
+                el.style.setProperty('display', 'block', 'important');
+                el.style.setProperty('opacity', '1', 'important');
+                el.style.setProperty('visibility', 'visible', 'important');
+            } else {
+                const elsByClass = document.querySelectorAll('.' + selector);
+                elsByClass.forEach(clsEl => {
+                    clsEl.style.setProperty('display', 'block', 'important');
+                    clsEl.style.setProperty('opacity', '1', 'important');
+                    clsEl.style.setProperty('visibility', 'visible', 'important');
+                });
             }
+        });
+        console.log('[UNIFED] forceRevealSmokingGun executado: Visibilidade forçada.');
+    };
+}
+
+// ============================================================================
+// CAMADA DE RESILIÊNCIA FINAL (WATCHDOG)
+// ============================================================================
+const _recoveryInterval = setInterval(() => {
+    const isDataReady = window.UNIFEDSystem && window.UNIFEDSystem.analysis;
+    const isUIReady = document.getElementById('pureDashboard');
+
+    if (isDataReady && isUIReady) {
+        if (typeof window.UNIFED_INTERNAL.syncMetrics === 'function') {
+            window.UNIFED_INTERNAL.syncMetrics();
+            window.UNIFED_INTERNAL.renderMatrix();
+            console.info('[UNIFED] Hidratação de emergência concluída pelo Watchdog.');
+            clearInterval(_recoveryInterval);
         }
-    }, 2000);
+    }
+}, 2000);
 })(); 
