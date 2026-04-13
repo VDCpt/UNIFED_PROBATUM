@@ -8435,20 +8435,18 @@ window.showToast = function(message, type = 'info') {
     
     container.appendChild(toast);
 
+// [FIX] Fecho de bloco na função de notificação (script.js)
     setTimeout(() => {
-        toast.style.opacity = '1';
-        toast.style.transform = 'translateX(0)';
-    }, 10);
-
-    setTimeout(() => {
-        toast.style.opacity = '0';
-        toast.style.transform = 'translateX(100%)';
-        setTimeout(() => {
-            if (toast.parentNode) toast.remove();
-        }, 400);
-    }, 5000);
+        if (toast && toast.parentNode) {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(100%)';
+            setTimeout(() => { 
+                if (toast.parentNode) container.removeChild(toast); 
+            }, 400);
+        }
+    }, 4000);
 };
-
+   
 window.renderChart = renderChart;
 window.renderDiscrepancyChart = renderDiscrepancyChart;
 
