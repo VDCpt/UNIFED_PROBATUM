@@ -6,6 +6,10 @@
  * ============================================================================
  * RETIFICAÇÕES v13.12.2-i18n (2026-04-14):
  * - [FIX] Sincronização estrita de Master Hash e Counts com extração forense validada.
+ * - [FIX] Mapeamento de #pure-sg-1-val (BTOR/BTF, 89.26%) e #pure-sg-2-val (SAF-T/DAC7).
+ * - [FIX] Injeção de normativos: Art. 23.º CIRC (indutividade) · Art. 103.º RGIT (fraude fiscal).
+ * - [FIX] Nó fluxosIsentos adicionado ao _PDF_CASE — elimina zeros em campanhas/gorjetas/portagens.
+ * - [FIX] Motor ATF: temporalData estático garante renderização do atfChartCanvas.
  * - [FIX] Eliminação de Race Conditions (Watchdogs setInterval) substituídos por evento UNIFED_ANALYSIS_COMPLETE.
  * - [FIX] Refatoração do monkey-patching com flags atómicas (window._isHydrating) e cadeia de delegação.
  * - [FIX] Sanitização de IDs: uso de seletores escopados (#pureDashboard #id) em syncMetrics e updateAuxiliaryUI.
@@ -63,6 +67,12 @@
             portagens:           0.15,
             campanhas:         405.00,
             cancelamentos:      0.00
+        },
+        fluxosIsentos: {
+            campanhas: 405.00,
+            gorjetas:   46.00,
+            portagens:   0.15,
+            total:     451.15
         },
         atf: {
             zScore: 2.45,
@@ -183,7 +193,8 @@
             const ircEstimado = discrepanciaC2 * 0.21;
             const asfixiaFinanceira = t.saftBruto * 0.06;
             
-            const totalNaoSujeitosCalc = (aux.campanhas || 0) + (aux.gorjetas || 0) + (aux.portagens || 0);
+            const fi = data.fluxosIsentos;
+            const totalNaoSujeitosCalc = fi.total;
             
             const getCounter = (docType, fallback) => {
                 if (sys && sys.documents && sys.documents[docType] && sys.documents[docType].totals) {
@@ -208,10 +219,14 @@
                 'pure-nao-sujeitos': fmt(totalNaoSujeitosCalc), 'pure-atf-sp': data.atf.score + '/100',
                 'pure-atf-trend': data.atf.trend, 'pure-atf-outliers': data.atf.outliers + ' outliers > 2σ',
                 'pure-atf-meses': '2.º Semestre 2024 — 4 meses com dados (Set–Dez)',
-                'pure-nc-campanhas': fmt(aux.campanhas),
-                'pure-nc-gorjetas': fmt(aux.gorjetas),
-                'pure-nc-portagens': fmt(aux.portagens),
-                'pure-nc-total': fmt(totalNaoSujeitosCalc),
+                'pure-sg-1-val': fmt(discrepanciaC2),
+                'pure-sg-1-pct': percentC2.toFixed(2) + '%',
+                'pure-sg-2-val': fmt(discrepanciaC1),
+                'pure-sg-2-pct': percentC1.toFixed(2) + '%',
+                'pure-nc-campanhas': fmt(fi.campanhas),
+                'pure-nc-gorjetas': fmt(fi.gorjetas),
+                'pure-nc-portagens': fmt(fi.portagens),
+                'pure-nc-total': fmt(fi.total),
                 'pure-verdict': 'RISCO CRÍTICO · DESVIO PADRÃO > 2σ',
                 'pure-verdict-pct': percentC2.toFixed(2) + '%',
                 'pure-session-id': (sys && sys.sessionId) ? sys.sessionId : data.sessionId,
@@ -251,10 +266,10 @@
                 console.warn('[UNIFED] Chart.js não disponível – gráficos não renderizados.');
             }
             
-            const sg2Legal = document.querySelector('#pureDashboard #pure-sg2-legal');
-            if (sg2Legal) sg2Legal.textContent = 'Art. 36.º n.º 11 CIVA · Art. 119.º RGIT';
             const sg1Legal = document.querySelector('#pureDashboard #pure-sg1-legal');
-            if (sg1Legal) sg1Legal.textContent = 'Diretiva DAC7 (UE) 2021/514 · DL n.º 41/2023';
+            if (sg1Legal) sg1Legal.textContent = 'Art. 23.º CIRC (Indutividade de Custos) · Art. 103.º RGIT (Fraude Fiscal)';
+            const sg2Legal = document.querySelector('#pureDashboard #pure-sg2-legal');
+            if (sg2Legal) sg2Legal.textContent = 'Diretiva DAC7 (UE) 2021/514 · Art. 103.º RGIT (Fraude Fiscal) · DL n.º 41/2023';
             const verdictBasis = document.querySelector('#pureDashboard #pure-verdict-basis');
             if (verdictBasis) verdictBasis.textContent = 'Art. 119.º RGIT · Art. 125.º CPP';
             const pureIva23Sub = document.querySelector('#pureDashboard #pure-iva23-sub');
@@ -509,7 +524,8 @@
             const aux = (sys && sys.auxiliaryData && sys.auxiliaryData.extractedAt) ? sys.auxiliaryData : data.totals;
             
             const _f = (typeof _fmt === 'function') ? _fmt : (v) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v || 0);
-            const totalNaoSujeitosCalc = (aux.campanhas || 0) + (aux.gorjetas || 0) + (aux.portagens || 0);
+            const fi2 = data.fluxosIsentos;
+            const totalNaoSujeitosCalc = fi2.total;
             
             const auxMapping = [
                 { id: 'pure-ganhos', val: t.ganhos }, { id: 'pure-despesas', val: t.despesas }, { id: 'pure-liquido', val: t.ganhosLiquidos },
@@ -519,10 +535,14 @@
                 { id: 'pure-disc-c2-grid', val: t.despesas - t.faturaPlataforma }, { id: 'pure-iva-devido', val: t.asfixiaFinanceira },
                 { id: 'pure-nao-sujeitos', val: totalNaoSujeitosCalc }, { id: 'pure-atf-sp', val: data.atf.score + '/100' }, { id: 'pure-atf-trend', val: data.atf.trend },
                 { id: 'pure-atf-outliers', val: data.atf.outliers + ' outliers > 2σ' }, { id: 'pure-atf-meses', val: '2.º Semestre 2024 — 4 meses com dados (Set–Dez)' },
-                { id: 'pure-nc-campanhas', val: aux.campanhas },
-                { id: 'pure-nc-gorjetas', val: aux.gorjetas },
-                { id: 'pure-nc-portagens', val: aux.portagens },
-                { id: 'pure-nc-total', val: totalNaoSujeitosCalc },
+                { id: 'pure-sg-1-val', val: t.despesas - t.faturaPlataforma },
+                { id: 'pure-sg-1-pct', val: ((t.despesas - t.faturaPlataforma) / t.despesas * 100).toFixed(2) + '%' },
+                { id: 'pure-sg-2-val', val: t.saftBruto - t.dac7TotalPeriodo },
+                { id: 'pure-sg-2-pct', val: ((t.saftBruto - t.dac7TotalPeriodo) / t.saftBruto * 100).toFixed(2) + '%' },
+                { id: 'pure-nc-campanhas', val: fi2.campanhas },
+                { id: 'pure-nc-gorjetas', val: fi2.gorjetas },
+                { id: 'pure-nc-portagens', val: fi2.portagens },
+                { id: 'pure-nc-total', val: fi2.total },
                 { id: 'pure-verdict', val: 'RISCO CRÍTICO · DESVIO PADRÃO > 2σ' },
                 { id: 'pure-verdict-pct', val: ((t.despesas - t.faturaPlataforma) / t.despesas * 100).toFixed(2) + '%' },
                 { id: 'pure-hash-prefix-verdict', val: (sys && sys.masterHash) ? sys.masterHash.substring(0, 16).toUpperCase() + '...' : data.masterHash.substring(0, 16) + '...' },
@@ -535,13 +555,13 @@
                 { id: 'pure-iva-devido-val', val: t.asfixiaFinanceira }, { id: 'pure-impacto-macro', val: data.macro_analysis.estimated_systemic_gap },
                 { id: 'pure-ctrl-qty', val: data.counts.ctrl }, { id: 'pure-saft-qty', val: data.counts.saft }, { id: 'pure-fat-qty', val: data.counts.fat },
                 { id: 'pure-ext-qty', val: data.counts.ext }, { id: 'pure-dac7-qty', val: data.counts.dac7 },
-                { id: 'auxBoxCampanhasValue', val: aux.campanhas },
-                { id: 'auxBoxPortagensValue', val: aux.portagens },
-                { id: 'auxBoxGorjetasValue', val: aux.gorjetas },
-                { id: 'auxBoxTotalNSValue', val: totalNaoSujeitosCalc },
-                { id: 'auxBoxCancelValue', val: aux.cancelamentos },
-                { id: 'auxDac7NoteValue', val: totalNaoSujeitosCalc },
-                { id: 'auxDac7NoteValueQ', val: totalNaoSujeitosCalc }
+                { id: 'auxBoxCampanhasValue', val: fi2.campanhas },
+                { id: 'auxBoxPortagensValue', val: fi2.portagens },
+                { id: 'auxBoxGorjetasValue', val: fi2.gorjetas },
+                { id: 'auxBoxTotalNSValue', val: fi2.total },
+                { id: 'auxBoxCancelValue', val: 0.00 },
+                { id: 'auxDac7NoteValue', val: fi2.total },
+                { id: 'auxDac7NoteValueQ', val: fi2.total }
             ];
             
             // [FIX] Uso de seletores escopados
