@@ -11,6 +11,8 @@
  *   3. MOTOR PREDITIVO ATF          — Forecasting 6M (Regressão Linear + Chart.js)
  *   4. BLOCKCHAIN EVIDENCE EXPLORER — OTS Individual por Ficheiro (SHA-256 + DOM UI)
  *   5. ENFORCE BILINGUAL INTEGRITY — Loop breaker para evitar piscas (EV-003)
+ * 
+ * [RETIFICAÇÃO v13.12.2-i18n]: Refatoração do monkey-patching com flag atómica window._isHydrating
  * ============================================================================
  */
 'use strict';
@@ -221,6 +223,7 @@ window.UNIFEDSystem = window.UNIFEDSystem || {};
 	function _installDOCXHookCore() {
 		var _origExportDOCX = window.exportDOCX;
 		window.exportDOCX = async function _nexusExportDOCX() {
+			if (window._isHydrating) return;
 			var sys = window.UNIFEDSystem;
 			var discPct = (sys && sys.analysis && sys.analysis.crossings) ? (sys.analysis.crossings.percentagemOmissao || 0) : 0;
 			if(discPct <= 0) {
@@ -508,6 +511,7 @@ window.UNIFEDSystem = window.UNIFEDSystem || {};
 	function _installATFHookCore() {
 		var _origOpenATFModal = window.openATFModal;
 		window.openATFModal = function _nexusOpenATFModal() {
+			if (window._isHydrating) return;
 			_origOpenATFModal.apply(this, arguments);
 			var sys = window.UNIFEDSystem;
 			if(!sys || !sys.monthlyData) return;

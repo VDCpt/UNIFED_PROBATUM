@@ -3501,8 +3501,6 @@ function setupClearConsoleButton() {
             if (consoleEl) {
                 consoleEl.innerHTML = '<div class="log-entry log-system">[SISTEMA] Memória de sessão limpa. Interface mantida. Operação DORA-Compliant.</div>';
             }
-            // [CORREÇÃO] Linha eliminada: const toolbar = document.getElementById('export-tools-container');
-            // if (toolbar) toolbar.style.display = 'grid';
             console.info('[UNIFED] Purga de logs executada (non-destructive).');
             if (typeof ForensicLogger !== 'undefined') {
                 ForensicLogger.addEntry('CONSOLE_PURGED', { nonDestructive: true });
@@ -4348,6 +4346,14 @@ function performAudit() {
             setTimeout(() => { forceRevealSmokingGun(); }, 500);
             
             revealForensicData();
+
+            // [RETIFICAÇÃO v13.12.2-i18n] Disparo do evento para re-hidratação da UI externa (script_injection, etc.)
+            try {
+                window.dispatchEvent(new CustomEvent('UNIFED_ANALYSIS_COMPLETE', { detail: { timestamp: Date.now() } }));
+                console.log('[UNIFED] Evento UNIFED_ANALYSIS_COMPLETE despachado.');
+            } catch (e) {
+                console.warn('[UNIFED] Falha ao despachar UNIFED_ANALYSIS_COMPLETE:', e);
+            }
 
         } catch (error) {
             _UNIFED_AUDIT_RUNNING = false;

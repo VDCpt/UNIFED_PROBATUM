@@ -5,21 +5,9 @@
  * Conformidade: DORA (UE) 2022/2554 · Art. 125.º CPP · ISO/IEC 27037:2012
  * ============================================================================
  * RETIFICAÇÕES v13.12.2-i18n (2026-04-12):
- * - Matriz de Triangulação: substituição de strings fixas por suporte bilíngue.
- * - Cartão Macro: injetado com atributos data-pt / data-en para tradução dinâmica.
- * - Aguarda Promise de _activatePurePanel antes de inicializar o dashboard.
- * - Previne sobreposição de eventos com flag _initializing.
- * - MutationObserver persistente (já corrigido no triada_export.js).
- * - Re-init Hook documentado para transição entre estados estático (3 botões) e enriquecido (6 botões).
- * - GAP C1 fixado em 1.951,42 € conforme relatório de auditoria.
- * - Veredicto alterado para "RISCO CRÍTICO · DESVIO PADRÃO > 2σ".
- * - [FIX] syncMetrics(): priorização de UNIFEDSystem dinâmico (Hash/Sessão/Contadores).
- * - [FIX] syncMetrics(): contadores de evidências extraídos de UNIFEDSystem.documents.
- * - [FIX] initializeFullWithEvidence(): re-sync após simulateEvidenceUpload().
- * - [FIX] syncMetrics(): consumir totals e auxiliaryData de UNIFEDSystem prioritariamente.
- * - [FIX] renderMatrix(): matriz dinâmica, evita duplicação, prioriza UNIFEDSystem.
- * - [FIX] _updateAuxiliaryUI(): valores dinâmicos de UNIFEDSystem.auxiliaryData.
- * - [FIX] Hook em updateDashboard() para re-hidratação pós-análise.
+ * - [FIX] Eliminação de Race Conditions (Watchdogs setInterval) substituídos por evento UNIFED_ANALYSIS_COMPLETE.
+ * - [FIX] Refatoração do monkey-patching com flags atómicas (window._isHydrating) e cadeia de delegação.
+ * - [FIX] Sanitização de IDs: uso de seletores escopados (#pureDashboard #id) em syncMetrics e updateAuxiliaryUI.
  * ============================================================================
  */
 
@@ -198,6 +186,12 @@
                 return fallback;
             };
 
+            // [FIX] Uso de seletores escopados para evitar colisões com IDs ocultos
+            const setScopedText = (id, value) => {
+                const el = document.querySelector(`#pureDashboard #${id}`);
+                if (el) el.textContent = value;
+            };
+
             const mapping = {
                 'pure-ganhos': fmt(t.ganhos), 'pure-despesas': fmt(t.despesas), 'pure-liquido': fmt(t.ganhosLiquidos),
                 'pure-saft': fmt(t.saftBruto), 'pure-dac7': fmt(t.dac7TotalPeriodo), 'pure-fatura': fmt(t.faturaPlataforma),
@@ -241,8 +235,7 @@
             };
             
             Object.entries(mapping).forEach(([id, value]) => {
-                const el = document.getElementById(id);
-                if (el) el.textContent = value;
+                setScopedText(id, value);
             });
             
             if (typeof Chart !== 'undefined') {
@@ -252,29 +245,29 @@
                 console.warn('[UNIFED] Chart.js não disponível – gráficos não renderizados.');
             }
             
-            const sg2Legal = document.getElementById('pure-sg2-legal');
+            const sg2Legal = document.querySelector('#pureDashboard #pure-sg2-legal');
             if (sg2Legal) sg2Legal.textContent = 'Art. 36.º n.º 11 CIVA · Art. 119.º RGIT';
-            const sg1Legal = document.getElementById('pure-sg1-legal');
+            const sg1Legal = document.querySelector('#pureDashboard #pure-sg1-legal');
             if (sg1Legal) sg1Legal.textContent = 'Diretiva DAC7 (UE) 2021/514 · DL n.º 41/2023';
-            const verdictBasis = document.getElementById('pure-verdict-basis');
+            const verdictBasis = document.querySelector('#pureDashboard #pure-verdict-basis');
             if (verdictBasis) verdictBasis.textContent = 'Art. 119.º RGIT · Art. 125.º CPP';
-            const pureIva23Sub = document.querySelector('#pure-iva23-sub');
+            const pureIva23Sub = document.querySelector('#pureDashboard #pure-iva23-sub');
             if (pureIva23Sub) pureIva23Sub.textContent = 'Art. 2.º n.º 1 al. i) CIVA';
-            const pureIrcSub = document.querySelector('#pure-irc-sub');
+            const pureIrcSub = document.querySelector('#pureDashboard #pure-irc-sub');
             if (pureIrcSub) pureIrcSub.textContent = 'Art. 17.º CIRC';
-            const pureAtfNote = document.getElementById('pure-atf-note-text');
+            const pureAtfNote = document.querySelector('#pureDashboard #pure-atf-note-text');
             if (pureAtfNote) pureAtfNote.textContent = 'Score de Persistência calculado pelo motor computeTemporalAnalysis() sobre 4 meses de histórico (Set/Out/Nov/Dez 2024). SP calculado sobre o lote global (dados verificados UNIFED-MMLADX8Q-CV69L). As discrepâncias absolutas (C2: €2.184,95 — 89,26% · C1: €1.951,42 — 23,72%) mantêm relevância jurídica independente.';
-            const omissaoPctEl = document.getElementById('omissaoDespesasPctValue');
+            const omissaoPctEl = document.querySelector('#pureDashboard #omissaoDespesasPctValue');
             if (omissaoPctEl) omissaoPctEl.textContent = ((t.despesas / t.ganhos) * 100).toFixed(2) + '%';
-            const sg2BtorEl = document.getElementById('pure-sg2-btor-val');
+            const sg2BtorEl = document.querySelector('#pureDashboard #pure-sg2-btor-val');
             if (sg2BtorEl) sg2BtorEl.textContent = fmt(t.despesas);
-            const sg2BtfEl = document.getElementById('pure-sg2-btf-val');
+            const sg2BtfEl = document.querySelector('#pureDashboard #pure-sg2-btf-val');
             if (sg2BtfEl) sg2BtfEl.textContent = fmt(t.faturaPlataforma);
-            const sg1SaftEl = document.getElementById('pure-sg1-saft-val');
+            const sg1SaftEl = document.querySelector('#pureDashboard #pure-sg1-saft-val');
             if (sg1SaftEl) sg1SaftEl.textContent = fmt(t.saftBruto);
-            const sg1Dac7El = document.getElementById('pure-sg1-dac7-val');
+            const sg1Dac7El = document.querySelector('#pureDashboard #pure-sg1-dac7-val');
             if (sg1Dac7El) sg1Dac7El.textContent = fmt(t.dac7TotalPeriodo);
-            const asfixiaEl = document.getElementById('pure-iva-devido');
+            const asfixiaEl = document.querySelector('#pureDashboard #pure-iva-devido');
             if (asfixiaEl) asfixiaEl.textContent = fmt(asfixiaFinanceira);
         };
         console.log('[UNIFED] Camada 2: OK.');
@@ -544,13 +537,17 @@
                 { id: 'auxDac7NoteValue', val: totalNaoSujeitosCalc },
                 { id: 'auxDac7NoteValueQ', val: totalNaoSujeitosCalc }
             ];
-            auxMapping.forEach(item => {
-                const el = document.getElementById(item.id);
-                if (el) el.textContent = (typeof item.val === 'number') ? _f(item.val) : item.val;
-            });
+            
+            // [FIX] Uso de seletores escopados
+            const setScopedText = (id, val) => {
+                const el = document.querySelector(`#pureDashboard #${id}`);
+                if (el) el.textContent = (typeof val === 'number') ? _f(val) : val;
+            };
+            auxMapping.forEach(item => setScopedText(item.id, item.val));
+            
             const dac7Note = document.getElementById('auxDac7ReconciliationNote');
             if (dac7Note && totalNaoSujeitosCalc > 0) dac7Note.style.display = 'block';
-            const questionText = document.getElementById('pure-zc-question-text');
+            const questionText = document.querySelector('#pureDashboard #pure-zc-question-text');
             if (questionText) questionText.textContent = 'Pode a plataforma confirmar se os €451,15 em Gorjetas e Campanhas (isentos de comissão nos termos da Lei TVDE) foram incluídos na base de cálculo do reporte DAC7 enviado pela plataforma à Autoridade Tributária? Se sim, qual o fundamento legal?';
         }
 
@@ -819,7 +816,7 @@
     window.correctRomanIndices = correctRomanIndices;
 
     // =========================================================================
-    // Inicialização Principal com Re-init Hook
+    // Inicialização Principal com Re-init Hook e Listener de Eventos
     // =========================================================================
     (function() {
         if (!window.UNIFED_INTERNAL) return;
@@ -856,6 +853,39 @@
                 observer.observe(document.body, { childList: true, subtree: true });
                 setTimeout(() => { observer.disconnect(); resolve(); }, 5000);
             });
+        }
+
+        // [RETIFICAÇÃO] Monkey-patching com flag atómica e cadeia de delegação
+        if (typeof window.updateDashboard === 'function' && !window.updateDashboard._nexusHooked) {
+            const _origUpdateDashboard = window.updateDashboard;
+            window.updateDashboard = function() {
+                if (window._isHydrating) return;
+                try {
+                    window._isHydrating = true;
+                    _origUpdateDashboard.apply(this, arguments);
+                } finally {
+                    window._isHydrating = false;
+                }
+                if (typeof syncMetrics === 'function') syncMetrics();
+                if (typeof renderMatrix === 'function') renderMatrix();
+                if (typeof updateAuxiliaryUI === 'function') updateAuxiliaryUI();
+                console.log('[UNIFED] Re-hidratação do DOM concluída via Hook (updateDashboard).');
+            };
+            window.updateDashboard._nexusHooked = true;
+        }
+
+        if (typeof window.forceRevealSmokingGun === 'function' && !window.forceRevealSmokingGun._nexusHooked) {
+            const _origForceReveal = window.forceRevealSmokingGun;
+            window.forceRevealSmokingGun = function() {
+                if (window._isHydrating) return;
+                try {
+                    window._isHydrating = true;
+                    _origForceReveal.apply(this, arguments);
+                } finally {
+                    window._isHydrating = false;
+                }
+            };
+            window.forceRevealSmokingGun._nexusHooked = true;
         }
 
         function initializeCoreDashboard() {
@@ -905,7 +935,6 @@
                 if (typeof window.UNIFED_INTERNAL.syncMetrics === 'function') {
                     window.UNIFED_INTERNAL.syncMetrics();
                 }
-                // [CORREÇÃO] Removida a chamada antecipada a forceRevealSmokingGun para respeitar o estado Zero-Knowledge
                 if (window.UNIFEDSystem && window.UNIFEDSystem.masterHash) {
                     const hashEl = document.getElementById('masterHashValue');
                     if (hashEl) hashEl.textContent = window.UNIFEDSystem.masterHash;
@@ -1028,147 +1057,28 @@
         }
         window.generateQRCode = generateQRCode;
 
-        // [AÇÃO 4] Hook na Execução Pericial para Re-hidratação de Estado
-        if (typeof window.updateDashboard === 'function' && !window.updateDashboard._nexusHooked) {
-            const _origUpdateDashboard = window.updateDashboard;
-            window.updateDashboard = function() {
-                _origUpdateDashboard.apply(this, arguments);
-                if (typeof window.UNIFED_INTERNAL.syncMetrics === 'function') window.UNIFED_INTERNAL.syncMetrics();
-                if (typeof window.UNIFED_INTERNAL.renderMatrix === 'function') window.UNIFED_INTERNAL.renderMatrix();
-                if (typeof window.UNIFED_INTERNAL.updateAuxiliaryUI === 'function') window.UNIFED_INTERNAL.updateAuxiliaryUI();
-                console.log('[UNIFED] Re-hidratação do DOM (Smoking Guns, Zona Cinzenta e Matriz) concluída via Hook.');
-            };
-            window.updateDashboard._nexusHooked = true;
+        // [RETIFICAÇÃO] Remoção dos Watchdogs (setInterval) e substituição por EventListener
+        function setupEventDrivenHydration() {
+            window.addEventListener('UNIFED_ANALYSIS_COMPLETE', function(event) {
+                console.log('[UNIFED] Evento UNIFED_ANALYSIS_COMPLETE recebido. Iniciando re-hidratação da UI.', event.detail);
+                if (typeof syncMetrics === 'function') syncMetrics();
+                if (typeof renderMatrix === 'function') renderMatrix();
+                if (typeof updateAuxiliaryUI === 'function') updateAuxiliaryUI();
+                if (typeof window.forceRevealSmokingGun === 'function') window.forceRevealSmokingGun();
+            });
+            console.log('[UNIFED] Listener para UNIFED_ANALYSIS_COMPLETE registado.');
         }
 
-       // =========================================================================
-        // CAMADA 5 · MOTOR DE PERSISTÊNCIA E WATCHDOG (FIX v13.12.2-i18n)
-        // =========================================================================
-        async function startApplication() {
-            try {
-                await _activatePurePanel(); // Garante que o painel HTML está no DOM
-                
-                // 1. Execução Imediata (First Pass)
-                if (typeof window.UNIFED_INTERNAL.syncMetrics === 'function') {
-                    window.UNIFED_INTERNAL.syncMetrics();
-                    window.UNIFED_INTERNAL.renderMatrix();
-                }
-
-                // 2. Hook de Resiliência: Monitorização do Objeto de Análise
-                let lastKnownGanhos = 0;
-                const stateWatchdog = setInterval(() => {
-                    const sys = window.UNIFEDSystem;
-                    if (sys && sys.analysis && sys.analysis.totals) {
-                        const currentGanhos = sys.analysis.totals.ganhos || 0;
-                        if (currentGanhos !== lastKnownGanhos) {
-                            console.warn('[UNIFED] Watchdog detetou novos dados. Forçando refresh da UI...');
-                            lastKnownGanhos = currentGanhos;
-                            if (typeof window.UNIFED_INTERNAL.syncMetrics === 'function') {
-                                window.UNIFED_INTERNAL.syncMetrics();
-                                window.UNIFED_INTERNAL.renderMatrix();
-                                window.UNIFED_INTERNAL.updateAuxiliaryUI();
-                                if (window.forceRevealSmokingGun) window.forceRevealSmokingGun();
-                            }
-                        }
-                    }
-                }, 1500);
-
-                // 3. Reparação do Hook Global
-                const patchDashboard = () => {
-                    if (typeof window.updateDashboard === 'function' && !window.updateDashboard._nexusHooked) {
-                        const _orig = window.updateDashboard;
-                        window.updateDashboard = function() {
-                            const result = _orig.apply(this, arguments);
-                            setTimeout(() => {
-                                if (window.UNIFED_INTERNAL.syncMetrics) window.UNIFED_INTERNAL.syncMetrics();
-                                if (window.UNIFED_INTERNAL.renderMatrix) window.UNIFED_INTERNAL.renderMatrix();
-                            }, 100);
-                            return result;
-                        };
-                        window.updateDashboard._nexusHooked = true;
-                        console.log('[UNIFED] Hook updateDashboard selado com sucesso.');
-                    }
-                };
-                
-                patchDashboard();
-                window.addEventListener('hashchange', patchDashboard);
-
-            } catch (err) {
-                console.error('[UNIFED] Erro fatal na Camada 5:', err);
-            }
-        }
-
-        // Iniciar com proteção contra race conditions de carregamento
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', startApplication);
-        } else {
-            startApplication();
-        }
-
-        // ============================================================================
-        // FORCE REVEAL SMOKING GUN – EXPANSÃO DE VISIBILIDADE (v13.12.2-i18n)
-        // ============================================================================
-        if (typeof window.forceRevealSmokingGun === 'function') {
-            const originalForceReveal = window.forceRevealSmokingGun;
-            window.forceRevealSmokingGun = function() {
-                if (originalForceReveal) originalForceReveal();
-                const extraModules = ['pureZonaCinzentaCard', 'white-collar-module'];
-                extraModules.forEach(selector => {
-                    const el = document.getElementById(selector);
-                    if (el) {
-                        el.style.setProperty('display', 'block', 'important');
-                        el.style.setProperty('opacity', '1', 'important');
-                        el.style.setProperty('visibility', 'visible', 'important');
-                    } else {
-                        const elsByClass = document.querySelectorAll('.' + selector);
-                        elsByClass.forEach(clsEl => {
-                            clsEl.style.setProperty('display', 'block', 'important');
-                            clsEl.style.setProperty('opacity', '1', 'important');
-                            clsEl.style.setProperty('visibility', 'visible', 'important');
-                        });
-                    }
-                });
-                console.log('[UNIFED] forceRevealSmokingGun expandido: white-collar e zona cinzenta forçados.');
-            };
-        } else {
-            window.forceRevealSmokingGun = function() {
-                const extraModules = ['pureZonaCinzentaCard', 'white-collar-module'];
-                extraModules.forEach(selector => {
-                    const el = document.getElementById(selector);
-                    if (el) {
-                        el.style.setProperty('display', 'block', 'important');
-                        el.style.setProperty('opacity', '1', 'important');
-                        el.style.setProperty('visibility', 'visible', 'important');
-                    } else {
-                        const elsByClass = document.querySelectorAll('.' + selector);
-                        elsByClass.forEach(clsEl => {
-                            clsEl.style.setProperty('display', 'block', 'important');
-                            clsEl.style.setProperty('opacity', '1', 'important');
-                            clsEl.style.setProperty('visibility', 'visible', 'important');
-                        });
-                    }
-                });
-                console.log('[UNIFED] forceRevealSmokingGun executado: Visibilidade forçada.');
-            };
-        }
-
-        // ============================================================================
-        // CAMADA DE RESILIÊNCIA FINAL (WATCHDOG)
-        // ============================================================================
-        const _recoveryInterval = setInterval(() => {
-            const isDataReady = window.UNIFEDSystem && window.UNIFEDSystem.analysis;
-            const isUIReady = document.getElementById('pureDashboard');
-
-            if (isDataReady && isUIReady) {
-                if (typeof window.UNIFED_INTERNAL.syncMetrics === 'function') {
-                    window.UNIFED_INTERNAL.syncMetrics();
-                    window.UNIFED_INTERNAL.renderMatrix();
-                    console.info('[UNIFED] Hidratação de emergência concluída pelo Watchdog.');
-                    clearInterval(_recoveryInterval);
-                }
-            }
-        }, 2000);
-        
+        setupEventDrivenHydration();
         setupRealCaseButton();
+        
+        // Inicialização inicial (caso o botão não seja clicado primeiro)
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                initializeCoreDashboard();
+            });
+        } else {
+            initializeCoreDashboard();
+        }
     })();
 })();
