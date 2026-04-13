@@ -1,18 +1,18 @@
 /**
- * UNIFED - PROBATUM · OUTPUT ENRICHMENT LAYER · v13.12.1-FIX-STABLE
+ * UNIFED - PROBATUM · OUTPUT ENRICHMENT LAYER · v13.12.2-i18n (ELITE DEMO)
  * ============================================================================
  * Arquitetura: Asynchronous Post-Computation Orchestration
  * Padrão:      Read-Only Data Consumption sobre UNIFEDSystem.analysis
  * Conformidade: DORA (UE) 2022/2554 · RGPD · ISO/IEC 27037:2012
  *
- * ALTERAÇÕES v13.12.1-FIX-STABLE (2026-04-12):
+ * ALTERAÇÕES v13.12.2-i18n (2026-04-13):
  * · Adicionada flag _isGraphRendering para evitar loops de re-renderização.
  * · Função renderATFChart() com controle de mutex.
  * · Estabilização do gráfico ATF no modal.
  * · Garantia de que todas as funções expõem logs para o ForensicLogger.
- * · Nenhuma alteração estrutural – apenas consistência de auditoria.
  * · CORREÇÃO CRÍTICA: removido bloco de código solto após generateLegalNarrative.
  * · CORREÇÃO: Substituída referência a 'extratoGanhos' por 'ganhos' em generateLegalNarrative.
+ * · Adicionadas verificações de segurança para aceder a UNIFEDSystem.analysis.
  * ============================================================================
  */
 
@@ -150,6 +150,8 @@ const LEGAL_KB = {
 // ============================================================================
 async function generateLegalNarrative(analysis) {
     console.log('[UNIFED-AI] \u25b6 A gerar Sintese Juridica Assistida por IA...');
+    // Garantir que analysis existe e tem a estrutura mínima
+    if (!analysis) analysis = { totals: {}, crossings: {}, verdict: {} };
     const forensicContext = _buildForensicContext(analysis);
     const legalContext    = _buildLegalContext();
     const hasData         = forensicContext !== '[DADOS INSUFICIENTES]';
@@ -193,7 +195,7 @@ Maximo 900 palavras. Prosa juridica formal. Sem preambulos.`;
         var baseNarrative = _fallbackNarrative('Execução em modo standalone (narrativa local)');
         
         // ========================================================================
-        // RETIFICAÇÃO v13.12.1: Inserção dinâmica do fragmento sobre inversão do ónus da prova
+        // RETIFICAÇÃO: Inserção dinâmica do fragmento sobre inversão do ónus da prova
         // quando a percentagem de omissão de comissões for superior a 50%
         // ========================================================================
         var omissionPct = (analysis && analysis.crossings && analysis.crossings.percentagemOmissao) || 0;
@@ -328,7 +330,7 @@ async function renderSankeyToImage(analysis) {
     ctx.fillStyle = '#00E5FF';
     ctx.font = 'bold 22px Courier New, monospace';
     ctx.textAlign = 'center';
-    ctx.fillText('DIAGRAMA DE FLUXO FINANCEIRO FORENSE -- UNIFED-PROBATUM v13.12.1-FIX', W / 2, 32);
+    ctx.fillText('DIAGRAMA DE FLUXO FINANCEIRO FORENSE -- UNIFED-PROBATUM v13.12.2-i18n', W / 2, 32);
     ctx.font = '14px Courier New, monospace';
     ctx.fillStyle = 'rgba(0,229,255,0.7)';
     ctx.fillText('Read-Only · Art. 125.o CPP · Output Enrichment Layer', W / 2, 55);
@@ -429,7 +431,7 @@ function generateIntegritySeal(masterHash, doc, x, y, sealSize) {
     doc.setFont('courier', 'bold');
     doc.setTextColor(0, 229, 255);
     doc.text('PROBATUM INTEGRITY SEAL', CX, y + 3.5, { align: 'center' });
-    doc.text('v13.12.1-FIX \u00b7 SHA-256', CX, y + 6.5, { align: 'center' });
+    doc.text('v13.12.2-i18n \u00b7 SHA-256', CX, y + 6.5, { align: 'center' });
     doc.setDrawColor(30, 60, 100);
     doc.setLineWidth(0.2);
     doc.circle(CX, CY, R, 'S');
@@ -487,11 +489,11 @@ async function exportDOCX(xmlInject) {
         if (typeof showToast === 'function') showToast('Sem sujeito passivo para gerar minuta.', 'error');
         return;
     }
-    if (typeof window.logAudit === 'function') window.logAudit('\ud83d\udcc4 [v13.12.1-FIX] A gerar Minuta de Peticao Inicial (DOCX)...', 'info');
+    if (typeof window.logAudit === 'function') window.logAudit('\ud83d\udcc4 [v13.12.2-i18n] A gerar Minuta de Peticao Inicial (DOCX)...', 'info');
     var sys  = window.UNIFEDSystem;
-    var t    = sys.analysis.totals    || {};
-    var c    = sys.analysis.crossings || {};
-    var v    = sys.analysis.verdict   || {};
+    var t    = (sys.analysis && sys.analysis.totals)    || {};
+    var c    = (sys.analysis && sys.analysis.crossings) || {};
+    var v    = (sys.analysis && sys.analysis.verdict)   || {};
     var date = new Date().toLocaleDateString('pt-PT');
     var xe = function(s) {
         return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -537,9 +539,11 @@ async function exportDOCX(xmlInject) {
     if ((c.ircEstimado || 0) > 0) discRows.push(tr([tc('IRC Estimado Omitido (Art. 17.o CIRC)', false, 5000), tc(fe(c.ircEstimado), false, 4000)]));
     if ((c.impactoSeteAnosMercado || 0) > 0) discRows.push(tr([tc('Impacto Macroeconomico 7 Anos', true, 5000, 'FFF0F0'), tc(fe(c.impactoSeteAnosMercado), true, 4000, 'FFF0F0')]));
     var srcRows = [tr([tc('Documento', true, 3000, 'E8F0F8'), tc('Tipo', true, 2000, 'E8F0F8'), tc('Hash SHA-256 (64 caracteres)', true, 4000, 'E8F0F8')])];
-    (sys.analysis.evidenceIntegrity || []).slice(0, 8).forEach(function(ev) {
-        srcRows.push(tr([tc(ev.filename || 'N/A', false, 3000), tc(ev.type || 'N/A', false, 2000), tc(ev.hash || 'N/A', false, 4000)]));
-    });
+    if (sys.analysis && sys.analysis.evidenceIntegrity) {
+        (sys.analysis.evidenceIntegrity || []).slice(0, 8).forEach(function(ev) {
+            srcRows.push(tr([tc(ev.filename || 'N/A', false, 3000), tc(ev.type || 'N/A', false, 2000), tc(ev.hash || 'N/A', false, 4000)]));
+        });
+    }
     var aiNarrative = _fallbackNarrative('DOCX export - API indisponivel offline');
     try {
         if (typeof generateLegalNarrative === 'function')
@@ -564,7 +568,7 @@ async function exportDOCX(xmlInject) {
         para('', false), hr(),
         para('Processo N.o: ' + xe(sys.sessionId || 'UNIFED-PENDING'), false, '20', '333333'),
         para('Data de Elaboracao: ' + date, false, '20', '333333'),
-        para('Sistema: UNIFED - PROBATUM v13.12.1-FIX - ADMISSIBILIDADE ART. 125.º CPP - DORA COMPLIANT', false, '18', '666666'),
+        para('Sistema: UNIFED - PROBATUM v13.12.2-i18n - ADMISSIBILIDADE ART. 125.º CPP - DORA COMPLIANT', false, '18', '666666'),
         para('Referencia de Integridade: Master Hash SHA-256: ' + xe(sys.masterHash || 'N/A'), false, '16', '888888'),
         hr(), para('', false),
         para('I. IDENTIFICACAO', true, '26', '003366'), para('', false),
@@ -599,7 +603,7 @@ async function exportDOCX(xmlInject) {
         para('Dano Reputacional e Perda de Chance: O reporte viciado da plataforma a Autoridade Tributaria (com uma discrepancia detetada de ' + fe(c.discrepanciaSaftVsDac7) + ') contamina diretamente o perfil de risco (Risk Scoring) do parceiro. Sendo a plataforma a detentora do monopolio de emissao documental (Art. 36.o n.o 11 CIVA), o sujeito passivo e penalizado sem dolo. Esta adulteracao do perfil fiscal gera lucros cessantes mensuraveis, inibindo o acesso a financiamento bancario, linhas de credito e beneficios fiscais, constituindo fundamento para indemnizacao por responsabilidade civil extracontratual.', false, '20', '333333'),
         para('', false), hr(), para('', false),
         para('IV. SÍNTESE JURÍDICA PERICIAL — ANÁLISE DETERMINÍSTICA', true, '26', '003366'),
-        para('Elaborada sob metodologia forense UNIFED-PROBATUM v13.12.1-FIX. Análise algorítmica de base determinística (non-probabilistic). Conformidade: Art. 125.º CPP · ISO/IEC 27037:2012 · DORA (UE) 2022/2554.', false, '16', '555555'),
+        para('Elaborada sob metodologia forense UNIFED-PROBATUM v13.12.2-i18n. Análise algorítmica de base determinística (non-probabilistic). Conformidade: Art. 125.º CPP · ISO/IEC 27037:2012 · DORA (UE) 2022/2554.', false, '16', '555555'),
         para('NOTA: A jurisprudência citada constitui referência doutrinária para orientação do advogado mandatário. Toda a referência a acórdãos deve ser validada pelo advogado antes de qualquer uso processual. O perito responsabiliza-se pelos dados forenses e pela metodologia UNIFED-PROBATUM.', false, '16', '888888'),
         para('', false)
     ].concat(narrativeParas).concat([
@@ -629,7 +633,7 @@ async function exportDOCX(xmlInject) {
         para('', false),
         para('Porto, ' + date, false, '20', '333333'), para('', false),
         para('_____________________________________________', false, '20', '333333'),
-        para('Analista e Consultor Forense Independente - UNIFED - PROBATUM v13.12.1-FIX', false, '18', '555555'),
+        para('Analista e Consultor Forense Independente - UNIFED - PROBATUM v13.12.2-i18n', false, '18', '555555'),
         para('Reconstituicao da Verdade Material Digital · Art. 153.o CPP · ISO/IEC 27037:2012', false, '16', '888888'),
         para('', false),
         para('AVISO: Esta minuta e destinada ao advogado mandatario. Nao constitui por si so peca processual.', false, '16', 'AA0000')
@@ -689,7 +693,7 @@ async function exportDOCX(xmlInject) {
         setTimeout(function() {
             try { URL.revokeObjectURL(url); document.body.removeChild(link); } catch (_) {}
         }, 2000);
-        if (typeof window.logAudit === 'function') window.logAudit('\u2705 [v13.12.1-FIX] Minuta DOCX exportada com sucesso.', 'success');
+        if (typeof window.logAudit === 'function') window.logAudit('\u2705 [v13.12.2-i18n] Minuta DOCX exportada com sucesso.', 'success');
         if (typeof showToast === 'function') showToast('Minuta DOCX exportada - Peticao Inicial pronta', 'success');
         if (typeof ForensicLogger !== 'undefined') ForensicLogger.addEntry('DOCX_EXPORT_COMPLETED', { sessionId: sys.sessionId });
     } catch (zipErr) {
@@ -1034,7 +1038,7 @@ function openATFModal() {
         '<div style="width:100%;max-width:1100px">' +
         '<div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(0,229,255,0.3);padding-bottom:12px;margin-bottom:20px">' +
             '<div>' +
-                '<div style="color:#00E5FF;font-size:1.1rem;font-weight:bold;letter-spacing:0.08em">' + _T('⏳ ANÁLISE TEMPORAL FORENSE (ATF)', '⏳ FORENSIC TEMPORAL ANALYSIS (ATF)') + ' · v13.12.1-FIX</div>' +
+                '<div style="color:#00E5FF;font-size:1.1rem;font-weight:bold;letter-spacing:0.08em">' + _T('⏳ ANÁLISE TEMPORAL FORENSE (ATF)', '⏳ FORENSIC TEMPORAL ANALYSIS (ATF)') + ' · v13.12.2-i18n</div>' +
                 '<div style="color:rgba(255,255,255,0.5);font-size:0.72rem;margin-top:4px">' + _T('Tendências · Outliers 2σ · Índice de Recidiva Algorítmica · Read-Only', 'Trends · Outliers 2σ · Algorithmic Recidivism Index · Read-Only') + '</div>' +
             '</div>' +
             '<button onclick="document.getElementById(\'atfModal\').remove()" ' +
@@ -1252,7 +1256,7 @@ function generateBurdenOfProofSection(discrepancyValue) {
 window.generateBurdenOfProofSection = generateBurdenOfProofSection;
 
 // ============================================================================
-// 9. ADIÇÕES v13.12.1-FIX · POLÍTICA ZERO-OMISSÃO
+// 9. ADIÇÕES v13.12.2-i18n · POLÍTICA ZERO-OMISSÃO
 // ============================================================================
 (function _enrichmentZeroOmission() {
     // Garantia de que o utilitário de formatação está disponível (redundante, mas seguro)
@@ -1271,7 +1275,7 @@ window.generateBurdenOfProofSection = generateBurdenOfProofSection;
             return;
         }
         
-        const data = window.UNIFEDSystem.analysis.totals;
+        const data = (window.UNIFEDSystem.analysis && window.UNIFEDSystem.analysis.totals) || {};
         const gains = data.ganhos || 10157.73;
         const dac7 = data.dac7TotalPeriodo || 7755.16;
         
@@ -1293,10 +1297,10 @@ window.generateBurdenOfProofSection = generateBurdenOfProofSection;
         });
     };
 
-    console.log('[UNIFED-ENRICHMENT] ✅ Módulo de Enriquecimento v13.12.1-FIX carregado (POLÍTICA ZERO-OMISSÃO).');
+    console.log('[UNIFED-ENRICHMENT] ✅ Módulo de Enriquecimento v13.12.2-i18n carregado (POLÍTICA ZERO-OMISSÃO).');
 })();
 
-console.log('[UNIFED-ENRICHMENT] \u2705 Output Enrichment Layer v13.12.1-FIX carregado.');
+console.log('[UNIFED-ENRICHMENT] \u2705 Output Enrichment Layer v13.12.2-i18n carregado.');
 console.log('[UNIFED-ENRICHMENT]   . generateLegalNarrative()     - IA Argumentativa + AI Adversarial Simulator');
 console.log('[UNIFED-ENRICHMENT]   . renderSankeyToImage()        - Dynamic Canvas-to-PDF (Sankey)');
 console.log('[UNIFED-ENRICHMENT]   . generateIntegritySeal()      - Integrity Visual Signature (Selo Holografico)');
