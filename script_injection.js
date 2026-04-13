@@ -1123,28 +1123,44 @@ if (typeof window.forceRevealSmokingGun === 'function') {
         console.log('[UNIFED] forceRevealSmokingGun expandido: white-collar e zona cinzenta forçados.');
     };
 } else {
-    window.forceRevealSmokingGun = function() {
-        const extraModules = ['pureZonaCinzentaCard', 'white-collar-module'];
-        extraModules.forEach(selector => {
-            const el = document.getElementById(selector);
-            if (el) {
-                el.style.setProperty('display', 'block', 'important');
-                el.style.setProperty('opacity', '1', 'important');
-                el.style.setProperty('visibility', 'visible', 'important');
-            } else {
-                const elsByClass = document.querySelectorAll('.' + selector);
-                elsByClass.forEach(clsEl => {
-                    clsEl.style.setProperty('display', 'block', 'important');
-                    clsEl.style.setProperty('opacity', '1', 'important');
-                    clsEl.style.setProperty('visibility', 'visible', 'important');
-                });
-            }
-        });
-       console.log('[UNIFED] forceRevealSmokingGun criado e expandido: white-collar e zona cinzenta forçados.');
-    };
-}
+ // ... (código anterior)
 
-// ============================================================================
-// FECHO DA IIFE E INICIALIZAÇÃO (FIX v13.12.2-i18n)
-// ============================================================================
-})(); // <--- O erro "Unexpected end of input" ocorre pela ausência deste fecho.
+        window.forceRevealSmokingGun = function() {
+            const extraModules = ['pureZonaCinzentaCard', 'white-collar-module'];
+            extraModules.forEach(selector => {
+                const el = document.getElementById(selector);
+                if (el) {
+                    el.style.setProperty('display', 'block', 'important');
+                    el.style.setProperty('opacity', '1', 'important');
+                    el.style.setProperty('visibility', 'visible', 'important');
+                } else {
+                    const elsByClass = document.querySelectorAll('.' + selector);
+                    elsByClass.forEach(clsEl => {
+                        clsEl.style.setProperty('display', 'block', 'important');
+                        clsEl.style.setProperty('opacity', '1', 'important');
+                        clsEl.style.setProperty('visibility', 'visible', 'important');
+                    });
+                }
+            });
+            console.log('[UNIFED] forceRevealSmokingGun executado: Visibilidade forçada.');
+        };
+    }
+
+    // ============================================================================
+    // CAMADA DE RESILIÊNCIA FINAL (WATCHDOG)
+    // ============================================================================
+    const _recoveryInterval = setInterval(() => {
+        const isDataReady = window.UNIFEDSystem && window.UNIFEDSystem.analysis;
+        const isUIReady = document.getElementById('pureDashboard');
+
+        if (isDataReady && isUIReady) {
+            if (typeof window.UNIFED_INTERNAL.syncMetrics === 'function') {
+                window.UNIFED_INTERNAL.syncMetrics();
+                window.UNIFED_INTERNAL.renderMatrix();
+                console.info('[UNIFED] Hidratação de emergência concluída pelo Watchdog.');
+                clearInterval(_recoveryInterval);
+            }
+        }
+    }, 2000);
+
+})(); // FECHO DA IIFE (OBRIGATÓRIO)
