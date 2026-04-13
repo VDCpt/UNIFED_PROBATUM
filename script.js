@@ -3492,6 +3492,38 @@ function setupMainListeners() {
     if (resetBtn) resetBtn.addEventListener('click', resetSystem);
 
     setupUploadListeners();
+
+// Inserir no final da função setupMainListeners() em script.js
+const startBtn = document.getElementById('startSessionBtn');
+const splashScreen = document.getElementById('splashScreen');
+const mainContainer = document.getElementById('mainContainer');
+
+if (startBtn && splashScreen && mainContainer) {
+    startBtn.addEventListener('click', function() {
+        // Registo de log forense
+        if (typeof ForensicLogger !== 'undefined') {
+            ForensicLogger.addEntry('SPLASH_SCREEN_DISMISSED', { action: 'Interface desbloqueada' });
+        }
+        
+        // Desvanecimento do ecrã de bloqueio
+        splashScreen.style.opacity = '0';
+        
+        // Transição de estado após 500ms (tempo da animação CSS)
+        setTimeout(function() {
+            splashScreen.style.display = 'none';
+            mainContainer.style.display = 'flex';
+            
+            // Forçar reflow do DOM para garantir a transição de opacidade
+            void mainContainer.offsetWidth; 
+            mainContainer.style.opacity = '1';
+            
+            logAudit('Transição de estado UI: Splash -> Main. Sistema pronto para demonstração ELITE.', 'success');
+        }, 500);
+    });
+} else {
+    console.error('[UNIFED-FORENSIC] Elementos críticos da interface não localizados no DOM.');
+}
+
 }
 
 function setupClearConsoleButton() {
