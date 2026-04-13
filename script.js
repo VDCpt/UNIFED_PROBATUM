@@ -8510,6 +8510,19 @@ window.renderDiscrepancyChart = renderDiscrepancyChart;
     console.log('[UNIFED] Listener de transição do splash configurado com sucesso.');
 })();
 
+// Garantir que o select do ano fiscal seja populado
+(function ensureAnoFiscalPopulated() {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof populateAnoFiscal === 'function') populateAnoFiscal();
+            if (typeof populateYears === 'function') populateYears();
+        });
+    } else {
+        if (typeof populateAnoFiscal === 'function') populateAnoFiscal();
+        if (typeof populateYears === 'function') populateYears();
+    }
+})();
+
 // ============================================================================
 // FIM DO FICHEIRO - UNIFED - PROBATUM v13.12.2-i18n
 // ============================================================================
