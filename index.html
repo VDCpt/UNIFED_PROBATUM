@@ -586,47 +586,74 @@
         // ======================================================================
         // RETIFICAÇÃO v13.12.2-i18n: _activatePurePanel agora retorna Promise
         // ======================================================================
-        window._activatePurePanel = function() {
-            const wrapper = document.getElementById('pureDashboardWrapper');
-            if (wrapper) { 
-                wrapper.innerHTML = ''; 
-                wrapper.style.display = 'none'; 
-            }
-            return fetch('panel.html')
-                .then(function(r) { return r.text(); })
-                .then(function(html) {
-                    if (wrapper) {
-                        wrapper.innerHTML = html;
-                        wrapper.style.display = 'block';
+    window._activatePurePanel = function(skipToolbarRestore = false) {
+    const wrapper = document.getElementById('pureDashboardWrapper');
+    if (wrapper) { 
+        wrapper.innerHTML = ''; 
+        wrapper.style.display = 'none'; 
+    }
+    return fetch('panel.html')
+        .then(function(r) { return r.text(); })
+        .then(function(html) {
+            if (wrapper) {
+                wrapper.innerHTML = html;
+                wrapper.style.display = 'block';
+                wrapper.classList.add('unifed-ready');
 
-                        // [AÇÃO2-FIX] correctRomanIndices — invocada logo após injeção de HTML
-                        if (typeof window.correctRomanIndices === 'function') {
-                            window.correctRomanIndices();
-                        }
-                        
-                        if (typeof UNIFEDSystem !== 'undefined' && typeof UNIFEDSystem.loadAnonymizedRealCase === 'function') {
-                            console.info('[UNIFED-PURE] Injetando evidências no Caso Real...');
-                            UNIFEDSystem.loadAnonymizedRealCase();
-                        }
-                        if (typeof window._translatePurePanel === 'function') {
-                            window._translatePurePanel(window.currentLang || 'pt');
-                        }
-                        
-                        // ========== BLOCO DE CORREÇÃO DE INTERFACE ==========
-                        (function() {
-                            if (typeof window.forceRevealSmokingGun === 'function') {
-                                window.forceRevealSmokingGun();
-                            } else {
-                                const criticalModules = ['pureDiscCard', 'pureZonaCinzentaCard', 'pureVerdictCard', 'card-asfixia'];
-                                criticalModules.forEach(id => {
-                                    const el = document.getElementById(id);
-                                    if (el) {
-                                        el.style.setProperty('display', 'block', 'important');
-                                        el.style.setProperty('opacity', '1', 'important');
-                                        el.style.setProperty('visibility', 'visible', 'important');
-                                    }
-                                });
-                            }
+                // CORREÇÃO BUG 3: Forçar revelação dos Smoking Guns
+                if (typeof window.forceRevealSmokingGun === 'function') {
+                    window.forceRevealSmokingGun();
+                } else {
+                    const criticalModules = ['pureDiscCard', 'pureZonaCinzentaCard', 'pureVerdictCard', 'card-asfixia'];
+                    criticalModules.forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) el.style.setProperty('display', 'block', 'important');
+                    });
+                    document.querySelectorAll('.smoking-gun-module, .pure-sg-critical, .pure-sg-secondary').forEach(el => {
+                        el.style.setProperty('display', 'block', 'important');
+                    });
+                }
+                
+                if (typeof UNIFEDSystem !== 'undefined' && typeof UNIFEDSystem.loadAnonymizedRealCase === 'function') {
+                    console.info('[UNIFED-PURE] Injetando evidências no Caso Real...');
+                    UNIFEDSystem.loadAnonymizedRealCase();
+                }
+                if (typeof window._translatePurePanel === 'function') {
+                    window._translatePurePanel(window.currentLang || 'pt');
+                }
+                
+                // Aplicar correções de interface (já incluídas)
+                (function() {
+                    if (typeof window.forceRevealSmokingGun === 'function') window.forceRevealSmokingGun();
+                    const smokingGuns = document.querySelectorAll('.smoking-gun-module, .pure-sg-critical, .pure-sg-secondary');
+                    smokingGuns.forEach(sg => {
+                        sg.style.setProperty('display', 'block', 'important');
+                        sg.style.setProperty('opacity', '1', 'important');
+                        sg.style.setProperty('z-index', '20', 'important');
+                    });
+                    const wrapperEl = document.getElementById('pureDashboardWrapper');
+                    if (wrapperEl) {
+                        wrapperEl.style.setProperty('height', 'auto', 'important');
+                        wrapperEl.style.setProperty('overflow', 'visible', 'important');
+                    }
+                    const chartSections = document.querySelectorAll('.chart-section');
+                    chartSections.forEach(chart => {
+                        chart.style.setProperty('margin-bottom', '0', 'important');
+                    });
+                    const consoleSection = document.querySelector('.console-section');
+                    if (consoleSection) consoleSection.style.setProperty('margin-top', '0', 'important');
+                })();
+
+                if (typeof window.renderChart === 'function') window.renderChart();
+                if (typeof window.renderDiscrepancyChart === 'function') window.renderDiscrepancyChart();
+                console.log('[UNIFED-FIX] Painel PURE carregado e corrigido.');
+            }
+        })
+        .catch(function(err) {
+            console.error('[UNIFED-PURE] Erro na carga do painel:', err);
+            throw err;
+        });
+};   
 
                             const smokingGuns = document.querySelectorAll('.smoking-gun-module, .pure-sg-critical, .pure-sg-secondary');
                             smokingGuns.forEach(sg => {
