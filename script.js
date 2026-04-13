@@ -3125,7 +3125,8 @@ function openHashModal() {
 }
 
 function resetUIVisual() {
-    const placeholders = document.querySelectorAll('.pure-data-value, .pure-mono, .kpi-card p, .stat-card p, .quantum-value, .verdict-level');
+    // Adição de classes periféricas para purga completa do DOM no arranque
+    const placeholders = document.querySelectorAll('.pure-data-value, .pure-mono, .kpi-card p, .stat-card p, .quantum-value, .verdict-level, .pure-atf-big, .pure-atf-trend-val, .pure-atf-outlier-val, .pure-atf-meses-val, .pure-zc-val, .pure-sg-val, .pure-delta-value, .pure-fiscal-value');
     placeholders.forEach(el => {
         if (el.id !== 'masterHashValue' && !el.closest('#qrcodeContainer') && !el.classList.contains('pure-hash-prefix-verdict')) {
             el.textContent = '---';
@@ -3145,7 +3146,7 @@ function resetUIVisual() {
     if (consoleEl) {
         consoleEl.innerHTML = '<div class="log-entry log-system">[SISTEMA] Aguardando inicialização. Interface limpa.</div>';
     }
-    console.log('[UNIFED] resetUIVisual: UI limpa (estado Zero-Knowledge).');
+    console.log('[UNIFED] resetUIVisual: UI limpa (estado Zero-Knowledge ampliado).');
 }
 
 function revealForensicData() {
