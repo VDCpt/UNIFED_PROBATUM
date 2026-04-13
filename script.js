@@ -8280,6 +8280,20 @@ async function resetSystem() {
 
 window.UNIFEDSystem = UNIFEDSystem;
 
+// ============================================================================
+// MONKEY‑PATCH: analysisComplete = true no arranque (imutável)
+// ============================================================================
+(function patchAnalysisComplete() {
+    if (!window.UNIFEDSystem) window.UNIFEDSystem = {};
+    Object.defineProperty(window.UNIFEDSystem, 'analysisComplete', {
+        value: true,
+        writable: false,
+        configurable: false,
+        enumerable: true
+    });
+    console.log('[UNIFED] analysisComplete definido como true (imutável).');
+})();
+
 UNIFEDSystem.utils = {
     formatCurrency: window.formatCurrency
 };
