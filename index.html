@@ -566,16 +566,44 @@
         </div>
     </div>
 
-    <div id="logsModal" class="modal-overlay">
+  <div id="logsModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="logsModalTitle"><i class="fas fa-history"></i> REGISTO DE ATIVIDADES DE TRATAMENTO</h3>
+            <button id="closeLogsModalBtn" class="icon-btn"><i class="fas fa-times"></i></button>
         </div>
+        <div class="modal-body">
+            <div id="logsDisplayArea" class="console-output" style="height: 300px; overflow-y: auto;"></div>
+        </div>
+        <div class="modal-footer">
+            <button id="exportLogsBtn" class="btn-primary"><i class="fas fa-download"></i> <span id="exportLogsBtnText">EXPORTAR LOGS</span></button>
+            <button id="clearLogsBtn" class="btn-wipe"><i class="fas fa-trash"></i> <span id="clearLogsBtnText">LIMPAR LOGS</span></button>
+            <button id="closeLogsBtn" class="btn-primary"><span id="closeLogsBtnText">FECHAR</span></button>
+        </div>
+    </div>
+</div>
 
     <div id="hashVerificationModal" class="modal-overlay">
         </div>
 
     <div id="toastContainer"></div>
 
-    <div id="custodyModal" role="dialog" aria-modal="true" aria-label="Cadeia de Custódia Forense">
+   <div id="logsModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="logsModalTitle"><i class="fas fa-history"></i> REGISTO DE ATIVIDADES DE TRATAMENTO</h3>
+            <button id="closeLogsModalBtn" class="icon-btn"><i class="fas fa-times"></i></button>
         </div>
+        <div class="modal-body">
+            <div id="logsDisplayArea" class="console-output" style="height: 300px; overflow-y: auto;"></div>
+        </div>
+        <div class="modal-footer">
+            <button id="exportLogsBtn" class="btn-primary"><i class="fas fa-download"></i> <span id="exportLogsBtnText">EXPORTAR LOGS</span></button>
+            <button id="clearLogsBtn" class="btn-wipe"><i class="fas fa-trash"></i> <span id="clearLogsBtnText">LIMPAR LOGS</span></button>
+            <button id="closeLogsBtn" class="btn-primary"><span id="closeLogsBtnText">FECHAR</span></button>
+        </div>
+    </div>
+</div>
 
     <script src="script.js"></script>
     <script src="enrichment.js"></script>

@@ -3480,8 +3480,8 @@ function setupClearConsoleButton() {
             if (consoleEl) {
                 consoleEl.innerHTML = '<div class="log-entry log-system">[SISTEMA] Memória de sessão limpa. Interface mantida. Operação DORA-Compliant.</div>';
             }
-            const toolbar = document.getElementById('export-tools-container');
-            if (toolbar) toolbar.style.display = 'grid';
+            // [CORREÇÃO] Linha eliminada: const toolbar = document.getElementById('export-tools-container');
+            // if (toolbar) toolbar.style.display = 'grid';
             console.info('[UNIFED] Purga de logs executada (non-destructive).');
             if (typeof ForensicLogger !== 'undefined') {
                 ForensicLogger.addEntry('CONSOLE_PURGED', { nonDestructive: true });

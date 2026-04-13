@@ -905,9 +905,7 @@
                 if (typeof window.UNIFED_INTERNAL.syncMetrics === 'function') {
                     window.UNIFED_INTERNAL.syncMetrics();
                 }
-                if (typeof window.forceRevealSmokingGun === 'function') {
-                    window.forceRevealSmokingGun();
-                }
+                // [CORREÇÃO] Removida a chamada antecipada a forceRevealSmokingGun para respeitar o estado Zero-Knowledge
                 if (window.UNIFEDSystem && window.UNIFEDSystem.masterHash) {
                     const hashEl = document.getElementById('masterHashValue');
                     if (hashEl) hashEl.textContent = window.UNIFEDSystem.masterHash;

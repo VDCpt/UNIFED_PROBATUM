@@ -188,11 +188,14 @@
         _log(`✅ Anexo de Custódia gerado com QR Code: ${sessionId}`, 'success');
     }
 
-    // ========== NOVA FUNÇÃO DE RESTAURO DA TOOLBAR ORIGINAL ==========
+    // ========== FUNÇÃO DE RESTAURO DA TOOLBAR ORIGINAL ==========
     function restoreOriginalToolbar() {
         const container = document.getElementById('export-tools-container');
         if (!container) return false;
         if (container.getAttribute('data-original-restored') === 'true') return true;
+
+        // [CORREÇÃO] Purga atómica para evitar duplicação
+        container.innerHTML = '';
 
         // Remove botões da tríade
         const triadaBtns = container.querySelectorAll('.btn-tool-pure');

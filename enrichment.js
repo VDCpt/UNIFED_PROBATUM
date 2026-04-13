@@ -706,7 +706,8 @@ if (typeof window.NIFAF === 'undefined') {
     var NIFAF_FALLBACK = {
         isEnabled: false,
         playCriticalAlert: function() {},
-        toggle: function() { return false; }
+        // [CORREÇÃO] toggle agora mutável
+        toggle: function() { this.isEnabled = !this.isEnabled; return this.isEnabled; }
     };
     window.NIFAF = NIFAF_FALLBACK;
     console.log('[UNIFED-ENRICHMENT] NIFAF em modo fallback (implementação principal em script.js)');
