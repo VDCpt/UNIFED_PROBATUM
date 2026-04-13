@@ -3597,6 +3597,22 @@ body.dual-screen .stat-card p {
     min-height: auto;
 }
 
+/* RETIFICAÇÃO: ESTADO ZERO-KNOWLEDGE (ANTI-FUC) */
+.pure-data-value, 
+.pure-mono:not(#pure-session-id), 
+.pure-atf-big, 
+.pure-zc-val, 
+.pure-sg-val,
+.pure-delta-value {
+    opacity: 0 !important;
+    transition: opacity 0.5s ease-in-out;
+}
+
+/* Classe de revelação controlada após validação forense */
+.forensic-revealed {
+    opacity: 1 !important;
+}
+
 /* ============================================================================
    ESTABILIZAÇÃO DO BLOCO DE IDENTIFICAÇÃO – evitar quebra de linha e overflow
    ============================================================================ */

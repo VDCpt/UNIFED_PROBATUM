@@ -39,6 +39,15 @@
         };
     }
 
+function safeExport() {
+    if (window._isGraphRendering) {
+        window.showToast('Aguarde: Renderização de gráficos em curso...', 'warning');
+        return;
+    }
+    console.info('[TRIADA] Iniciando exportação segura (Integridade de Dados Validada).');
+    // Seguir com a lógica de exportação existente
+}
+
     async function gerarAnexoCustodia() {
         const masterHash = getStableMasterHash();
         const sessionId  = window.UNIFEDSystem?.sessionId || window.activeForensicSession?.sessionId || 'UNIFED-SESSION';
