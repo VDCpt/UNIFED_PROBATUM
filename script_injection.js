@@ -971,6 +971,105 @@
             };
         }
 
+        // =========================================================================
+        // [FIX v13.12.2] window._activatePurePanel
+        // Função central em falta em todas as versões anteriores.
+        // Responsável por:
+        //   1. Injetar o conteúdo de panel.html no #pureDashboardWrapper
+        //   2. Tornar o wrapper visível (opacity + height)
+        //   3. Carregar as evidências simuladas do caso real
+        //   4. Sincronizar todas as métricas no DOM injetado
+        //   5. Renderizar os gráficos no canvas correto (dentro do painel)
+        // =========================================================================
+        window._activatePurePanel = async function _activatePurePanel(skipData) {
+            const wrapper = document.getElementById('pureDashboardWrapper');
+            if (!wrapper) {
+                console.error('[UNIFED] #pureDashboardWrapper não encontrado no DOM.');
+                return;
+            }
+
+            // Se o painel já foi injetado, apenas garantir visibilidade e re-sincronizar
+            if (document.getElementById('pureDashboard')) {
+                wrapper.style.opacity  = '1';
+                wrapper.style.height   = 'auto';
+                wrapper.style.overflow = 'visible';
+                if (!skipData && window.UNIFED_INTERNAL && typeof window.UNIFED_INTERNAL.syncMetrics === 'function') {
+                    window.UNIFED_INTERNAL.syncMetrics();
+                }
+                if (typeof window.renderDiscrepancyChart === 'function') window.renderDiscrepancyChart();
+                return;
+            }
+
+            // Injetar panel.html via fetch
+            try {
+                const response = await fetch('panel.html');
+                if (!response.ok) throw new Error('HTTP ' + response.status);
+                const html = await response.text();
+                wrapper.innerHTML = html;
+                wrapper.style.opacity  = '1';
+                wrapper.style.height   = 'auto';
+                wrapper.style.overflow = 'visible';
+                wrapper.style.transition = 'opacity 0.3s ease';
+            } catch (fetchErr) {
+                console.error('[UNIFED] Falha ao carregar panel.html:', fetchErr.message);
+                // Fallback: tentar via XHR síncrono (compatibilidade file://)
+                try {
+                    const xhr = new XMLHttpRequest();
+                    xhr.open('GET', 'panel.html', false);
+                    xhr.send(null);
+                    if (xhr.status === 200 || xhr.status === 0) {
+                        wrapper.innerHTML = xhr.responseText;
+                        wrapper.style.opacity  = '1';
+                        wrapper.style.height   = 'auto';
+                        wrapper.style.overflow = 'visible';
+                    } else {
+                        throw new Error('XHR status: ' + xhr.status);
+                    }
+                } catch (xhrErr) {
+                    console.error('[UNIFED] Fallback XHR também falhou:', xhrErr.message);
+                    return;
+                }
+            }
+
+            // Aguardar o DOM estabilizar após innerHTML
+            await new Promise(r => setTimeout(r, 120));
+
+            if (!document.getElementById('pureDashboard')) {
+                console.error('[UNIFED] #pureDashboard não encontrado após injeção de panel.html.');
+                return;
+            }
+
+            // Carregar evidências e sincronizar métricas
+            if (!skipData && window.UNIFED_INTERNAL) {
+                try {
+                    if (typeof window.UNIFED_INTERNAL.simulateEvidenceUpload === 'function') {
+                        await window.UNIFED_INTERNAL.simulateEvidenceUpload();
+                    }
+                    if (typeof window.UNIFED_INTERNAL.updateEvidenceCountersAndShow === 'function') {
+                        window.UNIFED_INTERNAL.updateEvidenceCountersAndShow();
+                    }
+                } catch (evErr) {
+                    console.warn('[UNIFED] Falha ao carregar evidências simuladas:', evErr.message);
+                }
+                if (typeof window.UNIFED_INTERNAL.syncMetrics === 'function') {
+                    window.UNIFED_INTERNAL.syncMetrics();
+                }
+            }
+
+            // Renderizar gráficos no canvas correto (agora dentro do pureDashboard)
+            await new Promise(r => setTimeout(r, 80));
+            if (typeof window.renderChart === 'function') window.renderChart();
+            if (typeof window.renderDiscrepancyChart === 'function') window.renderDiscrepancyChart();
+
+            // Revelar módulos críticos
+            if (typeof window.forceRevealSmokingGun === 'function') window.forceRevealSmokingGun();
+
+            // Sincronizar session ID e hash no painel
+            if (typeof syncSessionAndHash === 'function') syncSessionAndHash();
+
+            console.info('[UNIFED] ✅ _activatePurePanel concluído — painel injetado e métricas sincronizadas.');
+        };
+
         function setupRealCaseButton() {
             let targetButton = document.getElementById('demoModeBtn');
             if (!targetButton) {
