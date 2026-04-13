@@ -3153,8 +3153,19 @@ function resetUIVisual() {
  * [RETIFICAÇÃO v13.12.2-i18n] 
  * Bloco Consolidado: Ciclo de Vida da Sessão e Revelação de Dados
  */
+
+// ============================================================================
+// RETIFICAÇÃO: revealForensicData com classe CSS e suspensão do Nexus
+// ============================================================================
 function revealForensicData() {
     console.log('[UNIFED] Iniciando protocolo de revelação de dados forenses...');
+
+    // Suspender traduções do Nexus durante a transição
+    if (window.nexusSuspendTranslation) window.nexusSuspendTranslation(true);
+
+    // Adicionar classe ao dashboard para revelar os valores
+    const dashboard = document.getElementById('pureDashboard');
+    if (dashboard) dashboard.classList.add('forensic-revealed');
 
     // 1. Orquestração de Métricas e Dashboards
     if (typeof window.UNIFED_INTERNAL !== 'undefined' && window.UNIFED_INTERNAL.syncMetrics) {
@@ -3169,121 +3180,111 @@ function revealForensicData() {
     // 2. Acionamento de Gatilhos de Visibilidade Forçada (Smoking Gun)
     if (typeof forceRevealSmokingGun === 'function') forceRevealSmokingGun();
 
-    // 3. REMOÇÃO DA MÁSCARA DE OPACIDADE (MÉTRICA ZERO-KNOWLEDGE)
-    // Seleciona todos os elementos que devem ser revelados pós-perícia
+    // 3. REMOÇÃO DA MÁSCARA DE OPACIDADE (fallback para elementos antigos)
     const forensicElements = document.querySelectorAll(
         '.pure-data-value, .pure-atf-big, .pure-zc-val, .pure-sg-val, .pure-delta-value, .pure-atf-trend-val'
     );
-    
     forensicElements.forEach(el => {
         el.classList.add('forensic-revealed');
     });
 
+    // Reativar traduções do Nexus após um breve delay
+    setTimeout(() => {
+        if (window.nexusSuspendTranslation) window.nexusSuspendTranslation(false);
+    }, 300);
+
     console.info('[UNIFED] Protocolo Zero-Knowledge encerrado. Dados em conformidade visual.');
 }
 
-function setupStaticListeners() {
-    console.log('[UNIFED] Configurando listeners estáticos...');
+// ============================================================================
+// RETIFICAÇÃO: resetSystem com limpeza da classe forensic-revealed
+// ============================================================================
+async function resetSystem() {
+    if (!confirm(currentLang === 'pt' ? 'Reiniciar o sistema irá apagar todas as evidências e análises. Continuar?' : 'Resetting the system will delete all evidence and analysis. Continue?')) {
+        return;
+    }
+    ForensicLogger.addEntry('SYSTEM_RESET_REQUESTED');
     
-    const listenersMap = [
-        { id: 'startSessionBtn', event: 'click', fn: typeof startGatekeeperSession !== 'undefined' ? startGatekeeperSession : null },
-        { id: 'langToggleBtn', event: 'click', fn: typeof switchLanguage !== 'undefined' ? switchLanguage : null },
-        { id: 'viewLogsBtn', event: 'click', fn: typeof openLogsModal !== 'undefined' ? openLogsModal : null },
-        { id: 'viewLogsHeaderBtn', event: 'click', fn: typeof openLogsModal !== 'undefined' ? openLogsModal : null },
-        { id: 'qrcodeContainer', event: 'click', fn: typeof openHashModal !== 'undefined' ? openHashModal : null }
-    ];
+    UNIFEDSystem.analysis = {
+        totals: { saftBruto:0, saftIliquido:0, saftIva:0, ganhos:0, despesas:0, ganhosLiquidos:0, faturaPlataforma:0, dac7Q1:0, dac7Q2:0, dac7Q3:0, dac7Q4:0, dac7TotalPeriodo:0 },
+        twoAxis: { revenueGap:0, expenseGap:0, revenueGapActive:false, expenseGapActive:false },
+        crossings: { discrepanciaCritica:0, discrepanciaSaftVsDac7:0, percentagemOmissao:0, percentagemSaftVsDac7:0, ivaFalta:0, ivaFalta6:0, btor:0, btf:0, agravamentoBrutoIRC:0, ircEstimado:0, asfixiaFinanceira:0 },
+        verdict: null,
+        evidenceIntegrity: [],
+        selectedQuestions: []
+    };
+    UNIFEDSystem.documents = {
+        control: { files:[], hashes:{}, totals:{ records:0 } },
+        saft: { files:[], hashes:{}, totals:{ records:0, iliquido:0, iva:0, bruto:0 } },
+        invoices: { files:[], hashes:{}, totals:{ records:0, invoiceValue:0 } },
+        statements: { files:[], hashes:{}, totals:{ records:0, ganhos:0, despesas:0, ganhosLiquidos:0 } },
+        dac7: { files:[], hashes:{}, totals:{ records:0, q1:0, q2:0, q3:0, q4:0, receitaAnual:0 } }
+    };
+    UNIFEDSystem.monthlyData = {};
+    UNIFEDSystem.dataMonths.clear();
+    UNIFEDSystem.processedFiles.clear();
+    UNIFEDSystem.fileSources.clear();
+    resetAuxiliaryData();
+    
+    await UNIFEDSystem.generateMasterHash();
+    
+    updateModulesUI();
+    updateDashboard();
+    renderChart();
+    renderDiscrepancyChart();
+    forensicDataSynchronization();
 
-    listenersMap.forEach(item => {
-        const el = document.getElementById(item.id);
-        if (el && item.fn) {
-            el.addEventListener(item.event, item.fn);
-            console.log(`[OK] Listener '${item.id}' vinculado.`);
-        } else if (!el) {
-            console.warn(`[AVISO] Elemento '${item.id}' não encontrado no DOM.`);
+    // Remover estado de revelação visual
+    const dashboard = document.getElementById('pureDashboard');
+    if (dashboard) dashboard.classList.remove('forensic-revealed');
+    document.querySelectorAll('.forensic-revealed').forEach(el => el.classList.remove('forensic-revealed'));
+
+    console.warn('[FORENSIC] Reset solicitado. Restaurando Toolbar de 6 botões...');
+    
+    const consoleElem = document.getElementById('forensic-console');
+    if (consoleElem) consoleElem.innerHTML = '';
+
+    resetUIVisual();
+
+    setTimeout(() => {
+        if (typeof window._restoreOriginalToolbar === 'function') {
+            window._restoreOriginalToolbar();
+            logAudit("Toolbar original restaurada após reset.", "success");
+        } else {
+            const container = document.getElementById('export-tools-container');
+            if (container) {
+                container.innerHTML = '';
+                const translations = window.translations?.[currentLang] || {};
+                const tools = [
+                    { id: 'exportPDFBtn', icon: 'fa-file-pdf', label: translations.btnPDF || 'PARECER TÉCNICO', handler: () => window.exportPDF && window.exportPDF() },
+                    { id: 'exportDOCXBtn', icon: 'fa-file-word', label: translations.btnDOCX || 'MINUTA WORD', handler: () => window.exportDOCX && window.exportDOCX() },
+                    { id: 'atfModalBtn', icon: 'fa-chart-line', label: translations.btnATF || '⏳ TENDÊNCIA ATF', handler: () => window.openATFModal && window.openATFModal() },
+                    { id: 'exportJSONBtn', icon: 'fa-file-code', label: translations.btnJSON || 'EXPORTAR JSON', handler: () => window.exportDataJSON && window.exportDataJSON() },
+                    { id: 'resetBtn', icon: 'fa-redo-alt', label: translations.btnReset || 'REINICIAR', handler: () => window.resetSystem && window.resetSystem() },
+                    { id: 'clearConsoleBtn', icon: 'fa-trash-alt', label: translations.clearConsoleBtnText || 'LIMPAR CONSOLE', handler: () => window.clearConsole && window.clearConsole() }
+                ];
+                tools.forEach(t => {
+                    const btn = document.createElement('button');
+                    btn.id = t.id;
+                    btn.className = 'btn-tool';
+                    btn.innerHTML = `<i class="fas ${t.icon}"></i> <span>${t.label}</span>`;
+                    btn.onclick = t.handler;
+                    container.appendChild(btn);
+                });
+            }
         }
-    });
+        if (typeof window._activatePurePanel === 'function') {
+            window._activatePurePanel(true);
+        }
+    }, 150);
+    
+    window.dispatchEvent(new CustomEvent('UNIFED_CORE_READY', { detail: { reset: true } }));
+    
+    logAudit('🔄 Sistema reiniciado – todas as evidências e análises foram limpas.', 'success');
+    showToast(currentLang === 'pt' ? 'Sistema reiniciado com sucesso.' : 'System reset successfully.', 'success');
+    ForensicLogger.addEntry('SYSTEM_RESET_COMPLETED');
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('[UNIFED] DOMContentLoaded - Inicializando v13.12.2-i18n');
-    
-    // Iniciação de Módulos Core
-    setupStaticListeners();
-    if (typeof populateAnoFiscal === 'function') populateAnoFiscal();
-    if (typeof populateYears === 'function') populateYears();
-    if (typeof startClockAndDate === 'function') startClockAndDate();
-    if (typeof setupDragAndDrop === 'function') setupDragAndDrop();
-    if (typeof generateQRCode === 'function') generateQRCode();
-    if (typeof setupLogsModal === 'function') setupLogsModal();
-    if (typeof setupHashModal === 'function') setupHashModal();
-    if (typeof setupDualScreenDetection === 'function') setupDualScreenDetection();
-    if (typeof setupWipeButton === 'function') setupWipeButton();
-    if (typeof setupClearConsoleButton === 'function') setupClearConsoleButton();
-
-    // Aplica estado Zero-Knowledge inicial
-    if (typeof resetUIVisual === 'function') resetUIVisual();
-
-    // Registo de Auditoria de Arranque
-    if (typeof ForensicLogger !== 'undefined') {
-        ForensicLogger.addEntry('SYSTEM_START', { 
-            version: 'v13.12.2-i18n', 
-            status: 'READY',
-            integrity: 'SHA-253_PENDING'
-        });
-    }
-});
-
-function startGatekeeperSession() {
-    ForensicLogger.addEntry('SESSION_START', { from: 'splash' });
-    const splash = document.getElementById('splashScreen');
-    const loading = document.getElementById('loadingOverlay');
-    if (splash && loading) {
-        splash.style.opacity = '0';
-        setTimeout(() => {
-            splash.style.display = 'none';
-            loading.style.display = 'flex';
-            if (typeof window.showMainInterface === 'function') {
-                window.showMainInterface();
-            } else {
-                console.error('[UNIFED] window.showMainInterface não definida. Verifique a ordem de carregamento.');
-            }
-        }, 500);
-    }
-    UNIFEDSystem.sessionId = generateSessionId();
-    UNIFEDSystem._sessionStart = Date.now();
-    setElementText('sessionIdDisplay', UNIFEDSystem.sessionId);
-    setElementText('verdictSessionId', UNIFEDSystem.sessionId);
-    if (typeof generateQRCode === 'function') generateQRCode();
-
-    ForensicLogger.addEntry('SESSION_CREATED', { sessionId: UNIFEDSystem.sessionId });
-
-    setTimeout(async () => {
-        if (typeof updateLoadingProgress === 'function') updateLoadingProgress(40);
-        if (typeof populateYears === 'function') populateYears();
-        if (typeof populateAnoFiscal === 'function') populateAnoFiscal();
-        if (typeof startClockAndDate === 'function') startClockAndDate();
-        if (typeof setupMainListeners === 'function') setupMainListeners();
-        
-        if (UNIFEDSystem.generateMasterHash) {
-            await UNIFEDSystem.generateMasterHash();
-            window.activeForensicSession = { sessionId: UNIFEDSystem.sessionId, masterHash: UNIFEDSystem.masterHash };
-        }
-        
-        if (typeof updateLoadingProgress === 'function') updateLoadingProgress(80);
-    }, 500);
-
-    window.showMainInterface = function() {
-        const loading = document.getElementById('loadingOverlay');
-        const main = document.getElementById('mainContainer');
-        if (loading && main) {
-            loading.style.opacity = '0';
-            setTimeout(() => {
-                loading.style.display = 'none';
-                main.style.display = 'block';
-                setTimeout(() => main.style.opacity = '1', 50);
-                ForensicLogger.addEntry('MAIN_INTERFACE_SHOWN');
-            }, 500);
-        }
         if (typeof logAudit === 'function') {
             logAudit('SISTEMA UNIFED - PROBATUM v13.12.2-i18n · DORA COMPLIANT · MODO PROFISSIONAL ATIVADO', 'success');
         }
