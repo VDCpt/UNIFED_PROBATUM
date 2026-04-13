@@ -4,7 +4,8 @@
  * Missão: Injeção Forense e Reconstituição da Verdade Material
  * Conformidade: DORA (UE) 2022/2554 · Art. 125.º CPP · ISO/IEC 27037:2012
  * ============================================================================
- * RETIFICAÇÕES v13.12.2-i18n (2026-04-12):
+ * RETIFICAÇÕES v13.12.2-i18n (2026-04-14):
+ * - [FIX] Sincronização estrita de Master Hash e Counts com extração forense validada.
  * - [FIX] Eliminação de Race Conditions (Watchdogs setInterval) substituídos por evento UNIFED_ANALYSIS_COMPLETE.
  * - [FIX] Refatoração do monkey-patching com flags atómicas (window._isHydrating) e cadeia de delegação.
  * - [FIX] Sanitização de IDs: uso de seletores escopados (#pureDashboard #id) em syncMetrics e updateAuxiliaryUI.
@@ -32,18 +33,18 @@
     // NOTA: O GAP C1 (SAF-T Bruto vs DAC7) foi ajustado para 1.951,42 € conforme relatório.
     const _PDF_CASE = Object.freeze({
         sessionId:  "UNIFED-MNGFN3C0-X57MO",
-        masterHash: "a3f8c9e2d5b6a7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1",
+        masterHash: "2A38423FED220D681D86E959F2C34F993BA71FCE9B92791199453B41E23A63E5",
         client: { 
             name: "Real Demo - Unipessoal, Lda", 
             nif: "999999990", 
             platform: "Plataforma A" 
         },
         counts: {
-            ctrl: 0,
-            saft: 0,
-            fat: 0,
-            ext: 0,
-            dac7: 0
+            ctrl: 4,
+            saft: 4,
+            fat: 2,
+            ext: 4,
+            dac7: 1
         },
         totals: {
             ganhos:           10157.73,
@@ -61,7 +62,7 @@
             gorjetas:           46.00,
             portagens:           0.15,
             campanhas:         405.00,
-            cancelamentos:      58.10
+            cancelamentos:      0.00
         },
         atf: {
             zScore: 2.45,
@@ -85,7 +86,7 @@
             disclaimer: "Os valores de impacto sistémico constituem contexto macroeconómico e não prova direta de ilícito alheio, nos termos do Art. 128.º do CPP."
         },
         meta: {
-            lastUpdate: "2026-04-12",
+            lastUpdate: "2026-04-14",
             forensicIntegrity: true
         }
     });
