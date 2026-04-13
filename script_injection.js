@@ -20,7 +20,6 @@
  * - [FIX] renderMatrix(): matriz dinâmica, evita duplicação, prioriza UNIFEDSystem.
  * - [FIX] _updateAuxiliaryUI(): valores dinâmicos de UNIFEDSystem.auxiliaryData.
  * - [FIX] Hook em updateDashboard() para re-hidratação pós-análise.
- * - [FIX] Camada 5: Watchdog de Estado + Monitorização direta da memória.
  * ============================================================================
  */
 
@@ -180,7 +179,7 @@
 
             console.log('[UNIFED] Iniciando Sincronização Forense...');
             
-            // Priorizar UNIFEDSystem.analysis.totals e UNIFEDSystem.auxiliaryData
+            // [AÇÃO 1] Priorizar UNIFEDSystem.analysis.totals e UNIFEDSystem.auxiliaryData
             const sys = window.UNIFEDSystem;
             const t = (sys && sys.analysis && sys.analysis.totals && sys.analysis.totals.ganhos > 0) ? sys.analysis.totals : data.totals;
             const aux = (sys && sys.auxiliaryData && sys.auxiliaryData.extractedAt) ? sys.auxiliaryData : data.totals;
@@ -513,7 +512,7 @@
         function _updateAuxiliaryUI() {
             if (!document.getElementById('pureDashboard')) return;
             
-            // Priorizar UNIFEDSystem.analysis.totals e UNIFEDSystem.auxiliaryData
+            // [AÇÃO 3] Priorizar UNIFEDSystem.analysis.totals e UNIFEDSystem.auxiliaryData
             const sys = window.UNIFEDSystem;
             const t = (sys && sys.analysis && sys.analysis.totals && sys.analysis.totals.ganhos > 0) ? sys.analysis.totals : data.totals;
             const aux = (sys && sys.auxiliaryData && sys.auxiliaryData.extractedAt) ? sys.auxiliaryData : data.totals;
@@ -572,73 +571,525 @@
     })();
 
     // =========================================================================
-    // CAMADA 5 · MOTOR DE PERSISTÊNCIA E WATCHDOG (FIX v13.12.2-i18n)
+    // Camada 5 – Simulação de Upload, Força de Plataforma e Inicialização
     // =========================================================================
-    async function startApplication() {
-        try {
-            await _activatePurePanel(); // Garante que o painel HTML está no DOM
-            
-            // 1. Execução Imediata (First Pass)
-            if (typeof window.UNIFED_INTERNAL.syncMetrics === 'function') {
-                window.UNIFED_INTERNAL.syncMetrics();
-                window.UNIFED_INTERNAL.renderMatrix();
-            }
+    (function() {
+        if (!window.UNIFED_INTERNAL) return;
+        const { data, fmt } = window.UNIFED_INTERNAL;
 
-            // 2. Hook de Resiliência: Monitorização do Objeto de Análise
-            // Se o canal de mensagens falhar, o Watchdog deteta a mudança nos dados
-            let lastKnownGanhos = 0;
-            const stateWatchdog = setInterval(() => {
-                const sys = window.UNIFEDSystem;
-                if (sys && sys.analysis && sys.analysis.totals) {
-                    const currentGanhos = sys.analysis.totals.ganhos || 0;
-                    if (currentGanhos !== lastKnownGanhos) {
-                        console.warn('[UNIFED] Watchdog detetou novos dados. Forçando refresh da UI...');
-                        lastKnownGanhos = currentGanhos;
-                        if (typeof window.UNIFED_INTERNAL.syncMetrics === 'function') {
-                            window.UNIFED_INTERNAL.syncMetrics();
-                            window.UNIFED_INTERNAL.renderMatrix();
-                            window.UNIFED_INTERNAL.updateAuxiliaryUI();
-                            if (window.forceRevealSmokingGun) window.forceRevealSmokingGun();
-                        }
+        function _forcePlatformReadOnly() {
+            const platformSelect = document.getElementById('selPlatformFixed');
+            if (platformSelect) {
+                for (let i = 0; i < platformSelect.options.length; i++) {
+                    if (platformSelect.options[i].value === 'outra') {
+                        platformSelect.selectedIndex = i;
+                        break;
                     }
                 }
-            }, 1500); // Verificação a cada 1.5s para evitar overhead
-
-            // 3. Reparação do Hook Global
-            const patchDashboard = () => {
-                if (typeof window.updateDashboard === 'function' && !window.updateDashboard._nexusHooked) {
-                    const _orig = window.updateDashboard;
-                    window.updateDashboard = function() {
-                        const result = _orig.apply(this, arguments);
-                        // Força a atualização dos nossos módulos injetados
-                        setTimeout(() => {
-                            if (window.UNIFED_INTERNAL.syncMetrics) window.UNIFED_INTERNAL.syncMetrics();
-                            if (window.UNIFED_INTERNAL.renderMatrix) window.UNIFED_INTERNAL.renderMatrix();
-                        }, 100);
-                        return result;
-                    };
-                    window.updateDashboard._nexusHooked = true;
-                    console.log('[UNIFED] Hook updateDashboard selado com sucesso.');
-                }
-            };
-            
-            patchDashboard();
-            // Re-patch em caso de reinicialização do sistema core
-            window.addEventListener('hashchange', patchDashboard);
-
-        } catch (err) {
-            console.error('[UNIFED] Erro fatal na Camada 5:', err);
+                platformSelect.disabled = true;
+                platformSelect.style.opacity = '0.7';
+                platformSelect.style.cursor = 'not-allowed';
+            }
+            if (window.UNIFEDSystem) window.UNIFEDSystem.selectedPlatform = 'outra';
+            console.log('[UNIFED] Plataforma forçada para "Plataforma A" em modo read‑only.');
         }
-    }
 
-    // Iniciar com proteção contra race conditions de carregamento
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', startApplication);
-    } else {
-        startApplication();
-    }
+        function _removeZeroDac7Kpis() {
+            const zeroKpis = ['dac7Q1Value', 'dac7Q2Value', 'dac7Q3Value'];
+            zeroKpis.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    const card = el.closest('.kpi-card');
+                    if (card) card.remove();
+                    else el.remove();
+                }
+            });
+        }
 
-})();
+        async function _simulateEvidenceUpload() {
+            try {
+                if (typeof window.UNIFEDSystem === 'undefined') throw new Error('UNIFEDSystem not found');
+                const sys = window.UNIFEDSystem;
+                const t = data.totals;
+                if (!sys.documents) sys.documents = {};
+                if (!sys.documents.control) sys.documents.control = { files: [], totals: { records: 0 } };
+                if (!sys.documents.saft) sys.documents.saft = { files: [], totals: { bruto: 0, iliquido: 0, iva: 0, records: 0 } };
+                if (!sys.documents.statements) sys.documents.statements = { files: [], totals: { ganhos: 0, despesas: 0, ganhosLiquidos: 0, records: 0 } };
+                if (!sys.documents.invoices) sys.documents.invoices = { files: [], totals: { invoiceValue: 0, records: 0 } };
+                if (!sys.documents.dac7) sys.documents.dac7 = { files: [], totals: { q1: 0, q2: 0, q3: 0, q4: 0, totalPeriodo: 0, records: 0 } };
+                if (!sys.analysis) sys.analysis = { evidenceIntegrity: [] };
+                if (!sys.analysis.evidenceIntegrity) sys.analysis.evidenceIntegrity = [];
+
+                sys.documents.control.files = []; sys.documents.saft.files = []; sys.documents.statements.files = [];
+                sys.documents.invoices.files = []; sys.documents.dac7.files = []; sys.analysis.evidenceIntegrity = [];
+
+                const controlFiles = [{ name: 'controlo_autenticidade_1.csv', size: 256 }, { name: 'controlo_autenticidade_2.csv', size: 256 }, { name: 'controlo_autenticidade_3.csv', size: 256 }, { name: 'controlo_autenticidade_4.csv', size: 256 }];
+                for (const file of controlFiles) {
+                    sys.documents.control.files.push({ name: file.name, size: file.size });
+                    const hash = await window.generateForensicHash(file.name + 'control_demo');
+                    sys.analysis.evidenceIntegrity.push({ filename: file.name, type: 'control', hash: hash, timestamp: new Date().toISOString(), size: file.size });
+                }
+                sys.documents.control.totals.records = controlFiles.length;
+
+                const saftFiles = [{ name: '131509_202409.csv', size: 1024 }, { name: '131509_202410.csv', size: 1024 }, { name: '131509_202411.csv', size: 1024 }, { name: '131509_202412.csv', size: 1024 }];
+                for (const file of saftFiles) {
+                    sys.documents.saft.files.push({ name: file.name, size: file.size });
+                    const hash = await window.generateForensicHash(file.name + 'saft_demo');
+                    sys.analysis.evidenceIntegrity.push({ filename: file.name, type: 'saft', hash: hash, timestamp: new Date().toISOString(), size: file.size });
+                }
+                sys.documents.saft.totals.bruto = t.saftBruto;
+                sys.documents.saft.totals.iliquido = t.saftIliquido;
+                sys.documents.saft.totals.iva = t.saftIva;
+                sys.documents.saft.totals.records = saftFiles.length;
+
+                const statementFiles = [{ name: 'extrato_setembro_2024.pdf', size: 2048 }, { name: 'extrato_outubro_2024.pdf', size: 2048 }, { name: 'extrato_novembro_2024.pdf', size: 2048 }, { name: 'extrato_dezembro_2024.pdf', size: 2048 }];
+                for (const file of statementFiles) {
+                    sys.documents.statements.files.push({ name: file.name, size: file.size });
+                    const hash = await window.generateForensicHash(file.name + 'statement_demo');
+                    sys.analysis.evidenceIntegrity.push({ filename: file.name, type: 'statement', hash: hash, timestamp: new Date().toISOString(), size: file.size });
+                }
+                sys.documents.statements.totals.ganhos = t.ganhos;
+                sys.documents.statements.totals.despesas = t.despesas;
+                sys.documents.statements.totals.ganhosLiquidos = t.ganhosLiquidos;
+                sys.documents.statements.totals.records = statementFiles.length;
+
+                const invoiceFiles = [{ name: 'PT1124_202412.pdf', size: 512 }, { name: 'PT1125_202412.pdf', size: 512 }];
+                for (const file of invoiceFiles) {
+                    sys.documents.invoices.files.push({ name: file.name, size: file.size });
+                    const hash = await window.generateForensicHash(file.name + 'invoice_demo');
+                    sys.analysis.evidenceIntegrity.push({ filename: file.name, type: 'invoice', hash: hash, timestamp: new Date().toISOString(), size: file.size });
+                }
+                sys.documents.invoices.totals.invoiceValue = t.faturaPlataforma;
+                sys.documents.invoices.totals.records = invoiceFiles.length;
+
+                const dac7Files = [{ name: 'dac7_2024_semestre2.pdf', size: 1024 }];
+                for (const file of dac7Files) {
+                    sys.documents.dac7.files.push({ name: file.name, size: file.size });
+                    const hash = await window.generateForensicHash(file.name + 'dac7_demo');
+                    sys.analysis.evidenceIntegrity.push({ filename: file.name, type: 'dac7', hash: hash, timestamp: new Date().toISOString(), size: file.size });
+                }
+                sys.documents.dac7.totals.q4 = t.dac7TotalPeriodo;
+                sys.documents.dac7.totals.q3 = 0; sys.documents.dac7.totals.q1 = 0; sys.documents.dac7.totals.q2 = 0;
+                sys.documents.dac7.totals.totalPeriodo = t.dac7TotalPeriodo;
+                sys.documents.dac7.totals.records = dac7Files.length;
+
+                if (!sys.auxiliaryData) sys.auxiliaryData = {};
+                sys.auxiliaryData.campanhas = t.campanhas || 0;
+                sys.auxiliaryData.portagens = t.portagens || 0;
+                sys.auxiliaryData.gorjetas = t.gorjetas || 0;
+                sys.auxiliaryData.cancelamentos = t.cancelamentos || 0;
+                sys.auxiliaryData.totalNaoSujeitos = (t.campanhas || 0) + (t.portagens || 0) + (t.gorjetas || 0);
+                sys.auxiliaryData.processedFrom = [];
+                sys.auxiliaryData.extractedAt = new Date().toISOString();
+
+                if (!sys.monthlyData) sys.monthlyData = {};
+                const monthlyGanhos = [2450.00, 2560.00, 2480.00, 2667.73];
+                const monthlyDespesas = [590.00, 615.00, 600.00, 642.89];
+                const monthlyGanhosLiq = [1860.00, 1945.00, 1880.00, 2024.84];
+                const months = ['202409', '202410', '202411', '202412'];
+                months.forEach((month, idx) => { sys.monthlyData[month] = { ganhos: monthlyGanhos[idx], despesas: monthlyDespesas[idx], ganhosLiq: monthlyGanhosLiq[idx] }; });
+                sys.dataMonths = new Set(months);
+
+                if (!sys.analysis.totals) sys.analysis.totals = {};
+                sys.analysis.totals.saftBruto = t.saftBruto;
+                sys.analysis.totals.saftIliquido = t.saftIliquido;
+                sys.analysis.totals.saftIva = t.saftIva;
+                sys.analysis.totals.ganhos = t.ganhos;
+                sys.analysis.totals.despesas = t.despesas;
+                sys.analysis.totals.ganhosLiquidos = t.ganhosLiquidos;
+                sys.analysis.totals.faturaPlataforma = t.faturaPlataforma;
+                sys.analysis.totals.dac7Q1 = 0; sys.analysis.totals.dac7Q2 = 0; sys.analysis.totals.dac7Q3 = 0;
+                sys.analysis.totals.dac7Q4 = t.dac7TotalPeriodo;
+                sys.analysis.totals.dac7TotalPeriodo = t.dac7TotalPeriodo;
+
+                const discrepanciaSaftVsDac7 = t.saftBruto - t.dac7TotalPeriodo;
+                const percentagemSaftVsDac7 = t.saftBruto > 0 ? (discrepanciaSaftVsDac7 / t.saftBruto) * 100 : 0;
+                const discrepanciaCritica = t.despesas - t.faturaPlataforma;
+                const percentagemOmissao = t.despesas > 0 ? (discrepanciaCritica / t.despesas) * 100 : 0;
+                const ivaFalta = discrepanciaCritica * 0.23;
+                const ivaFalta6 = discrepanciaCritica * 0.06;
+                const agravamentoBrutoIRC = discrepanciaCritica;
+                const ircEstimado = discrepanciaCritica * 0.21;
+                const asfixiaFinanceira = t.saftBruto * 0.06;
+
+                if (!sys.analysis.crossings) sys.analysis.crossings = {};
+                sys.analysis.crossings.discrepanciaSaftVsDac7 = discrepanciaSaftVsDac7;
+                sys.analysis.crossings.percentagemSaftVsDac7 = percentagemSaftVsDac7;
+                sys.analysis.crossings.discrepanciaCritica = discrepanciaCritica;
+                sys.analysis.crossings.percentagemOmissao = percentagemOmissao;
+                sys.analysis.crossings.ivaFalta = ivaFalta;
+                sys.analysis.crossings.ivaFalta6 = ivaFalta6;
+                sys.analysis.crossings.agravamentoBrutoIRC = agravamentoBrutoIRC;
+                sys.analysis.crossings.ircEstimado = ircEstimado;
+                sys.analysis.crossings.asfixiaFinanceira = asfixiaFinanceira;
+                sys.analysis.crossings.btor = t.despesas;
+                sys.analysis.crossings.btf = t.faturaPlataforma;
+                sys.analysis.crossings.c1_delta = discrepanciaSaftVsDac7;
+                sys.analysis.crossings.c1_pct = percentagemSaftVsDac7;
+                sys.analysis.crossings.c2_delta = discrepanciaCritica;
+                sys.analysis.crossings.c2_pct = percentagemOmissao;
+
+                if (!sys.client && data.client) {
+                    sys.client = { name: data.client.name, nif: data.client.nif, platform: data.client.platform };
+                    const clientStatus = document.getElementById('clientStatusFixed');
+                    if (clientStatus) {
+                        clientStatus.style.display = 'flex';
+                        const nameSpan = document.getElementById('clientNameDisplayFixed');
+                        const nifSpan = document.getElementById('clientNifDisplayFixed');
+                        if (nameSpan) nameSpan.textContent = data.client.name;
+                        if (nifSpan) nifSpan.textContent = data.client.nif;
+                    }
+                    const nameInput = document.getElementById('clientNameFixed');
+                    const nifInput = document.getElementById('clientNIFFixed');
+                    if (nameInput) nameInput.value = data.client.name;
+                    if (nifInput) nifInput.value = data.client.nif;
+                }
+
+                const periodSelect = document.getElementById('periodoAnalise');
+                if (periodSelect) {
+                    periodSelect.value = '2s';
+                    if (typeof window.UNIFEDSystem !== 'undefined') window.UNIFEDSystem.selectedPeriodo = '2s';
+                    const changeEvent = new Event('change', { bubbles: true });
+                    periodSelect.dispatchEvent(changeEvent);
+                }
+                const trimestralContainer = document.getElementById('trimestralSelectorContainer');
+                if (trimestralContainer) trimestralContainer.style.display = 'none';
+
+                const evidenceHashes = sys.analysis.evidenceIntegrity.map(ev => ev.hash).filter(h => h && h.length === 64).sort();
+                const binaryConcat = evidenceHashes.join('') + JSON.stringify({ client: sys.client, totals: t }) + sys.sessionId;
+                const masterHashFull = await window.generateForensicHash(binaryConcat);
+                sys.masterHash = masterHashFull;
+                window.activeForensicSession = { sessionId: sys.sessionId, masterHash: masterHashFull };
+
+                console.log('[UNIFED] Evidências simuladas carregadas. Total: 15 ficheiros.');
+                return true;
+            } catch (err) {
+                console.error('[UNIFED] Erro na simulação de evidências:', err);
+                throw err;
+            }
+        }
+
+        function _updateEvidenceCountersAndShow() {
+            const sys = window.UNIFEDSystem;
+            if (!sys || !sys.documents) return;
+            const controlCount = sys.documents.control?.files?.length || 0;
+            const saftCount = sys.documents.saft?.files?.length || 0;
+            const invoiceCount = sys.documents.invoices?.files?.length || 0;
+            const statementCount = sys.documents.statements?.files?.length || 0;
+            const dac7Count = sys.documents.dac7?.files?.length || 0;
+            const total = controlCount + saftCount + invoiceCount + statementCount + dac7Count;
+
+            const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+            setText('controlCountCompact', controlCount);
+            setText('saftCountCompact', saftCount);
+            setText('invoiceCountCompact', invoiceCount);
+            setText('statementCountCompact', statementCount);
+            setText('dac7CountCompact', dac7Count);
+            setText('summaryControl', controlCount);
+            setText('summarySaft', saftCount);
+            setText('summaryInvoices', invoiceCount);
+            setText('summaryStatements', statementCount);
+            setText('summaryDac7', dac7Count);
+            setText('summaryTotal', total);
+            const evidenceCountTotal = document.getElementById('evidenceCountTotal');
+            if (evidenceCountTotal) evidenceCountTotal.textContent = total;
+
+            const evidenceSection = document.getElementById('pureEvidenceSection');
+            if (evidenceSection) evidenceSection.style.display = 'block';
+            const counters = ['controlCountCompact', 'saftCountCompact', 'invoiceCountCompact', 'statementCountCompact', 'dac7CountCompact'];
+            counters.forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'inline-block'; });
+            console.log('[UNIFED] Contadores de evidências atualizados e secção revelada.');
+        }
+
+        window.UNIFED_INTERNAL.forcePlatformReadOnly = _forcePlatformReadOnly;
+        window.UNIFED_INTERNAL.removeZeroDac7Kpis = _removeZeroDac7Kpis;
+        window.UNIFED_INTERNAL.simulateEvidenceUpload = _simulateEvidenceUpload;
+        window.UNIFED_INTERNAL.updateEvidenceCountersAndShow = _updateEvidenceCountersAndShow;
+        console.log('[UNIFED] Camada 5: OK.');
+    })();
+
+    // =========================================================================
+    // Função de correção de índices romanos
+    // =========================================================================
+    function correctRomanIndices() {
+        const titles = document.querySelectorAll('#pureDashboard .pure-card-title span, .pure-card-title, .verdict-title');
+        titles.forEach(el => {
+            let txt = el.textContent;
+            const maps = {
+                'IV. IMPACTO FISCAL': 'V. IMPACTO FISCAL',
+                'V. CADEIA DE CUSTÓDIA': 'VI. CADEIA DE CUSTÓDIA',
+                'VI. CONCLUSÃO': 'VII. CONCLUSÃO',
+                'IV. ANÁLISE DE RISCO SISTÉMICO (MIS)': 'V. ANÁLISE DE RISCO SISTÉMICO (MIS)'
+            };
+            for (let key in maps) {
+                if (txt.includes(key)) el.textContent = txt.replace(key, maps[key]);
+            }
+        });
+    }
+    window.correctRomanIndices = correctRomanIndices;
+
+    // =========================================================================
+    // Inicialização Principal com Re-init Hook
+    // =========================================================================
+    (function() {
+        if (!window.UNIFED_INTERNAL) return;
+        const { data, fmt, set, syncMetrics, renderMatrix } = window.UNIFED_INTERNAL;
+        const { injectAuxiliaryBoxesCSS, injectMacroCard, updateAuxiliaryUI, forcePlatformReadOnly, removeZeroDac7Kpis, simulateEvidenceUpload, updateEvidenceCountersAndShow } = window.UNIFED_INTERNAL;
+
+        let _initializing = false;
+
+        function showClientIdentificationBlock() {
+            let block = document.getElementById('clientIdentificationBlock');
+            if (!block) {
+                const sidebarHeader = document.querySelector('.sidebar-header-fixed');
+                if (sidebarHeader) {
+                    sidebarHeader.id = 'clientIdentificationBlock';
+                    block = sidebarHeader;
+                } else {
+                    console.warn('[UNIFED] Elemento .sidebar-header-fixed não encontrado. O bloco de identificação não será exibido.');
+                    return;
+                }
+            }
+            const subjectHeader = document.getElementById('pure-subject-header');
+            if (subjectHeader) subjectHeader.style.display = 'block';
+        }
+
+        function waitForPureDashboard() {
+            return new Promise((resolve) => {
+                if (document.getElementById('pureDashboard')) { resolve(); return; }
+                const observer = new MutationObserver((mutations, obs) => {
+                    if (document.getElementById('pureDashboard')) {
+                        obs.disconnect();
+                        resolve();
+                    }
+                });
+                observer.observe(document.body, { childList: true, subtree: true });
+                setTimeout(() => { observer.disconnect(); resolve(); }, 5000);
+            });
+        }
+
+        function initializeCoreDashboard() {
+            if (_initializing) {
+                console.warn('[UNIFED] Inicialização já em curso, ignorando chamada duplicada.');
+                return;
+            }
+            _initializing = true;
+            waitForPureDashboard().then(() => {
+                setTimeout(() => {
+                    if (typeof window.injectAuxiliaryHelperBoxes === 'function') window.injectAuxiliaryHelperBoxes();
+                    if (typeof syncMetrics === 'function') syncMetrics();
+                    if (typeof renderMatrix === 'function') renderMatrix();
+                    if (typeof injectMacroCard === 'function') injectMacroCard();
+                    if (typeof injectAuxiliaryBoxesCSS === 'function') injectAuxiliaryBoxesCSS();
+                    if (typeof forcePlatformReadOnly === 'function') forcePlatformReadOnly();
+                    if (typeof removeZeroDac7Kpis === 'function') removeZeroDac7Kpis();
+                    if (document.getElementById('pureDashboard')) {
+                        if (typeof updateAuxiliaryUI === 'function') updateAuxiliaryUI();
+                        document.querySelectorAll('.chart-section').forEach(section => { 
+                            section.style.display = 'block'; 
+                            section.style.height = 'auto';
+                        });
+                        if (typeof Chart === 'undefined') {
+                            document.querySelectorAll('.chart-section').forEach(section => section.style.display = 'none');
+                            console.warn('[UNIFED] Chart.js não disponível – secções de gráfico ocultadas.');
+                        }
+                    }
+                    console.log('[UNIFED] Core dashboard inicializado com sucesso após injeção do painel.');
+                    _initializing = false;
+                }, 100);
+            }).catch(err => {
+                console.warn('[UNIFED] Erro ao aguardar #pureDashboard', err);
+                _initializing = false;
+            });
+        }
+
+        async function initializeFullWithEvidence() {
+            console.log('[UNIFED] A carregar evidências do caso real...');
+            await waitForPureDashboard();
+            try {
+                await simulateEvidenceUpload();
+                updateEvidenceCountersAndShow();
+                if (typeof window.injectAuxiliaryHelperBoxes === 'function') window.injectAuxiliaryHelperBoxes();
+                if (typeof updateAuxiliaryUI === 'function') updateAuxiliaryUI();
+                
+                // Re-sincronização após upload e geração de hash
+                if (typeof window.UNIFED_INTERNAL.syncMetrics === 'function') {
+                    window.UNIFED_INTERNAL.syncMetrics();
+                }
+                
+                if (window.UNIFEDSystem && window.UNIFEDSystem.masterHash) {
+                    const hashEl = document.getElementById('masterHashValue');
+                    if (hashEl) hashEl.textContent = window.UNIFEDSystem.masterHash;
+                    if (typeof generateQRCode === 'function') generateQRCode();
+                }
+                showClientIdentificationBlock();
+                if (typeof window.renderChart === 'function') window.renderChart();
+                if (typeof window.renderDiscrepancyChart === 'function') window.renderDiscrepancyChart();
+                console.log('[UNIFED] ✅ Evidências carregadas e secção revelada.');
+            } catch (err) {
+                console.error('[UNIFED] Falha ao carregar evidências:', err);
+            }
+        }
+
+        function setupRealCaseButton() {
+            let targetButton = document.getElementById('demoModeBtn');
+            if (!targetButton) {
+                const buttons = document.querySelectorAll('button, .btn, [role="button"]');
+                for (let btn of buttons) {
+                    if (btn.textContent.trim() === 'CASO REAL ANONIMIZADO') {
+                        targetButton = btn;
+                        break;
+                    }
+                }
+            }
+            if (!targetButton) {
+                console.warn('[UNIFED] Botão "CASO REAL ANONIMIZADO" não encontrado. Listener genérico activado.');
+                document.body.addEventListener('click', async function(e) {
+                    const el = e.target.closest('button, .btn, [role="button"]');
+                    if (el && el.textContent.includes('CASO REAL ANONIMIZADO')) {
+                        e.preventDefault();
+                        if (_initializing) return;
+                        try {
+                            if (typeof window._activatePurePanel === 'function') {
+                                await window._activatePurePanel();
+                            }
+                            await waitForPureDashboard();
+                            initializeCoreDashboard();
+                            await new Promise(r => setTimeout(r, 100));
+                            window.UNIFED_INTERNAL.syncMetrics();
+                            await initializeFullWithEvidence();
+                            if (typeof window.correctRomanIndices === 'function') {
+                                window.correctRomanIndices();
+                            }
+                        } catch (err) {
+                            console.error('[UNIFED] Erro na ativação do caso real:', err);
+                        }
+                    }
+                });
+                return;
+            }
+
+            if (targetButton.getAttribute('data-unifed-active') === 'true') return;
+
+            targetButton.addEventListener('click', async function(e) {
+                e.preventDefault();
+                if (_initializing) return;
+
+                logAudit('Iniciando transição para Caso Real Anonimizado...', 'info');
+
+                try {
+                    if (typeof window._activatePurePanel === 'function') {
+                        await window._activatePurePanel();
+                    }
+                    await waitForPureDashboard();
+                    initializeCoreDashboard();
+                    await new Promise(r => setTimeout(r, 100));
+                    window.UNIFED_INTERNAL.syncMetrics();
+                    await initializeFullWithEvidence();
+
+                    if (typeof window.correctRomanIndices === 'function') {
+                        window.correctRomanIndices();
+                    }
+                    logAudit('Interface harmonizada (Índices Romanos V-VII).', 'success');
+                } catch (err) {
+                    console.error('[UNIFED] Erro na ativação do caso real:', err);
+                }
+            }, { capture: true });
+
+            targetButton.setAttribute('data-unifed-active', 'true');
+            console.log('[UNIFED] Listener associado ao botão "CASO REAL ANONIMIZADO" com espera assíncrona.');
+        }
+
+        function generateQRCode() {
+            const container = document.getElementById('qrcodeContainer');
+            if (!container) return;
+            container.innerHTML = '';
+            const hashFull = window.UNIFEDSystem?.masterHash || 'HASH_INDISPONIVEL';
+            const sessionShort = window.UNIFEDSystem?.sessionId ? window.UNIFEDSystem.sessionId.substring(0, 16) : 'N/A';
+            const qrData = `UNIFED|${sessionShort}|${hashFull}`;
+            if (typeof QRCode !== 'undefined') {
+                new QRCode(container, { text: qrData, width: 75, height: 75, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.L });
+            }
+            container.setAttribute('data-tooltip', 'Clique para verificar a cadeia de custódia completa');
+        }
+        window.generateQRCode = generateQRCode;
+
+        // [AÇÃO 4] Hook na Execução Pericial para Re-hidratação de Estado
+        if (typeof window.updateDashboard === 'function' && !window.updateDashboard._nexusHooked) {
+            const _origUpdateDashboard = window.updateDashboard;
+            window.updateDashboard = function() {
+                _origUpdateDashboard.apply(this, arguments);
+                if (typeof window.UNIFED_INTERNAL.syncMetrics === 'function') window.UNIFED_INTERNAL.syncMetrics();
+                if (typeof window.UNIFED_INTERNAL.renderMatrix === 'function') window.UNIFED_INTERNAL.renderMatrix();
+                if (typeof window.UNIFED_INTERNAL.updateAuxiliaryUI === 'function') window.UNIFED_INTERNAL.updateAuxiliaryUI();
+                console.log('[UNIFED] Re-hidratação do DOM (Smoking Guns, Zona Cinzenta e Matriz) concluída via Hook.');
+            };
+            window.updateDashboard._nexusHooked = true;
+        }
+
+       // =========================================================================
+// CAMADA 5 · MOTOR DE PERSISTÊNCIA E WATCHDOG (FIX v13.12.2-i18n)
+// =========================================================================
+async function startApplication() {
+    try {
+        await _activatePurePanel(); // Garante que o painel HTML está no DOM
+        
+        // 1. Execução Imediata (First Pass)
+        if (typeof window.UNIFED_INTERNAL.syncMetrics === 'function') {
+            window.UNIFED_INTERNAL.syncMetrics();
+            window.UNIFED_INTERNAL.renderMatrix();
+        }
+
+        // 2. Hook de Resiliência: Monitorização do Objeto de Análise
+        let lastKnownGanhos = 0;
+        const stateWatchdog = setInterval(() => {
+            const sys = window.UNIFEDSystem;
+            if (sys && sys.analysis && sys.analysis.totals) {
+                const currentGanhos = sys.analysis.totals.ganhos || 0;
+                if (currentGanhos !== lastKnownGanhos) {
+                    console.warn('[UNIFED] Watchdog detetou novos dados. Forçando refresh da UI...');
+                    lastKnownGanhos = currentGanhos;
+                    if (typeof window.UNIFED_INTERNAL.syncMetrics === 'function') {
+                        window.UNIFED_INTERNAL.syncMetrics();
+                        window.UNIFED_INTERNAL.renderMatrix();
+                        window.UNIFED_INTERNAL.updateAuxiliaryUI();
+                        if (window.forceRevealSmokingGun) window.forceRevealSmokingGun();
+                    }
+                }
+            }
+        }, 1500);
+
+        // 3. Reparação do Hook Global
+        const patchDashboard = () => {
+            if (typeof window.updateDashboard === 'function' && !window.updateDashboard._nexusHooked) {
+                const _orig = window.updateDashboard;
+                window.updateDashboard = function() {
+                    const result = _orig.apply(this, arguments);
+                    setTimeout(() => {
+                        if (window.UNIFED_INTERNAL.syncMetrics) window.UNIFED_INTERNAL.syncMetrics();
+                        if (window.UNIFED_INTERNAL.renderMatrix) window.UNIFED_INTERNAL.renderMatrix();
+                    }, 100);
+                    return result;
+                };
+                window.updateDashboard._nexusHooked = true;
+                console.log('[UNIFED] Hook updateDashboard selado com sucesso.');
+            }
+        };
+        
+        patchDashboard();
+        window.addEventListener('hashchange', patchDashboard);
+
+    } catch (err) {
+        console.error('[UNIFED] Erro fatal na Camada 5:', err);
+    }
+}
+
+// Iniciar com proteção contra race conditions de carregamento
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', startApplication);
+} else {
+    startApplication();
+}
 
 // ============================================================================
 // FORCE REVEAL SMOKING GUN – EXPANSÃO DE VISIBILIDADE (v13.12.2-i18n)
