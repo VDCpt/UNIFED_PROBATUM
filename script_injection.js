@@ -1164,4 +1164,3 @@ if (typeof window.forceRevealSmokingGun === 'function') {
     }, 2000);
 
 })(); 
-    // FECHO DA IIFE (OBRIGATÓRIO)
