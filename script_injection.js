@@ -60,7 +60,6 @@
             saftIva:            466.30,
             despesas:          2447.89,
             faturaPlataforma:   262.94,
-            // DAC7 ajustado para que a diferença (saftBruto - dac7TotalPeriodo) = 1951.42
             dac7TotalPeriodo:  6276.55,
             iva6Omitido:        131.10,
             iva23Omitido:       502.54,
@@ -179,14 +178,13 @@
 
             console.log('[UNIFED] Iniciando Sincronização Forense...');
             
-            // [AÇÃO 1] Priorizar UNIFEDSystem.analysis.totals e UNIFEDSystem.auxiliaryData
             const sys = window.UNIFEDSystem;
             const t = (sys && sys.analysis && sys.analysis.totals && sys.analysis.totals.ganhos > 0) ? sys.analysis.totals : data.totals;
             const aux = (sys && sys.auxiliaryData && sys.auxiliaryData.extractedAt) ? sys.auxiliaryData : data.totals;
             
             const discrepanciaC2 = t.despesas - t.faturaPlataforma;
             const percentC2 = (t.despesas > 0) ? (discrepanciaC2 / t.despesas) * 100 : 0;
-            const discrepanciaC1 = t.saftBruto - t.dac7TotalPeriodo; // Agora 1951.42
+            const discrepanciaC1 = t.saftBruto - t.dac7TotalPeriodo;
             const percentC1 = (t.saftBruto > 0) ? (discrepanciaC1 / t.saftBruto) * 100 : 0;
             const ircEstimado = discrepanciaC2 * 0.21;
             const asfixiaFinanceira = t.saftBruto * 0.06;
@@ -210,14 +208,12 @@
                 'pure-nao-sujeitos': fmt(totalNaoSujeitosCalc), 'pure-atf-sp': data.atf.score + '/100',
                 'pure-atf-trend': data.atf.trend, 'pure-atf-outliers': data.atf.outliers + ' outliers > 2σ',
                 'pure-atf-meses': '2.º Semestre 2024 — 4 meses com dados (Set–Dez)',
-                // Zona Cinzenta usando 'aux' (prioritário)
                 'pure-nc-campanhas': fmt(aux.campanhas),
                 'pure-nc-gorjetas': fmt(aux.gorjetas),
                 'pure-nc-portagens': fmt(aux.portagens),
                 'pure-nc-total': fmt(totalNaoSujeitosCalc),
                 'pure-verdict': 'RISCO CRÍTICO · DESVIO PADRÃO > 2σ',
                 'pure-verdict-pct': percentC2.toFixed(2) + '%',
-                // Hash e Sessão dinâmicos com fallback
                 'pure-session-id': (sys && sys.sessionId) ? sys.sessionId : data.sessionId,
                 'pure-hash-prefix': (sys && sys.masterHash) ? sys.masterHash.substring(0, 12).toUpperCase() + '...' : data.masterHash.substring(0, 12) + '...',
                 'pure-hash-prefix-verdict': (sys && sys.masterHash) ? sys.masterHash.substring(0, 16).toUpperCase() + '...' : data.masterHash.substring(0, 16) + '...',
@@ -228,7 +224,6 @@
                 'pure-atf-zscore': data.atf.zScore.toString(), 'pure-atf-confianca': data.atf.confianca,
                 'pure-atf-score-val': data.atf.score + '/100', 'pure-iva-devido-val': fmt(asfixiaFinanceira),
                 'pure-impacto-macro': fmt(data.macro_analysis.estimated_systemic_gap),
-                // Contadores dinâmicos
                 'pure-ctrl-qty': getCounter('control', data.counts.ctrl.toString()),
                 'pure-saft-qty': getCounter('saft', data.counts.saft.toString()),
                 'pure-fat-qty': getCounter('invoices', data.counts.fat.toString()),
@@ -257,7 +252,6 @@
                 console.warn('[UNIFED] Chart.js não disponível – gráficos não renderizados.');
             }
             
-            // Textos legais e detalhes adicionais
             const sg2Legal = document.getElementById('pure-sg2-legal');
             if (sg2Legal) sg2Legal.textContent = 'Art. 36.º n.º 11 CIVA · Art. 119.º RGIT';
             const sg1Legal = document.getElementById('pure-sg1-legal');
@@ -296,7 +290,6 @@
         window.UNIFED_INTERNAL.renderMatrix = function() {
             const target = document.getElementById('pureDashboard');
             if (!target) return;
-            // Remove matriz antiga para evitar duplicação
             const existingMatrix = document.getElementById('triangulationMatrixContainer');
             if (existingMatrix) existingMatrix.remove();
 
@@ -512,7 +505,6 @@
         function _updateAuxiliaryUI() {
             if (!document.getElementById('pureDashboard')) return;
             
-            // [AÇÃO 3] Priorizar UNIFEDSystem.analysis.totals e UNIFEDSystem.auxiliaryData
             const sys = window.UNIFEDSystem;
             const t = (sys && sys.analysis && sys.analysis.totals && sys.analysis.totals.ganhos > 0) ? sys.analysis.totals : data.totals;
             const aux = (sys && sys.auxiliaryData && sys.auxiliaryData.extractedAt) ? sys.auxiliaryData : data.totals;
@@ -528,7 +520,6 @@
                 { id: 'pure-disc-c2-grid', val: t.despesas - t.faturaPlataforma }, { id: 'pure-iva-devido', val: t.asfixiaFinanceira },
                 { id: 'pure-nao-sujeitos', val: totalNaoSujeitosCalc }, { id: 'pure-atf-sp', val: data.atf.score + '/100' }, { id: 'pure-atf-trend', val: data.atf.trend },
                 { id: 'pure-atf-outliers', val: data.atf.outliers + ' outliers > 2σ' }, { id: 'pure-atf-meses', val: '2.º Semestre 2024 — 4 meses com dados (Set–Dez)' },
-                // Zona Cinzenta usando aux (prioritário)
                 { id: 'pure-nc-campanhas', val: aux.campanhas },
                 { id: 'pure-nc-gorjetas', val: aux.gorjetas },
                 { id: 'pure-nc-portagens', val: aux.portagens },
@@ -545,7 +536,6 @@
                 { id: 'pure-iva-devido-val', val: t.asfixiaFinanceira }, { id: 'pure-impacto-macro', val: data.macro_analysis.estimated_systemic_gap },
                 { id: 'pure-ctrl-qty', val: data.counts.ctrl }, { id: 'pure-saft-qty', val: data.counts.saft }, { id: 'pure-fat-qty', val: data.counts.fat },
                 { id: 'pure-ext-qty', val: data.counts.ext }, { id: 'pure-dac7-qty', val: data.counts.dac7 },
-                // Auxiliary boxes
                 { id: 'auxBoxCampanhasValue', val: aux.campanhas },
                 { id: 'auxBoxPortagensValue', val: aux.portagens },
                 { id: 'auxBoxGorjetasValue', val: aux.gorjetas },
@@ -912,19 +902,17 @@
                 if (typeof window.injectAuxiliaryHelperBoxes === 'function') window.injectAuxiliaryHelperBoxes();
                 if (typeof updateAuxiliaryUI === 'function') updateAuxiliaryUI();
                 
-                // Re-sincronização após upload e geração de hash
-                // dentro de initializeFullWithEvidence()
-		if (typeof window.UNIFED_INTERNAL.syncMetrics === 'function') {
-   		 window.UNIFED_INTERNAL.syncMetrics();
-		}
-		if (typeof window.forceRevealSmokingGun === 'function') {
-  		  window.forceRevealSmokingGun();
-		}
-		if (window.UNIFEDSystem && window.UNIFEDSystem.masterHash) {
-  		  const hashEl = document.getElementById('masterHashValue');
-  		  if (hashEl) hashEl.textContent = window.UNIFEDSystem.masterHash;
-   		 if (typeof generateQRCode === 'function') generateQRCode();
-		}
+                if (typeof window.UNIFED_INTERNAL.syncMetrics === 'function') {
+                    window.UNIFED_INTERNAL.syncMetrics();
+                }
+                if (typeof window.forceRevealSmokingGun === 'function') {
+                    window.forceRevealSmokingGun();
+                }
+                if (window.UNIFEDSystem && window.UNIFEDSystem.masterHash) {
+                    const hashEl = document.getElementById('masterHashValue');
+                    if (hashEl) hashEl.textContent = window.UNIFEDSystem.masterHash;
+                    if (typeof generateQRCode === 'function') generateQRCode();
+                }
 
                 showClientIdentificationBlock();
                 if (typeof window.renderChart === 'function') window.renderChart();
@@ -933,6 +921,22 @@
             } catch (err) {
                 console.error('[UNIFED] Falha ao carregar evidências:', err);
             }
+        }
+
+        // =========================================================================
+        // [HOOK CIRÚRGICO] Conectar o gatilho nativo do index.html ao injetor de dados
+        // =========================================================================
+        if (window.UNIFEDSystem) {
+            window.UNIFEDSystem.loadAnonymizedRealCase = async function() {
+                await initializeFullWithEvidence();
+                if (typeof window.updateDashboard === 'function') window.updateDashboard();
+                if (typeof window.updateModulesUI === 'function') window.updateModulesUI();
+                if (typeof window.renderChart === 'function') window.renderChart();
+                if (typeof window.renderDiscrepancyChart === 'function') window.renderDiscrepancyChart();
+                if (typeof window.forceRevealSmokingGun === 'function') window.forceRevealSmokingGun();
+                if (typeof window.correctRomanIndices === 'function') window.correctRomanIndices();
+                console.info('[UNIFED-FIX] Data Hydration concluída com sucesso via Hook Cirúrgico.');
+            };
         }
 
         function setupRealCaseButton() {
@@ -961,7 +965,11 @@
                             initializeCoreDashboard();
                             await new Promise(r => setTimeout(r, 100));
                             window.UNIFED_INTERNAL.syncMetrics();
-                            await initializeFullWithEvidence();
+                            if (window.UNIFEDSystem.loadAnonymizedRealCase) {
+                                await window.UNIFEDSystem.loadAnonymizedRealCase();
+                            } else {
+                                await initializeFullWithEvidence();
+                            }
                             if (typeof window.correctRomanIndices === 'function') {
                                 window.correctRomanIndices();
                             }
@@ -989,7 +997,11 @@
                     initializeCoreDashboard();
                     await new Promise(r => setTimeout(r, 100));
                     window.UNIFED_INTERNAL.syncMetrics();
-                    await initializeFullWithEvidence();
+                    if (window.UNIFEDSystem.loadAnonymizedRealCase) {
+                        await window.UNIFEDSystem.loadAnonymizedRealCase();
+                    } else {
+                        await initializeFullWithEvidence();
+                    }
 
                     if (typeof window.correctRomanIndices === 'function') {
                         window.correctRomanIndices();
@@ -1032,132 +1044,133 @@
         }
 
        // =========================================================================
-// CAMADA 5 · MOTOR DE PERSISTÊNCIA E WATCHDOG (FIX v13.12.2-i18n)
-// =========================================================================
-async function startApplication() {
-    try {
-        await _activatePurePanel(); // Garante que o painel HTML está no DOM
-        
-        // 1. Execução Imediata (First Pass)
-        if (typeof window.UNIFED_INTERNAL.syncMetrics === 'function') {
-            window.UNIFED_INTERNAL.syncMetrics();
-            window.UNIFED_INTERNAL.renderMatrix();
+        // CAMADA 5 · MOTOR DE PERSISTÊNCIA E WATCHDOG (FIX v13.12.2-i18n)
+        // =========================================================================
+        async function startApplication() {
+            try {
+                await _activatePurePanel(); // Garante que o painel HTML está no DOM
+                
+                // 1. Execução Imediata (First Pass)
+                if (typeof window.UNIFED_INTERNAL.syncMetrics === 'function') {
+                    window.UNIFED_INTERNAL.syncMetrics();
+                    window.UNIFED_INTERNAL.renderMatrix();
+                }
+
+                // 2. Hook de Resiliência: Monitorização do Objeto de Análise
+                let lastKnownGanhos = 0;
+                const stateWatchdog = setInterval(() => {
+                    const sys = window.UNIFEDSystem;
+                    if (sys && sys.analysis && sys.analysis.totals) {
+                        const currentGanhos = sys.analysis.totals.ganhos || 0;
+                        if (currentGanhos !== lastKnownGanhos) {
+                            console.warn('[UNIFED] Watchdog detetou novos dados. Forçando refresh da UI...');
+                            lastKnownGanhos = currentGanhos;
+                            if (typeof window.UNIFED_INTERNAL.syncMetrics === 'function') {
+                                window.UNIFED_INTERNAL.syncMetrics();
+                                window.UNIFED_INTERNAL.renderMatrix();
+                                window.UNIFED_INTERNAL.updateAuxiliaryUI();
+                                if (window.forceRevealSmokingGun) window.forceRevealSmokingGun();
+                            }
+                        }
+                    }
+                }, 1500);
+
+                // 3. Reparação do Hook Global
+                const patchDashboard = () => {
+                    if (typeof window.updateDashboard === 'function' && !window.updateDashboard._nexusHooked) {
+                        const _orig = window.updateDashboard;
+                        window.updateDashboard = function() {
+                            const result = _orig.apply(this, arguments);
+                            setTimeout(() => {
+                                if (window.UNIFED_INTERNAL.syncMetrics) window.UNIFED_INTERNAL.syncMetrics();
+                                if (window.UNIFED_INTERNAL.renderMatrix) window.UNIFED_INTERNAL.renderMatrix();
+                            }, 100);
+                            return result;
+                        };
+                        window.updateDashboard._nexusHooked = true;
+                        console.log('[UNIFED] Hook updateDashboard selado com sucesso.');
+                    }
+                };
+                
+                patchDashboard();
+                window.addEventListener('hashchange', patchDashboard);
+
+            } catch (err) {
+                console.error('[UNIFED] Erro fatal na Camada 5:', err);
+            }
         }
 
-        // 2. Hook de Resiliência: Monitorização do Objeto de Análise
-        let lastKnownGanhos = 0;
-        const stateWatchdog = setInterval(() => {
-            const sys = window.UNIFEDSystem;
-            if (sys && sys.analysis && sys.analysis.totals) {
-                const currentGanhos = sys.analysis.totals.ganhos || 0;
-                if (currentGanhos !== lastKnownGanhos) {
-                    console.warn('[UNIFED] Watchdog detetou novos dados. Forçando refresh da UI...');
-                    lastKnownGanhos = currentGanhos;
-                    if (typeof window.UNIFED_INTERNAL.syncMetrics === 'function') {
-                        window.UNIFED_INTERNAL.syncMetrics();
-                        window.UNIFED_INTERNAL.renderMatrix();
-                        window.UNIFED_INTERNAL.updateAuxiliaryUI();
-                        if (window.forceRevealSmokingGun) window.forceRevealSmokingGun();
+        // Iniciar com proteção contra race conditions de carregamento
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', startApplication);
+        } else {
+            startApplication();
+        }
+
+        // ============================================================================
+        // FORCE REVEAL SMOKING GUN – EXPANSÃO DE VISIBILIDADE (v13.12.2-i18n)
+        // ============================================================================
+        if (typeof window.forceRevealSmokingGun === 'function') {
+            const originalForceReveal = window.forceRevealSmokingGun;
+            window.forceRevealSmokingGun = function() {
+                if (originalForceReveal) originalForceReveal();
+                const extraModules = ['pureZonaCinzentaCard', 'white-collar-module'];
+                extraModules.forEach(selector => {
+                    const el = document.getElementById(selector);
+                    if (el) {
+                        el.style.setProperty('display', 'block', 'important');
+                        el.style.setProperty('opacity', '1', 'important');
+                        el.style.setProperty('visibility', 'visible', 'important');
+                    } else {
+                        const elsByClass = document.querySelectorAll('.' + selector);
+                        elsByClass.forEach(clsEl => {
+                            clsEl.style.setProperty('display', 'block', 'important');
+                            clsEl.style.setProperty('opacity', '1', 'important');
+                            clsEl.style.setProperty('visibility', 'visible', 'important');
+                        });
                     }
+                });
+                console.log('[UNIFED] forceRevealSmokingGun expandido: white-collar e zona cinzenta forçados.');
+            };
+        } else {
+            window.forceRevealSmokingGun = function() {
+                const extraModules = ['pureZonaCinzentaCard', 'white-collar-module'];
+                extraModules.forEach(selector => {
+                    const el = document.getElementById(selector);
+                    if (el) {
+                        el.style.setProperty('display', 'block', 'important');
+                        el.style.setProperty('opacity', '1', 'important');
+                        el.style.setProperty('visibility', 'visible', 'important');
+                    } else {
+                        const elsByClass = document.querySelectorAll('.' + selector);
+                        elsByClass.forEach(clsEl => {
+                            clsEl.style.setProperty('display', 'block', 'important');
+                            clsEl.style.setProperty('opacity', '1', 'important');
+                            clsEl.style.setProperty('visibility', 'visible', 'important');
+                        });
+                    }
+                });
+                console.log('[UNIFED] forceRevealSmokingGun executado: Visibilidade forçada.');
+            };
+        }
+
+        // ============================================================================
+        // CAMADA DE RESILIÊNCIA FINAL (WATCHDOG)
+        // ============================================================================
+        const _recoveryInterval = setInterval(() => {
+            const isDataReady = window.UNIFEDSystem && window.UNIFEDSystem.analysis;
+            const isUIReady = document.getElementById('pureDashboard');
+
+            if (isDataReady && isUIReady) {
+                if (typeof window.UNIFED_INTERNAL.syncMetrics === 'function') {
+                    window.UNIFED_INTERNAL.syncMetrics();
+                    window.UNIFED_INTERNAL.renderMatrix();
+                    console.info('[UNIFED] Hidratação de emergência concluída pelo Watchdog.');
+                    clearInterval(_recoveryInterval);
                 }
             }
-        }, 1500);
-
-        // 3. Reparação do Hook Global
-        const patchDashboard = () => {
-            if (typeof window.updateDashboard === 'function' && !window.updateDashboard._nexusHooked) {
-                const _orig = window.updateDashboard;
-                window.updateDashboard = function() {
-                    const result = _orig.apply(this, arguments);
-                    setTimeout(() => {
-                        if (window.UNIFED_INTERNAL.syncMetrics) window.UNIFED_INTERNAL.syncMetrics();
-                        if (window.UNIFED_INTERNAL.renderMatrix) window.UNIFED_INTERNAL.renderMatrix();
-                    }, 100);
-                    return result;
-                };
-                window.updateDashboard._nexusHooked = true;
-                console.log('[UNIFED] Hook updateDashboard selado com sucesso.');
-            }
-        };
+        }, 2000);
         
-        patchDashboard();
-        window.addEventListener('hashchange', patchDashboard);
-
-    } catch (err) {
-        console.error('[UNIFED] Erro fatal na Camada 5:', err);
-    }
-}
-
-// Iniciar com proteção contra race conditions de carregamento
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', startApplication);
-} else {
-    startApplication();
-}
-
-// ============================================================================
-// FORCE REVEAL SMOKING GUN – EXPANSÃO DE VISIBILIDADE (v13.12.2-i18n)
-// ============================================================================
-// Assegura que o módulo White-Collar e Zona Cinzenta são exibidos com !important
-if (typeof window.forceRevealSmokingGun === 'function') {
-    const originalForceReveal = window.forceRevealSmokingGun;
-    window.forceRevealSmokingGun = function() {
-        if (originalForceReveal) originalForceReveal();
-        const extraModules = ['pureZonaCinzentaCard', 'white-collar-module'];
-        extraModules.forEach(selector => {
-            const el = document.getElementById(selector);
-            if (el) {
-                el.style.setProperty('display', 'block', 'important');
-                el.style.setProperty('opacity', '1', 'important');
-                el.style.setProperty('visibility', 'visible', 'important');
-            } else {
-                const elsByClass = document.querySelectorAll('.' + selector);
-                elsByClass.forEach(clsEl => {
-                    clsEl.style.setProperty('display', 'block', 'important');
-                    clsEl.style.setProperty('opacity', '1', 'important');
-                    clsEl.style.setProperty('visibility', 'visible', 'important');
-                });
-            }
-        });
-        console.log('[UNIFED] forceRevealSmokingGun expandido: white-collar e zona cinzenta forçados.');
-    };
-} else {
-    window.forceRevealSmokingGun = function() {
-        const extraModules = ['pureZonaCinzentaCard', 'white-collar-module'];
-        extraModules.forEach(selector => {
-            const el = document.getElementById(selector);
-            if (el) {
-                el.style.setProperty('display', 'block', 'important');
-                el.style.setProperty('opacity', '1', 'important');
-                el.style.setProperty('visibility', 'visible', 'important');
-            } else {
-                const elsByClass = document.querySelectorAll('.' + selector);
-                elsByClass.forEach(clsEl => {
-                    clsEl.style.setProperty('display', 'block', 'important');
-                    clsEl.style.setProperty('opacity', '1', 'important');
-                    clsEl.style.setProperty('visibility', 'visible', 'important');
-                });
-            }
-        });
-        console.log('[UNIFED] forceRevealSmokingGun executado: Visibilidade forçada.');
-    };
-}
-
-// ============================================================================
-// CAMADA DE RESILIÊNCIA FINAL (WATCHDOG)
-// ============================================================================
-const _recoveryInterval = setInterval(() => {
-    const isDataReady = window.UNIFEDSystem && window.UNIFEDSystem.analysis;
-    const isUIReady = document.getElementById('pureDashboard');
-
-    if (isDataReady && isUIReady) {
-        if (typeof window.UNIFED_INTERNAL.syncMetrics === 'function') {
-            window.UNIFED_INTERNAL.syncMetrics();
-            window.UNIFED_INTERNAL.renderMatrix();
-            console.info('[UNIFED] Hidratação de emergência concluída pelo Watchdog.');
-            clearInterval(_recoveryInterval);
-        }
-    }
-}, 2000);
-})(); 
+        setupRealCaseButton();
+    })();
 })();
