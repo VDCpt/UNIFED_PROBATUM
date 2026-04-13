@@ -3149,7 +3149,14 @@ function resetUIVisual() {
     console.log('[UNIFED] resetUIVisual: UI limpa (estado Zero-Knowledge ampliado).');
 }
 
+/**
+ * [RETIFICAÇÃO v13.12.2-i18n] 
+ * Bloco Consolidado: Ciclo de Vida da Sessão e Revelação de Dados
+ */
 function revealForensicData() {
+    console.log('[UNIFED] Iniciando protocolo de revelação de dados forenses...');
+
+    // 1. Orquestração de Métricas e Dashboards
     if (typeof window.UNIFED_INTERNAL !== 'undefined' && window.UNIFED_INTERNAL.syncMetrics) {
         window.UNIFED_INTERNAL.syncMetrics(true);
     } else {
@@ -3158,61 +3165,73 @@ function revealForensicData() {
         if (typeof renderChart === 'function') renderChart();
         if (typeof renderDiscrepancyChart === 'function') renderDiscrepancyChart();
     }
+
+    // 2. Acionamento de Gatilhos de Visibilidade Forçada (Smoking Gun)
     if (typeof forceRevealSmokingGun === 'function') forceRevealSmokingGun();
-    console.log('[UNIFED] Dados forenses revelados na UI.');
+
+    // 3. REMOÇÃO DA MÁSCARA DE OPACIDADE (MÉTRICA ZERO-KNOWLEDGE)
+    // Seleciona todos os elementos que devem ser revelados pós-perícia
+    const forensicElements = document.querySelectorAll(
+        '.pure-data-value, .pure-atf-big, .pure-zc-val, .pure-sg-val, .pure-delta-value, .pure-atf-trend-val'
+    );
+    
+    forensicElements.forEach(el => {
+        el.classList.add('forensic-revealed');
+    });
+
+    console.info('[UNIFED] Protocolo Zero-Knowledge encerrado. Dados em conformidade visual.');
+}
+
+function setupStaticListeners() {
+    console.log('[UNIFED] Configurando listeners estáticos...');
+    
+    const listenersMap = [
+        { id: 'startSessionBtn', event: 'click', fn: typeof startGatekeeperSession !== 'undefined' ? startGatekeeperSession : null },
+        { id: 'langToggleBtn', event: 'click', fn: typeof switchLanguage !== 'undefined' ? switchLanguage : null },
+        { id: 'viewLogsBtn', event: 'click', fn: typeof openLogsModal !== 'undefined' ? openLogsModal : null },
+        { id: 'viewLogsHeaderBtn', event: 'click', fn: typeof openLogsModal !== 'undefined' ? openLogsModal : null },
+        { id: 'qrcodeContainer', event: 'click', fn: typeof openHashModal !== 'undefined' ? openHashModal : null }
+    ];
+
+    listenersMap.forEach(item => {
+        const el = document.getElementById(item.id);
+        if (el && item.fn) {
+            el.addEventListener(item.event, item.fn);
+            console.log(`[OK] Listener '${item.id}' vinculado.`);
+        } else if (!el) {
+            console.warn(`[AVISO] Elemento '${item.id}' não encontrado no DOM.`);
+        }
+    });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOMContentLoaded - Inicializando sistema UNIFED - PROBATUM v13.12.2-i18n');
+    console.log('[UNIFED] DOMContentLoaded - Inicializando v13.12.2-i18n');
+    
+    // Iniciação de Módulos Core
     setupStaticListeners();
-    populateAnoFiscal();
-    populateYears();
-    startClockAndDate();
-    setupDragAndDrop();
-    generateQRCode();
-    setupLogsModal();
-    setupHashModal();
-    setupDualScreenDetection();
-    setupWipeButton();
-    setupClearConsoleButton();
+    if (typeof populateAnoFiscal === 'function') populateAnoFiscal();
+    if (typeof populateYears === 'function') populateYears();
+    if (typeof startClockAndDate === 'function') startClockAndDate();
+    if (typeof setupDragAndDrop === 'function') setupDragAndDrop();
+    if (typeof generateQRCode === 'function') generateQRCode();
+    if (typeof setupLogsModal === 'function') setupLogsModal();
+    if (typeof setupHashModal === 'function') setupHashModal();
+    if (typeof setupDualScreenDetection === 'function') setupDualScreenDetection();
+    if (typeof setupWipeButton === 'function') setupWipeButton();
+    if (typeof setupClearConsoleButton === 'function') setupClearConsoleButton();
 
-    resetUIVisual();
+    // Aplica estado Zero-Knowledge inicial
+    if (typeof resetUIVisual === 'function') resetUIVisual();
 
-    ForensicLogger.addEntry('SYSTEM_START', { version: 'v13.12.2-i18n', logsCarregados: ForensicLogger.logs.length });
+    // Registo de Auditoria de Arranque
+    if (typeof ForensicLogger !== 'undefined') {
+        ForensicLogger.addEntry('SYSTEM_START', { 
+            version: 'v13.12.2-i18n', 
+            status: 'READY',
+            integrity: 'SHA-253_PENDING'
+        });
+    }
 });
-
-function setupStaticListeners() {
-    console.log('Configurando listeners estáticos');
-    const startBtn = document.getElementById('startSessionBtn');
-    if (startBtn) {
-        startBtn.addEventListener('click', startGatekeeperSession);
-        console.log('Listener startSessionBtn adicionado');
-    }
-
-    const langBtn = document.getElementById('langToggleBtn');
-    if (langBtn) {
-        langBtn.addEventListener('click', switchLanguage);
-        console.log('Listener langToggleBtn adicionado');
-    }
-
-    const viewLogsBtn = document.getElementById('viewLogsBtn');
-    if (viewLogsBtn) {
-        viewLogsBtn.addEventListener('click', openLogsModal);
-        console.log('Listener viewLogsBtn adicionado');
-    }
-
-    const viewLogsHeaderBtn = document.getElementById('viewLogsHeaderBtn');
-    if (viewLogsHeaderBtn) {
-        viewLogsHeaderBtn.addEventListener('click', openLogsModal);
-        console.log('Listener viewLogsHeaderBtn adicionado');
-    }
-
-    const qrContainer = document.getElementById('qrcodeContainer');
-    if (qrContainer) {
-        qrContainer.addEventListener('click', openHashModal);
-        console.log('Listener QR Code adicionado');
-    }
-}
 
 function startGatekeeperSession() {
     ForensicLogger.addEntry('SESSION_START', { from: 'splash' });
