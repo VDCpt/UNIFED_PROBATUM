@@ -500,7 +500,7 @@
                 <div class="chart-section">
                     <h3 id="chartTitle2"><i class="fas fa-chart-bar"></i> DISCREPÂNCIA SAF-T vs DAC7</h3>
                     <div class="chart-container">
-                        <canvas id="mainDiscrepancyChart"></canvas>
+                        <canvas id="discrepancyChart"></canvas>
                     </div>
                 </div>
 
@@ -582,6 +582,61 @@
 </div>
 
     <div id="hashVerificationModal" class="modal-overlay">
+        </div>
+
+    <div id="toastContainer"></div>
+
+ <div id="evidenceModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-folder-plus"></i> <span id="modalTitle">GESTÃO DE EVIDÊNCIAS DIGITAIS</span></h3>
+                <button id="closeModalBtn" class="icon-btn"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="upload-section-modal">
+                    <div id="globalDropZone" class="upload-group-modal" style="border: 2px dashed var(--accent-primary); background: rgba(0, 229, 255, 0.05);">
+                        <label for="globalFileInput" style="color: var(--accent-primary); font-size: 1rem;"><i class="fas fa-cloud-upload-alt"></i> ÁREA DE CARREGAMENTO RÁPIDO BIG DATA</label>
+
+<div id="globalDropZone" class="upload-group-modal">
+    <label for="inputBigDataProcess">ÁREA DE CARREGAMENTO BIG DATA</label>
+    <input type="file" id="inputBigDataProcess" class="file-input-modal" accept=".csv,.json" multiple>
+</div>
+
+<div id="physicalEvidenceZone" class="upload-group-modal">
+    <label for="inputPhysicalEvidence">CARREGAMENTO DE PROVA MATERIAL (PDF/IMG)</label>
+    <input type="file" id="inputPhysicalEvidence" class="file-input-modal" accept=".pdf,.jpg,.png" multiple>
+</div>
+
+                        <p style="color: var(--text-secondary); margin: 0.5rem 0; font-size: 0.9rem;">Arraste e solte todos os ficheiros aqui (o sistema classifica automaticamente)</p>
+                        <button id="globalUploadBtn" class="upload-btn" style="background: var(--accent-primary); color: #000;"><i class="fas fa-folder-open"></i> SELECIONAR MÚLTIPLOS FICHEIROS</button>
+                        <input type="file" id="globalFileInput" class="file-input-modal" accept=".csv,.pdf,.txt,.xml,.json" multiple>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="closeAndSaveBtn" class="btn-primary"><i class="fas fa-check-circle"></i> <span id="modalSaveBtn">SELAR EVIDÊNCIAS</span></button>
+            </div>
+        </div>
+    </div>
+
+    <div id="logsModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="logsModalTitle"><i class="fas fa-history"></i> REGISTO DE ATIVIDADES DE TRATAMENTO</h3>
+                <button id="closeLogsModalBtn" class="icon-btn"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <div id="logsDisplayArea" class="console-output" style="height: 300px; overflow-y: auto;"></div>
+            </div>
+            <div class="modal-footer">
+                <button id="exportLogsBtn" class="btn-primary"><i class="fas fa-download"></i> <span id="exportLogsBtnText">EXPORTAR LOGS</span></button>
+                <button id="clearLogsBtn" class="btn-wipe"><i class="fas fa-trash"></i> <span id="clearLogsBtnText">LIMPAR LOGS</span></button>
+                <button id="closeLogsBtn" class="btn-primary"><span id="closeLogsBtnText">FECHAR</span></button>
+            </div>
+        </div>
+    </div>
+
+    <div id="hashVerificationModal" class="modal-overlay">
         <div class="modal-content" style="max-width: 600px;">
             <div class="modal-header">
                 <h3 id="hashModalTitle"><i class="fas fa-link"></i> VERIFICAÇÃO DE INTEGRIDADE · CADEIA DE CUSTÓDIA</h3>
@@ -609,4 +664,4 @@
     <script src="script_injection.js"></script>
     <script src="unifed_triada_export.js"></script>
 </body>
-</html>
+</html> 

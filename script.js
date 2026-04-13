@@ -4092,44 +4092,33 @@ function activateDemoMode() {
 
     ForensicLogger.addEntry('DEMO_MODE_ACTIVATED');
 
-    // [FIX v13.12.2] Delegação assíncrona a _activatePurePanel quando disponível.
-    // Elimina o abort() prematuro que impedia a cadeia de execução completa.
-    if (typeof window._activatePurePanel === 'function') {
-        window._activatePurePanel().then(() => {
-            const client = UNIFEDSystem.client;
-            if (client) {
-                const nameInput = document.getElementById('clientNameFixed');
-                const nifInput  = document.getElementById('clientNIFFixed');
-                if (nameInput) nameInput.value = client.name;
-                if (nifInput)  nifInput.value  = client.nif;
-                registerClient();
-            }
-            UNIFEDSystem.processing = false;
-            const demoBtn = document.getElementById('demoModeBtn');
-            if (demoBtn) {
-                demoBtn.disabled = false;
-                demoBtn.innerHTML = `<i class="fas fa-flask"></i> ${translations[currentLang].navDemo}`;
-            }
-            forensicDataSynchronization();
-            logAudit('✅ Caso Real (Anonimizado) carregado com sucesso.', 'success');
-        }).catch(err => {
-            console.error('[UNIFED] activateDemoMode → _activatePurePanel falhou:', err);
-            UNIFEDSystem.processing = false;
-        });
+    if (typeof window._activatePurePanel !== 'function') {
+        console.error('[UNIFED] _activatePurePanel não registado. Verifique a ordem de carregamento de scripts.');
+        UNIFEDSystem.processing = false;
         return;
     }
 
-    // Fallback: _activatePurePanel ainda não registado (carregamento tardio de script).
-    // Aguarda 300 ms e re-tenta uma vez antes de desistir.
+    window._activatePurePanel();
+
     setTimeout(() => {
-        if (typeof window._activatePurePanel === 'function') {
-            UNIFEDSystem.processing = false;
-            activateDemoMode();
-        } else {
-            console.error('[UNIFED] _activatePurePanel não registado após fallback. Verifique a ordem de carregamento de scripts.');
-            UNIFEDSystem.processing = false;
+        const client = UNIFEDSystem.client;
+        if (client) {
+            const nameInput = document.getElementById('clientNameFixed');
+            const nifInput  = document.getElementById('clientNIFFixed');
+            if (nameInput) nameInput.value = client.name;
+            if (nifInput)  nifInput.value  = client.nif;
+            registerClient();
         }
-    }, 300);
+
+        UNIFEDSystem.processing = false;
+        const demoBtn = document.getElementById('demoModeBtn');
+        if (demoBtn) {
+            demoBtn.disabled = false;
+            demoBtn.innerHTML = `<i class="fas fa-flask"></i> ${translations[currentLang].navDemo}`;
+        }
+        forensicDataSynchronization();
+        logAudit('✅ Caso Real (Anonimizado) carregado com sucesso.', 'success');
+    }, 500);
 }
 
 function simulateUpload(type, count) {
@@ -5319,13 +5308,7 @@ function renderChart() {
 }
 
 function renderDiscrepancyChart() {
-    // [FIX v13.12.2] Selecção cirúrgica do canvas:
-    // · Quando o pureDashboard está injetado, usa o canvas dentro dele (panel.html).
-    // · Caso contrário, usa o canvas do corpo principal (#mainDiscrepancyChart).
-    const purePanel = document.getElementById('pureDashboard');
-    const ctx = purePanel
-        ? purePanel.querySelector('canvas#discrepancyChart')
-        : document.getElementById('mainDiscrepancyChart');
+    const ctx = document.getElementById('discrepancyChart');
     if (!ctx) return;
     if (UNIFEDSystem.discrepancyChart) UNIFEDSystem.discrepancyChart.destroy();
 
