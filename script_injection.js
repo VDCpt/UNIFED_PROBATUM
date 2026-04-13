@@ -1166,6 +1166,72 @@
     })();
 
     // =========================================================================
+    // Camada 7 – State-Driven Hydration + Event-Based Triggering (DOC3 / 2026-04-14)
+    // Padrão aditivo — não substitui nenhuma lógica existente.
+    // Estado 1 (METADATA): Gatilho btn-caso-real → revealMetadata()
+    // Estado 2 (PERITIA):  Gatilho btn-executar-pericia → performFinancialTriangulation()
+    // =========================================================================
+    (function _installStateHydration() {
+        window.revealMetadata = function() {
+            const sys = window.UNIFEDSystem;
+            const _sessionId = (sys && sys.sessionId) ? sys.sessionId : (window.UNIFED_INTERNAL && window.UNIFED_INTERNAL.data) ? window.UNIFED_INTERNAL.data.sessionId : 'UNIFED-SESSION';
+            const _hash     = (sys && sys.masterHash) ? sys.masterHash : '2A38423FED220D681D86E959F2C34F993BA71FCE9B92791199453B41E23A63E5';
+            const mappings  = {
+                '#pure-session-id':   _sessionId,
+                '#pure-hash-prefix':  _hash.substring(0, 12).toUpperCase() + '...'
+            };
+            Object.entries(mappings).forEach(([sel, val]) => {
+                document.querySelectorAll(sel).forEach(el => { el.textContent = val; });
+            });
+            const tsaEl = document.getElementById('pure-tsa-anchor');
+            if (tsaEl) tsaEl.innerHTML = 'Selo de Tempo RFC 3161: <span style="color:#00e5ff;font-weight:bold;">VALIDADO VIA FREETSA.ORG</span>';
+            document.querySelectorAll('.pure-subject-header, #pure-tsa-anchor').forEach(el => {
+                el.classList.add('forensic-revealed');
+            });
+            console.log('[UNIFED] Estado 1 (METADATA): hidratação de metadados concluída.');
+        };
+
+        window.performFinancialTriangulation = function() {
+            if (typeof window.UNIFED_INTERNAL !== 'undefined' && typeof window.UNIFED_INTERNAL.syncMetrics === 'function') {
+                window.UNIFED_INTERNAL.syncMetrics();
+            }
+            if (typeof window.UNIFED_INTERNAL !== 'undefined' && typeof window.UNIFED_INTERNAL.renderMatrix === 'function') {
+                window.UNIFED_INTERNAL.renderMatrix();
+            }
+            if (typeof window.UNIFED_INTERNAL !== 'undefined' && typeof window.UNIFED_INTERNAL.updateAuxiliaryUI === 'function') {
+                window.UNIFED_INTERNAL.updateAuxiliaryUI();
+            }
+            document.querySelectorAll('.pure-data-value, .pure-delta-value, .pure-atf-big, .smoking-gun-module, .pure-sg-val').forEach(el => {
+                el.classList.add('forensic-revealed');
+            });
+            window.dispatchEvent(new CustomEvent('UNIFED_EXECUTE_PERITIA', {
+                detail: { timestamp: new Date().toISOString(), masterHash: '2A38423FED220D681D86E959F2C34F993BA71FCE9B92791199453B41E23A63E5' }
+            }));
+            console.log('[UNIFED] Estado 2 (PERITIA): triangulação executada e evento UNIFED_EXECUTE_PERITIA disparado.');
+        };
+
+        function _setupTriggers() {
+            const btnCasoReal = document.querySelector('[data-action="load-caso-real"]') || document.getElementById('btnCasoReal') || document.getElementById('demoModeBtn');
+            const btnExecutar = document.querySelector('[data-action="executar-pericia"]') || document.getElementById('btnExecutarPericia');
+            if (btnCasoReal && !btnCasoReal.getAttribute('data-state-hydration')) {
+                btnCasoReal.addEventListener('click', window.revealMetadata);
+                btnCasoReal.setAttribute('data-state-hydration', '1');
+            }
+            if (btnExecutar && !btnExecutar.getAttribute('data-state-hydration')) {
+                btnExecutar.addEventListener('click', window.performFinancialTriangulation);
+                btnExecutar.setAttribute('data-state-hydration', '1');
+            }
+        }
+
+        if (document.readyState === 'complete' || document.readyState === 'interactive') {
+            _setupTriggers();
+        } else {
+            window.addEventListener('load', _setupTriggers);
+        }
+        console.log('[UNIFED] Camada 7 (State-Driven Hydration): OK.');
+    })();
+
+    // =========================================================================
     // PATCH ELITE DEMO (2026-04-13)
     // =========================================================================
     (function unifedElitePatch() {

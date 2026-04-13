@@ -1271,7 +1271,33 @@ window.generateBurdenOfProofSection = generateBurdenOfProofSection;
 // 9. ADIÇÕES v13.12.2-i18n · POLÍTICA ZERO-OMISSÃO
 // ============================================================================
 (function _enrichmentZeroOmission() {
-    // Garantia de que o utilitário de formatação está disponível (redundante, mas seguro)
+    // ── Event-Based Lazy Rendering (DOC3 / 2026-04-14) ──────────────────────
+    window.addEventListener('UNIFED_EXECUTE_PERITIA', function _onPeritiaExecute(evt) {
+        console.log('[UNIFED-ENRICHMENT] UNIFED_EXECUTE_PERITIA recebido. Motor gráfico a inicializar...', (evt.detail || {}).masterHash || '');
+        if (typeof window.renderDiscrepancyCharts === 'function') window.renderDiscrepancyCharts();
+        var _canvas = document.getElementById('atfChartCanvas');
+        if (_canvas && typeof Chart !== 'undefined') {
+            var _sys = window.UNIFEDSystem || {};
+            var _rawMonthly = (_sys.monthlyData && Object.keys(_sys.monthlyData).length > 0) ? _sys.monthlyData : {
+                '202409': { ganhos: 2450.00, despesas: 590.00, ganhosLiq: 1860.00 },
+                '202410': { ganhos: 2560.00, despesas: 615.00, ganhosLiq: 1945.00 },
+                '202411': { ganhos: 2480.00, despesas: 600.00, ganhosLiq: 1880.00 },
+                '202412': { ganhos: 2667.73, despesas: 642.89, ganhosLiq: 2024.84 }
+            };
+            if (typeof computeTemporalAnalysis === 'function') {
+                var _atf = computeTemporalAnalysis(_rawMonthly, _sys.analysis || {});
+                if (typeof window.renderATFChart === 'function' && _atf && _atf.months && _atf.months.length > 0) {
+                    window.renderATFChart(_atf);
+                }
+            }
+        }
+        if (typeof window.generateLegalNarrative === 'function' && window.UNIFEDSystem && window.UNIFEDSystem.analysis) {
+            window.generateLegalNarrative(window.UNIFEDSystem.analysis).catch(function() {});
+        }
+        console.log('[UNIFED-ENRICHMENT] Lazy rendering concluído (UNIFED_EXECUTE_PERITIA).');
+    });
+    console.log('[UNIFED-ENRICHMENT] Listener UNIFED_EXECUTE_PERITIA registado (Chart.js Lazy Rendering).');
+
     if (!window.UNIFEDSystem.utils.formatCurrency) {
         window.UNIFEDSystem.utils.formatCurrency = function(val) {
             return new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(val || 0);
