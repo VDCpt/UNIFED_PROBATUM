@@ -3273,22 +3273,22 @@ async function resetSystem() {
                 });
             }
         }
+    // --- INÍCIO DA RETIFICAÇÃO ---
         if (typeof window._activatePurePanel === 'function') {
             window._activatePurePanel(true);
         }
     }, 150);
-    
+
     window.dispatchEvent(new CustomEvent('UNIFED_CORE_READY', { detail: { reset: true } }));
-    
+
     logAudit('🔄 Sistema reiniciado – todas as evidências e análises foram limpas.', 'success');
     showToast(currentLang === 'pt' ? 'Sistema reiniciado com sucesso.' : 'System reset successfully.', 'success');
     ForensicLogger.addEntry('SYSTEM_RESET_COMPLETED');
-}
 
-        if (typeof logAudit === 'function') {
-            logAudit('SISTEMA UNIFED - PROBATUM v13.12.2-i18n · DORA COMPLIANT · MODO PROFISSIONAL ATIVADO', 'success');
-        }
-    };
+    // [FIX] Bloco de inicialização final - Removida chaveta órfã na linha 3291
+    if (typeof logAudit === 'function') {
+        logAudit('SISTEMA UNIFED - PROBATUM v13.12.2-i18n · DORA COMPLIANT · MODO PROFISSIONAL ATIVADO', 'success');
+    }
 
     const idsToEnable = ['analyzeBtn', 'exportPDFBtn', 'exportJSONBtn'];
     idsToEnable.forEach(id => {
