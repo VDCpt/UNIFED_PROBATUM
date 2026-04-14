@@ -8421,9 +8421,8 @@ if (typeof window.dispatchEvent === 'function') {
     }));
     console.log('[UNIFED-CORE] Evento UNIFED_CORE_READY despachado.');
 }
-
 // ============================================================================
-// SISTEMA DE NOTIFICAÇÕES (TOASTS) - SANITIZADO
+// BLOCO DE NOTIFICAÇÕES E INICIALIZAÇÃO (SANER v13.12.2)
 // ============================================================================
 window.showToast = function(message, type = 'info') {
     let container = document.getElementById('toastContainer');
@@ -8457,13 +8456,11 @@ window.showToast = function(message, type = 'info') {
     
     container.appendChild(toast);
 
-    // Animação de entrada
     requestAnimationFrame(() => {
         toast.style.opacity = '1';
         toast.style.transform = 'translateX(0)';
     });
 
-    // Auto-remoção
     setTimeout(() => {
         if (toast && toast.parentNode) {
             toast.style.opacity = '0';
@@ -8475,18 +8472,11 @@ window.showToast = function(message, type = 'info') {
     }, 4000);
 };
 
-// Exposição global das funções de gráficos
-window.renderChart = typeof renderChart !== 'undefined' ? renderChart : null;
-window.renderDiscrepancyChart = typeof renderDiscrepancyChart !== 'undefined' ? renderDiscrepancyChart : null;
-
-// ============================================================================
-// ORQUESTRAÇÃO DE CARREGAMENTO (RETIFICAÇÃO v13.12.2)
-// ============================================================================
+// ORQUESTRADOR DE CARREGAMENTO (Sincronização de Visibilidade)
 window.addEventListener('load', function () {
     window.UNIFEDSystem = window.UNIFEDSystem || {};
     window.UNIFEDSystem.demoMode = true; 
 
-    // Delay para garantir que script_injection.js terminou a hidratação
     setTimeout(() => {
         // 1. Ocultar Loading Overlay
         const loader = document.querySelector('.loading-overlay');
@@ -8495,20 +8485,20 @@ window.addEventListener('load', function () {
             setTimeout(() => { loader.style.display = 'none'; }, 500);
         }
 
-        // 2. Revelar Container Principal
+        // 2. Revelar Dashboard (Estado Zero-Knowledge -> Revelação)
         const main = document.querySelector('.main-container');
         if (main) {
             main.style.display = 'flex';
-            // Força reflow para animação de opacidade funcionar
-            main.offsetHeight; 
+            main.offsetHeight; // Force reflow
             main.style.opacity = '1';
         }
 
-        // 3. Gatilho de revelação de dados periciais (Smoking Gun)
+        // 3. Gatilho de revelação de dados periciais
         if (typeof window.revealForensicData === 'function') {
             window.revealForensicData();
         }
+        
+        console.log('[UNIFED] Sistema pronto. Custódia Local Ativa.');
     }, 400); 
 });
-
-// FIM DO FICHEIRO - UNIFED-PROBATUM v13.12.2-i18n
+// FIM DO SCRIPT - INTEGRIDADE VERIFICADA
