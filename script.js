@@ -90,30 +90,15 @@ console.log('UNIFED - PROBATUM SCRIPT v13.12.2-i18n · DORA COMPLIANT · ATIVADO
         return typeof window.OpenTimestamps !== 'undefined';
     }
 
-// --- RETIFICAÇÃO DA LINHA 90 À 108 ---
-window.addEventListener('load', function () {
-    const isOTSReady = detectOTSLibrary();
-    
-    if (isOTSReady) {
-        console.log('[UNIFED-OTS] ✅ Handshake OK — window.OpenTimestamps disponível.');
-    } else {
-        console.warn('[UNIFED-OTS] ⚙ Operação em Modo de Segurança Forense — OTS indisponível (CDN bloqueado).');
-        console.info('[UNIFED] Ativando Protocolo de Custódia Nível 2 (Selo Interno).');
-    }
-
-    // [MODIFICAÇÃO CRÍTICA]: Ativação de Prontidão para a Reunião
-    window.UNIFEDSystem = window.UNIFEDSystem || {};
-    window.UNIFEDSystem.demoMode = true; // Mantém modo demo disponível
-    
-    // Forçar a revelação da UI caso o sistema esteja parado no ecrã de boas-vindas
-    setTimeout(() => {
-        if (typeof revealForensicData === 'function') {
-            console.log('[UNIFED] Executando revealForensicData preventivo para modo DEMO.');
-            revealForensicData(); 
+    window.addEventListener('load', function () {
+        if (detectOTSLibrary()) {
+            console.log('[UNIFED-OTS] ✅ Handshake OK — window.OpenTimestamps disponível.');
+        } else {
+            console.info('[UNIFED-OTS] ⚙ Operação em Modo de Segurança Forense — OTS indisponível (CDN bloqueado). ' +
+                         'A funcionalidade OTS/Blockchain estará indisponível; o Nível 2 (PROBATUM interno) permanece ativo.');
         }
-    }, 500); // Delay técnico de 500ms para garantir injeção do painel
-});
-// --- FIM DA RETIFICAÇÃO ---
+    });
+})();
 
 // ============================================================================
 // 2. DADOS DAS PLATAFORMAS
@@ -8465,6 +8450,36 @@ window.showToast = function(message, type = 'info') {
    
 window.renderChart = renderChart;
 window.renderDiscrepancyChart = renderDiscrepancyChart;
+
+// --- RETIFICAÇÃO FINAL: script.js ---
+window.addEventListener('load', function () {
+    // 1. Definir estado de prontidão
+    window.UNIFEDSystem = window.UNIFEDSystem || {};
+    window.UNIFEDSystem.demoMode = true; 
+
+    // 2. Delay de sincronização para permitir a injeção do painel (script_injection.js)
+    setTimeout(() => {
+        // Remove o overlay de loading/boas-vindas
+        const loader = document.querySelector('.loading-overlay');
+        if (loader) {
+            loader.style.transition = 'opacity 0.5s ease';
+            loader.style.opacity = '0';
+            setTimeout(() => { loader.style.display = 'none'; }, 500);
+        }
+
+        // Força a exibição do container principal
+        const main = document.querySelector('.main-container');
+        if (main) {
+            main.style.display = 'flex';
+            main.style.opacity = '1';
+        }
+
+        // Ativa a revelação dos dados periciais
+        if (typeof window.revealForensicData === 'function') {
+            window.revealForensicData();
+        }
+    }, 400); 
+});
 
 // ============================================================================
 // FIM DO FICHEIRO - UNIFED - PROBATUM v13.12.2-i18n
