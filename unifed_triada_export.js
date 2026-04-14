@@ -22,8 +22,7 @@
             return window.activeForensicSession.masterHash;
         }
         if (window.UNIFEDSystem && window.UNIFEDSystem.demoMode) {
-            // MATCH ABSOLUTO COM A MATRIZ DE PROVA (script_injection.js)
-            return "2A38423FED220D681D86E959F2C34F993BA71FCE9B92791199453B41E23A63E5";
+            return "79b032809b9e54ea3504659c37edb9e49e6d462d691c75e4a5afd79d8bb8f86c";
         }
         if (window.UNIFEDSystem && window.UNIFEDSystem.masterHash) {
             return window.UNIFEDSystem.masterHash;

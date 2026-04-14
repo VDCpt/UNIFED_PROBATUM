@@ -5,13 +5,9 @@
  * Padrão:      Read-Only Data Consumption sobre UNIFEDSystem.analysis
  * Conformidade: DORA (UE) 2022/2554 · RGPD · ISO/IEC 27037:2012
  *
- * ALTERAÇÕES v13.12.2-i18n (2026-04-14):
+ * ALTERAÇÕES v13.12.2-i18n (2026-04-13):
  * · Adicionada flag _isGraphRendering para evitar loops de re-renderização.
  * · Função renderATFChart() com controle de mutex.
- * · [FIX] openATFModal: injeção de temporalData estático (Q4-2024) quando sys.monthlyData está vazio.
- * · [FIX] renderDiscrepancyCharts: fallback dac7 corrigido de 7755.16 para 6276.55.
- * · [FIX] Listener UNIFED_ANALYSIS_COMPLETE: uncloaking pós-performAudit() sem race condition.
- * · [FIX] Listener UNIFED_EXECUTE_PERITIA: Chart.js Lazy Rendering após Estado 2.
  * · Estabilização do gráfico ATF no modal.
  * · Garantia de que todas as funções expõem logs para o ForensicLogger.
  * · CORREÇÃO CRÍTICA: removido bloco de código solto após generateLegalNarrative.
@@ -1026,17 +1022,7 @@ function openATFModal() {
     if (!sys) { console.warn('[UNIFED-ATF] UNIFEDSystem nao disponivel.'); return; }
     var _L = (typeof window.currentLang !== 'undefined') ? window.currentLang : 'pt';
     var _T = function(pt, en) { return _L === 'en' ? en : pt; };
-    var _rawMonthly = sys.monthlyData || {};
-    if (Object.keys(_rawMonthly).length === 0) {
-        _rawMonthly = {
-            '202409': { ganhos: 2450.00, despesas: 590.00, ganhosLiq: 1860.00 },
-            '202410': { ganhos: 2560.00, despesas: 615.00, ganhosLiq: 1945.00 },
-            '202411': { ganhos: 2480.00, despesas: 600.00, ganhosLiq: 1880.00 },
-            '202412': { ganhos: 2667.73, despesas: 642.89, ganhosLiq: 2024.84 }
-        };
-        console.info('[UNIFED-ATF] temporalData estático injetado (monthlyData vazio) — 4 meses Q4-2024.');
-    }
-    var atf    = computeTemporalAnalysis(_rawMonthly, sys.analysis);
+    var atf    = computeTemporalAnalysis(sys.monthlyData || {}, sys.analysis);
     var months = atf.months;
     var existing = document.getElementById('atfModal');
     if (existing) existing.remove();
@@ -1273,51 +1259,7 @@ window.generateBurdenOfProofSection = generateBurdenOfProofSection;
 // 9. ADIÇÕES v13.12.2-i18n · POLÍTICA ZERO-OMISSÃO
 // ============================================================================
 (function _enrichmentZeroOmission() {
-    // ── Listener UNIFED_ANALYSIS_COMPLETE (pós-performAudit()) ───────────────
-    // Resolve a race condition: enriquecimento só ocorre APÓS o motor nativo terminar.
-    window.addEventListener('UNIFED_ANALYSIS_COMPLETE', function _onAnalysisComplete(evt) {
-        console.log('[UNIFED-ENRICHMENT] UNIFED_ANALYSIS_COMPLETE recebido. A enriquecer UI...', (evt && evt.detail) || '');
-        var _sys = window.UNIFEDSystem || {};
-        // Re-mapear Smoking Guns e fluxos isentos com dados calculados pelo motor nativo
-        if (window.UNIFED_INTERNAL) {
-            if (typeof window.UNIFED_INTERNAL.syncMetrics   === 'function') window.UNIFED_INTERNAL.syncMetrics();
-            if (typeof window.UNIFED_INTERNAL.updateAuxiliaryUI === 'function') window.UNIFED_INTERNAL.updateAuxiliaryUI();
-        }
-        // Uncloaking atómico (latência zero)
-        document.querySelectorAll(
-            '.pure-data-value, .pure-delta-value, .pure-atf-big, ' +
-            '.smoking-gun-module, .pure-sg-val, [data-pt], [data-en]'
-        ).forEach(function(el) { el.classList.add('forensic-revealed'); });
-        console.log('[UNIFED-ENRICHMENT] Uncloaking concluído via UNIFED_ANALYSIS_COMPLETE.');
-    });
-
-    // ── Event-Based Lazy Rendering: UNIFED_EXECUTE_PERITIA ───────────────────
-    window.addEventListener('UNIFED_EXECUTE_PERITIA', function _onPeritiaExecute(evt) {
-        console.log('[UNIFED-ENRICHMENT] UNIFED_EXECUTE_PERITIA recebido. Motor gráfico ATF a inicializar...', (evt.detail || {}).masterHash || '');
-        if (typeof window.renderDiscrepancyCharts === 'function') window.renderDiscrepancyCharts();
-        var _canvas = document.getElementById('atfChartCanvas');
-        if (_canvas && typeof Chart !== 'undefined') {
-            var _sys = window.UNIFEDSystem || {};
-            var _rawMonthly = (_sys.monthlyData && Object.keys(_sys.monthlyData).length > 0) ? _sys.monthlyData : {
-                '202409': { ganhos: 2450.00, despesas: 590.00, ganhosLiq: 1860.00 },
-                '202410': { ganhos: 2560.00, despesas: 615.00, ganhosLiq: 1945.00 },
-                '202411': { ganhos: 2480.00, despesas: 600.00, ganhosLiq: 1880.00 },
-                '202412': { ganhos: 2667.73, despesas: 642.89, ganhosLiq: 2024.84 }
-            };
-            if (typeof computeTemporalAnalysis === 'function') {
-                var _atf = computeTemporalAnalysis(_rawMonthly, _sys.analysis || {});
-                if (typeof window.renderATFChart === 'function' && _atf && _atf.months && _atf.months.length > 0) {
-                    window.renderATFChart(_atf);
-                }
-            }
-        }
-        if (typeof window.generateLegalNarrative === 'function' && window.UNIFEDSystem && window.UNIFEDSystem.analysis) {
-            window.generateLegalNarrative(window.UNIFEDSystem.analysis).catch(function() {});
-        }
-        console.log('[UNIFED-ENRICHMENT] Lazy rendering concluído (UNIFED_EXECUTE_PERITIA).');
-    });
-    console.log('[UNIFED-ENRICHMENT] Listener UNIFED_EXECUTE_PERITIA registado (Chart.js Lazy Rendering).');
-
+    // Garantia de que o utilitário de formatação está disponível (redundante, mas seguro)
     if (!window.UNIFEDSystem.utils.formatCurrency) {
         window.UNIFEDSystem.utils.formatCurrency = function(val) {
             return new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(val || 0);
@@ -1335,7 +1277,7 @@ window.generateBurdenOfProofSection = generateBurdenOfProofSection;
         
         const data = (window.UNIFEDSystem.analysis && window.UNIFEDSystem.analysis.totals) || {};
         const gains = data.ganhos || 10157.73;
-        const dac7 = data.dac7TotalPeriodo || 6276.55;
+        const dac7 = data.dac7TotalPeriodo || 7755.16;
         
         new Chart(ctx, {
             type: 'bar',
