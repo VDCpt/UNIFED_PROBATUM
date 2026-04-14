@@ -8422,6 +8422,9 @@ if (typeof window.dispatchEvent === 'function') {
     console.log('[UNIFED-CORE] Evento UNIFED_CORE_READY despachado.');
 }
 
+// ============================================================================
+// SISTEMA DE NOTIFICAÇÕES (TOASTS) - SANITIZADO
+// ============================================================================
 window.showToast = function(message, type = 'info') {
     let container = document.getElementById('toastContainer');
     if (!container) {
@@ -8454,7 +8457,13 @@ window.showToast = function(message, type = 'info') {
     
     container.appendChild(toast);
 
-// [FIX] Fecho de bloco na função de notificação (script.js)
+    // Animação de entrada
+    requestAnimationFrame(() => {
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateX(0)';
+    });
+
+    // Auto-remoção
     setTimeout(() => {
         if (toast && toast.parentNode) {
             toast.style.opacity = '0';
@@ -8465,40 +8474,41 @@ window.showToast = function(message, type = 'info') {
         }
     }, 4000);
 };
-   
-window.renderChart = renderChart;
-window.renderDiscrepancyChart = renderDiscrepancyChart;
 
-// --- RETIFICAÇÃO FINAL: script.js ---
+// Exposição global das funções de gráficos
+window.renderChart = typeof renderChart !== 'undefined' ? renderChart : null;
+window.renderDiscrepancyChart = typeof renderDiscrepancyChart !== 'undefined' ? renderDiscrepancyChart : null;
+
+// ============================================================================
+// ORQUESTRAÇÃO DE CARREGAMENTO (RETIFICAÇÃO v13.12.2)
+// ============================================================================
 window.addEventListener('load', function () {
-    // 1. Definir estado de prontidão
     window.UNIFEDSystem = window.UNIFEDSystem || {};
     window.UNIFEDSystem.demoMode = true; 
 
-    // 2. Delay de sincronização para permitir a injeção do painel (script_injection.js)
+    // Delay para garantir que script_injection.js terminou a hidratação
     setTimeout(() => {
-        // Remove o overlay de loading/boas-vindas
+        // 1. Ocultar Loading Overlay
         const loader = document.querySelector('.loading-overlay');
         if (loader) {
-            loader.style.transition = 'opacity 0.5s ease';
             loader.style.opacity = '0';
             setTimeout(() => { loader.style.display = 'none'; }, 500);
         }
 
-        // Força a exibição do container principal
+        // 2. Revelar Container Principal
         const main = document.querySelector('.main-container');
         if (main) {
             main.style.display = 'flex';
+            // Força reflow para animação de opacidade funcionar
+            main.offsetHeight; 
             main.style.opacity = '1';
         }
 
-        // Ativa a revelação dos dados periciais
+        // 3. Gatilho de revelação de dados periciais (Smoking Gun)
         if (typeof window.revealForensicData === 'function') {
             window.revealForensicData();
         }
     }, 400); 
 });
 
-// ============================================================================
-// FIM DO FICHEIRO - UNIFED - PROBATUM v13.12.2-i18n
-// ============================================================================
+// FIM DO FICHEIRO - UNIFED-PROBATUM v13.12.2-i18n
