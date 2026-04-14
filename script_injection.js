@@ -1043,24 +1043,38 @@
             console.log('[UNIFED] Listener associado ao botão "CASO REAL ANONIMIZADO" com espera assíncrona.');
         }
 
-       // --- RETIFICAÇÃO FINAL: script_injection.js (Substituir Bloco Final) ---
+      // --- INÍCIO DA RETIFICAÇÃO: script_injection.js ---
+
+        // 1. Correcção do QR Code para usar o Master Hash da Sessão
         function generateQRCode() {
             const container = document.getElementById('qrcodeContainer');
             if (!container) return;
             container.innerHTML = '';
+            
+            // Recupera o Hash estável definido no script.js ou triada
             const hashFull = window.UNIFEDSystem?.masterHash || '79b032809b9e54ea3504659c37edb9e49e6d462d691c75e4a5afd79d8bb8f86c';
-            const sessionShort = window.UNIFEDSystem?.sessionId ? window.UNIFEDSystem.sessionId.substring(0, 16) : 'UNIFED-DEMO-2026';
+            const sessionShort = window.UNIFEDSystem?.sessionId ? window.UNIFEDSystem.sessionId.substring(0, 16) : 'DEMO-SESSION-2026';
+            
             const qrData = `UNIFED|${sessionShort}|${hashFull}`;
+            
             if (typeof QRCode !== 'undefined') {
-                new QRCode(container, { text: qrData, width: 75, height: 75, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.L });
+                new QRCode(container, { 
+                    text: qrData, 
+                    width: 75, 
+                    height: 75, 
+                    colorDark: "#000000", 
+                    colorLight: "#ffffff", 
+                    correctLevel: QRCode.CorrectLevel.L 
+                });
             }
             container.setAttribute('data-tooltip', 'Verificar Cadeia de Custódia (ISO 27037)');
         }
         window.generateQRCode = generateQRCode;
 
+        // 2. Listener de Hidratação de Dados
         function setupEventDrivenHydration() {
             window.addEventListener('UNIFED_ANALYSIS_COMPLETE', function(event) {
-                console.log('[UNIFED] Re-hidratação da UI iniciada.', event.detail);
+                console.log('[UNIFED] Evento de conclusão detectado. A sincronizar métricas...');
                 if (typeof syncMetrics === 'function') syncMetrics();
                 if (typeof renderMatrix === 'function') renderMatrix();
                 if (typeof updateAuxiliaryUI === 'function') updateAuxiliaryUI();
@@ -1071,22 +1085,29 @@
         setupEventDrivenHydration();
         setupRealCaseButton();
         
-        // GATILHO DE EXECUÇÃO IMEDIATA PARA DEMO
+        // 3. GATILHO DE EXECUÇÃO FORÇADA (CRÍTICO PARA A REUNIÃO)
         const runInit = () => {
             initializeCoreDashboard();
-            // Pequeno delay para garantir que o DOM injetado está pronto
+            
+            // Pequeno delay (200ms) para garantir que o DOM injetado está estável
             setTimeout(() => {
                 if (typeof syncMetrics === 'function') syncMetrics();
                 if (typeof generateQRCode === 'function') generateQRCode();
-                // Dispara evento para sinalizar que a "Análise Demo" está completa
-                window.dispatchEvent(new CustomEvent('UNIFED_ANALYSIS_COMPLETE', { detail: { mode: 'DEMO' } }));
+                
+                // Dispara o sinal de que a análise está pronta para exibição
+                window.dispatchEvent(new CustomEvent('UNIFED_ANALYSIS_COMPLETE', { 
+                    detail: { mode: 'DEMO_READY' } 
+                }));
             }, 200);
         };
 
+        // Execução baseada no estado do documento
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', runInit);
         } else {
             runInit();
         }
+
     })();
 })();
+// --- FIM DA RETIFICAÇÃO ---
