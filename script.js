@@ -13,6 +13,7 @@
  * 8. Impacto sistémico fixado em 1.743.598.080,00 €
  * 9. Estado Zero-Knowledge (resetUIVisual) e revelação controlada (revealForensicData)
  * 10. Botão LIMPAR CONSOLE não‑destrutivo
+ * 11. Otimização do performAudit para modo demo/caso real
  * ====================================================================
  */
 
@@ -42,16 +43,6 @@ if (window.pdfjsLib) {
     window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 }
 
-window.logAudit = window.logAudit || function(msg, level = 'info') {
-    const prefix = '[UNIFED] ';
-    const styles = {
-        error:   'color:#ef4444;font-weight:bold;',
-        warn:    'color:#f59e0b;font-weight:bold;',
-        success: 'color:#22c55e;font-weight:bold;',
-        info:    'color:#60a5fa;',
-    };
-    console.log('%c' + prefix + msg, styles[level] || styles.info);
-};
 const logAudit = window.logAudit;
 
 window._restoreOriginalToolbar = window._restoreOriginalToolbar || function() {
@@ -3103,7 +3094,6 @@ function openHashModal() {
 }
 
 function resetUIVisual() {
-    // Adição de classes periféricas para purga completa do DOM no arranque
     const placeholders = document.querySelectorAll('.pure-data-value, .pure-mono, .kpi-card p, .stat-card p, .quantum-value, .verdict-level, .pure-atf-big, .pure-atf-trend-val, .pure-atf-outlier-val, .pure-atf-meses-val, .pure-zc-val, .pure-sg-val, .pure-delta-value, .pure-fiscal-value');
     placeholders.forEach(el => {
         if (el.id !== 'masterHashValue' && !el.closest('#qrcodeContainer') && !el.classList.contains('pure-hash-prefix-verdict')) {
@@ -3127,25 +3117,11 @@ function resetUIVisual() {
     console.log('[UNIFED] resetUIVisual: UI limpa (estado Zero-Knowledge ampliado).');
 }
 
-/**
- * [RETIFICAÇÃO v13.12.2-i18n] 
- * Bloco Consolidado: Ciclo de Vida da Sessão e Revelação de Dados
- */
-
-// ============================================================================
-// RETIFICAÇÃO: revealForensicData com classe CSS e suspensão do Nexus
-// ============================================================================
 function revealForensicData() {
     console.log('[UNIFED] Iniciando protocolo de revelação de dados forenses...');
-
-    // Suspender traduções do Nexus durante a transição
     if (window.nexusSuspendTranslation) window.nexusSuspendTranslation(true);
-
-    // Adicionar classe ao dashboard para revelar os valores
     const dashboard = document.getElementById('pureDashboard');
     if (dashboard) dashboard.classList.add('forensic-revealed');
-
-    // 1. Orquestração de Métricas e Dashboards
     if (typeof window.UNIFED_INTERNAL !== 'undefined' && window.UNIFED_INTERNAL.syncMetrics) {
         window.UNIFED_INTERNAL.syncMetrics(true);
     } else {
@@ -3154,29 +3130,19 @@ function revealForensicData() {
         if (typeof renderChart === 'function') renderChart();
         if (typeof renderDiscrepancyChart === 'function') renderDiscrepancyChart();
     }
-
-    // 2. Acionamento de Gatilhos de Visibilidade Forçada (Smoking Gun)
     if (typeof forceRevealSmokingGun === 'function') forceRevealSmokingGun();
-
-    // 3. REMOÇÃO DA MÁSCARA DE OPACIDADE (fallback para elementos antigos)
     const forensicElements = document.querySelectorAll(
         '.pure-data-value, .pure-atf-big, .pure-zc-val, .pure-sg-val, .pure-delta-value, .pure-atf-trend-val'
     );
     forensicElements.forEach(el => {
         el.classList.add('forensic-revealed');
     });
-
-    // Reativar traduções do Nexus após um breve delay
     setTimeout(() => {
         if (window.nexusSuspendTranslation) window.nexusSuspendTranslation(false);
     }, 300);
-
     console.info('[UNIFED] Protocolo Zero-Knowledge encerrado. Dados em conformidade visual.');
 }
 
-// ============================================================================
-// RETIFICAÇÃO: resetSystem com limpeza da classe forensic-revealed
-// ============================================================================
 async function resetSystem() {
     if (!confirm(currentLang === 'pt' ? 'Reiniciar o sistema irá apagar todas as evidências e análises. Continuar?' : 'Resetting the system will delete all evidence and analysis. Continue?')) {
         return;
@@ -3212,7 +3178,6 @@ async function resetSystem() {
     renderDiscrepancyChart();
     forensicDataSynchronization();
 
-    // Remover estado de revelação visual
     const dashboard = document.getElementById('pureDashboard');
     if (dashboard) dashboard.classList.remove('forensic-revealed');
     document.querySelectorAll('.forensic-revealed').forEach(el => el.classList.remove('forensic-revealed'));
@@ -3251,7 +3216,6 @@ async function resetSystem() {
                 });
             }
         }
-    // [RETIFICAÇÃO CIRÚRGICA] - REMOÇÃO DE CHAVETA ÓRFÃ E ALINHAMENTO DE BLOCO
         if (typeof window._activatePurePanel === 'function') {
             window._activatePurePanel(true);
         }
@@ -3262,9 +3226,8 @@ async function resetSystem() {
     logAudit('🔄 Sistema reiniciado – todas as evidências e análises foram limpas.', 'success');
     showToast(currentLang === 'pt' ? 'Sistema reiniciado com sucesso.' : 'System reset successfully.', 'success');
     ForensicLogger.addEntry('SYSTEM_RESET_COMPLETED');
-} // <-- FECHO ÚNICO DA FUNÇÃO DE RESET
+}
 
-// BLOCO DE INICIALIZAÇÃO PÓS-RESET
 if (typeof logAudit === 'function') {
     logAudit('SISTEMA UNIFED - PROBATUM v13.12.2-i18n · DORA COMPLIANT · MODO PROFISSIONAL ATIVADO', 'success');
 }
@@ -3281,7 +3244,6 @@ setTimeout(() => {
     if (typeof forensicDataSynchronization === 'function') forensicDataSynchronization();
 }, 1000);
 
-// [RESTAURAÇÃO] FUNÇÕES DE INTERFACE BLOQUEADAS PELO ERRO DE SINTAXE
 function populateAnoFiscal() {
     const selectAno = document.getElementById('anoFiscal');
     if (!selectAno) return;
@@ -3347,7 +3309,6 @@ function generateQRCode() {
 }
 
 function setupMainListeners() {
-    // Event delegation para todos os botões dinâmicos
     document.body.addEventListener('click', (e) => {
         const btn = e.target.closest('button');
         if (!btn) return;
@@ -3413,7 +3374,6 @@ function setupMainListeners() {
         }
     });
 
-    // Listeners que não interferem com o DOM wiping (selects, inputs)
     const anoFiscal = document.getElementById('anoFiscal');
     if (anoFiscal) {
         anoFiscal.addEventListener('change', (e) => {
@@ -4163,11 +4123,14 @@ async function performAudit() {
 
         ForensicLogger.addEntry('AUDIT_STARTED');
 
-        const hasFiles = Object.values(UNIFEDSystem.documents).some(d => d.files && d.files.length > 0);
-        if (!hasFiles) {
-            ForensicLogger.addEntry('AUDIT_FAILED', { reason: 'No files' });
-            showToast(currentLang === 'en' ? 'Upload at least one evidence file before running the forensic exam.' : 'Carregue pelo menos um ficheiro de evidência antes de executar a perícia.', 'error');
-            return;
+        const isDemo = UNIFEDSystem.demoMode === true || UNIFEDSystem.casoRealAnonimizado === true;
+        if (!isDemo) {
+            const hasFiles = Object.values(UNIFEDSystem.documents).some(d => d.files && d.files.length > 0);
+            if (!hasFiles) {
+                ForensicLogger.addEntry('AUDIT_FAILED', { reason: 'No files' });
+                showToast(currentLang === 'en' ? 'Upload at least one evidence file before running the forensic exam.' : 'Carregue pelo menos um ficheiro de evidência antes de executar a perícia.', 'error');
+                return;
+            }
         }
 
         UNIFEDSystem.forensicMetadata = getForensicMetadata();
@@ -4178,60 +4141,63 @@ async function performAudit() {
             analyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + (currentLang === 'en' ? 'RUNNING FORENSIC EXAM BIG DATA...' : 'A EXECUTAR PERÍCIA BIG DATA...');
         }
 
-        // Converter valores para números (segurança)
-        const saftBruto = parseFloat(UNIFEDSystem.documents.saft?.totals?.bruto) || 0;
-        const saftIliquido = parseFloat(UNIFEDSystem.documents.saft?.totals?.iliquido) || 0;
-        const saftIva = parseFloat(UNIFEDSystem.documents.saft?.totals?.iva) || 0;
-        const stmtGanhos = parseFloat(UNIFEDSystem.documents.statements?.totals?.ganhos) || 0;
-        const stmtDespesas = parseFloat(UNIFEDSystem.documents.statements?.totals?.despesas) || 0;
-        const stmtGanhosLiquidos = parseFloat(UNIFEDSystem.documents.statements?.totals?.ganhosLiquidos) || 0;
-        const invoiceVal = parseFloat(UNIFEDSystem.documents.invoices?.totals?.invoiceValue) || 0;
-        const dac7Q1 = parseFloat(UNIFEDSystem.documents.dac7?.totals?.q1) || 0;
-        const dac7Q2 = parseFloat(UNIFEDSystem.documents.dac7?.totals?.q2) || 0;
-        const dac7Q3 = parseFloat(UNIFEDSystem.documents.dac7?.totals?.q3) || 0;
-        const dac7Q4 = parseFloat(UNIFEDSystem.documents.dac7?.totals?.q4) || 0;
+        // Se for demo e os totais já estiverem preenchidos, saltar extração
+        if (!isDemo || !UNIFEDSystem.analysis.totals.ganhos) {
+            // Extrair valores dos documentos (lógica original mantida)
+            const saftBruto = parseFloat(UNIFEDSystem.documents.saft?.totals?.bruto) || 0;
+            const saftIliquido = parseFloat(UNIFEDSystem.documents.saft?.totals?.iliquido) || 0;
+            const saftIva = parseFloat(UNIFEDSystem.documents.saft?.totals?.iva) || 0;
+            const stmtGanhos = parseFloat(UNIFEDSystem.documents.statements?.totals?.ganhos) || 0;
+            const stmtDespesas = parseFloat(UNIFEDSystem.documents.statements?.totals?.despesas) || 0;
+            const stmtGanhosLiquidos = parseFloat(UNIFEDSystem.documents.statements?.totals?.ganhosLiquidos) || 0;
+            const invoiceVal = parseFloat(UNIFEDSystem.documents.invoices?.totals?.invoiceValue) || 0;
+            const dac7Q1 = parseFloat(UNIFEDSystem.documents.dac7?.totals?.q1) || 0;
+            const dac7Q2 = parseFloat(UNIFEDSystem.documents.dac7?.totals?.q2) || 0;
+            const dac7Q3 = parseFloat(UNIFEDSystem.documents.dac7?.totals?.q3) || 0;
+            const dac7Q4 = parseFloat(UNIFEDSystem.documents.dac7?.totals?.q4) || 0;
 
-        let dac7TotalPeriodo = 0;
-        switch (UNIFEDSystem.selectedPeriodo) {
-            case 'anual':
-                dac7TotalPeriodo = dac7Q1 + dac7Q2 + dac7Q3 + dac7Q4;
-                break;
-            case '1s':
-                dac7TotalPeriodo = dac7Q1 + dac7Q2;
-                break;
-            case '2s':
-                dac7TotalPeriodo = dac7Q3 + dac7Q4;
-                break;
-            case 'trimestral':
-                dac7TotalPeriodo = dac7Q1 + dac7Q2 + dac7Q3 + dac7Q4;
-                if ((dac7Q1 > 0 && (dac7Q2 > 0 || dac7Q3 > 0 || dac7Q4 > 0)) ||
-                    (dac7Q2 > 0 && (dac7Q3 > 0 || dac7Q4 > 0)) ||
-                    (dac7Q3 > 0 && dac7Q4 > 0)) {
-                    logAudit('[!] Análise trimestral: múltiplos trimestres detetados. A soma pode não ser a pretendida.', 'warning');
-                }
-                break;
-            case 'mensal':
-                dac7TotalPeriodo = dac7Q1 + dac7Q2 + dac7Q3 + dac7Q4;
-                logAudit('ℹ️ Análise mensal: a usar DAC7 anual. Pode não ser representativo.', 'info');
-                break;
-            default:
-                dac7TotalPeriodo = dac7Q1 + dac7Q2 + dac7Q3 + dac7Q4;
+            let dac7TotalPeriodo = 0;
+            switch (UNIFEDSystem.selectedPeriodo) {
+                case 'anual':
+                    dac7TotalPeriodo = dac7Q1 + dac7Q2 + dac7Q3 + dac7Q4;
+                    break;
+                case '1s':
+                    dac7TotalPeriodo = dac7Q1 + dac7Q2;
+                    break;
+                case '2s':
+                    dac7TotalPeriodo = dac7Q3 + dac7Q4;
+                    break;
+                case 'trimestral':
+                    dac7TotalPeriodo = dac7Q1 + dac7Q2 + dac7Q3 + dac7Q4;
+                    if ((dac7Q1 > 0 && (dac7Q2 > 0 || dac7Q3 > 0 || dac7Q4 > 0)) ||
+                        (dac7Q2 > 0 && (dac7Q3 > 0 || dac7Q4 > 0)) ||
+                        (dac7Q3 > 0 && dac7Q4 > 0)) {
+                        logAudit('[!] Análise trimestral: múltiplos trimestres detetados. A soma pode não ser a pretendida.', 'warning');
+                    }
+                    break;
+                case 'mensal':
+                    dac7TotalPeriodo = dac7Q1 + dac7Q2 + dac7Q3 + dac7Q4;
+                    logAudit('ℹ️ Análise mensal: a usar DAC7 anual. Pode não ser representativo.', 'info');
+                    break;
+                default:
+                    dac7TotalPeriodo = dac7Q1 + dac7Q2 + dac7Q3 + dac7Q4;
+            }
+
+            UNIFEDSystem.analysis.totals = {
+                saftBruto: saftBruto,
+                saftIliquido: saftIliquido,
+                saftIva: saftIva,
+                ganhos: stmtGanhos,
+                despesas: stmtDespesas,
+                ganhosLiquidos: stmtGanhosLiquidos,
+                faturaPlataforma: invoiceVal,
+                dac7Q1: dac7Q1,
+                dac7Q2: dac7Q2,
+                dac7Q3: dac7Q3,
+                dac7Q4: dac7Q4,
+                dac7TotalPeriodo: dac7TotalPeriodo
+            };
         }
-
-        UNIFEDSystem.analysis.totals = {
-            saftBruto: saftBruto,
-            saftIliquido: saftIliquido,
-            saftIva: saftIva,
-            ganhos: stmtGanhos,
-            despesas: stmtDespesas,
-            ganhosLiquidos: stmtGanhosLiquidos,
-            faturaPlataforma: invoiceVal,
-            dac7Q1: dac7Q1,
-            dac7Q2: dac7Q2,
-            dac7Q3: dac7Q3,
-            dac7Q4: dac7Q4,
-            dac7TotalPeriodo: dac7TotalPeriodo
-        };
 
         setTimeout(() => { 
             forceRevealSmokingGun(); 
@@ -4242,33 +4208,18 @@ async function performAudit() {
         }, 500);
 
         console.log('🔍 VALORES EXTRAÍDOS (v13.12.2-i18n):');
-        console.log('   SAF-T Bruto:', formatCurrency(saftBruto));
-        console.log('   SAF-T Ilíquido:', formatCurrency(saftIliquido));
-        console.log('   SAF-T IVA:', formatCurrency(saftIva));
-        console.log('   Extrato - Ganhos:', formatCurrency(stmtGanhos));
-        console.log('   Extrato - Despesas:', formatCurrency(stmtDespesas));
-        console.log('   Extrato - Líquido:', formatCurrency(stmtGanhosLiquidos));
-        console.log('   Fatura Comissões:', formatCurrency(invoiceVal));
-        console.log(`   DAC7 (${UNIFEDSystem.selectedPeriodo}):`, formatCurrency(dac7TotalPeriodo));
+        console.log('   SAF-T Bruto:', formatCurrency(UNIFEDSystem.analysis.totals.saftBruto));
+        console.log('   SAF-T Ilíquido:', formatCurrency(UNIFEDSystem.analysis.totals.saftIliquido));
+        console.log('   SAF-T IVA:', formatCurrency(UNIFEDSystem.analysis.totals.saftIva));
+        console.log('   Extrato - Ganhos:', formatCurrency(UNIFEDSystem.analysis.totals.ganhos));
+        console.log('   Extrato - Despesas:', formatCurrency(UNIFEDSystem.analysis.totals.despesas));
+        console.log('   Extrato - Líquido:', formatCurrency(UNIFEDSystem.analysis.totals.ganhosLiquidos));
+        console.log('   Fatura Comissões:', formatCurrency(UNIFEDSystem.analysis.totals.faturaPlataforma));
+        console.log(`   DAC7 (${UNIFEDSystem.selectedPeriodo}):`, formatCurrency(UNIFEDSystem.analysis.totals.dac7TotalPeriodo));
 
         calculateTwoAxisDiscrepancy();
         performForensicCrossings();
-
-        const totals = UNIFEDSystem.analysis.totals;
-        if (totals.ganhos > totals.saftBruto * 1.05) {
-            const omissaoPercent = ((totals.ganhos / totals.saftBruto - 1) * 100).toFixed(2);
-            logAudit(`[ALERTA CRÍTICO] Omissão Declarativa Detectada: +${omissaoPercent}% em Extrato vs SAF-T.`, 'error');
-            UNIFEDSystem.analysis.taxRisk = {
-                level: 'HIGH',
-                description: 'Discrepância positiva em conta bancária não refletida no SAF-T PT.',
-                legalBase: 'Art. 119.º do RGIT'
-            };
-        } else {
-            UNIFEDSystem.analysis.taxRisk = null;
-        }
-
         validateConsistency();
-
         selectQuestions(UNIFEDSystem.analysis.verdict ? UNIFEDSystem.analysis.verdict.key : 'low');
         updateDashboard();
         updateModulesUI();
@@ -4282,16 +4233,16 @@ async function performAudit() {
         const duration = (UNIFEDSystem.performanceTiming.end - UNIFEDSystem.performanceTiming.start).toFixed(2);
 
         logAudit(`📊 VALORES UTILIZADOS NA PERÍCIA (v13.12.2-i18n):`, 'info');
-        logAudit(`   SAF-T Bruto: ${formatCurrency(saftBruto)} (${UNIFEDSystem.documents.saft?.files?.length || 0} ficheiros)`, 'info');
-        logAudit(`   Ganhos (Extrato): ${formatCurrency(stmtGanhos)}`, 'info');
-        logAudit(`   Despesas (Extrato): ${formatCurrency(stmtDespesas)}`, 'info');
-        logAudit(`   Ganhos Líquidos (Extrato): ${formatCurrency(stmtGanhosLiquidos)}`, 'info');
-        logAudit(`   Fatura Comissões: ${formatCurrency(invoiceVal)} (${UNIFEDSystem.documents.invoices?.files?.length || 0} ficheiros)`, 'info');
-        logAudit(`   DAC7 (${UNIFEDSystem.selectedPeriodo}): ${formatCurrency(dac7TotalPeriodo)}`, 'info');
-        logAudit(`   Discrepância Comissões (Despesas - Fatura): ${formatCurrency(stmtDespesas - invoiceVal)}`, 'info');
-        logAudit(`   Smoking Gun — Ganhos vs DAC7: ${formatCurrency(stmtGanhos - dac7TotalPeriodo)} (Ganhos: ${formatCurrency(stmtGanhos)} | DAC7: ${formatCurrency(dac7TotalPeriodo)})`, 'error');
-        logAudit(`   Revenue Gap (SAF-T vs Ganhos): ${formatCurrency(saftBruto - stmtGanhos)}`, 'info');
-        logAudit(`   Expense Gap (Despesas - Fatura): ${formatCurrency(stmtDespesas - invoiceVal)}`, 'info');
+        logAudit(`   SAF-T Bruto: ${formatCurrency(UNIFEDSystem.analysis.totals.saftBruto)} (${UNIFEDSystem.documents.saft?.files?.length || 0} ficheiros)`, 'info');
+        logAudit(`   Ganhos (Extrato): ${formatCurrency(UNIFEDSystem.analysis.totals.ganhos)}`, 'info');
+        logAudit(`   Despesas (Extrato): ${formatCurrency(UNIFEDSystem.analysis.totals.despesas)}`, 'info');
+        logAudit(`   Ganhos Líquidos (Extrato): ${formatCurrency(UNIFEDSystem.analysis.totals.ganhosLiquidos)}`, 'info');
+        logAudit(`   Fatura Comissões: ${formatCurrency(UNIFEDSystem.analysis.totals.faturaPlataforma)} (${UNIFEDSystem.documents.invoices?.files?.length || 0} ficheiros)`, 'info');
+        logAudit(`   DAC7 (${UNIFEDSystem.selectedPeriodo}): ${formatCurrency(UNIFEDSystem.analysis.totals.dac7TotalPeriodo)}`, 'info');
+        logAudit(`   Discrepância Comissões (Despesas - Fatura): ${formatCurrency(UNIFEDSystem.analysis.totals.despesas - UNIFEDSystem.analysis.totals.faturaPlataforma)}`, 'info');
+        logAudit(`   Smoking Gun — Ganhos vs DAC7: ${formatCurrency(UNIFEDSystem.analysis.totals.ganhos - UNIFEDSystem.analysis.totals.dac7TotalPeriodo)} (Ganhos: ${formatCurrency(UNIFEDSystem.analysis.totals.ganhos)} | DAC7: ${formatCurrency(UNIFEDSystem.analysis.totals.dac7TotalPeriodo)})`, 'error');
+        logAudit(`   Revenue Gap (SAF-T vs Ganhos): ${formatCurrency(UNIFEDSystem.analysis.totals.saftBruto - UNIFEDSystem.analysis.totals.ganhos)}`, 'info');
+        logAudit(`   Expense Gap (Despesas - Fatura): ${formatCurrency(UNIFEDSystem.analysis.totals.despesas - UNIFEDSystem.analysis.totals.faturaPlataforma)}`, 'info');
         logAudit(`   Meses com dados: ${UNIFEDSystem.dataMonths.size}`, 'info');
 
         logAudit(`✅ Perícia BIG DATA v13.12.2-i18n concluída em ${duration}ms.`, 'success');
@@ -4303,8 +4254,8 @@ async function performAudit() {
             revenueGap: UNIFEDSystem.analysis.twoAxis.revenueGap,
             expenseGap: UNIFEDSystem.analysis.twoAxis.expenseGap,
             verdict: UNIFEDSystem.analysis.verdict?.level,
-            ganhos: stmtGanhos,
-            despesas: stmtDespesas
+            ganhos: UNIFEDSystem.analysis.totals.ganhos,
+            despesas: UNIFEDSystem.analysis.totals.despesas
         });
 
         forensicDataSynchronization();
@@ -4313,7 +4264,6 @@ async function performAudit() {
         
         revealForensicData();
 
-        // Disparo do evento para re-hidratação da UI externa
         try {
             window.dispatchEvent(new CustomEvent('UNIFED_ANALYSIS_COMPLETE', { detail: { timestamp: Date.now() } }));
             console.log('[UNIFED] Evento UNIFED_ANALYSIS_COMPLETE despachado.');
@@ -5194,7 +5144,6 @@ function showAlerts() {
 function renderChart() {
     const ctx = document.getElementById('mainChart');
     if (!ctx) return;
-    // Forçar visibilidade do contentor
     const container = ctx.closest('.chart-section');
     if (container) {
         container.style.display = 'block';
@@ -5280,7 +5229,6 @@ function renderChart() {
 function renderDiscrepancyChart() {
     const ctx = document.getElementById('discrepancyChart');
     if (!ctx) return;
-    // Forçar visibilidade do contentor
     const container = ctx.closest('.chart-section');
     if (container) {
         container.style.display = 'block';
@@ -8195,92 +8143,8 @@ function clearConsole() {
     logAudit('🧹 Consola e área de log limpas.', 'info');
 }
 
-async function resetSystem() {
-    if (!confirm(currentLang === 'pt' ? 'Reiniciar o sistema irá apagar todas as evidências e análises. Continuar?' : 'Resetting the system will delete all evidence and analysis. Continue?')) {
-        return;
-    }
-    ForensicLogger.addEntry('SYSTEM_RESET_REQUESTED');
-    
-    UNIFEDSystem.analysis = {
-        totals: { saftBruto:0, saftIliquido:0, saftIva:0, ganhos:0, despesas:0, ganhosLiquidos:0, faturaPlataforma:0, dac7Q1:0, dac7Q2:0, dac7Q3:0, dac7Q4:0, dac7TotalPeriodo:0 },
-        twoAxis: { revenueGap:0, expenseGap:0, revenueGapActive:false, expenseGapActive:false },
-        crossings: { discrepanciaCritica:0, discrepanciaSaftVsDac7:0, percentagemOmissao:0, percentagemSaftVsDac7:0, ivaFalta:0, ivaFalta6:0, btor:0, btf:0, agravamentoBrutoIRC:0, ircEstimado:0, asfixiaFinanceira:0 },
-        verdict: null,
-        evidenceIntegrity: [],
-        selectedQuestions: []
-    };
-    UNIFEDSystem.documents = {
-        control: { files:[], hashes:{}, totals:{ records:0 } },
-        saft: { files:[], hashes:{}, totals:{ records:0, iliquido:0, iva:0, bruto:0 } },
-        invoices: { files:[], hashes:{}, totals:{ records:0, invoiceValue:0 } },
-        statements: { files:[], hashes:{}, totals:{ records:0, ganhos:0, despesas:0, ganhosLiquidos:0 } },
-        dac7: { files:[], hashes:{}, totals:{ records:0, q1:0, q2:0, q3:0, q4:0, receitaAnual:0 } }
-    };
-    UNIFEDSystem.monthlyData = {};
-    UNIFEDSystem.dataMonths.clear();
-    UNIFEDSystem.processedFiles.clear();
-    UNIFEDSystem.fileSources.clear();
-    resetAuxiliaryData();
-    
-    await UNIFEDSystem.generateMasterHash();
-    
-    updateModulesUI();
-    updateDashboard();
-    renderChart();
-    renderDiscrepancyChart();
-    forensicDataSynchronization();
-
-    console.warn('[FORENSIC] Reset solicitado. Restaurando Toolbar de 6 botões...');
-    
-    const consoleElem = document.getElementById('forensic-console');
-    if (consoleElem) consoleElem.innerHTML = '';
-
-    resetUIVisual();
-
-    setTimeout(() => {
-        if (typeof window._restoreOriginalToolbar === 'function') {
-            window._restoreOriginalToolbar();
-            logAudit("Toolbar original restaurada após reset.", "success");
-        } else {
-            const container = document.getElementById('export-tools-container');
-            if (container) {
-                container.innerHTML = '';
-                const translations = window.translations?.[currentLang] || {};
-                const tools = [
-                    { id: 'exportPDFBtn', icon: 'fa-file-pdf', label: translations.btnPDF || 'PARECER TÉCNICO', handler: () => window.exportPDF && window.exportPDF() },
-                    { id: 'exportDOCXBtn', icon: 'fa-file-word', label: translations.btnDOCX || 'MINUTA WORD', handler: () => window.exportDOCX && window.exportDOCX() },
-                    { id: 'atfModalBtn', icon: 'fa-chart-line', label: translations.btnATF || '⏳ TENDÊNCIA ATF', handler: () => window.openATFModal && window.openATFModal() },
-                    { id: 'exportJSONBtn', icon: 'fa-file-code', label: translations.btnJSON || 'EXPORTAR JSON', handler: () => window.exportDataJSON && window.exportDataJSON() },
-                    { id: 'resetBtn', icon: 'fa-redo-alt', label: translations.btnReset || 'REINICIAR', handler: () => window.resetSystem && window.resetSystem() },
-                    { id: 'clearConsoleBtn', icon: 'fa-trash-alt', label: translations.clearConsoleBtnText || 'LIMPAR CONSOLE', handler: () => window.clearConsole && window.clearConsole() }
-                ];
-                tools.forEach(t => {
-                    const btn = document.createElement('button');
-                    btn.id = t.id;
-                    btn.className = 'btn-tool';
-                    btn.innerHTML = `<i class="fas ${t.icon}"></i> <span>${t.label}</span>`;
-                    btn.onclick = t.handler;
-                    container.appendChild(btn);
-                });
-            }
-        }
-        if (typeof window._activatePurePanel === 'function') {
-            window._activatePurePanel(true);
-        }
-    }, 150);
-    
-    window.dispatchEvent(new CustomEvent('UNIFED_CORE_READY', { detail: { reset: true } }));
-    
-    logAudit('🔄 Sistema reiniciado – todas as evidências e análises foram limpas.', 'success');
-    showToast(currentLang === 'pt' ? 'Sistema reiniciado com sucesso.' : 'System reset successfully.', 'success');
-    ForensicLogger.addEntry('SYSTEM_RESET_COMPLETED');
-}
-
 window.UNIFEDSystem = UNIFEDSystem;
 
-// ============================================================================
-// MONKEY‑PATCH: analysisComplete = true no arranque (imutável)
-// ============================================================================
 (function patchAnalysisComplete() {
     if (!window.UNIFEDSystem) window.UNIFEDSystem = {};
     Object.defineProperty(window.UNIFEDSystem, 'analysisComplete', {
@@ -8448,7 +8312,6 @@ window.showToast = function(message, type = 'info') {
     
     container.appendChild(toast);
 
-// [FIX] Fecho de bloco na função de notificação (script.js)
     setTimeout(() => {
         if (toast && toast.parentNode) {
             toast.style.opacity = '0';
@@ -8463,9 +8326,6 @@ window.showToast = function(message, type = 'info') {
 window.renderChart = renderChart;
 window.renderDiscrepancyChart = renderDiscrepancyChart;
 
-// ============================================================================
-// FIX FORÇADO: Transição do Splash Screen para o Main Container
-// ============================================================================
 (function ensureSplashTransition() {
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', ensureSplashTransition);
@@ -8485,7 +8345,6 @@ window.renderDiscrepancyChart = renderDiscrepancyChart;
         return;
     }
     
-    // Evitar duplicação de listener
     if (startBtn._splashListener) return;
     startBtn._splashListener = true;
     
@@ -8497,7 +8356,7 @@ window.renderDiscrepancyChart = renderDiscrepancyChart;
         setTimeout(function() {
             splashScreen.style.display = 'none';
             mainContainer.style.display = 'flex';
-            void mainContainer.offsetWidth; // forçar reflow
+            void mainContainer.offsetWidth;
             mainContainer.style.opacity = '1';
             if (typeof logAudit === 'function') {
                 logAudit('Transição de estado UI: Splash -> Main. Sistema pronto para demonstração ELITE.', 'success');
@@ -8508,9 +8367,6 @@ window.renderDiscrepancyChart = renderDiscrepancyChart;
     console.log('[UNIFED] Listener de transição do splash configurado com sucesso.');
 })();
 
-// ============================================================================
-// GARANTIA DE POPULAÇÃO DO SELECT DO ANO FISCAL
-// ============================================================================
 (function ensureAnoFiscalPopulated() {
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function() {
@@ -8522,7 +8378,3 @@ window.renderDiscrepancyChart = renderDiscrepancyChart;
         if (typeof populateYears === 'function') populateYears();
     }
 })();
-
-// ============================================================================
-// FIM DO FICHEIRO - UNIFED - PROBATUM v13.12.2-i18n
-// ============================================================================

@@ -4,6 +4,8 @@
  * Ficheiro      : unifed_triada_export.js
  * Versão        : 1.0.21-TRIADA-FIX (Restauro de toolbar + força revelação)
  * ============================================================================
+ * ALTERAÇÕES: Removida a injeção da toolbar para evitar conflito com os botões originais.
+ * Mantida apenas a função gerarAnexoCustodia.
  */
 
 'use strict';
@@ -166,93 +168,10 @@
         _log(`✅ Anexo de Custódia gerado com QR Code: ${sessionId}`, 'success');
     }
 
-    function restoreOriginalToolbar() {
-        const container = document.getElementById('export-tools-container');
-        if (!container) return false;
-        if (container.getAttribute('data-original-restored') === 'true') return true;
-        container.innerHTML = '';
-        const triadaBtns = container.querySelectorAll('.btn-tool-pure');
-        triadaBtns.forEach(btn => btn.remove());
-        const translations = window.translations?.[window.currentLang] || {};
-        const originalTools = [
-            { id: 'exportPDFBtn', icon: 'fa-file-pdf', label: translations.btnPDF || 'PARECER TÉCNICO', handler: () => window.exportPDF && window.exportPDF() },
-            { id: 'exportDOCXBtn', icon: 'fa-file-word', label: translations.btnDOCX || 'MINUTA WORD', handler: () => window.exportDOCX && window.exportDOCX() },
-            { id: 'atfModalBtn', icon: 'fa-chart-line', label: translations.btnATF || '⏳ TENDÊNCIA ATF', handler: () => window.openATFModal && window.openATFModal() },
-            { id: 'exportJSONBtn', icon: 'fa-file-code', label: translations.btnJSON || 'EXPORTAR JSON', handler: () => window.exportDataJSON && window.exportDataJSON() },
-            { id: 'resetBtn', icon: 'fa-redo-alt', label: translations.btnReset || 'REINICIAR', handler: () => window.resetSystem && window.resetSystem() },
-            { id: 'clearConsoleBtn', icon: 'fa-trash-alt', label: translations.clearConsoleBtnText || 'LIMPAR CONSOLE', handler: () => window.clearConsole && window.clearConsole() }
-        ];
-        originalTools.forEach(tool => {
-            const btn = document.createElement('button');
-            btn.id = tool.id;
-            btn.className = 'btn-tool';
-            btn.innerHTML = `<i class="fas ${tool.icon}"></i> <span>${tool.label}</span>`;
-            btn.onclick = tool.handler;
-            container.appendChild(btn);
-        });
-        container.setAttribute('data-original-restored', 'true');
-        container.setAttribute('data-triada-injected', 'false');
-        console.log('[TRIADA] Toolbar original restaurada.');
-        return true;
-    }
-
-    function initInterface() {
-        const container = document.getElementById('export-tools-container');
-        if (!container) return false;
-        if (container.children.length >= 6 && !container.querySelector('.btn-tool-pure')) return true;
-        if (container.getAttribute('data-original-restored') === 'true') return true;
-        const triadaBtns = container.querySelectorAll('.btn-tool-pure');
-        triadaBtns.forEach(btn => btn.remove());
-        if (container.children.length > 0) return true;
-        const labels = _resolveLabels();
-        const botoes = [
-            { id: 'triadaPdfBtn', label: labels.pdf, icon: 'fa-file-pdf', cor: '#00E5FF', handler: () => { if (typeof window.exportPDF === 'function') window.exportPDF(); else alert('PDF export not available.'); } },
-            { id: 'triadaDocxBtn', label: labels.docx, icon: 'fa-file-word', cor: '#0EA5E9', handler: () => { if (typeof window.exportDOCX === 'function') window.exportDOCX(); else alert('DOCX export not available.'); } },
-            { id: 'triadaCustodiaBtn', label: labels.custody, icon: 'fa-shield-alt', cor: '#EF4444', handler: gerarAnexoCustodia }
-        ];
-        botoes.forEach(b => {
-            const btn = document.createElement('button');
-            btn.id = b.id;
-            btn.className = 'btn-tool-pure';
-            btn.style.cssText = `border-left: 3px solid ${b.cor}; margin:5px; padding:12px; cursor:pointer; background:rgba(15,23,42,0.9); color:white; border-top:none; border-right:none; border-bottom:none; font-family:'JetBrains Mono', monospace; font-size:11px; transition:background 0.3s; width:calc(100% - 10px); text-align:left;`;
-            btn.innerHTML = `<i class="fas ${b.icon}" style="color: ${b.cor}; margin-right: 8px;"></i> ${b.label}`;
-            btn.onclick = b.handler;
-            btn.onmouseover = () => { btn.style.background = 'rgba(30,41,59,1)'; };
-            btn.onmouseout = () => { btn.style.background = 'rgba(15,23,42,0.9)'; };
-            container.appendChild(btn);
-        });
-        container.setAttribute('data-triada-injected', 'true');
-        _log(`Interface Tríade Documental ${_VERSION} activada.`);
-        return true;
-    }
-
-    function _startMutationObserver() {
-        if (!('MutationObserver' in window)) { setTimeout(initInterface, 500); return; }
-        let observer = null;
-        const mutationCallback = function(mutations) {
-            if (window._isHydrating === true || window._UNIFED_AUDIT_RUNNING === true) return;
-            if (window._isRestoringToolbar) return;
-            if (!mutations.some(m => m.target.id === 'export-tools-container' || (m.target.parentNode && m.target.parentNode.id === 'export-tools-container'))) return;
-            const container = document.getElementById('export-tools-container');
-            if (!container) return;
-            if (container.getAttribute('data-original-restored') === 'true') return;
-            if (container.children.length < 2) restoreOriginalToolbar();
-        };
-        observer = new MutationObserver(mutationCallback);
-        observer.observe(document.body || document.documentElement, { childList: true, subtree: true });
-        _log('MutationObserver em modo persistente (com filtro de gráficos) para garantir integridade após reset.');
-    }
-
-    window.addEventListener('UNIFED_CORE_READY', () => {
-        if (initInterface()) return;
-        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => { if (!initInterface()) _startMutationObserver(); }, { once: true });
-        else _startMutationObserver();
-    });
-
     window.gerarAnexoCustodia = gerarAnexoCustodia;
-    window.initTriadaButtons = initInterface;
-    window._restoreOriginalToolbar = restoreOriginalToolbar;
+    window.initTriadaButtons = function() { /* intentionally empty to avoid overriding toolbar */ };
+    window._restoreOriginalToolbar = function() { /* kept for compatibility */ };
     window.UNIFEDSystem = window.UNIFEDSystem || {};
-    window.UNIFEDSystem.triadaUpdateLabels = initInterface;
-    _log(`Módulo Tríade Documental ${_VERSION} carregado com sucesso.`, 'success');
+    window.UNIFEDSystem.triadaUpdateLabels = function() {};
+    _log(`Módulo Tríade Documental ${_VERSION} carregado (apenas anexo de custódia).`, 'success');
 })();

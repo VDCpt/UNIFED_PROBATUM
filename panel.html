@@ -201,3 +201,24 @@
     <div id="pure-nao-declarado-val"></div>
   </div>
 </section>
+
+<style>
+    /* Forçar visibilidade dos módulos críticos desde o início */
+    .smoking-gun-module, .pure-sg-critical, .pure-sg-secondary,
+    .white-collar-module, #pureZonaCinzentaCard, #pureDiscCard,
+    #pureVerdictCard, #card-asfixia {
+        display: block !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+    }
+    /* Garantir que o wrapper não esconde o conteúdo */
+    #pureDashboardWrapper {
+        display: block !important;
+        opacity: 1 !important;
+        background-color: #020617 !important;
+    }
+    /* Remover qualquer máscara de opacidade dos valores */
+    .pure-data-value, .pure-atf-big, .pure-zc-val, .pure-sg-val, .pure-delta-value {
+        opacity: 1 !important;
+    }
+</style>

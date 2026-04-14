@@ -5,6 +5,7 @@
    ESTILO FBI/INTERPOL/CSI · QR CODE · PAGINAÇÃO PDF
    PORTUGUÊS DE PORTUGAL
    + v13.12.2-i18n: suporte completo a atributos data-pt/data-en para alternância dinâmica de idioma
+   + REMOVIDA A OPACIDADE INICIAL DOS VALORES PARA EXIBIÇÃO IMEDIATA
    ===================================================================== */
 
 :root {
@@ -1982,9 +1983,9 @@ body.dual-screen .stat-card p { font-size: 2.1rem; }
 .pure-card:last-child, .pure-card-grid .pure-card:last-of-type { margin-bottom: 0; }
 .console-section { min-height: auto; }
 
-/* ESTADO ZERO-KNOWLEDGE */
+/* ESTADO ZERO-KNOWLEDGE - REMOVIDA A OPACIDADE INICIAL */
 .pure-data-value, .pure-mono:not(#pure-session-id), .pure-atf-big, .pure-zc-val, .pure-sg-val, .pure-delta-value {
-    opacity: 0 !important;
+    opacity: 1 !important;
     transition: opacity 0.5s ease-in-out;
 }
 .forensic-revealed { opacity: 1 !important; }

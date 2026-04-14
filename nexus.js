@@ -1,6 +1,8 @@
 /**
  * UNIFED - PROBATUM · NEXUS LAYER · v13.12.2-i18n
  * ============================================================================
+ * NOTA: Este ficheiro permanece inalterado na sua lógica central.
+ * ============================================================================
  */
 
 'use strict';
