@@ -415,11 +415,12 @@ body {
 /* ---------------------------------------------------------------------
    4. MAIN LAYOUT
    --------------------------------------------------------------------- */
+/* RETIFICAÇÃO NAS LINHAS 424-431 */
 .main-container {
-    display: none;
+    display: flex; /* Alterado de none para flex para garantir presença no DOM */
     flex-direction: column;
     min-height: 100vh;
-    opacity: 0;
+    opacity: 1;    /* Alterado de 0 para 1 para visibilidade imediata */
     transition: opacity 0.5s ease;
     width: 100%;
 }
@@ -3597,20 +3598,15 @@ body.dual-screen .stat-card p {
     min-height: auto;
 }
 
-/* RETIFICAÇÃO: ESTADO ZERO-KNOWLEDGE (ANTI-FUC) */
+/* RETIFICAÇÃO: ESTADO ZERO-KNOWLEDGE (ANTI-FUC) - LINHAS 3605-3611 */
 .pure-data-value, 
 .pure-mono:not(#pure-session-id), 
 .pure-atf-big, 
 .pure-zc-val, 
 .pure-sg-val,
 .pure-delta-value {
-    opacity: 0 !important;
+    opacity: 0; /* REMOVIDO !important: permite transição via JS */
     transition: opacity 0.5s ease-in-out;
-}
-
-/* Classe de revelação controlada após validação forense */
-.forensic-revealed {
-    opacity: 1 !important;
 }
 
 /* ============================================================================
