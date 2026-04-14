@@ -1368,6 +1368,25 @@
                 window.UNIFED_INTERNAL.updateAuxiliaryUI();
             }
             reveal(); // Instantâneo — sem setTimeout
+
+            // =========================================================================
+            // FORCE FINAL STATE – Garantia de Hidratação
+            // =========================================================================
+            const forceFinalState = () => {
+                window.UNIFED_OTS_DISABLED = true; // Força Selagem Local
+                window.dispatchEvent(new CustomEvent('UNIFED_CORE_READY'));
+                window.dispatchEvent(new CustomEvent('UNIFED_ANALYSIS_COMPLETE'));
+                
+                // Garante que o painel PureDashboardWrapper fica visível
+                const wrapper = document.getElementById('pureDashboardWrapper');
+                if (wrapper) {
+                    wrapper.classList.add('activated');
+                    wrapper.style.opacity = '1';
+                    wrapper.style.display = 'block';
+                }
+                console.log('[UNIFED] forceFinalState executado: eventos despachados e wrapper ativado.');
+            };
+            forceFinalState();
         };
 
         // Gatilho de execução

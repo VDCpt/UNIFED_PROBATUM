@@ -1194,6 +1194,23 @@ canvas {
     border-left: 4px solid var(--pure-warn) !important;
 }
 
-/* ============================================================================
-   FIM — UNIFED PROBATUM v13.12.1-FIX CONSOLIDADO
-   ============================================================================ */
+/* RETIFICAÇÃO DEFINITIVA DE VISIBILIDADE */
+#main-container {
+    transition: opacity 0.5s ease-in-out;
+}
+
+/* Garante que o wrapper nunca fica invisível após a ativação */
+#pureDashboardWrapper.activated {
+    opacity: 1 !important;
+    display: block !important;
+    visibility: visible !important;
+}
+
+/* Estilo do Selo de Selagem Local (Nível 1) */
+#pure-tsa-anchor {
+    border: 1px solid var(--pure-accent);
+    padding: 4px 8px;
+    background: rgba(0, 229, 255, 0.1);
+    border-radius: 4px;
+    display: inline-block;
+}
