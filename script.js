@@ -524,6 +524,7 @@ function getForensicMetadata() {
 
 function mockRFC3161Timestamp(hashHex) {
     const now = new Date();
+    const warning = "⚠️ Este carimbo de tempo é interno (Nível 1) e carece de calibração NTP. Para validade jurídica plena, utilize selagem externa RFC 3161 (FreeTSA.org ou TSR local).";
     return {
         status: 'PROBATUM_INTERNAL_SEAL',
         tsaSource: 'PROBATUM INTERNAL SEAL (PENDING EXTERNAL TSA)',
@@ -538,7 +539,8 @@ function mockRFC3161Timestamp(hashHex) {
         policy: 'UNIFED-INTERNAL-OID-1.0',
         nonce: Math.floor(Math.random() * 0xFFFF).toString(16).toUpperCase(),
         ordering: false,
-        _note: 'O hash SHA-256 é definitivo e matematicamente verificável. Nível 2 (RFC 3161 externo) activo após configuração da API de produção TSA.'
+        ntpCalibrationWarning: warning,
+        _note: 'Para processos judiciais, é obrigatória a selagem externa (Nível 2) com TSA certificada.'
     };
 }
 
@@ -1680,47 +1682,23 @@ const ForensicLogger = {
         });
     },
 
-    _getSecret() {
-        if (typeof CryptoJS === 'undefined') return null;
-
-        const _SS_KEY_ID = 'IFDE_SESSION_ID_ANCHOR';
-        const _SS_KEY_START = 'IFDE_SESSION_START_ANCHOR';
-
-        let _sessionId = null;
-        let _sessionStart = null;
-
-        try {
-            const _storedId = sessionStorage.getItem(_SS_KEY_ID);
-            const _storedStart = sessionStorage.getItem(_SS_KEY_START);
-
-            if (_storedId && _storedStart) {
-                _sessionId = _storedId;
-                _sessionStart = _storedStart;
-            } else {
-                _sessionId = (typeof UNIFEDSystem !== 'undefined' && UNIFEDSystem.sessionId)
-                    ? UNIFEDSystem.sessionId
-                    : 'UNIFED-DIAMOND-PROBATUM-PRESESSION';
-
-                _sessionStart = (typeof UNIFEDSystem !== 'undefined' && UNIFEDSystem._sessionStart)
-                    ? String(UNIFEDSystem._sessionStart)
-                    : String(Math.floor(Date.now() / 86400000));
-
-                sessionStorage.setItem(_SS_KEY_ID, _sessionId);
-                sessionStorage.setItem(_SS_KEY_START, _sessionStart);
+    _getSecret: (function() {
+        let volatileKey = null;
+        return function() {
+            if (!volatileKey) {
+                try {
+                    const randomBytes = new Uint8Array(32);
+                    crypto.getRandomValues(randomBytes);
+                    volatileKey = Array.from(randomBytes).map(b => b.toString(16).padStart(2, '0')).join('');
+                    console.log('[ForensicLogger] Chave criptográfica volátil gerada com sucesso.');
+                } catch (e) {
+                    console.error('[ForensicLogger] Falha ao gerar chave aleatória:', e);
+                    throw new Error('Incapaz de gerar chave de cifragem segura.');
+                }
             }
-        } catch (_ssErr) {
-            _sessionId = (typeof UNIFEDSystem !== 'undefined' && UNIFEDSystem.sessionId)
-                ? UNIFEDSystem.sessionId
-                : 'UNIFED-DIAMOND-PROBATUM-PRESESSION';
-
-            _sessionStart = (typeof UNIFEDSystem !== 'undefined' && UNIFEDSystem._sessionStart)
-                ? String(UNIFEDSystem._sessionStart)
-                : String(Math.floor(Date.now() / 86400000));
-        }
-
-        const _rawKey = _sessionId + '::' + _sessionStart + '::IFDE_SALT_PROBATUM_2026';
-        return CryptoJS.SHA256(_rawKey).toString();
-    },
+            return volatileKey;
+        };
+    })(),
 
     _persistEncrypted(logsArray) {
         try {
@@ -3369,18 +3347,79 @@ function generateQRCode() {
 }
 
 function setupMainListeners() {
-    const registerBtn = document.getElementById('registerClientBtnFixed');
-    if (registerBtn) registerBtn.addEventListener('click', registerClient);
+    // Event delegation para todos os botões dinâmicos
+    document.body.addEventListener('click', (e) => {
+        const btn = e.target.closest('button');
+        if (!btn) return;
+        const id = btn.id;
 
-    const demoBtn = document.getElementById('demoModeBtn');
-    if (demoBtn) demoBtn.addEventListener('click', activateDemoMode);
+        if (id === 'registerClientBtnFixed' || btn.closest('#registerClientBtnFixed')) {
+            e.preventDefault();
+            registerClient();
+        }
+        else if (id === 'demoModeBtn' || btn.closest('#demoModeBtn')) {
+            e.preventDefault();
+            activateDemoMode();
+        }
+        else if (id === 'openEvidenceModalBtn') {
+            e.preventDefault();
+            document.getElementById('evidenceModal').style.display = 'flex';
+            updateEvidenceSummary();
+            forensicDataSynchronization();
+            if (ForensicLogger) ForensicLogger.addEntry('EVIDENCE_MODAL_OPENED');
+        }
+        else if (id === 'closeModalBtn' || id === 'closeAndSaveBtn') {
+            e.preventDefault();
+            document.getElementById('evidenceModal').style.display = 'none';
+            updateAnalysisButton();
+            forensicDataSynchronization();
+            if (ForensicLogger) ForensicLogger.addEntry('EVIDENCE_MODAL_CLOSED');
+        }
+        else if (id === 'analyzeBtn') {
+            e.preventDefault();
+            performAudit();
+        }
+        else if (id === 'exportPDFBtn') {
+            e.preventDefault();
+            if (typeof exportPDF === 'function') exportPDF();
+        }
+        else if (id === 'exportJSONBtn') {
+            e.preventDefault();
+            if (typeof exportDataJSON === 'function') exportDataJSON();
+        }
+        else if (id === 'exportDOCXBtn') {
+            e.preventDefault();
+            if (typeof window.exportDOCX === 'function') window.exportDOCX();
+            else showToast('Módulo DOCX não disponível.', 'error');
+        }
+        else if (id === 'atfModalBtn') {
+            e.preventDefault();
+            if (typeof window.openATFModal === 'function') window.openATFModal();
+            else showToast('Módulo ATF não disponível.', 'warning');
+        }
+        else if (id === 'resetBtn') {
+            e.preventDefault();
+            resetSystem();
+        }
+        else if (id === 'clearConsoleBtn') {
+            e.preventDefault();
+            const consoleEl = document.getElementById('consoleOutput');
+            if (consoleEl) consoleEl.innerHTML = '<div class="log-entry log-system">[SISTEMA] Memória de sessão limpa. Interface mantida. Operação DORA-Compliant.</div>';
+            if (typeof ForensicLogger !== 'undefined') ForensicLogger.addEntry('CONSOLE_PURGED', { nonDestructive: true });
+        }
+        else if (id === 'custodyChainTriggerBtn') {
+            e.preventDefault();
+            if (typeof openCustodyChainModal === 'function') openCustodyChainModal();
+        }
+    });
 
+    // Listeners que não interferem com o DOM wiping (selects, inputs)
     const anoFiscal = document.getElementById('anoFiscal');
     if (anoFiscal) {
         anoFiscal.addEventListener('change', (e) => {
             UNIFEDSystem.selectedYear = parseInt(e.target.value);
             logAudit(`Ano fiscal em exame alterado para: ${e.target.value}`, 'info');
-            ForensicLogger.addEntry('YEAR_CHANGED', { year: e.target.value });
+            if (ForensicLogger) ForensicLogger.addEntry('YEAR_CHANGED', { year: e.target.value });
         });
     }
 
@@ -3389,43 +3428,25 @@ function setupMainListeners() {
         const toggleTrimestralSelector = (value) => {
             const container = document.getElementById('trimestralSelectorContainer');
             if (!container) return;
-            if (value === 'trimestral') {
-                container.style.display = 'flex';
-                container.classList.add('show');
-            } else {
-                container.style.display = 'none';
-                container.classList.remove('show');
-            }
+            container.style.display = value === 'trimestral' ? 'flex' : 'none';
         };
-
         periodoAnalise.addEventListener('change', (e) => {
             UNIFEDSystem.selectedPeriodo = e.target.value;
-            const periodos = {
-                'anual': currentLang === 'pt' ? 'Exercício Completo (Anual)' : 'Full Year (Annual)',
-                '1s': currentLang === 'pt' ? '1.º Semestre' : '1st Semester',
-                '2s': currentLang === 'pt' ? '2.º Semestre' : '2nd Semester',
-                'trimestral': currentLang === 'pt' ? 'Análise Trimestral' : 'Quarterly Analysis',
-                'mensal': currentLang === 'pt' ? 'Análise Mensal' : 'Monthly Analysis'
-            };
             toggleTrimestralSelector(e.target.value);
-            logAudit(`Período temporal alterado para: ${periodos[e.target.value] || e.target.value}`, 'info');
-            ForensicLogger.addEntry('PERIOD_CHANGED', { period: e.target.value });
+            logAudit(`Período temporal alterado para: ${e.target.value}`, 'info');
+            if (ForensicLogger) ForensicLogger.addEntry('PERIOD_CHANGED', { period: e.target.value });
             filterDAC7ByPeriod();
         });
-
-        const triSel = document.getElementById('trimestralSelector');
-        if (triSel) {
-            triSel.addEventListener('change', (e) => {
-                const tri = parseInt(e.target.value, 10);
-                if (tri >= 1 && tri <= 4) {
-                    UNIFEDSystem.selectedTrimestre = tri;
-                    logAudit(`Trimestre activo alterado para: Q${tri}`, 'info');
-                    filterDAC7ByPeriod();
-                }
-            });
-        }
-
         toggleTrimestralSelector(periodoAnalise.value);
+    }
+
+    const triSel = document.getElementById('trimestralSelector');
+    if (triSel) {
+        triSel.addEventListener('change', (e) => {
+            UNIFEDSystem.selectedTrimestre = parseInt(e.target.value, 10);
+            logAudit(`Trimestre activo alterado para: Q${UNIFEDSystem.selectedTrimestre}`, 'info');
+            filterDAC7ByPeriod();
+        });
     }
 
     const selPlatform = document.getElementById('selPlatformFixed');
@@ -3433,63 +3454,9 @@ function setupMainListeners() {
         selPlatform.addEventListener('change', (e) => {
             UNIFEDSystem.selectedPlatform = e.target.value;
             logAudit(`Plataforma alterada para: ${e.target.value.toUpperCase()}`, 'info');
-            ForensicLogger.addEntry('PLATFORM_CHANGED', { platform: e.target.value });
+            if (ForensicLogger) ForensicLogger.addEntry('PLATFORM_CHANGED', { platform: e.target.value });
         });
     }
-
-    const openEvidenceBtn = document.getElementById('openEvidenceModalBtn');
-    if (openEvidenceBtn) {
-        openEvidenceBtn.addEventListener('click', () => {
-            document.getElementById('evidenceModal').style.display = 'flex';
-            updateEvidenceSummary();
-            forensicDataSynchronization();
-            ForensicLogger.addEntry('EVIDENCE_MODAL_OPENED');
-        });
-    }
-
-    const closeModal = () => {
-        document.getElementById('evidenceModal').style.display = 'none';
-        updateAnalysisButton();
-        forensicDataSynchronization();
-        ForensicLogger.addEntry('EVIDENCE_MODAL_CLOSED');
-    };
-
-    const closeModalBtn = document.getElementById('closeModalBtn');
-    if (closeModalBtn) closeModalBtn.addEventListener('click', closeModal);
-
-    const closeAndSaveBtn = document.getElementById('closeAndSaveBtn');
-    if (closeAndSaveBtn) closeAndSaveBtn.addEventListener('click', closeModal);
-
-    const evidenceModal = document.getElementById('evidenceModal');
-    if (evidenceModal) {
-        evidenceModal.addEventListener('click', (e) => {
-            if (e.target.id === 'evidenceModal') closeModal();
-        });
-    }
-
-    const analyzeBtn = document.getElementById('analyzeBtn');
-    if (analyzeBtn) analyzeBtn.addEventListener('click', performAudit);
-
-    const exportPDFBtn = document.getElementById('exportPDFBtn');
-    if (exportPDFBtn) exportPDFBtn.addEventListener('click', exportPDF);
-
-    const exportJSONBtn = document.getElementById('exportJSONBtn');
-    if (exportJSONBtn) exportJSONBtn.addEventListener('click', exportDataJSON);
-
-    const exportDOCXBtn = document.getElementById('exportDOCXBtn');
-    if (exportDOCXBtn) exportDOCXBtn.addEventListener('click', () => {
-        if (typeof window.exportDOCX === 'function') window.exportDOCX();
-        else showToast('Módulo DOCX não disponível.', 'error');
-    });
-
-    const atfBtn = document.getElementById('atfModalBtn');
-    if (atfBtn) atfBtn.addEventListener('click', () => {
-        if (typeof window.openATFModal === 'function') window.openATFModal();
-        else showToast('Módulo ATF não disponível.', 'warning');
-    });
-
-    const resetBtn = document.getElementById('resetBtn');
-    if (resetBtn) resetBtn.addEventListener('click', resetSystem);
 
     setupUploadListeners();
 }
@@ -4180,200 +4147,193 @@ function simulateUpload(type, count) {
 
 let _UNIFED_AUDIT_RUNNING = false;
 
-function performAudit() {
+async function performAudit() {
     if (_UNIFED_AUDIT_RUNNING === true) {
         console.log('%c[UNIFED] ⚠ performAudit() bloqueada por mutex — ciclo de re-entrada prevenido.', 'color:#f59e0b;font-weight:bold;');
         return;
     }
     _UNIFED_AUDIT_RUNNING = true;
 
-    if (!UNIFEDSystem.client) {
-        _UNIFED_AUDIT_RUNNING = false;
-        return showToast(currentLang === 'en' ? 'Register the taxpayer first.' : 'Registe o sujeito passivo primeiro.', 'error');
-    }
-
-    ForensicLogger.addEntry('AUDIT_STARTED');
-
-    const hasFiles = Object.values(UNIFEDSystem.documents).some(d => d.files && d.files.length > 0);
-    if (!hasFiles) {
-        // [FIX ACHADO C] mutex DEVE ser reposto antes de qualquer return antecipado;
-        // a omissão anterior bloqueava performAudit() permanentemente após validação falhada.
-        _UNIFED_AUDIT_RUNNING = false;
-        ForensicLogger.addEntry('AUDIT_FAILED', { reason: 'No files' });
-        return showToast(currentLang === 'en' ? 'Upload at least one evidence file before running the forensic exam.' : 'Carregue pelo menos um ficheiro de evidência antes de executar a perícia.', 'error');
-    }
-
-    UNIFEDSystem.forensicMetadata = getForensicMetadata();
-    UNIFEDSystem.performanceTiming.start = performance.now();
-
     const analyzeBtn = document.getElementById('analyzeBtn');
-    if (analyzeBtn) {
-        analyzeBtn.disabled = true;
-        analyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + (currentLang === 'en' ? 'RUNNING FORENSIC EXAM BIG DATA...' : 'A EXECUTAR PERÍCIA BIG DATA...');
-    }
-
-    setTimeout(() => {
-        try {
-            const saftBruto = UNIFEDSystem.documents.saft?.totals?.bruto || 0;
-            const saftIliquido = UNIFEDSystem.documents.saft?.totals?.iliquido || 0;
-            const saftIva = UNIFEDSystem.documents.saft?.totals?.iva || 0;
-
-            const stmtGanhos = UNIFEDSystem.documents.statements?.totals?.ganhos || 0;
-            const stmtDespesas = UNIFEDSystem.documents.statements?.totals?.despesas || 0;
-            const stmtGanhosLiquidos = UNIFEDSystem.documents.statements?.totals?.ganhosLiquidos || 0;
-
-            const invoiceVal = UNIFEDSystem.documents.invoices?.totals?.invoiceValue || 0;
-
-            const dac7Q1 = UNIFEDSystem.documents.dac7?.totals?.q1 || 0;
-            const dac7Q2 = UNIFEDSystem.documents.dac7?.totals?.q2 || 0;
-            const dac7Q3 = UNIFEDSystem.documents.dac7?.totals?.q3 || 0;
-            const dac7Q4 = UNIFEDSystem.documents.dac7?.totals?.q4 || 0;
-
-            let dac7TotalPeriodo = 0;
-            switch (UNIFEDSystem.selectedPeriodo) {
-                case 'anual':
-                    dac7TotalPeriodo = dac7Q1 + dac7Q2 + dac7Q3 + dac7Q4;
-                    break;
-                case '1s':
-                    dac7TotalPeriodo = dac7Q1 + dac7Q2;
-                    break;
-                case '2s':
-                    dac7TotalPeriodo = dac7Q3 + dac7Q4;
-                    break;
-                case 'trimestral':
-                    dac7TotalPeriodo = dac7Q1 + dac7Q2 + dac7Q3 + dac7Q4;
-                    if ((dac7Q1 > 0 && (dac7Q2 > 0 || dac7Q3 > 0 || dac7Q4 > 0)) ||
-                        (dac7Q2 > 0 && (dac7Q3 > 0 || dac7Q4 > 0)) ||
-                        (dac7Q3 > 0 && dac7Q4 > 0)) {
-                        logAudit('[!] Análise trimestral: múltiplos trimestres detetados. A soma pode não ser a pretendida.', 'warning');
-                    }
-                    break;
-                case 'mensal':
-                    dac7TotalPeriodo = dac7Q1 + dac7Q2 + dac7Q3 + dac7Q4;
-                    logAudit('ℹ️ Análise mensal: a usar DAC7 anual. Pode não ser representativo.', 'info');
-                    break;
-                default:
-                    dac7TotalPeriodo = dac7Q1 + dac7Q2 + dac7Q3 + dac7Q4;
-            }
-
-            UNIFEDSystem.analysis.totals = {
-                saftBruto: saftBruto,
-                saftIliquido: saftIliquido,
-                saftIva: saftIva,
-                ganhos: stmtGanhos,
-                despesas: stmtDespesas,
-                ganhosLiquidos: stmtGanhosLiquidos,
-                faturaPlataforma: invoiceVal,
-                dac7Q1: dac7Q1,
-                dac7Q2: dac7Q2,
-                dac7Q3: dac7Q3,
-                dac7Q4: dac7Q4,
-                dac7TotalPeriodo: dac7TotalPeriodo
-            };
-
-            setTimeout(() => { 
-                forceRevealSmokingGun(); 
-                const wrapper = document.getElementById('pureDashboardWrapper');
-                if (wrapper) wrapper.style.height = 'auto';
-                const consoleSection = document.querySelector('.console-section');
-                if (consoleSection) consoleSection.style.marginTop = '0';
-            }, 500);
-
-            console.log('🔍 VALORES EXTRAÍDOS (v13.12.2-i18n):');
-            console.log('   SAF-T Bruto:', formatCurrency(saftBruto));
-            console.log('   SAF-T Ilíquido:', formatCurrency(saftIliquido));
-            console.log('   SAF-T IVA:', formatCurrency(saftIva));
-            console.log('   Extrato - Ganhos:', formatCurrency(stmtGanhos));
-            console.log('   Extrato - Despesas:', formatCurrency(stmtDespesas));
-            console.log('   Extrato - Líquido:', formatCurrency(stmtGanhosLiquidos));
-            console.log('   Fatura Comissões:', formatCurrency(invoiceVal));
-            console.log(`   DAC7 (${UNIFEDSystem.selectedPeriodo}):`, formatCurrency(dac7TotalPeriodo));
-
-            calculateTwoAxisDiscrepancy();
-            performForensicCrossings();
-
-            const totals = UNIFEDSystem.analysis.totals;
-            if (totals.ganhos > totals.saftBruto * 1.05) {
-                const omissaoPercent = ((totals.ganhos / totals.saftBruto - 1) * 100).toFixed(2);
-                logAudit(`[ALERTA CRÍTICO] Omissão Declarativa Detectada: +${omissaoPercent}% em Extrato vs SAF-T.`, 'error');
-                UNIFEDSystem.analysis.taxRisk = {
-                    level: 'HIGH',
-                    description: 'Discrepância positiva em conta bancária não refletida no SAF-T PT.',
-                    legalBase: 'Art. 119.º do RGIT'
-                };
-            } else {
-                UNIFEDSystem.analysis.taxRisk = null;
-            }
-
-            validateConsistency();
-
-            selectQuestions(UNIFEDSystem.analysis.verdict ? UNIFEDSystem.analysis.verdict.key : 'low');
-            updateDashboard();
-            updateModulesUI();
-            renderChart();
-            renderDiscrepancyChart();
-            showAlerts();
-            showTwoAxisAlerts();
-            filterDAC7ByPeriod();
-
-            UNIFEDSystem.performanceTiming.end = performance.now();
-            const duration = (UNIFEDSystem.performanceTiming.end - UNIFEDSystem.performanceTiming.start).toFixed(2);
-
-            logAudit(`📊 VALORES UTILIZADOS NA PERÍCIA (v13.12.2-i18n):`, 'info');
-            logAudit(`   SAF-T Bruto: ${formatCurrency(saftBruto)} (${UNIFEDSystem.documents.saft?.files?.length || 0} ficheiros)`, 'info');
-            logAudit(`   Ganhos (Extrato): ${formatCurrency(stmtGanhos)}`, 'info');
-            logAudit(`   Despesas (Extrato): ${formatCurrency(stmtDespesas)}`, 'info');
-            logAudit(`   Ganhos Líquidos (Extrato): ${formatCurrency(stmtGanhosLiquidos)}`, 'info');
-            logAudit(`   Fatura Comissões: ${formatCurrency(invoiceVal)} (${UNIFEDSystem.documents.invoices?.files?.length || 0} ficheiros)`, 'info');
-            logAudit(`   DAC7 (${UNIFEDSystem.selectedPeriodo}): ${formatCurrency(dac7TotalPeriodo)}`, 'info');
-            logAudit(`   Discrepância Comissões (Despesas - Fatura): ${formatCurrency(stmtDespesas - invoiceVal)}`, 'info');
-            logAudit(`   Smoking Gun — Ganhos vs DAC7: ${formatCurrency(stmtGanhos - dac7TotalPeriodo)} (Ganhos: ${formatCurrency(stmtGanhos)} | DAC7: ${formatCurrency(dac7TotalPeriodo)})`, 'error');
-            logAudit(`   Revenue Gap (SAF-T vs Ganhos): ${formatCurrency(saftBruto - stmtGanhos)}`, 'info');
-            logAudit(`   Expense Gap (Despesas - Fatura): ${formatCurrency(stmtDespesas - invoiceVal)}`, 'info');
-            logAudit(`   Meses com dados: ${UNIFEDSystem.dataMonths.size}`, 'info');
-
-            logAudit(`✅ Perícia BIG DATA v13.12.2-i18n concluída em ${duration}ms.`, 'success');
-
-            ForensicLogger.addEntry('AUDIT_COMPLETED', {
-                duration,
-                discrepancy: UNIFEDSystem.analysis.crossings.discrepanciaCritica,
-                saftVsDac7: UNIFEDSystem.analysis.crossings.discrepanciaSaftVsDac7,
-                revenueGap: UNIFEDSystem.analysis.twoAxis.revenueGap,
-                expenseGap: UNIFEDSystem.analysis.twoAxis.expenseGap,
-                verdict: UNIFEDSystem.analysis.verdict?.level,
-                ganhos: stmtGanhos,
-                despesas: stmtDespesas
-            });
-
-            forensicDataSynchronization();
-
-            setTimeout(() => { forceRevealSmokingGun(); }, 500);
-            
-            revealForensicData();
-
-            // [RETIFICAÇÃO v13.12.2-i18n] Disparo do evento para re-hidratação da UI externa (script_injection, etc.)
-            try {
-                window.dispatchEvent(new CustomEvent('UNIFED_ANALYSIS_COMPLETE', { detail: { timestamp: Date.now() } }));
-                console.log('[UNIFED] Evento UNIFED_ANALYSIS_COMPLETE despachado.');
-            } catch (e) {
-                console.warn('[UNIFED] Falha ao despachar UNIFED_ANALYSIS_COMPLETE:', e);
-            }
-
-        } catch (error) {
-            _UNIFED_AUDIT_RUNNING = false;
-            logAudit(`❌ ERRO CRÍTICO NA PERÍCIA: ${error.message}`, 'error');
-            ForensicLogger.addEntry('AUDIT_ERROR', { error: error.message });
-            showToast('Erro durante a execução da perícia. Verifique os ficheiros carregados.', 'error');
-        } finally {
-            _UNIFED_AUDIT_RUNNING = false;
-            if (analyzeBtn) {
-                analyzeBtn.disabled = false;
-                const _analyzeLbl = document.getElementById('btnAnalyze');
-                if (_analyzeLbl) _analyzeLbl.textContent = translations[currentLang].btnAnalyze;
-                else analyzeBtn.innerHTML = `<i class="fas fa-search-dollar"></i> ${translations[currentLang].btnAnalyze}`;
-            }
+    try {
+        if (!UNIFEDSystem.client) {
+            showToast(currentLang === 'en' ? 'Register the taxpayer first.' : 'Registe o sujeito passivo primeiro.', 'error');
+            return;
         }
-    }, 1000);
+
+        ForensicLogger.addEntry('AUDIT_STARTED');
+
+        const hasFiles = Object.values(UNIFEDSystem.documents).some(d => d.files && d.files.length > 0);
+        if (!hasFiles) {
+            ForensicLogger.addEntry('AUDIT_FAILED', { reason: 'No files' });
+            showToast(currentLang === 'en' ? 'Upload at least one evidence file before running the forensic exam.' : 'Carregue pelo menos um ficheiro de evidência antes de executar a perícia.', 'error');
+            return;
+        }
+
+        UNIFEDSystem.forensicMetadata = getForensicMetadata();
+        UNIFEDSystem.performanceTiming.start = performance.now();
+
+        if (analyzeBtn) {
+            analyzeBtn.disabled = true;
+            analyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + (currentLang === 'en' ? 'RUNNING FORENSIC EXAM BIG DATA...' : 'A EXECUTAR PERÍCIA BIG DATA...');
+        }
+
+        // Converter valores para números (segurança)
+        const saftBruto = parseFloat(UNIFEDSystem.documents.saft?.totals?.bruto) || 0;
+        const saftIliquido = parseFloat(UNIFEDSystem.documents.saft?.totals?.iliquido) || 0;
+        const saftIva = parseFloat(UNIFEDSystem.documents.saft?.totals?.iva) || 0;
+        const stmtGanhos = parseFloat(UNIFEDSystem.documents.statements?.totals?.ganhos) || 0;
+        const stmtDespesas = parseFloat(UNIFEDSystem.documents.statements?.totals?.despesas) || 0;
+        const stmtGanhosLiquidos = parseFloat(UNIFEDSystem.documents.statements?.totals?.ganhosLiquidos) || 0;
+        const invoiceVal = parseFloat(UNIFEDSystem.documents.invoices?.totals?.invoiceValue) || 0;
+        const dac7Q1 = parseFloat(UNIFEDSystem.documents.dac7?.totals?.q1) || 0;
+        const dac7Q2 = parseFloat(UNIFEDSystem.documents.dac7?.totals?.q2) || 0;
+        const dac7Q3 = parseFloat(UNIFEDSystem.documents.dac7?.totals?.q3) || 0;
+        const dac7Q4 = parseFloat(UNIFEDSystem.documents.dac7?.totals?.q4) || 0;
+
+        let dac7TotalPeriodo = 0;
+        switch (UNIFEDSystem.selectedPeriodo) {
+            case 'anual':
+                dac7TotalPeriodo = dac7Q1 + dac7Q2 + dac7Q3 + dac7Q4;
+                break;
+            case '1s':
+                dac7TotalPeriodo = dac7Q1 + dac7Q2;
+                break;
+            case '2s':
+                dac7TotalPeriodo = dac7Q3 + dac7Q4;
+                break;
+            case 'trimestral':
+                dac7TotalPeriodo = dac7Q1 + dac7Q2 + dac7Q3 + dac7Q4;
+                if ((dac7Q1 > 0 && (dac7Q2 > 0 || dac7Q3 > 0 || dac7Q4 > 0)) ||
+                    (dac7Q2 > 0 && (dac7Q3 > 0 || dac7Q4 > 0)) ||
+                    (dac7Q3 > 0 && dac7Q4 > 0)) {
+                    logAudit('[!] Análise trimestral: múltiplos trimestres detetados. A soma pode não ser a pretendida.', 'warning');
+                }
+                break;
+            case 'mensal':
+                dac7TotalPeriodo = dac7Q1 + dac7Q2 + dac7Q3 + dac7Q4;
+                logAudit('ℹ️ Análise mensal: a usar DAC7 anual. Pode não ser representativo.', 'info');
+                break;
+            default:
+                dac7TotalPeriodo = dac7Q1 + dac7Q2 + dac7Q3 + dac7Q4;
+        }
+
+        UNIFEDSystem.analysis.totals = {
+            saftBruto: saftBruto,
+            saftIliquido: saftIliquido,
+            saftIva: saftIva,
+            ganhos: stmtGanhos,
+            despesas: stmtDespesas,
+            ganhosLiquidos: stmtGanhosLiquidos,
+            faturaPlataforma: invoiceVal,
+            dac7Q1: dac7Q1,
+            dac7Q2: dac7Q2,
+            dac7Q3: dac7Q3,
+            dac7Q4: dac7Q4,
+            dac7TotalPeriodo: dac7TotalPeriodo
+        };
+
+        setTimeout(() => { 
+            forceRevealSmokingGun(); 
+            const wrapper = document.getElementById('pureDashboardWrapper');
+            if (wrapper) wrapper.style.height = 'auto';
+            const consoleSection = document.querySelector('.console-section');
+            if (consoleSection) consoleSection.style.marginTop = '0';
+        }, 500);
+
+        console.log('🔍 VALORES EXTRAÍDOS (v13.12.2-i18n):');
+        console.log('   SAF-T Bruto:', formatCurrency(saftBruto));
+        console.log('   SAF-T Ilíquido:', formatCurrency(saftIliquido));
+        console.log('   SAF-T IVA:', formatCurrency(saftIva));
+        console.log('   Extrato - Ganhos:', formatCurrency(stmtGanhos));
+        console.log('   Extrato - Despesas:', formatCurrency(stmtDespesas));
+        console.log('   Extrato - Líquido:', formatCurrency(stmtGanhosLiquidos));
+        console.log('   Fatura Comissões:', formatCurrency(invoiceVal));
+        console.log(`   DAC7 (${UNIFEDSystem.selectedPeriodo}):`, formatCurrency(dac7TotalPeriodo));
+
+        calculateTwoAxisDiscrepancy();
+        performForensicCrossings();
+
+        const totals = UNIFEDSystem.analysis.totals;
+        if (totals.ganhos > totals.saftBruto * 1.05) {
+            const omissaoPercent = ((totals.ganhos / totals.saftBruto - 1) * 100).toFixed(2);
+            logAudit(`[ALERTA CRÍTICO] Omissão Declarativa Detectada: +${omissaoPercent}% em Extrato vs SAF-T.`, 'error');
+            UNIFEDSystem.analysis.taxRisk = {
+                level: 'HIGH',
+                description: 'Discrepância positiva em conta bancária não refletida no SAF-T PT.',
+                legalBase: 'Art. 119.º do RGIT'
+            };
+        } else {
+            UNIFEDSystem.analysis.taxRisk = null;
+        }
+
+        validateConsistency();
+
+        selectQuestions(UNIFEDSystem.analysis.verdict ? UNIFEDSystem.analysis.verdict.key : 'low');
+        updateDashboard();
+        updateModulesUI();
+        renderChart();
+        renderDiscrepancyChart();
+        showAlerts();
+        showTwoAxisAlerts();
+        filterDAC7ByPeriod();
+
+        UNIFEDSystem.performanceTiming.end = performance.now();
+        const duration = (UNIFEDSystem.performanceTiming.end - UNIFEDSystem.performanceTiming.start).toFixed(2);
+
+        logAudit(`📊 VALORES UTILIZADOS NA PERÍCIA (v13.12.2-i18n):`, 'info');
+        logAudit(`   SAF-T Bruto: ${formatCurrency(saftBruto)} (${UNIFEDSystem.documents.saft?.files?.length || 0} ficheiros)`, 'info');
+        logAudit(`   Ganhos (Extrato): ${formatCurrency(stmtGanhos)}`, 'info');
+        logAudit(`   Despesas (Extrato): ${formatCurrency(stmtDespesas)}`, 'info');
+        logAudit(`   Ganhos Líquidos (Extrato): ${formatCurrency(stmtGanhosLiquidos)}`, 'info');
+        logAudit(`   Fatura Comissões: ${formatCurrency(invoiceVal)} (${UNIFEDSystem.documents.invoices?.files?.length || 0} ficheiros)`, 'info');
+        logAudit(`   DAC7 (${UNIFEDSystem.selectedPeriodo}): ${formatCurrency(dac7TotalPeriodo)}`, 'info');
+        logAudit(`   Discrepância Comissões (Despesas - Fatura): ${formatCurrency(stmtDespesas - invoiceVal)}`, 'info');
+        logAudit(`   Smoking Gun — Ganhos vs DAC7: ${formatCurrency(stmtGanhos - dac7TotalPeriodo)} (Ganhos: ${formatCurrency(stmtGanhos)} | DAC7: ${formatCurrency(dac7TotalPeriodo)})`, 'error');
+        logAudit(`   Revenue Gap (SAF-T vs Ganhos): ${formatCurrency(saftBruto - stmtGanhos)}`, 'info');
+        logAudit(`   Expense Gap (Despesas - Fatura): ${formatCurrency(stmtDespesas - invoiceVal)}`, 'info');
+        logAudit(`   Meses com dados: ${UNIFEDSystem.dataMonths.size}`, 'info');
+
+        logAudit(`✅ Perícia BIG DATA v13.12.2-i18n concluída em ${duration}ms.`, 'success');
+
+        ForensicLogger.addEntry('AUDIT_COMPLETED', {
+            duration,
+            discrepancy: UNIFEDSystem.analysis.crossings.discrepanciaCritica,
+            saftVsDac7: UNIFEDSystem.analysis.crossings.discrepanciaSaftVsDac7,
+            revenueGap: UNIFEDSystem.analysis.twoAxis.revenueGap,
+            expenseGap: UNIFEDSystem.analysis.twoAxis.expenseGap,
+            verdict: UNIFEDSystem.analysis.verdict?.level,
+            ganhos: stmtGanhos,
+            despesas: stmtDespesas
+        });
+
+        forensicDataSynchronization();
+
+        setTimeout(() => { forceRevealSmokingGun(); }, 500);
+        
+        revealForensicData();
+
+        // Disparo do evento para re-hidratação da UI externa
+        try {
+            window.dispatchEvent(new CustomEvent('UNIFED_ANALYSIS_COMPLETE', { detail: { timestamp: Date.now() } }));
+            console.log('[UNIFED] Evento UNIFED_ANALYSIS_COMPLETE despachado.');
+        } catch (e) {
+            console.warn('[UNIFED] Falha ao despachar UNIFED_ANALYSIS_COMPLETE:', e);
+        }
+
+    } catch (error) {
+        logAudit(`❌ ERRO CRÍTICO NA PERÍCIA: ${error.message}`, 'error');
+        ForensicLogger.addEntry('AUDIT_ERROR', { error: error.message });
+        showToast('Erro durante a execução da perícia. Verifique os ficheiros carregados.', 'error');
+    } finally {
+        _UNIFED_AUDIT_RUNNING = false;
+        if (analyzeBtn) {
+            analyzeBtn.disabled = false;
+            const _analyzeLbl = document.getElementById('btnAnalyze');
+            if (_analyzeLbl) _analyzeLbl.textContent = translations[currentLang].btnAnalyze;
+            else analyzeBtn.innerHTML = `<i class="fas fa-search-dollar"></i> ${translations[currentLang].btnAnalyze}`;
+        }
+    }
 }
 
 function updateSmokingGunUI() {
@@ -4699,7 +4659,7 @@ function performForensicCrossings() {
 
     cross.impactoMensalMercado = discrepanciaMensalMedia * 38000;
     cross.impactoAnualMercado = cross.impactoMensalMercado * 12;
-    cross.impactoSeteAnosMercado = 1743598080.00;
+    cross.impactoSeteAnosMercado = cross.impactoAnualMercado * 7;
 
     cross.discrepancia5IMT = cross.discrepanciaSaftVsDac7 * 0.05;
     cross.agravamentoBrutoIRC = (cross.discrepancia / mesesDados) * 12;
@@ -5234,6 +5194,13 @@ function showAlerts() {
 function renderChart() {
     const ctx = document.getElementById('mainChart');
     if (!ctx) return;
+    // Forçar visibilidade do contentor
+    const container = ctx.closest('.chart-section');
+    if (container) {
+        container.style.display = 'block';
+        container.style.visibility = 'visible';
+        container.style.opacity = '1';
+    }
     if (UNIFEDSystem.chart) UNIFEDSystem.chart.destroy();
 
     const totals = UNIFEDSystem.analysis.totals;
@@ -5313,6 +5280,13 @@ function renderChart() {
 function renderDiscrepancyChart() {
     const ctx = document.getElementById('discrepancyChart');
     if (!ctx) return;
+    // Forçar visibilidade do contentor
+    const container = ctx.closest('.chart-section');
+    if (container) {
+        container.style.display = 'block';
+        container.style.visibility = 'visible';
+        container.style.opacity = '1';
+    }
     if (UNIFEDSystem.discrepancyChart) UNIFEDSystem.discrepancyChart.destroy();
 
     const totals = UNIFEDSystem.analysis.totals;
@@ -5369,90 +5343,111 @@ function renderDiscrepancyChart() {
 }
 
 async function exportDataJSON() {
-    ForensicLogger.addEntry('JSON_EXPORT_STARTED');
+    const exportBtn = document.getElementById('exportJSONBtn');
+    if (exportBtn) {
+        exportBtn.disabled = true;
+        exportBtn.style.opacity = '0.5';
+    }
 
-    const sources = {};
-    ValueSource.sources.forEach((value, key) => {
-        sources[key] = value;
-    });
+    try {
+        if (typeof UNIFEDSystem.generateMasterHash === 'function') {
+            await UNIFEDSystem.generateMasterHash();
+        }
 
-    const exportData = {
-        metadata: {
-            version: UNIFEDSystem.version,
-            sessionId: UNIFEDSystem.sessionId,
-            timestamp: new Date().toISOString(),
-            timestampUnix: Math.floor(Date.now() / 1000),
-            timestampRFC3161: new Date().toUTCString(),
-            language: currentLang,
-            client: UNIFEDSystem.client,
-            anoFiscal: UNIFEDSystem.selectedYear,
-            periodoAnalise: UNIFEDSystem.selectedPeriodo,
-            platform: UNIFEDSystem.selectedPlatform,
-            demoMode: UNIFEDSystem.demoMode,
-            forensicMetadata: UNIFEDSystem.forensicMetadata || getForensicMetadata(),
-            dataMonths: Array.from(UNIFEDSystem.dataMonths)
-        },
-        analysis: {
-            totals: UNIFEDSystem.analysis.totals,
-            twoAxis: UNIFEDSystem.analysis.twoAxis,
-            crossings: UNIFEDSystem.analysis.crossings,
-            discrepancies: UNIFEDSystem.analysis.crossings,
-            verdict: UNIFEDSystem.analysis.verdict,
-            selectedQuestions: UNIFEDSystem.analysis.selectedQuestions,
-            evidenceCount: UNIFEDSystem.counts?.total || 0,
-            valueSources: sources
-        },
-        evidence: {
-            integrity: UNIFEDSystem.analysis.evidenceIntegrity,
-            invoices: {
-                count: UNIFEDSystem.documents.invoices?.files?.length || 0,
-                totalValue: UNIFEDSystem.documents.invoices?.totals?.invoiceValue || 0,
-                files: UNIFEDSystem.documents.invoices?.files?.map(f => f.name) || []
+        ForensicLogger.addEntry('JSON_EXPORT_STARTED');
+
+        const sources = {};
+        ValueSource.sources.forEach((value, key) => {
+            sources[key] = value;
+        });
+
+        const exportData = {
+            metadata: {
+                version: UNIFEDSystem.version,
+                sessionId: UNIFEDSystem.sessionId,
+                timestamp: new Date().toISOString(),
+                timestampUnix: Math.floor(Date.now() / 1000),
+                timestampRFC3161: new Date().toUTCString(),
+                language: currentLang,
+                client: UNIFEDSystem.client,
+                anoFiscal: UNIFEDSystem.selectedYear,
+                periodoAnalise: UNIFEDSystem.selectedPeriodo,
+                platform: UNIFEDSystem.selectedPlatform,
+                demoMode: UNIFEDSystem.demoMode,
+                forensicMetadata: UNIFEDSystem.forensicMetadata || getForensicMetadata(),
+                dataMonths: Array.from(UNIFEDSystem.dataMonths)
             },
-            statements: {
-                count: UNIFEDSystem.documents.statements?.files?.length || 0,
-                ganhos: UNIFEDSystem.documents.statements?.totals?.ganhos || 0,
-                despesas: UNIFEDSystem.documents.statements?.totals?.despesas || 0,
-                ganhosLiquidos: UNIFEDSystem.documents.statements?.totals?.ganhosLiquidos || 0,
-                files: UNIFEDSystem.documents.statements?.files?.map(f => f.name) || []
+            analysis: {
+                totals: UNIFEDSystem.analysis.totals,
+                twoAxis: UNIFEDSystem.analysis.twoAxis,
+                crossings: UNIFEDSystem.analysis.crossings,
+                discrepancies: UNIFEDSystem.analysis.crossings,
+                verdict: UNIFEDSystem.analysis.verdict,
+                selectedQuestions: UNIFEDSystem.analysis.selectedQuestions,
+                evidenceCount: UNIFEDSystem.counts?.total || 0,
+                valueSources: sources
             },
-            saft: {
-                count: UNIFEDSystem.documents.saft?.files?.length || 0,
-                bruto: UNIFEDSystem.documents.saft?.totals?.bruto || 0,
-                iliquido: UNIFEDSystem.documents.saft?.totals?.iliquido || 0,
-                iva: UNIFEDSystem.documents.saft?.totals?.iva || 0,
-                files: UNIFEDSystem.documents.saft?.files?.map(f => f.name) || []
+            evidence: {
+                integrity: UNIFEDSystem.analysis.evidenceIntegrity,
+                invoices: {
+                    count: UNIFEDSystem.documents.invoices?.files?.length || 0,
+                    totalValue: UNIFEDSystem.documents.invoices?.totals?.invoiceValue || 0,
+                    files: UNIFEDSystem.documents.invoices?.files?.map(f => f.name) || []
+                },
+                statements: {
+                    count: UNIFEDSystem.documents.statements?.files?.length || 0,
+                    ganhos: UNIFEDSystem.documents.statements?.totals?.ganhos || 0,
+                    despesas: UNIFEDSystem.documents.statements?.totals?.despesas || 0,
+                    ganhosLiquidos: UNIFEDSystem.documents.statements?.totals?.ganhosLiquidos || 0,
+                    files: UNIFEDSystem.documents.statements?.files?.map(f => f.name) || []
+                },
+                saft: {
+                    count: UNIFEDSystem.documents.saft?.files?.length || 0,
+                    bruto: UNIFEDSystem.documents.saft?.totals?.bruto || 0,
+                    iliquido: UNIFEDSystem.documents.saft?.totals?.iliquido || 0,
+                    iva: UNIFEDSystem.documents.saft?.totals?.iva || 0,
+                    files: UNIFEDSystem.documents.saft?.files?.map(f => f.name) || []
+                },
+                dac7: {
+                    count: UNIFEDSystem.documents.dac7?.files?.length || 0,
+                    q1: UNIFEDSystem.documents.dac7?.totals?.q1 || 0,
+                    q2: UNIFEDSystem.documents.dac7?.totals?.q2 || 0,
+                    q3: UNIFEDSystem.documents.dac7?.totals?.q3 || 0,
+                    q4: UNIFEDSystem.documents.dac7?.totals?.q4 || 0,
+                    receitaAnual: UNIFEDSystem.documents.dac7?.totals?.receitaAnual || 0,
+                    files: UNIFEDSystem.documents.dac7?.files?.map(f => f.name) || []
+                }
             },
-            dac7: {
-                count: UNIFEDSystem.documents.dac7?.files?.length || 0,
-                q1: UNIFEDSystem.documents.dac7?.totals?.q1 || 0,
-                q2: UNIFEDSystem.documents.dac7?.totals?.q2 || 0,
-                q3: UNIFEDSystem.documents.dac7?.totals?.q3 || 0,
-                q4: UNIFEDSystem.documents.dac7?.totals?.q4 || 0,
-                receitaAnual: UNIFEDSystem.documents.dac7?.totals?.receitaAnual || 0,
-                files: UNIFEDSystem.documents.dac7?.files?.map(f => f.name) || []
-            }
-        },
-        auditLog: UNIFEDSystem.logs.slice(-50),
-        forensicLogs: ForensicLogger.getLogs().slice(-20)
-    };
+            auditLog: UNIFEDSystem.logs.slice(-50),
+            forensicLogs: ForensicLogger.getLogs().slice(-20)
+        };
 
-    exportData.metadata.legalBasis = "Dada a latência administrativa na disponibilização do ficheiro SAF-T (.xml) pelas plataformas, ou a sua entrega em estado insuficiente e inconsistente (incompleto ou corrompido), o ficheiro SAF-T (.xml) é tecnicamente substituído pelo ficheiro Relatório (.csv) gerado na plataforma Fleet. O cruzamento de dados entre a plataforma e o parceiro é validado pelo ficheiro PDF de extratos 'Ganhos da Empresa'. Para efeitos de perícia, o ficheiro 'Ganhos da Empresa' (Fleet/Ledger) é aqui tratado como o Livro-Razão (Ledger) de suporte, detendo valor probatório material por constituir a fonte primária e fidedigna dos registos que deveriam integrar o reporte fiscal final. A integridade desta extração é blindada através da assinatura digital SHA-256 (Hash), garantindo que os dados analisados mantêm a inviolabilidade absoluta desde a sua recolha, em conformidade com o Decreto-Lei n.º 28/2019 e os princípios de cadeia de custódia previstos no Art. 125.º do CPP. FUNDAMENTAÇÃO DA PROVA MATERIAL: Para efeitos de prova legal de rendimentos reais, consideram-se os ficheiros operacionais que contêm o rasto digital de centenas de viagens efetivamente realizadas. Este conteúdo reflete a atividade económica real do motorista, sendo por isso elevado à categoria de Documento de Suporte (Ledger). Esta metodologia permite detetar e corrigir as discrepâncias omissas nos ficheiros de reporte simplificado, assegurando uma reconstrução financeira rigorosa e auditável em sede judicial.";
+        exportData.metadata.legalBasis = "Dada a latência administrativa na disponibilização do ficheiro SAF-T (.xml) pelas plataformas, ou a sua entrega em estado insuficiente e inconsistente (incompleto ou corrompido), o ficheiro SAF-T (.xml) é tecnicamente substituído pelo ficheiro Relatório (.csv) gerado na plataforma Fleet. O cruzamento de dados entre a plataforma e o parceiro é validado pelo ficheiro PDF de extratos 'Ganhos da Empresa'. Para efeitos de perícia, o ficheiro 'Ganhos da Empresa' (Fleet/Ledger) é aqui tratado como o Livro-Razão (Ledger) de suporte, detendo valor probatório material por constituir a fonte primária e fidedigna dos registos que deveriam integrar o reporte fiscal final. A integridade desta extração é blindada através da assinatura digital SHA-256 (Hash), garantindo que os dados analisados mantêm a inviolabilidade absoluta desde a sua recolha, em conformidade com o Decreto-Lei n.º 28/2019 e os princípios de cadeia de custódia previstos no Art. 125.º do CPP. FUNDAMENTAÇÃO DA PROVA MATERIAL: Para efeitos de prova legal de rendimentos reais, consideram-se os ficheiros operacionais que contêm o rasto digital de centenas de viagens efetivamente realizadas. Este conteúdo reflete a atividade económica real do motorista, sendo por isso elevado à categoria de Documento de Suporte (Ledger). Esta metodologia permite detetar e corrigir as discrepâncias omissas nos ficheiros de reporte simplificado, assegurando uma reconstrução financeira rigorosa e auditável em sede judicial.";
 
-    const _dataPayload = JSON.stringify(exportData.analysis) + JSON.stringify(exportData.evidence) + exportData.metadata.legalBasis;
-    exportData.integrityHash = await generateForensicHash(_dataPayload);
+        const _dataPayload = JSON.stringify(exportData.analysis) + JSON.stringify(exportData.evidence) + exportData.metadata.legalBasis;
+        exportData.integrityHash = await generateForensicHash(_dataPayload);
 
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `UNIFED_PERITIA_${UNIFEDSystem.sessionId}.json`;
-    a.click();
-    URL.revokeObjectURL(a.href);
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `UNIFED_PERITIA_${UNIFEDSystem.sessionId}.json`;
+        a.click();
+        URL.revokeObjectURL(a.href);
 
-    logAudit('📊 Relatório JSON exportado com rastreabilidade completa.', 'success');
-    showToast('JSON probatório exportado', 'success');
+        logAudit('📊 Relatório JSON exportado com rastreabilidade completa.', 'success');
+        showToast('JSON probatório exportado', 'success');
 
-    ForensicLogger.addEntry('JSON_EXPORT_COMPLETED', { sessionId: UNIFEDSystem.sessionId });
+        ForensicLogger.addEntry('JSON_EXPORT_COMPLETED', { sessionId: UNIFEDSystem.sessionId });
+    } catch (err) {
+        logAudit(`❌ Erro na exportação JSON: ${err.message}`, 'error');
+        showToast('Erro ao exportar JSON', 'error');
+        ForensicLogger.addEntry('JSON_EXPORT_ERROR', { error: err.message });
+    } finally {
+        if (exportBtn) {
+            exportBtn.disabled = false;
+            exportBtn.style.opacity = '1';
+        }
+    }
 }
 
 async function exportPDF() {
@@ -6199,7 +6194,7 @@ async function exportPDF() {
         {
             const _riskW = doc.internal.pageSize.getWidth() - left - 14;
 
-            doc.setDrawColor(239, 68, 68);
+            doc.setDrawColor(239, 68, Giya);
             doc.setLineWidth(0.5);
             doc.setFillColor(255, 245, 245);
             doc.rect(left, y - 3, _riskW, 9, 'FD');
@@ -8513,7 +8508,9 @@ window.renderDiscrepancyChart = renderDiscrepancyChart;
     console.log('[UNIFED] Listener de transição do splash configurado com sucesso.');
 })();
 
-// Garantir que o select do ano fiscal seja populado
+// ============================================================================
+// GARANTIA DE POPULAÇÃO DO SELECT DO ANO FISCAL
+// ============================================================================
 (function ensureAnoFiscalPopulated() {
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function() {

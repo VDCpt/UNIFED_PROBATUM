@@ -5,18 +5,15 @@
  * Padrão:      Read-Only Data Consumption sobre UNIFEDSystem.analysis
  * Conformidade: DORA (UE) 2022/2554 · RGPD · ISO/IEC 27037:2012
  *
- * ALTERAÇÕES v13.12.2-i18n (2026-04-14):
+ * ALTERAÇÕES v13.12.2-i18n (2026-04-13):
  * · Adicionada flag _isGraphRendering para evitar loops de re-renderização.
  * · Função renderATFChart() com controle de mutex.
- * · [FIX] openATFModal: injeção de temporalData estático (Q4-2024) quando sys.monthlyData está vazio.
- * · [FIX] renderDiscrepancyCharts: fallback dac7 corrigido de 7755.16 para 6276.55.
- * · [FIX] Listener UNIFED_ANALYSIS_COMPLETE: uncloaking pós-performAudit() sem race condition.
- * · [FIX] Listener UNIFED_EXECUTE_PERITIA: Chart.js Lazy Rendering após Estado 2.
  * · Estabilização do gráfico ATF no modal.
  * · Garantia de que todas as funções expõem logs para o ForensicLogger.
  * · CORREÇÃO CRÍTICA: removido bloco de código solto após generateLegalNarrative.
  * · CORREÇÃO: Substituída referência a 'extratoGanhos' por 'ganhos' em generateLegalNarrative.
  * · Adicionadas verificações de segurança para aceder a UNIFEDSystem.analysis.
+ * · CORREÇÃO: renderChart e renderDiscrepancyChart agora forçam visibilidade do contentor.
  * ============================================================================
  */
 
@@ -154,7 +151,6 @@ const LEGAL_KB = {
 // ============================================================================
 async function generateLegalNarrative(analysis) {
     console.log('[UNIFED-AI] \u25b6 A gerar Sintese Juridica Assistida por IA...');
-    // Garantir que analysis existe e tem a estrutura mínima
     if (!analysis) analysis = { totals: {}, crossings: {}, verdict: {} };
     const forensicContext = _buildForensicContext(analysis);
     const legalContext    = _buildLegalContext();
@@ -194,14 +190,8 @@ Seccao D - ESTRATEGIA DE CONTRA-INTERROGATORIO (AI Adversarial Simulator)
 [Para cada discrepancia critica, identifica 2-3 linhas de ataque da contraparte e fornece a resposta tecnica pericial com referencia legal.]
 Maximo 900 palavras. Prosa juridica formal. Sem preambulos.`;
     try {
-        // Fallback estático – sem qualquer tentativa de fetch para evitar erros de rede
         console.log('[UNIFED-AI] Modo de segurança ativo – a usar narrativa jurídica local (fallback estático).');
         var baseNarrative = _fallbackNarrative('Execução em modo standalone (narrativa local)');
-        
-        // ========================================================================
-        // RETIFICAÇÃO: Inserção dinâmica do fragmento sobre inversão do ónus da prova
-        // quando a percentagem de omissão de comissões for superior a 50%
-        // ========================================================================
         var omissionPct = (analysis && analysis.crossings && analysis.crossings.percentagemOmissao) || 0;
         if (omissionPct > 50) {
             var fmtPct = omissionPct.toFixed(2);
@@ -213,6 +203,12 @@ Maximo 900 palavras. Prosa juridica formal. Sem preambulos.`;
             console.log('[UNIFED-AI] Fragmento de inversão do ónus da prova adicionado (discrepância > 50%: ' + fmtPct + '%).');
         }
         
+        const container = document.getElementById('legalNarrativeContainer');
+        const contentDiv = document.getElementById('legalNarrativeContent');
+        if (container && contentDiv) {
+            contentDiv.innerHTML = baseNarrative.replace(/\n/g, '<br>');
+            container.style.display = 'block';
+        }
         return baseNarrative;
     } catch (err) {
         const isCors = err.message.indexOf('fetch') !== -1 || err.message.indexOf('Failed') !== -1;
@@ -223,7 +219,6 @@ Maximo 900 palavras. Prosa juridica formal. Sem preambulos.`;
         }
         var fallbackMsg = isCors ? 'Inteligencia Artificial em contencao - Execucao em Ambiente Local Seguro / Air-Gapped' : err.message;
         var fallbackNarrative = _fallbackNarrative(fallbackMsg);
-        // Também aplicar a retificação no fallback (por segurança)
         var omissionPctFallback = (analysis && analysis.crossings && analysis.crossings.percentagemOmissao) || 0;
         if (omissionPctFallback > 50) {
             var fmtPctFallback = omissionPctFallback.toFixed(2);
@@ -231,6 +226,12 @@ Maximo 900 palavras. Prosa juridica formal. Sem preambulos.`;
                 "Dada a discrepância de " + fmtPctFallback + "%, " +
                 "opera-se a inversão do ónus da prova (Art. 344.º do C. Civil), " +
                 "cabendo à Ré demonstrar a licitude das retenções efectuadas à margem da facturação emitida.\n";
+        }
+        const container = document.getElementById('legalNarrativeContainer');
+        const contentDiv = document.getElementById('legalNarrativeContent');
+        if (container && contentDiv) {
+            contentDiv.innerHTML = fallbackNarrative.replace(/\n/g, '<br>');
+            container.style.display = 'block';
         }
         return fallbackNarrative;
     }
@@ -240,7 +241,6 @@ function _buildForensicContext(analysis) {
     const c  = analysis.crossings || {};
     const v  = analysis.verdict   || {};
     const lines = [];
-    // CORREÇÃO: substituído extratoGanhos por ganhos
     if (t.ganhos           > 0) lines.push('GANHOS DECLARADOS: ' + _fmtEur(t.ganhos));
     if (t.saftBruto        > 0) lines.push('RECEITA SAF-T: ' + _fmtEur(t.saftBruto));
     if (t.dac7TotalPeriodo > 0) lines.push('RECEITA DAC7: ' + _fmtEur(t.dac7TotalPeriodo));
@@ -714,7 +714,6 @@ if (typeof window.NIFAF === 'undefined') {
     var NIFAF_FALLBACK = {
         isEnabled: false,
         playCriticalAlert: function() {},
-        // [CORREÇÃO] toggle agora mutável
         toggle: function() { this.isEnabled = !this.isEnabled; return this.isEnabled; }
     };
     window.NIFAF = NIFAF_FALLBACK;
@@ -930,7 +929,6 @@ window.renderATFChart = function(data) {
         return;
     }
 
-    // Destruir instância anterior se existir
     if (window.atfChartInstance && typeof window.atfChartInstance.destroy === 'function') {
         window.atfChartInstance.destroy();
         window.atfChartInstance = null;
@@ -1009,7 +1007,6 @@ window.renderATFChart = function(data) {
         }
     });
 
-    // Aplicar selo de integridade visual, se disponível
     if (window.UNIFEDSystem && window.UNIFEDSystem.utils && window.UNIFEDSystem.utils.sealCanvas) {
         window.UNIFEDSystem.utils.sealCanvas('atfChartCanvas');
     }
@@ -1026,17 +1023,7 @@ function openATFModal() {
     if (!sys) { console.warn('[UNIFED-ATF] UNIFEDSystem nao disponivel.'); return; }
     var _L = (typeof window.currentLang !== 'undefined') ? window.currentLang : 'pt';
     var _T = function(pt, en) { return _L === 'en' ? en : pt; };
-    var _rawMonthly = sys.monthlyData || {};
-    if (Object.keys(_rawMonthly).length === 0) {
-        _rawMonthly = {
-            '202409': { ganhos: 2450.00, despesas: 590.00, ganhosLiq: 1860.00 },
-            '202410': { ganhos: 2560.00, despesas: 615.00, ganhosLiq: 1945.00 },
-            '202411': { ganhos: 2480.00, despesas: 600.00, ganhosLiq: 1880.00 },
-            '202412': { ganhos: 2667.73, despesas: 642.89, ganhosLiq: 2024.84 }
-        };
-        console.info('[UNIFED-ATF] temporalData estático injetado (monthlyData vazio) — 4 meses Q4-2024.');
-    }
-    var atf    = computeTemporalAnalysis(_rawMonthly, sys.analysis);
+    var atf    = computeTemporalAnalysis(sys.monthlyData || {}, sys.analysis);
     var months = atf.months;
     var existing = document.getElementById('atfModal');
     if (existing) existing.remove();
@@ -1097,7 +1084,7 @@ function openATFModal() {
                     '<i class="fas fa-chart-line" style="font-size:2rem;color:var(--warn-secondary);"></i>' +
                     '<h4>' + _T('Análise Temporal Forense não disponível', 'Forensic Temporal Analysis not available') + '</h4>' +
                     '<p>' + _T('O lote global não possui decomposição mensal. Os dados são processados em modo agregado.', 'The global batch does not have monthly breakdown. Data is processed in aggregate mode.') + '</p>' +
-                    '<p>' + _T('As discrepâncias apuradas (C2: €2.184,95 – 89,26%; C1: €2.402,57 – 23,65%) mantêm plena relevância jurídica.', 'The discrepancies found (C2: €2,184.95 – 89.26%; C1: €2,402.57 – 23.65%) maintain full legal relevance.') + '</p>' +
+                    '<p>' + _T('As discrepâncias apuradas (C2: €2.184,95 – 89,26%; C1: €1.951,42 – 23,72%) mantêm plena relevância jurídica.', 'The discrepancies found (C2: €2,184.95 – 89.26%; C1: €2,402.57 – 23.65%) maintain full legal relevance.') + '</p>' +
                   '</div>'
                 : '<canvas id="atfChartCanvas" style="width:100%;max-height:320px"></canvas>') +
         '</div>' +
@@ -1159,11 +1146,9 @@ function openATFModal() {
         }
     });
     if (months.length > 0 && typeof Chart !== 'undefined') {
-        // Usar a nova função estável de renderização
         if (typeof window.renderATFChart === 'function') {
             window.renderATFChart(atf);
         } else {
-            // Fallback para o código original (caso a função não exista)
             try {
                 var cvs = document.getElementById('atfChartCanvas');
                 if (cvs) {
@@ -1273,51 +1258,6 @@ window.generateBurdenOfProofSection = generateBurdenOfProofSection;
 // 9. ADIÇÕES v13.12.2-i18n · POLÍTICA ZERO-OMISSÃO
 // ============================================================================
 (function _enrichmentZeroOmission() {
-    // ── Listener UNIFED_ANALYSIS_COMPLETE (pós-performAudit()) ───────────────
-    // Resolve a race condition: enriquecimento só ocorre APÓS o motor nativo terminar.
-    window.addEventListener('UNIFED_ANALYSIS_COMPLETE', function _onAnalysisComplete(evt) {
-        console.log('[UNIFED-ENRICHMENT] UNIFED_ANALYSIS_COMPLETE recebido. A enriquecer UI...', (evt && evt.detail) || '');
-        var _sys = window.UNIFEDSystem || {};
-        // Re-mapear Smoking Guns e fluxos isentos com dados calculados pelo motor nativo
-        if (window.UNIFED_INTERNAL) {
-            if (typeof window.UNIFED_INTERNAL.syncMetrics   === 'function') window.UNIFED_INTERNAL.syncMetrics();
-            if (typeof window.UNIFED_INTERNAL.updateAuxiliaryUI === 'function') window.UNIFED_INTERNAL.updateAuxiliaryUI();
-        }
-        // Uncloaking atómico (latência zero)
-        document.querySelectorAll(
-            '.pure-data-value, .pure-delta-value, .pure-atf-big, ' +
-            '.smoking-gun-module, .pure-sg-val, [data-pt], [data-en]'
-        ).forEach(function(el) { el.classList.add('forensic-revealed'); });
-        console.log('[UNIFED-ENRICHMENT] Uncloaking concluído via UNIFED_ANALYSIS_COMPLETE.');
-    });
-
-    // ── Event-Based Lazy Rendering: UNIFED_EXECUTE_PERITIA ───────────────────
-    window.addEventListener('UNIFED_EXECUTE_PERITIA', function _onPeritiaExecute(evt) {
-        console.log('[UNIFED-ENRICHMENT] UNIFED_EXECUTE_PERITIA recebido. Motor gráfico ATF a inicializar...', (evt.detail || {}).masterHash || '');
-        if (typeof window.renderDiscrepancyCharts === 'function') window.renderDiscrepancyCharts();
-        var _canvas = document.getElementById('atfChartCanvas');
-        if (_canvas && typeof Chart !== 'undefined') {
-            var _sys = window.UNIFEDSystem || {};
-            var _rawMonthly = (_sys.monthlyData && Object.keys(_sys.monthlyData).length > 0) ? _sys.monthlyData : {
-                '202409': { ganhos: 2450.00, despesas: 590.00, ganhosLiq: 1860.00 },
-                '202410': { ganhos: 2560.00, despesas: 615.00, ganhosLiq: 1945.00 },
-                '202411': { ganhos: 2480.00, despesas: 600.00, ganhosLiq: 1880.00 },
-                '202412': { ganhos: 2667.73, despesas: 642.89, ganhosLiq: 2024.84 }
-            };
-            if (typeof computeTemporalAnalysis === 'function') {
-                var _atf = computeTemporalAnalysis(_rawMonthly, _sys.analysis || {});
-                if (typeof window.renderATFChart === 'function' && _atf && _atf.months && _atf.months.length > 0) {
-                    window.renderATFChart(_atf);
-                }
-            }
-        }
-        if (typeof window.generateLegalNarrative === 'function' && window.UNIFEDSystem && window.UNIFEDSystem.analysis) {
-            window.generateLegalNarrative(window.UNIFEDSystem.analysis).catch(function() {});
-        }
-        console.log('[UNIFED-ENRICHMENT] Lazy rendering concluído (UNIFED_EXECUTE_PERITIA).');
-    });
-    console.log('[UNIFED-ENRICHMENT] Listener UNIFED_EXECUTE_PERITIA registado (Chart.js Lazy Rendering).');
-
     if (!window.UNIFEDSystem.utils.formatCurrency) {
         window.UNIFEDSystem.utils.formatCurrency = function(val) {
             return new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(val || 0);
@@ -1325,7 +1265,6 @@ window.generateBurdenOfProofSection = generateBurdenOfProofSection;
         if (!window.formatCurrency) window.formatCurrency = window.UNIFEDSystem.utils.formatCurrency;
     }
 
-    // Renderização simplificada de gráfico de discrepâncias (SAF-T vs DAC7)
     window.renderDiscrepancyCharts = function() {
         const ctx = document.getElementById('pure-discrepancia-saf-t-dac7');
         if (!ctx || typeof Chart === 'undefined') {
@@ -1335,7 +1274,7 @@ window.generateBurdenOfProofSection = generateBurdenOfProofSection;
         
         const data = (window.UNIFEDSystem.analysis && window.UNIFEDSystem.analysis.totals) || {};
         const gains = data.ganhos || 10157.73;
-        const dac7 = data.dac7TotalPeriodo || 6276.55;
+        const dac7 = data.dac7TotalPeriodo || 7755.16;
         
         new Chart(ctx, {
             type: 'bar',

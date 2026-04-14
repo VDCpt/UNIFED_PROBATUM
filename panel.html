@@ -13,13 +13,10 @@
 
 <section id="pureDashboard" class="pure-section" aria-label="Painel Caso Real Anonimizado v13.12.2-i18n">
 
-  <!-- HEADER DA SECÇÃO -->
   <div class="pure-section-header">
     <div class="pure-section-title">
       <span class="pure-badge-version" title="Versão / Version">v13.12.2-i18n</span>
-      <span id="pure-title-text"
-            data-pt="RECONSTITUIÇÃO DA VERDADE MATERIAL — SESSÃO"
-            data-en="RECONSTRUCTION OF MATERIAL TRUTH — SESSION">RECONSTITUIÇÃO DA VERDADE MATERIAL — SESSÃO</span>
+      <span id="pure-title-text" data-pt="RECONSTITUIÇÃO DA VERDADE MATERIAL — SESSÃO" data-en="RECONSTRUCTION OF MATERIAL TRUTH — SESSION">RECONSTITUIÇÃO DA VERDADE MATERIAL — SESSÃO</span>
       <span id="pure-session-id" class="pure-mono">UNIFED-MMLADX8Q-CV69L</span>
     </div>
     <div class="pure-session-badge">
@@ -28,12 +25,10 @@
     </div>
   </div>
 
-  <!-- IDENTIDADE DO OPERADOR FORENSE (Art. 153.º CPP) -->
   <div class="pure-operator-badge" style="margin-top: 5px; font-family: monospace; font-size: 0.85em; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 4px;">
     ID_OPERADOR_FORENSE: <span class="pure-value-warn" style="color: #00e5ff;">UNIFED-A.S.-9W3HI [VALIDADO/eIDAS]</span>
   </div>
 
-  <!-- BLOCO DE IDENTIFICAÇÃO DO SUJEITO PASSIVO -->
   <div class="pure-subject-header" style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; align-items: stretch;">
     <div class="pure-data-block" style="flex: 1 1 200px; background: rgba(255,255,255,0.03); border-radius: 6px; padding: 12px 14px;">
       <div class="pure-data-label" data-pt="Sujeito Passivo" data-en="Subject">Sujeito Passivo</div>
@@ -49,7 +44,6 @@
     </div>
   </div>
 
-  <!-- GESTÃO DE EVIDÊNCIAS (contadores visíveis) -->
   <div id="pureEvidenceSection" class="evidence-management-section-solid" style="margin-bottom: 1rem; display: none;">
     <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
       <div class="evidence-management-btn-solid" style="flex: 1; cursor: default;">
@@ -73,94 +67,56 @@
     </div>
   </div>
 
-  <!-- GRID DE PAINÉIS (pure-card-grid) -->
   <div class="pure-card-grid">
 
-    <!-- CARTÃO GARANTIDO: RISCO DE ASFIXIA FINANCEIRA -->
     <div class="pure-card pure-card-warn" id="card-asfixia" style="display:block !important; opacity:1 !important;">
       <div class="pure-card-title">RISCO DE ASFIXIA FINANCEIRA</div>
       <div class="pure-card-value" id="pure-atf-score-val">--%</div>
       <div class="pure-card-trend">Indicador de Probabilidade de Insolvência Forçada</div>
     </div>
 
-    <!-- GRÁFICO DE DISCREPÂNCIA GARANTIDO -->
     <div class="chart-section" id="pure-chart-container">
       <div class="pure-chart-wrapper">
         <canvas id="discrepancyChart"></canvas>
       </div>
     </div>
 
-    <!-- PAINEL I – RECONSTITUIÇÃO FINANCEIRA -->
     <div class="pure-card" id="pureFinancialCard">
       <h3 class="pure-card-title">
         <span class="pure-icon">🔬</span>
-        <span id="pure-card1-title"
-              data-pt="I. RECONSTITUIÇÃO DA VERDADE MATERIAL (EXTRATO vs SAF-T vs DAC7)"
-              data-en="I. RECONSTRUCTION OF MATERIAL TRUTH (STATEMENT vs SAF-T vs DAC7)">I. RECONSTITUIÇÃO DA VERDADE MATERIAL (EXTRATO vs SAF-T vs DAC7)</span>
+        <span id="pure-card1-title" data-pt="I. RECONSTITUIÇÃO DA VERDADE MATERIAL (EXTRATO vs SAF-T vs DAC7)" data-en="I. RECONSTRUCTION OF MATERIAL TRUTH (STATEMENT vs SAF-T vs DAC7)">I. RECONSTITUIÇÃO DA VERDADE MATERIAL (EXTRATO vs SAF-T vs DAC7)</span>
       </h3>
       <div class="pure-data-grid pure-3col">
-        <div class="pure-data-block">
-          <div class="pure-data-label" id="pure-label-ganhos" data-pt="Ganhos (Extrato Ledger)" data-en="Earnings (Ledger Statement)">Ganhos (Extrato Ledger)</div>
-          <div id="pure-ganhos" class="pure-data-value pure-value-primary">€ 0,00</div>
-          <div class="pure-data-sub" id="pure-sub-ganhos" data-pt="Fonte primária · Viagens efectuadas" data-en="Primary source · Trips completed">Fonte primária · Viagens efectuadas</div>
-        </div>
-        <div class="pure-data-block">
-          <div class="pure-data-label" id="pure-label-despesas" data-pt="Despesas / Comissões (BTOR)" data-en="Expenses / Commissions (BTOR)">Despesas / Comissões (BTOR)</div>
-          <div id="pure-despesas" class="pure-data-value pure-value-warn">€ 0,00</div>
-          <div class="pure-data-sub" id="pure-sub-despesas" data-pt="Retidas pela plataforma (extrato)" data-en="Withheld by platform (statement)">Retidas pela plataforma (extrato)</div>
-        </div>
-        <div class="pure-data-block">
-          <div class="pure-data-label" id="pure-label-liquido" data-pt="Ganhos Líquidos (Extrato)" data-en="Net Earnings (Statement)">Ganhos Líquidos (Extrato)</div>
-          <div id="pure-liquido" class="pure-data-value pure-value-neutral">€ 0,00</div>
-          <div class="pure-data-sub" id="pure-sub-liquido" data-pt="Ganhos − Despesas (extrato real)" data-en="Earnings − Expenses (actual statement)">Ganhos − Despesas (extrato real)</div>
-        </div>
-        <div class="pure-data-block">
-          <div class="pure-data-label" id="pure-label-saft" data-pt="SAF-T Bruto (Declarado)" data-en="SAF-T Gross (Declared)">SAF-T Bruto (Declarado)</div>
-          <div id="pure-saft" class="pure-data-value pure-value-neutral">€ 0,00</div>
-          <div class="pure-data-sub" id="pure-sub-saft" data-pt="Faturação interna plataforma" data-en="Platform internal invoicing">Faturação interna plataforma</div>
-        </div>
-        <div class="pure-data-block">
-          <div class="pure-data-label" id="pure-label-dac7" data-pt="DAC7 (Reportado à AT)" data-en="DAC7 (Reported to TA)">DAC7 (Reportado à AT)</div>
-          <div id="pure-dac7" class="pure-data-value pure-value-neutral">€ 0,00</div>
-          <div class="pure-data-sub" id="pure-sub-dac7" data-pt="2.º Semestre 2024 (Q4 activo)" data-en="2nd Semester 2024 (Q4 active)">2.º Semestre 2024 (Q4 activo)</div>
-        </div>
-        <div class="pure-data-block">
-          <div class="pure-data-label" id="pure-label-fatura" data-pt="Comissões Faturadas (BTF)" data-en="Invoiced Commissions (BTF)">Comissões Faturadas (BTF)</div>
-          <div id="pure-fatura" class="pure-data-value pure-value-warn">€ 0,00</div>
-          <div class="pure-data-sub" id="pure-sub-fatura" data-pt="Valor em faturas emitidas (PT1124/PT1125)" data-en="Value in issued invoices (PT1124/PT1125)">Valor em faturas emitidas (PT1124/PT1125)</div>
-        </div>
+        <div class="pure-data-block"><div class="pure-data-label" id="pure-label-ganhos" data-pt="Ganhos (Extrato Ledger)" data-en="Earnings (Ledger Statement)">Ganhos (Extrato Ledger)</div><div id="pure-ganhos" class="pure-data-value pure-value-primary">€ 0,00</div><div class="pure-data-sub" id="pure-sub-ganhos" data-pt="Fonte primária · Viagens efectuadas" data-en="Primary source · Trips completed">Fonte primária · Viagens efectuadas</div></div>
+        <div class="pure-data-block"><div class="pure-data-label" id="pure-label-despesas" data-pt="Despesas / Comissões (BTOR)" data-en="Expenses / Commissions (BTOR)">Despesas / Comissões (BTOR)</div><div id="pure-despesas" class="pure-data-value pure-value-warn">€ 0,00</div><div class="pure-data-sub" id="pure-sub-despesas" data-pt="Retidas pela plataforma (extrato)" data-en="Withheld by platform (statement)">Retidas pela plataforma (extrato)</div></div>
+        <div class="pure-data-block"><div class="pure-data-label" id="pure-label-liquido" data-pt="Ganhos Líquidos (Extrato)" data-en="Net Earnings (Statement)">Ganhos Líquidos (Extrato)</div><div id="pure-liquido" class="pure-data-value pure-value-neutral">€ 0,00</div><div class="pure-data-sub" id="pure-sub-liquido" data-pt="Ganhos − Despesas (extrato real)" data-en="Earnings − Expenses (actual statement)">Ganhos − Despesas (extrato real)</div></div>
+        <div class="pure-data-block"><div class="pure-data-label" id="pure-label-saft" data-pt="SAF-T Bruto (Declarado)" data-en="SAF-T Gross (Declared)">SAF-T Bruto (Declarado)</div><div id="pure-saft" class="pure-data-value pure-value-neutral">€ 0,00</div><div class="pure-data-sub" id="pure-sub-saft" data-pt="Faturação interna plataforma" data-en="Platform internal invoicing">Faturação interna plataforma</div></div>
+        <div class="pure-data-block"><div class="pure-data-label" id="pure-label-dac7" data-pt="DAC7 (Reportado à AT)" data-en="DAC7 (Reported to TA)">DAC7 (Reportado à AT)</div><div id="pure-dac7" class="pure-data-value pure-value-neutral">€ 0,00</div><div class="pure-data-sub" id="pure-sub-dac7" data-pt="2.º Semestre 2024 (Q4 activo)" data-en="2nd Semester 2024 (Q4 active)">2.º Semestre 2024 (Q4 activo)</div></div>
+        <div class="pure-data-block"><div class="pure-data-label" id="pure-label-fatura" data-pt="Comissões Faturadas (BTF)" data-en="Invoiced Commissions (BTF)">Comissões Faturadas (BTF)</div><div id="pure-fatura" class="pure-data-value pure-value-warn">€ 0,00</div><div class="pure-data-sub" id="pure-sub-fatura" data-pt="Valor em faturas emitidas (PT1124/PT1125)" data-en="Value in issued invoices (PT1124/PT1125)">Valor em faturas emitidas (PT1124/PT1125)</div></div>
       </div>
     </div>
 
-    <!-- PAINEL II – DISCREPÂNCIAS (SMOKING GUN) - VISIBILIDADE FORÇADA -->
     <div class="pure-card pure-card-alert" id="pureDiscCard" style="display:block !important; opacity:1 !important;">
       <h3 class="pure-card-title">
         <span class="pure-icon">🔫</span>
-        <span id="pure-card2-title"
-              data-pt="II. DISCREPÂNCIAS APURADAS — PROVA RAINHA"
-              data-en="II. DISCREPANCIES FOUND — CROWN EVIDENCE">II. DISCREPÂNCIAS APURADAS — PROVA RAINHA</span>
+        <span id="pure-card2-title" data-pt="II. DISCREPÂNCIAS APURADAS — PROVA RAINHA" data-en="II. DISCREPANCIES FOUND — CROWN EVIDENCE">II. DISCREPÂNCIAS APURADAS — PROVA RAINHA</span>
       </h3>
       <div class="pure-smoking-guns">
         <div class="pure-sg pure-sg-critical smoking-gun-module">
-          <div class="pure-sg-label" id="pure-sg2-label"
-               data-pt="SMOKING GUN 2 — Despesas/Comissões (Extrato) vs Comissões Faturadas (BTF)"
-               data-en="SMOKING GUN 2 — Expenses/Commissions (Statement) vs Invoiced Commissions (BTF)">SMOKING GUN 2 — Despesas/Comissões (Extrato) vs Comissões Faturadas (BTF)</div>
+          <div class="pure-sg-label" id="pure-sg2-label" data-pt="SMOKING GUN 2 — Despesas/Comissões (Extrato) vs Comissões Faturadas (BTF)" data-en="SMOKING GUN 2 — Expenses/Commissions (Statement) vs Invoiced Commissions (BTF)">SMOKING GUN 2 — Despesas/Comissões (Extrato) vs Comissões Faturadas (BTF)</div>
           <div class="pure-sg-row"><span class="pure-sg-key" id="pure-sg2-btor-label" data-pt="BTOR (Extrato):" data-en="BTOR (Statement):">BTOR (Extrato):</span><span class="pure-sg-val" id="pure-sg2-btor-val">€ 0,00</span></div>
           <div class="pure-sg-row"><span class="pure-sg-key" id="pure-sg2-btf-label" data-pt="BTF (Fatura):" data-en="BTF (Invoice):">BTF (Fatura):</span><span class="pure-sg-val" id="pure-sg2-btf-val">€ 0,00</span></div>
           <div class="pure-sg-delta"><span id="pure-sg2-delta-label" data-pt="OMISSÃO:" data-en="OMISSION:">OMISSÃO:</span><span id="pure-disc-c2" class="pure-delta-value">€ 0,00</span><span id="pure-disc-c2-pct" class="pure-delta-pct">0,00%</span></div>
           <div class="pure-sg-legal" id="pure-sg2-legal" data-pt="Art. 36.º n.º 11 CIVA · Art. 119.º RGIT" data-en="Art. 36(11) CIVA · Art. 119 RGIT">Art. 36.º n.º 11 CIVA · Art. 119.º RGIT</div>
         </div>
         <div class="pure-sg pure-sg-secondary smoking-gun-module">
-          <div class="pure-sg-label" id="pure-sg1-label"
-               data-pt="SMOKING GUN 1 — SAF-T Bruto vs Reportado DAC7 (AT)"
-               data-en="SMOKING GUN 1 — SAF-T Gross vs DAC7 Reported (TA)">SMOKING GUN 1 — SAF-T Bruto vs Reportado DAC7 (AT)</div>
+          <div class="pure-sg-label" id="pure-sg1-label" data-pt="SMOKING GUN 1 — SAF-T Bruto vs Reportado DAC7 (AT)" data-en="SMOKING GUN 1 — SAF-T Gross vs DAC7 Reported (TA)">SMOKING GUN 1 — SAF-T Bruto vs Reportado DAC7 (AT)</div>
           <div class="pure-sg-row"><span class="pure-sg-key" id="pure-sg1-saft-label" data-pt="SAF-T Bruto:" data-en="SAF-T Gross:">SAF-T Bruto:</span><span class="pure-sg-val" id="pure-sg1-saft-val">€ 0,00</span></div>
           <div class="pure-sg-row"><span class="pure-sg-key" id="pure-sg1-dac7-label" data-pt="DAC7 (2.º Sem.):" data-en="DAC7 (2nd Sem.):">DAC7 (2.º Sem.):</span><span class="pure-sg-val" id="pure-sg1-dac7-val">€ 0,00</span></div>
           <div class="pure-sg-delta"><span id="pure-sg1-delta-label" data-pt="DIFERENÇA:" data-en="DIFFERENCE:">DIFERENÇA:</span><span id="pure-disc-saft-dac7" class="pure-delta-value">€ 0,00</span><span id="pure-disc-saft-pct" class="pure-delta-pct">0,00%</span></div>
           <div class="pure-sg-legal" id="pure-sg1-legal" data-pt="Diretiva DAC7 (UE) 2021/514 · DL n.º 41/2023" data-en="DAC7 Directive (EU) 2021/514 · DL No. 41/2023">Diretiva DAC7 (UE) 2021/514 · DL n.º 41/2023</div>
         </div>
       </div>
-
       <div class="pure-fiscal-row">
         <div class="pure-fiscal-item"><div class="pure-fiscal-label" id="pure-iva23-label" data-pt="IVA 23% Omitido" data-en="VAT 23% Omitted">IVA 23% Omitido</div><div id="pure-iva-23" class="pure-fiscal-value">€ 0,00</div><div class="pure-fiscal-sub" id="pure-iva23-sub" data-pt="Art. 2.º n.º 1 al. i) CIVA" data-en="Art. 2(1)(i) CIVA">Art. 2.º n.º 1 al. i) CIVA</div></div>
         <div class="pure-fiscal-item"><div class="pure-fiscal-label" id="pure-iva6-label" data-pt="IVA 6% Omitido" data-en="VAT 6% Omitted">IVA 6% Omitido</div><div id="pure-iva-6" class="pure-fiscal-value">€ 0,00</div><div class="pure-fiscal-sub" id="pure-iva6-sub" data-pt="Art. 18.º CIVA · Transporte" data-en="Art. 18 CIVA · Transport">Art. 18.º CIVA · Transporte</div></div>
@@ -173,7 +129,6 @@
       </div>
     </div>
 
-    <!-- PAINEL III – ATF -->
     <div class="pure-card" id="pureATFCard">
       <h3 class="pure-card-title"><span class="pure-icon">⏳</span><span id="pure-card3-title" data-pt="III. ANÁLISE TEMPORAL FORENSE (ATF) — LOTE GLOBAL (2.º SEMESTRE 2024)" data-en="III. FORENSIC TEMPORAL ANALYSIS (ATF) — GLOBAL BATCH (2nd SEMESTER 2024)">III. ANÁLISE TEMPORAL FORENSE (ATF) — LOTE GLOBAL (2.º SEMESTRE 2024)</span></h3>
       <div class="pure-atf-grid">
@@ -186,7 +141,6 @@
       <div style="text-align:center;margin-top:16px"><button onclick="if(typeof openATFModal === 'function') openATFModal();" class="pure-btn-atf" id="pure-atf-btn" data-pt="⏳ ABRIR ANÁLISE TEMPORAL FORENSE COMPLETA" data-en="⏳ OPEN COMPLETE FORENSIC TEMPORAL ANALYSIS" title="Abrir modal ATF completo / Open complete ATF modal"><span id="pure-atf-btn-text">⏳ ABRIR ANÁLISE TEMPORAL FORENSE COMPLETA</span></button></div>
     </div>
 
-    <!-- PAINEL IV – ZONA CINZENTA - VISIBILIDADE FORÇADA -->
     <div class="pure-card white-collar-module" id="pureZonaCinzentaCard" style="display:block !important; opacity:1 !important;">
       <h3 class="pure-card-title"><span class="pure-icon">🔍</span><span id="pure-card4-title" data-pt="IV. ZONA CINZENTA — VALORES NÃO SUJEITOS A COMISSÃO (ISOLADOS)" data-en="IV. GREY ZONE — VALUES NOT SUBJECT TO COMMISSION (ISOLATED)">IV. ZONA CINZENTA — VALORES NÃO SUJEITOS A COMISSÃO (ISOLADOS)</span></h3>
       <p class="pure-zc-intro" id="pure-zc-intro"><span id="pure-zc-intro-text" data-pt="O sistema isolou" data-en="The system isolated">O sistema isolou</span><strong id="pure-zc-amount">€ 451,00</strong><span id="pure-zc-intro-end" data-pt="em fluxos não sujeitos a comissão pela plataforma (Campanhas + Gorjetas — mês de Outubro). A reconciliação DAC7 deve verificar se estes valores foram indevidamente incluídos na base de reporte à AT, explicando parte da discrepância C1." data-en="in flows not subject to commission by the platform (Campaigns + Tips — October month). DAC7 reconciliation must verify whether these values were improperly included in the reporting base to the TA, explaining part of the C1 discrepancy.">em fluxos não sujeitos a comissão pela plataforma (Campanhas + Gorjetas — mês de Outubro). A reconciliação DAC7 deve verificar se estes valores foram indevidamente incluídos na base de reporte à AT, explicando parte da discrepância C1.</span></p>
@@ -197,7 +151,6 @@
         <div class="pure-zc-item"><span class="pure-zc-label" id="pure-zc-cancelamentos-label" data-pt="Taxas de Cancelamento (total período)" data-en="Cancellation Fees (total period)">Taxas de Cancelamento (total período)</span><span id="pure-nc-cancelamentos" class="pure-zc-val">€ 0,00</span><span class="pure-zc-tag" id="pure-zc-cancelamentos-tag" data-pt="já em Ganhos · comissão incluída nos −Despesas" data-en="already in Earnings · commission included in −Expenses">já em Ganhos · comissão incluída nos −Despesas</span></div>
         <div class="pure-zc-item pure-zc-total"><span class="pure-zc-label" id="pure-zc-total-label" data-pt="Total Não Sujeitos (Out 2024)" data-en="Total Not Subject (Oct 2024)">Total Não Sujeitos (Out 2024)</span><span id="pure-nc-total" class="pure-zc-val">€ 0,00</span><span class="pure-zc-tag" id="pure-zc-total-tag" data-pt="Fora da base tributável TVDE" data-en="Outside TVDE taxable base">Fora da base tributável TVDE</span></div>
       </div>
-      <!-- GAP DE CONCILIAÇÃO (C1) fixado em 1.951,42 € -->
       <div style="color: #ef4444; border-left: 2px solid #ef4444; padding-left: 8px; margin-top: 10px;">
         <strong>GAP DE CONCILIAÇÃO (C1): 1.951,42 €</strong><br>
         <span style="font-size: 0.8em;">Estado: Indício de Omissão Declarativa (Base Bruta não justificada por fluxos isentos).</span>
@@ -205,7 +158,6 @@
       <div class="pure-zc-question" id="pure-zc-question"><strong id="pure-zc-question-strong" data-pt="Questão para contraditório (Art. 327.º CPP):" data-en="Question for contradiction (Art. 327 CPP):">Questão para contraditório (Art. 327.º CPP):</strong><span id="pure-zc-question-text" data-pt="Pode a plataforma confirmar se os €451,00 em Gorjetas e Campanhas (isentos de comissão nos termos da Lei TVDE) foram incluídos na base de cálculo do reporte DAC7? Se sim, qual o fundamento legal?" data-en="Can the platform confirm whether the €451.00 in Tips and Campaigns (commission-exempt under the TVDE Law) were included in the calculation basis of the DAC7 report? If so, what is the legal basis?">Pode a plataforma confirmar se os €451,00 em Gorjetas e Campanhas (isentos de comissão nos termos da Lei TVDE) foram incluídos na base de cálculo do reporte DAC7? Se sim, qual o fundamento legal?</span></div>
     </div>
 
-    <!-- PAINEL V – VEREDICTO E INTEGRIDADE -->
     <div class="pure-card pure-card-verdict" id="pureVerdictCard">
       <div class="pure-verdict-row">
         <div class="pure-verdict-block"><div class="pure-verdict-label" id="pure-verdict-label" data-pt="VEREDICTO PERICIAL" data-en="EXPERT VERDICT">VEREDICTO PERICIAL</div><div id="pure-verdict" class="pure-verdict-value" data-pt="RISCO CRÍTICO · DESVIO PADRÃO > 2σ" data-en="CRITICAL RISK · STANDARD DEVIATION > 2σ">RISCO CRÍTICO · DESVIO PADRÃO > 2σ</div><div id="pure-verdict-pct" class="pure-verdict-pct">89,26%</div><div class="pure-verdict-basis" id="pure-verdict-basis" data-pt="Art. 119.º RGIT · Art. 125.º CPP" data-en="Art. 119 RGIT · Art. 125 CPP">Art. 119.º RGIT · Art. 125.º CPP</div></div>
@@ -213,9 +165,8 @@
       </div>
     </div>
 
-  </div> <!-- FIM: pure-card-grid -->
+  </div>
 
-  <!-- TRIANGULAÇÃO FINANCEIRA (4 PILARES) -->
   <div class="pure-card" id="pureTriangulationCard" style="margin-top: 16px;">
     <h3 class="pure-card-title"><span class="pure-icon">📊</span><span data-pt="TRIANGULAÇÃO FINANCEIRA · BIG DATA ALGORITHM" data-en="FINANCIAL TRIANGULATION · BIG DATA ALGORITHM">TRIANGULAÇÃO FINANCEIRA · BIG DATA ALGORITHM</span></h3>
     <div class="pure-data-grid pure-4col" style="display: grid; grid-template-columns: repeat(4,1fr); gap: 12px;">
@@ -226,12 +177,10 @@
     </div>
   </div>
 
-  <!-- CANVAS PARA O GRÁFICO ATF -->
   <div class="pure-atf-chart" style="margin-top: 16px;">
     <canvas id="atfChartCanvas" width="800" height="300" style="width:100%; height:auto; max-height:300px;"></canvas>
   </div>
 
-  <!-- SELO TEMPORAL -->
   <div id="pure-tsa-anchor" style="font-family: monospace; font-size: 0.8em; margin-top: 4px;">
     Selo de Tempo Local (ISO 27037): <span style="color: #10b981; font-weight: bold;">ATIVO — CUSTÓDIA NÍVEL 1</span>
   </div>

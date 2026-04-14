@@ -1,14 +1,7 @@
 /* ============================================================================
    UNIFED - PROBATUM · v13.12.1-FIX · ESTILOS DO PAINEL DE CASO REAL
-   ============================================================================
-   Escopo      : Seletor raiz #pureDashboard — sem conflito com estilos base.
-   Variáveis   : Consume as CSS custom properties existentes em style.css base.
-                 Fallbacks definidos para standalone rendering.
-   Conformidade: WCAG 2.1 AA · Palette forense (dark + alert accents).
-   Consolidado : style_additions.css + patch v13.12.1-FIX integrados.
    ============================================================================ */
 
-/* ── Variáveis globais PURE ─────────────────────────────────────────────────── */
 :root {
     --pure-accent: #00E5FF;
     --pure-warn: #EF4444;
@@ -19,13 +12,11 @@
     background-color: #0f172a !important;
 }
 
-/* ── Enforcement Dark Mode — html/body ─────────────────────────────────────── */
 html, body {
     background-color: #0f172a !important;
     color: #f8fafc !important;
 }
 
-/* ── Wrapper do painel PURE — estado inicial oculto, aguarda classe .unifed-ready ── */
 #pureDashboardWrapper {
     display: none;
     opacity: 0;
@@ -41,13 +32,11 @@ html, body {
     transition: opacity 0.5s ease-in-out;
 }
 
-/* Garante fundo escuro durante injeção de panel.html */
 html, body, #pureDashboardWrapper {
     background-color: var(--pure-bg-dark) !important;
     color: #f8fafc !important;
 }
 
-/* ── Grid de painéis ────────────────────────────────────────────────────────── */
 .pure-card-grid {
     display: flex;
     flex-direction: column;
@@ -55,7 +44,6 @@ html, body, #pureDashboardWrapper {
     width: 100%;
 }
 
-/* ── Variáveis locais com fallback (dentro de #pureDashboard) ───────────────── */
 #pureDashboard {
     --pure-bg-card: var(--bg-secondary, rgba(13, 27, 42, 0.85));
     --pure-bg-alert: var(--bg-tertiary, rgba(30, 41, 59, 0.7));
@@ -71,7 +59,6 @@ html, body, #pureDashboardWrapper {
     --pure-font-mono: var(--font-mono, 'Courier New', 'JetBrains Mono', monospace);
 }
 
-/* ── Secção raiz ───────────────────────────────────────────────────────────── */
 .pure-section {
     max-width: 100%;
     margin: 32px auto;
@@ -79,7 +66,6 @@ html, body, #pureDashboardWrapper {
     font-family: var(--pure-font-mono);
 }
 
-/* ── Header da secção ─────────────────────────────────────────────────────── */
 .pure-section-header {
     display: flex;
     align-items: center;
@@ -142,7 +128,6 @@ html, body, #pureDashboardWrapper {
     letter-spacing: 0.04em;
 }
 
-/* ── Cards ────────────────────────────────────────────────────────────────── */
 .pure-card {
     background: var(--pure-bg-card);
     border: 1px solid var(--pure-border);
@@ -176,7 +161,6 @@ html, body, #pureDashboardWrapper {
     font-size: 1rem;
 }
 
-/* ── Grid financeiro ──────────────────────────────────────────────────────── */
 .pure-data-grid {
     display: grid;
     gap: 14px;
@@ -226,7 +210,6 @@ html, body, #pureDashboardWrapper {
     opacity: 0.7;
 }
 
-/* ── Smoking Guns ─────────────────────────────────────────────────────────── */
 .pure-smoking-guns {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -304,7 +287,6 @@ html, body, #pureDashboardWrapper {
     opacity: 0.6;
 }
 
-/* ── Linha fiscal ─────────────────────────────────────────────────────────── */
 .pure-fiscal-row {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -341,7 +323,6 @@ html, body, #pureDashboardWrapper {
     opacity: 0.6;
 }
 
-/* ── ATF Grid ─────────────────────────────────────────────────────────────── */
 .pure-atf-grid {
     display: grid;
     grid-template-columns: 1fr repeat(3, auto);
@@ -350,11 +331,7 @@ html, body, #pureDashboardWrapper {
     margin-bottom: 16px;
 }
 
-@media (max-width: 768px) {
-    .pure-atf-grid {
-        grid-template-columns: 1fr 1fr;
-    }
-}
+@media (max-width: 768px) { .pure-atf-grid { grid-template-columns: 1fr 1fr; } }
 
 .pure-atf-block {
     background: rgba(255,255,255,0.03);
@@ -441,18 +418,9 @@ html, body, #pureDashboardWrapper {
     line-height: 1.7;
 }
 
-.pure-atf-note strong {
-    color: rgba(0,229,255,0.8);
-}
-
-.pure-atf-note em {
-    color: var(--pure-warn-amber);
-}
-
-.pure-atf-note code {
-    color: var(--pure-accent);
-    font-size: 0.65rem;
-}
+.pure-atf-note strong { color: rgba(0,229,255,0.8); }
+.pure-atf-note em { color: var(--pure-warn-amber); }
+.pure-atf-note code { color: var(--pure-accent); font-size: 0.65rem; }
 
 .pure-btn-atf {
     background: rgba(0,229,255,0.08);
@@ -472,7 +440,6 @@ html, body, #pureDashboardWrapper {
     box-shadow: 0 0 16px rgba(0,229,255,0.2);
 }
 
-/* ── Zona Cinzenta ────────────────────────────────────────────────────────── */
 .pure-zc-intro {
     font-size: 0.75rem;
     color: rgba(255,255,255,0.65);
@@ -480,9 +447,7 @@ html, body, #pureDashboardWrapper {
     margin-bottom: 14px;
 }
 
-.pure-zc-intro strong {
-    color: var(--pure-accent);
-}
+.pure-zc-intro strong { color: var(--pure-accent); }
 
 .pure-zc-grid {
     display: grid;
@@ -533,11 +498,8 @@ html, body, #pureDashboardWrapper {
     line-height: 1.7;
 }
 
-.pure-zc-question strong {
-    color: rgba(0,229,255,0.8);
-}
+.pure-zc-question strong { color: rgba(0,229,255,0.8); }
 
-/* ── Veredicto ────────────────────────────────────────────────────────────── */
 .pure-verdict-row {
     display: flex;
     align-items: center;
@@ -546,8 +508,7 @@ html, body, #pureDashboardWrapper {
     gap: 20px;
 }
 
-.pure-verdict-block,
-.pure-integrity-block {
+.pure-verdict-block, .pure-integrity-block {
     flex: 1;
     min-width: 200px;
 }
@@ -581,48 +542,26 @@ html, body, #pureDashboardWrapper {
     opacity: 0.7;
 }
 
-/* ── Responsividade base ──────────────────────────────────────────────────── */
 @media (max-width: 600px) {
-    .pure-3col {
-        grid-template-columns: 1fr;
-    }
-    .pure-smoking-guns {
-        grid-template-columns: 1fr;
-    }
-    .pure-atf-grid {
-        grid-template-columns: 1fr;
-    }
-    .pure-section-header {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    .pure-atf-big {
-        font-size: 1.8rem;
-    }
-    .pure-verdict-value {
-        font-size: 1.2rem;
-    }
+    .pure-3col, .pure-smoking-guns, .pure-atf-grid { grid-template-columns: 1fr; }
+    .pure-section-header { flex-direction: column; align-items: flex-start; }
+    .pure-atf-big { font-size: 1.8rem; }
+    .pure-verdict-value { font-size: 1.2rem; }
 }
 
-/* ── Estado de carregamento ───────────────────────────────────────────────── */
 .pure-loading-placeholder::after {
     content: '...';
     animation: pure-dots 1.2s infinite;
 }
 
 @keyframes pure-dots {
-    0%   { content: '.'; }
-    33%  { content: '..'; }
-    66%  { content: '...'; }
+    0% { content: '.'; }
+    33% { content: '..'; }
+    66% { content: '...'; }
     100% { content: '.'; }
 }
 
-/* ============================================================================
-   CORR-4/5: Triangulação — texto invisível e reset de herança
-   ============================================================================ */
-#pureDashboard *:not([style*="color"]) {
-    color: inherit;
-}
+#pureDashboard *:not([style*="color"]) { color: inherit; }
 
 #triangulationMatrixContainer {
     width: 100% !important;
@@ -633,17 +572,8 @@ html, body, #pureDashboardWrapper {
     margin-right: 0 !important;
     box-sizing: border-box !important;
 }
-
-#triangulationMatrixContainer h3,
-#triangulationMatrixContainer strong,
-#triangulationMatrixContainer div {
-    color: #f8fafc !important;
-}
-
-#triangulationMatrixContainer table {
-    color: #f8fafc !important;
-}
-
+#triangulationMatrixContainer h3, #triangulationMatrixContainer strong, #triangulationMatrixContainer div { color: #f8fafc !important; }
+#triangulationMatrixContainer table { color: #f8fafc !important; }
 #triangulationMatrixContainer th {
     background: rgba(0, 229, 255, 0.12) !important;
     color: #00E5FF !important;
@@ -651,13 +581,11 @@ html, body, #pureDashboardWrapper {
     padding: 8px 10px;
     font-weight: 700;
 }
-
 #triangulationMatrixContainer td {
     color: #f8fafc !important;
     border-color: rgba(255, 255, 255, 0.08) !important;
     padding: 8px 10px;
 }
-
 #triangulationMatrixContainer .delta-critical,
 #triangulationMatrixContainer td[style*="b71c1c"] {
     background: rgba(239, 68, 68, 0.15) !important;
@@ -665,9 +593,6 @@ html, body, #pureDashboardWrapper {
     font-weight: 700 !important;
 }
 
-/* ============================================================================
-   CORR-8/10: Anti-flash e pure-metric-card
-   ============================================================================ */
 .pure-metric-card {
     background: var(--pure-bg-card, rgba(13, 27, 42, 0.85));
     border: 1px solid var(--pure-border, rgba(0, 229, 255, 0.18));
@@ -676,23 +601,17 @@ html, body, #pureDashboardWrapper {
     margin-bottom: 12px;
     font-family: var(--pure-font-mono, 'Courier New', monospace);
 }
-
 .pure-metric-card.alert {
     border-color: var(--pure-border-alert, rgba(239, 68, 68, 0.35));
     background: rgba(239, 68, 68, 0.04);
     border-left: 4px solid var(--pure-warn, #EF4444);
 }
-
 .pure-metric-card.warning {
     border-color: rgba(250, 204, 21, 0.45);
     background: rgba(250, 204, 21, 0.04);
     border-left: 4px solid #FACC15;
 }
-
-.pure-metric-card.warning .pure-metric-value {
-    color: #FACC15;
-}
-
+.pure-metric-card.warning .pure-metric-value { color: #FACC15; }
 .pure-metric-label {
     font-size: 0.65rem;
     color: var(--pure-text-muted, rgba(255, 255, 255, 0.5));
@@ -700,26 +619,17 @@ html, body, #pureDashboardWrapper {
     text-transform: uppercase;
     margin-bottom: 8px;
 }
-
 .pure-metric-value {
     font-size: 1.5rem;
     font-weight: 900;
     color: var(--pure-warn, #EF4444);
     letter-spacing: 0.03em;
 }
-
 @media (max-width: 600px) {
-    .pure-metric-value {
-        font-size: 1.15rem;
-    }
-    .pure-metric-card {
-        padding: 12px 14px;
-    }
-    .pure-legal-notice {
-        font-size: 0.58rem;
-    }
+    .pure-metric-value { font-size: 1.15rem; }
+    .pure-metric-card { padding: 12px 14px; }
+    .pure-legal-notice { font-size: 0.58rem; }
 }
-
 .pure-legal-notice {
     font-size: 0.62rem;
     color: var(--pure-text-muted, rgba(255, 255, 255, 0.5));
@@ -731,7 +641,6 @@ html, body, #pureDashboardWrapper {
     letter-spacing: 0.04em;
     line-height: 1.5;
 }
-
 .pure-metric-sublabel {
     font-size: 0.6rem;
     color: var(--pure-text-muted, rgba(255, 255, 255, 0.5));
@@ -739,14 +648,8 @@ html, body, #pureDashboardWrapper {
     letter-spacing: 0.04em;
     opacity: 0.75;
 }
+#pure-iva-devido { transition: color 0.4s ease, opacity 0.4s ease; }
 
-#pure-iva-devido {
-    transition: color 0.4s ease, opacity 0.4s ease;
-}
-
-/* ============================================================================
-   CORR-B: pure-subject-* e supressão DAC7
-   ============================================================================ */
 #pureDashboard.pure-subject-value,
 #pureDashboard[id^="pure-subject-"] {
     color: var(--pure-accent, #00E5FF);
@@ -754,7 +657,6 @@ html, body, #pureDashboardWrapper {
     font-size: 0.82rem;
     font-weight: 600;
 }
-
 .pure-dac7-box[style*="display: none"],
 .pure-dac7-box[style*="display:none"] {
     height: 0;
@@ -763,10 +665,6 @@ html, body, #pureDashboardWrapper {
     padding: 0;
     border: none;
 }
-
-/* ============================================================================
-   ADIÇÕES v13.11.16-PURE · PROBATUM LAYER
-   ============================================================================ */
 .pure-button-lang {
     background: rgba(30, 41, 59, 0.5);
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -779,25 +677,20 @@ html, body, #pureDashboardWrapper {
     font-family: 'JetBrains Mono', monospace;
     letter-spacing: 0.05em;
 }
-
-.pure-button-lang:hover,
-.pure-button-lang.active {
+.pure-button-lang:hover, .pure-button-lang.active {
     background: var(--pure-accent, #00E5FF);
     color: #020617;
     border-color: var(--pure-accent, #00E5FF);
 }
-
 #nexus-atf-risk-panel {
     animation: slideInUp 0.5s ease-out;
     margin-top: 20px;
     border-top: 2px solid var(--pure-accent, #00E5FF) !important;
 }
-
 @keyframes slideInUp {
     from { transform: translateY(20px); opacity: 0; }
-    to   { transform: translateY(0);    opacity: 1; }
+    to { transform: translateY(0); opacity: 1; }
 }
-
 .pure-integrity-seal {
     position: fixed;
     bottom: 20px;
@@ -809,20 +702,12 @@ html, body, #pureDashboardWrapper {
     filter: drop-shadow(0 0 5px var(--pure-accent, #00E5FF));
     transition: opacity 0.3s ease;
 }
-
-.pure-integrity-seal:hover {
-    opacity: 1;
-}
-
+.pure-integrity-seal:hover { opacity: 1; }
 .pure-card-warn {
     background: rgba(239, 68, 68, 0.05) !important;
     border: 1px solid rgba(239, 68, 68, 0.2) !important;
 }
-
-.pure-card-warn .pure-card-title {
-    color: var(--pure-warn, #EF4444) !important;
-}
-
+.pure-card-warn .pure-card-title { color: var(--pure-warn, #EF4444) !important; }
 #pure-forensic-narrative {
     margin-top: 24px;
     padding: 20px 24px;
@@ -830,29 +715,20 @@ html, body, #pureDashboardWrapper {
     border: 1px solid rgba(0, 229, 255, 0.12);
     border-radius: 8px;
 }
-
 #pure-forensic-narrative .pure-narrative-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 16px;
     margin-top: 16px;
 }
-
 #pure-forensic-narrative .pure-narrative-card {
     background: rgba(15, 23, 42, 0.8);
     border: 1px solid rgba(255, 255, 255, 0.06);
     border-radius: 6px;
     padding: 14px 16px;
 }
-
-#pure-forensic-narrative .pure-narrative-card.warn-card {
-    border-left: 3px solid var(--pure-warn, #EF4444);
-}
-
-#pure-forensic-narrative .pure-narrative-card.info-card {
-    border-left: 3px solid var(--pure-accent, #00E5FF);
-}
-
+#pure-forensic-narrative .pure-narrative-card.warn-card { border-left: 3px solid var(--pure-warn, #EF4444); }
+#pure-forensic-narrative .pure-narrative-card.info-card { border-left: 3px solid var(--pure-accent, #00E5FF); }
 .pure-forensic-console {
     background: #020617;
     border: 1px solid rgba(0, 229, 255, 0.15);
@@ -867,23 +743,10 @@ html, body, #pureDashboardWrapper {
     margin-top: 16px;
     white-space: pre-wrap;
 }
-
-.pure-forensic-console .log-system {
-    color: #475569;
-}
-
-.pure-forensic-console .log-auth {
-    color: #22c55e;
-}
-
-.pure-forensic-console .log-alert {
-    color: var(--pure-warn, #EF4444);
-}
-
-.pure-forensic-console .log-info {
-    color: var(--pure-accent, #00E5FF);
-}
-
+.pure-forensic-console .log-system { color: #475569; }
+.pure-forensic-console .log-auth { color: #22c55e; }
+.pure-forensic-console .log-alert { color: var(--pure-warn, #EF4444); }
+.pure-forensic-console .log-info { color: var(--pure-accent, #00E5FF); }
 #pure-narrative-footer {
     display: flex;
     justify-content: space-between;
@@ -895,13 +758,11 @@ html, body, #pureDashboardWrapper {
     color: #475569;
     font-family: 'JetBrains Mono', monospace;
 }
-
 #pure-master-hash-display {
     color: var(--pure-accent, #00E5FF);
     letter-spacing: 0.04em;
     word-break: break-all;
 }
-
 #forensic-loader {
     position: fixed;
     top: 0;
@@ -916,7 +777,6 @@ html, body, #pureDashboardWrapper {
     z-index: 9999;
     transition: opacity 0.5s ease;
 }
-
 #forensic-loader .loader-spinner {
     width: 50px;
     height: 50px;
@@ -925,7 +785,6 @@ html, body, #pureDashboardWrapper {
     border-radius: 50%;
     animation: loaderSpin 1s linear infinite;
 }
-
 #forensic-loader .loader-text {
     color: var(--pure-accent, #00E5FF);
     font-family: monospace;
@@ -933,12 +792,10 @@ html, body, #pureDashboardWrapper {
     font-size: 0.8rem;
     letter-spacing: 2px;
 }
-
 @keyframes loaderSpin {
-    0%   { transform: rotate(0deg); }
+    0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
-
 .pure-evidence-count {
     display: none;
     background: var(--pure-accent, #00E5FF);
@@ -953,11 +810,7 @@ html, body, #pureDashboardWrapper {
     margin-left: 8px;
     font-family: 'JetBrains Mono', monospace;
 }
-
-.pure-evidence-count.active {
-    display: inline-flex;
-}
-
+.pure-evidence-count.active { display: inline-flex; }
 .pure-button-export {
     background: var(--pure-bg-card, rgba(15, 23, 42, 0.9));
     border: 1px solid rgba(0, 229, 255, 0.2);
@@ -971,47 +824,22 @@ html, body, #pureDashboardWrapper {
     transition: all 0.2s ease;
     margin-right: 8px;
 }
-
 .pure-button-export:hover {
     background: rgba(0, 229, 255, 0.1);
     border-color: var(--pure-accent, #00E5FF);
 }
-
-/* ── Responsividade dos novos componentes ─────────────────────────────────── */
 @media (max-width: 768px) {
-    .pure-subject-header {
-        flex-wrap: wrap !important;
-    }
-    .pure-subject-info {
-        flex: 1 1 45%;
-    }
-    #pure-forensic-narrative .pure-narrative-grid {
-        grid-template-columns: 1fr;
-    }
-    .pure-button-export {
-        width: 100%;
-        margin: 4px 0;
-    }
+    .pure-subject-header { flex-wrap: wrap !important; }
+    .pure-subject-info { flex: 1 1 45%; }
+    #pure-forensic-narrative .pure-narrative-grid { grid-template-columns: 1fr; }
+    .pure-button-export { width: 100%; margin: 4px 0; }
 }
-
 @media (max-width: 480px) {
-    .pure-subject-info {
-        flex: 1 1 100%;
-    }
-    #pure-narrative-footer {
-        flex-direction: column;
-        gap: 6px;
-        text-align: center;
-    }
+    .pure-subject-info { flex: 1 1 100%; }
+    #pure-narrative-footer { flex-direction: column; gap: 6px; text-align: center; }
 }
 
-/* ============================================================================
-   PATCH v13.12.1-FIX · ESTILOS DE VISIBILIDADE CRÍTICA
-   ============================================================================ */
-
-/* Forçar visibilidade dos módulos Smoking Gun quando ativados */
-.smoking-gun-module,
-.white-collar-module {
+.smoking-gun-module, .white-collar-module {
     margin: 15px 0 !important;
     border-left: 4px solid #ef4444 !important;
     background: rgba(239, 68, 68, 0.05) !important;
@@ -1020,18 +848,12 @@ html, body, #pureDashboardWrapper {
     overflow: hidden;
     box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
-
 .pure-card-header {
     padding: 12px 16px;
     background: rgba(0,0,0,0.3);
     border-bottom: 1px solid rgba(239,68,68,0.3);
 }
-
-.pure-card-body {
-    padding: 16px;
-    line-height: 1.5;
-}
-
+.pure-card-body { padding: 16px; line-height: 1.5; }
 .pure-badge-warn {
     background: #f59e0b;
     color: #000;
@@ -1042,7 +864,6 @@ html, body, #pureDashboardWrapper {
     display: inline-block;
     margin-bottom: 8px;
 }
-
 .pure-badge-error {
     background: #ef4444;
     color: #fff;
@@ -1051,14 +872,12 @@ html, body, #pureDashboardWrapper {
     font-size: 10px;
     font-weight: bold;
 }
-
 .pure-metric {
     font-size: 1.5rem;
     font-weight: bold;
     color: #ef4444;
     margin: 8px 0;
 }
-
 .pure-seal-integrity {
     margin-top: 12px;
     padding-top: 8px;
@@ -1067,21 +886,16 @@ html, body, #pureDashboardWrapper {
     font-size: 0.7rem;
     color: #00e5ff;
 }
-
 @keyframes slideIn {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
 }
-
-/* Garantir que o container não esconde os módulos por overflow */
 #pure-main-container {
     overflow: visible !important;
     display: flex;
     flex-direction: column;
     gap: 1rem;
 }
-
-/* Estilo para o gráfico de barras (canvas) */
 canvas#pure-discrepancia-saf-t-dac7 {
     max-width: 100%;
     height: auto;
@@ -1090,11 +904,6 @@ canvas#pure-discrepancia-saf-t-dac7 {
     padding: 1rem;
 }
 
-/* ============================================================================
-   CORREÇÕES DE LAYOUT v13.12.1-FIX (Layout Shift, Smoking Gun, Matriz)
-   ============================================================================ */
-
-/* Correção do layout shift: eliminação do espaço azul */
 #pureDashboard {
     display: flex !important;
     flex-direction: column !important;
@@ -1102,40 +911,25 @@ canvas#pure-discrepancia-saf-t-dac7 {
     min-height: 0 !important;
     overflow: visible !important;
 }
-
-/* Garantir que todos os wrappers de gráficos tenham overflow visível */
-.chart-section,
-.chart-container,
-.pure-chart-wrapper,
-canvas {
+.chart-section, .chart-container, .pure-chart-wrapper, canvas {
     overflow: visible !important;
     min-height: auto !important;
 }
-
-/* Classe para realce de linhas críticas na Matriz de Triangulação */
 .pure-matrix-alert {
     background-color: rgba(239, 68, 68, 0.15) !important;
     border-left: 3px solid #ef4444 !important;
     transition: all 0.2s ease;
 }
-
 .pure-matrix-alert td:first-child {
     font-weight: 700;
     color: #ef4444;
 }
-
-/* Garantir visibilidade dos Smoking Guns mesmo se classes ancestrais tentarem ocultar */
-.smoking-gun-module,
-.pure-sg-critical,
-.pure-sg-secondary,
-[id*="smoking-gun"] {
+.smoking-gun-module, .pure-sg-critical, .pure-sg-secondary, [id*="smoking-gun"] {
     display: block !important;
     opacity: 1 !important;
     visibility: visible !important;
     z-index: 20 !important;
 }
-
-/* Ajuste para o container da Matriz de Triangulação */
 #triangulationMatrixContainer {
     width: 100% !important;
     overflow-x: auto !important;
@@ -1143,8 +937,6 @@ canvas {
     background: #1e293b !important;
     border-radius: 8px !important;
 }
-
-/* Forçar redesenho do canvas ATF */
 #atfChartCanvas {
     width: 100% !important;
     height: auto !important;
@@ -1152,23 +944,13 @@ canvas {
     background: #0f172a !important;
     border-radius: 6px !important;
 }
+.chart-section:last-of-type { margin-bottom: 0 !important; }
+.console-section { margin-top: 0 !important; clear: both; }
+.pure-card-grid .pure-card:last-of-type { margin-bottom: 0; }
+#pureDashboardWrapper { margin-bottom: 0; padding-bottom: 0; }
 
-/* CORREÇÃO BUG 2 – Remover espaço vazio entre gráfico e console */
-.chart-section:last-of-type {
-    margin-bottom: 0 !important;
+.forensic-revealed {
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: block !important;
 }
-.console-section {
-    margin-top: 0 !important;
-    clear: both;
-}
-.pure-card-grid .pure-card:last-of-type {
-    margin-bottom: 0;
-}
-#pureDashboardWrapper {
-    margin-bottom: 0;
-    padding-bottom: 0;
-}
-
-/* ============================================================================
-   FIM — UNIFED PROBATUM v13.12.1-FIX CONSOLIDADO
-   ============================================================================ */
