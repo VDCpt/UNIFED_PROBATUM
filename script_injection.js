@@ -9,11 +9,6 @@
  * - [FIX] Refatoração do monkey-patching com flags atómicas (window._isHydrating) e cadeia de delegação.
  * - [FIX] Sanitização de IDs: uso de seletores escopados (#pureDashboard #id) em syncMetrics e updateAuxiliaryUI.
  * ============================================================================
- * PATCH ELITE DEMO (2026-04-13):
- * - Configuração do servidor TSA (FreeTSA) para selagem RFC 3161.
- * - Supressão silenciosa de erros CORS/OTS na consola (estética profissional).
- * - Motor de revelação automática com atraso “natural” (800ms) e forçagem de visibilidade.
- * ============================================================================
  */
 
 (function() {
@@ -1064,69 +1059,14 @@
 
         // [RETIFICAÇÃO] Remoção dos Watchdogs (setInterval) e substituição por EventListener
         function setupEventDrivenHydration() {
-            // Executa imediatamente em vez de aguardar o evento
-            if (typeof window.forensicDataSynchronization === 'function') {
-                window.forensicDataSynchronization();
-            } else {
-                console.warn('[UNIFED] forensicDataSynchronization não disponível no arranque.');
-            }
-            // Manter listener como fallback para compatibilidade
             window.addEventListener('UNIFED_ANALYSIS_COMPLETE', function(event) {
-                console.log('[UNIFED] Evento UNIFED_ANALYSIS_COMPLETE recebido (fallback).', event.detail);
-                if (typeof window.forensicDataSynchronization === 'function') {
-                    window.forensicDataSynchronization();
-                }
+                console.log('[UNIFED] Evento UNIFED_ANALYSIS_COMPLETE recebido. Iniciando re-hidratação da UI.', event.detail);
                 if (typeof syncMetrics === 'function') syncMetrics();
                 if (typeof renderMatrix === 'function') renderMatrix();
                 if (typeof updateAuxiliaryUI === 'function') updateAuxiliaryUI();
                 if (typeof window.forceRevealSmokingGun === 'function') window.forceRevealSmokingGun();
             });
-            console.log('[UNIFED] Listener para UNIFED_ANALYSIS_COMPLETE registado como fallback.');
-        }
-
-        // =========================================================================
-        // CSS Injection para forçar opacidade em elementos com data-pt / data-en
-        // =========================================================================
-        function forceDataPtVisibility() {
-            const style = document.createElement('style');
-            style.id = 'unifed-force-data-pt';
-            style.textContent = `
-                [data-pt], [data-en] {
-                    opacity: 1 !important;
-                    transition: opacity 0.1s ease;
-                }
-                .pure-data-value, .pure-mono, .pure-atf-big, .pure-zc-val, .pure-sg-val, .pure-delta-value {
-                    opacity: 1 !important;
-                }
-            `;
-            document.head.appendChild(style);
-            console.log('[UNIFED] CSS injection para visibilidade de data-pt/data-en aplicado.');
-        }
-
-        // =========================================================================
-        // Sincronização de Session ID e Master Hash com o DOM
-        // =========================================================================
-        function syncSessionAndHash() {
-            const sys = window.UNIFEDSystem;
-            if (!sys) return;
-            const sessionEl = document.querySelector('#pure-session-id');
-            if (sessionEl && sys.sessionId) sessionEl.textContent = sys.sessionId;
-            const hashFullEl = document.getElementById('masterHashFull');
-            if (hashFullEl && sys.masterHash) hashFullEl.textContent = sys.masterHash;
-            // Atualizar também o elemento do panel.html
-            const hashPrefixEl = document.querySelector('#pure-hash-prefix-verdict');
-            if (hashPrefixEl && sys.masterHash) hashPrefixEl.textContent = sys.masterHash.substring(0, 16).toUpperCase() + '...';
-        }
-
-        // Hook no syncMetrics para garantir que a sincronização de hash ocorre
-        if (window.UNIFED_INTERNAL && window.UNIFED_INTERNAL.syncMetrics) {
-            const origSync = window.UNIFED_INTERNAL.syncMetrics;
-            window.UNIFED_INTERNAL.syncMetrics = function() {
-                origSync.apply(this, arguments);
-                syncSessionAndHash();
-            };
-        } else {
-            window.addEventListener('UNIFED_CORE_READY', syncSessionAndHash);
+            console.log('[UNIFED] Listener para UNIFED_ANALYSIS_COMPLETE registado.');
         }
 
         setupEventDrivenHydration();
@@ -1136,91 +1076,9 @@
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
                 initializeCoreDashboard();
-                forceDataPtVisibility();
-                // [FIX] Forçar revelação dos módulos após injeção do painel
-                setTimeout(() => {
-                    if (typeof window.forceRevealSmokingGun === 'function') {
-                        window.forceRevealSmokingGun();
-                        console.log('[UNIFED] forceRevealSmokingGun chamado após inicialização do DOM.');
-                    }
-                }, 800);
             });
         } else {
             initializeCoreDashboard();
-            forceDataPtVisibility();
-            setTimeout(() => {
-                if (typeof window.forceRevealSmokingGun === 'function') {
-                    window.forceRevealSmokingGun();
-                    console.log('[UNIFED] forceRevealSmokingGun chamado após inicialização imediata.');
-                }
-            }, 800);
         }
     })();
-
-    // =========================================================================
-    // PATCH ELITE DEMO (2026-04-13)
-    // =========================================================================
-    (function unifedElitePatch() {
-        'use strict';
-
-        // 1. CONFIGURAÇÃO DO SERVIDOR DE CARIMBOS DE TEMPO (TSA)
-        window.UNIFED_CONFIG = {
-            tsa_server: "https://freetsa.org/tsr",
-            demo_mode: true,
-            log_level: 'silent_errors'
-        };
-
-        // 2. SUPRESSÃO DE ERROS DE CONSOLA (ESTÉTICA PROFISSIONAL)
-        const _originalError = console.error;
-        console.error = function(...args) {
-            const msg = args[0] ? args[0].toString() : "";
-            if (msg.includes('CORS') || msg.includes('OTS') || msg.includes('UNIFED')) {
-                return; // Silencia erros técnicos do sistema
-            }
-            _originalError.apply(console, args);
-        };
-
-        // 3. MOTOR DE REVELAÇÃO AUTOMÁTICA (NATURAL FLOW)
-        const hydrator = () => {
-            console.info('[UNIFED] A inicializar ambiente de alta fidelidade para demonstração...');
-            
-            // Garante que o objeto de análise existe
-            window.UNIFEDSystem = window.UNIFEDSystem || {};
-            window.UNIFEDSystem.analysis = window.UNIFEDSystem.analysis || { 
-                discrepancies: [], 
-                metrics: { saft_total: 0, bank_total: 0 } 
-            };
-
-            // Força a visibilidade removendo o bloqueio Zero-Knowledge
-            const reveal = () => {
-                if (window.forceRevealSmokingGun) window.forceRevealSmokingGun();
-                
-                document.querySelectorAll('.pure-data-value, .pure-delta-value, .pure-atf-big')
-                    .forEach(el => {
-                        el.style.setProperty('opacity', '1', 'important');
-                        el.classList.add('forensic-revealed');
-                    });
-                
-                // Atualiza o selo para indicar conformidade externa
-                const tAnchor = document.getElementById('pure-tsa-anchor');
-                if (tAnchor) {
-                    tAnchor.innerHTML = 'Selo de Tempo RFC 3161: <span style="color: #00e5ff; font-weight: bold;">VALIDADO VIA FREETSA.ORG</span>';
-                }
-            };
-
-            // Executa a sincronização e revela em 800ms (tempo de transição "natural")
-            if (typeof syncMetrics === 'function') syncMetrics();
-            setTimeout(reveal, 800);
-        };
-
-        // Gatilho de execução
-        if (document.readyState === 'complete' || document.readyState === 'interactive') {
-            hydrator();
-        } else {
-            window.addEventListener('load', hydrator);
-        }
-
-        console.log('%c[UNIFED] PATCH DE ELITE APLICADO: Pronto para demonstração.', 'color: #00e5ff; font-weight: bold;');
-    })();
-
 })();

@@ -8280,20 +8280,6 @@ async function resetSystem() {
 
 window.UNIFEDSystem = UNIFEDSystem;
 
-// ============================================================================
-// MONKEY‑PATCH: analysisComplete = true no arranque (imutável)
-// ============================================================================
-(function patchAnalysisComplete() {
-    if (!window.UNIFEDSystem) window.UNIFEDSystem = {};
-    Object.defineProperty(window.UNIFEDSystem, 'analysisComplete', {
-        value: true,
-        writable: false,
-        configurable: false,
-        enumerable: true
-    });
-    console.log('[UNIFED] analysisComplete definido como true (imutável).');
-})();
-
 UNIFEDSystem.utils = {
     formatCurrency: window.formatCurrency
 };
@@ -8464,66 +8450,6 @@ window.showToast = function(message, type = 'info') {
    
 window.renderChart = renderChart;
 window.renderDiscrepancyChart = renderDiscrepancyChart;
-
-// ============================================================================
-// FIX FORÇADO: Transição do Splash Screen para o Main Container
-// ============================================================================
-(function ensureSplashTransition() {
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', ensureSplashTransition);
-        return;
-    }
-    
-    const startBtn = document.getElementById('startSessionBtn');
-    const splashScreen = document.getElementById('splashScreen');
-    const mainContainer = document.getElementById('mainContainer');
-    
-    if (!startBtn || !splashScreen || !mainContainer) {
-        console.error('[UNIFED] Elementos críticos não encontrados:', {
-            startBtn: !!startBtn,
-            splashScreen: !!splashScreen,
-            mainContainer: !!mainContainer
-        });
-        return;
-    }
-    
-    // Evitar duplicação de listener
-    if (startBtn._splashListener) return;
-    startBtn._splashListener = true;
-    
-    startBtn.addEventListener('click', function() {
-        if (typeof ForensicLogger !== 'undefined') {
-            ForensicLogger.addEntry('SPLASH_SCREEN_DISMISSED', { action: 'Interface desbloqueada' });
-        }
-        splashScreen.style.opacity = '0';
-        setTimeout(function() {
-            splashScreen.style.display = 'none';
-            mainContainer.style.display = 'flex';
-            void mainContainer.offsetWidth; // forçar reflow
-            mainContainer.style.opacity = '1';
-            if (typeof logAudit === 'function') {
-                logAudit('Transição de estado UI: Splash -> Main. Sistema pronto para demonstração ELITE.', 'success');
-            }
-        }, 500);
-    });
-    
-    console.log('[UNIFED] Listener de transição do splash configurado com sucesso.');
-})();
-
-// ============================================================================
-// GARANTIA DE POPULAÇÃO DO SELECT DO ANO FISCAL
-// ============================================================================
-(function ensureAnoFiscalPopulated() {
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function() {
-            if (typeof populateAnoFiscal === 'function') populateAnoFiscal();
-            if (typeof populateYears === 'function') populateYears();
-        });
-    } else {
-        if (typeof populateAnoFiscal === 'function') populateAnoFiscal();
-        if (typeof populateYears === 'function') populateYears();
-    }
-})();
 
 // ============================================================================
 // FIM DO FICHEIRO - UNIFED - PROBATUM v13.12.2-i18n
