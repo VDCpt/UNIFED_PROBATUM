@@ -630,6 +630,24 @@ function showBlockchainExplain(hash) {
     document.body.appendChild(el);
 }
 
+<div class="loading-overlay">
+    <div class="loading-content">
+        <div class="loading-spinner">
+            <i class="fas fa-microscope"></i>
+        </div>
+        <h2 data-pt="SISTEMA FORENSE UNIFED" data-en="UNIFED FORENSIC SYSTEM">SISTEMA FORENSE UNIFED</h2>
+        <p data-pt="A preparar prova pericial..." data-en="Preparing forensic evidence...">
+            A preparar prova pericial...
+        </p>
+        <div class="loading-progress">
+            <div class="loading-progress-bar" style="width: 65%;"></div>
+        </div>
+        <div class="loading-status" id="loadingStatus">
+            CUSTÓDIA: ATIVA (ISO 27037)
+        </div>
+    </div>
+</div>
+
 function openCustodyChainModal() {
     const modal = document.getElementById('custodyModal');
     if (!modal) return;
