@@ -33,10 +33,11 @@
     <div id="logsModal" class="modal-overlay"><div class="modal-content"><div class="modal-header"><h3 id="logsModalTitle"><i class="fas fa-history"></i> REGISTO DE ATIVIDADES DE TRATAMENTO</h3><button id="closeLogsModalBtn" class="icon-btn"><i class="fas fa-times"></i></button></div><div class="modal-body"><div id="logsDisplayArea" class="console-output" style="height: 300px; overflow-y: auto;"></div></div><div class="modal-footer"><button id="exportLogsBtn" class="btn-primary"><i class="fas fa-download"></i> <span id="exportLogsBtnText">EXPORTAR LOGS</span></button><button id="clearLogsBtn" class="btn-wipe"><i class="fas fa-trash"></i> <span id="clearLogsBtnText">LIMPAR LOGS</span></button><button id="closeLogsBtn" class="btn-primary"><span id="closeLogsBtnText">FECHAR</span></button></div></div></div>
     <div id="hashVerificationModal" class="modal-overlay"><div class="modal-content" style="max-width: 600px;"><div class="modal-header"><h3 id="hashModalTitle"><i class="fas fa-link"></i> VERIFICAÇÃO DE INTEGRIDADE · CADEIA DE CUSTÓDIA</h3><button id="closeHashModalBtn" class="icon-btn"><i class="fas fa-times"></i></button></div><div class="modal-body"><div style="margin-bottom: 15px;"><strong style="color: var(--accent-primary); font-size: 0.8rem;">MASTER HASH SHA-256 DA SESSÃO:</strong><div id="masterHashFull" style="word-break: break-all; font-family: var(--font-mono); font-size: 0.75rem; background: rgba(0,0,0,0.3); padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; margin-top: 5px; color: var(--success-primary);"></div></div><strong style="color: var(--text-secondary); font-size: 0.8rem;">EVIDÊNCIAS PROCESSADAS:</strong><div id="evidenceHashList" style="margin-top: 10px; max-height: 250px; overflow-y: auto; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 4px; border: 1px solid var(--border-color);"></div></div><div class="modal-footer"><button id="closeHashBtn" class="btn-primary"><span id="closeHashBtnText">VALIDAR E FECHAR</span></button></div></div></div>
     <div id="toastContainer"></div>
+    <!-- ORDEM CORRIGIDA: primeiro o núcleo, depois extensões, por último a injeção -->
     <script src="script.js"></script>
     <script src="enrichment.js"></script>
     <script src="nexus.js"></script>
-    <script src="script_injection.js"></script>
     <script src="unifed_triada_export.js"></script>
+    <script src="script_injection.js"></script>
 </body>
 </html>

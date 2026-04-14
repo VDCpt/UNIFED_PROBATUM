@@ -7,26 +7,6 @@
  * Rotas       : POST /claude-proxy  →  forward para api.anthropic.com/v1/messages
  *             : GET  /ots-proxy     →  forward dinâmico para URL fornecida (CORS-safe)
  *             : GET  /health        →  health check (retorna 200)
- *
- * OBJECTIVO:
- *   Resolver o bloqueio CORS estrito da API da Anthropic e também de CDNs externas
- *   (OpenTimestamps, etc.) fornecendo um proxy que injecta cabeçalhos
- *   Access-Control-Allow-Origin: * e Content-Type adequado.
- *
- * SEGURANÇA:
- *   · x-api-key NUNCA é exposto no front-end.
- *   · A chave é lida exclusivamente da variável de ambiente ANTHROPIC_API_KEY.
- *   · O proxy OTS restringe os domínios permitidos (whitelist) para evitar abuso.
- *   · Rate limiting recomendado via Cloudflare Rate Limiting Rules.
- *   · CORS com whitelist estrita (apenas domínios oficiais).
- *
- * DEPLOY:
- *   1. wrangler deploy (ou Cloudflare Dashboard → Workers → Novo Worker)
- *   2. Definir variável de ambiente: ANTHROPIC_API_KEY = sk-ant-...
- *   3. Configurar Custom Domain: api.unifed.com → este Worker
- *   4. (Opcional) Adicionar regra de Rate Limiting: 60 req/min por IP
- *
- * CONFORMIDADE: DORA (UE) 2022/2554 · RGPD · ISO/IEC 27037:2012 · eIDAS
  * ============================================================================
  */
 
