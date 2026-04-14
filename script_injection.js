@@ -5,6 +5,7 @@
  * Conformidade: DORA (UE) 2022/2554 · Art. 125.º CPP · ISO/IEC 27037:2012
  * ============================================================================
  * [FIX URGENTE] Carregamento do panel.html e garantia de existência do DOM
+ * + Clique automático no botão "INICIAR" para remover o splash screen.
  * ============================================================================
  */
 
@@ -1371,7 +1372,7 @@
     })();
 
     // =========================================================================
-    // FORCE FINAL STATE (com espera do painel)
+    // FORCE FINAL STATE (com espera do painel e clique automático no botão Iniciar)
     // =========================================================================
     async function forceFinalState() {
         // Garantir que o painel é carregado antes de activar
@@ -1388,6 +1389,16 @@
             wrapper.style.opacity = '1';
             wrapper.style.display = 'block';
         }
+
+        // Simular clique no botão "INICIAR" para remover o splash screen
+        const startBtn = document.getElementById('startSessionBtn');
+        if (startBtn) {
+            startBtn.click();
+            console.log('[UNIFED] Clique automático no botão INICIAR executado.');
+        } else {
+            console.warn('[UNIFED] Botão startSessionBtn não encontrado.');
+        }
+
         console.log('[UNIFED] forceFinalState executado: painel carregado, eventos despachados e wrapper ativado.');
     }
 
