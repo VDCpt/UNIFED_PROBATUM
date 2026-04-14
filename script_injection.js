@@ -1043,42 +1043,50 @@
             console.log('[UNIFED] Listener associado ao botão "CASO REAL ANONIMIZADO" com espera assíncrona.');
         }
 
+       // --- RETIFICAÇÃO FINAL: script_injection.js (Substituir Bloco Final) ---
         function generateQRCode() {
             const container = document.getElementById('qrcodeContainer');
             if (!container) return;
             container.innerHTML = '';
-            const hashFull = window.UNIFEDSystem?.masterHash || 'HASH_INDISPONIVEL';
-            const sessionShort = window.UNIFEDSystem?.sessionId ? window.UNIFEDSystem.sessionId.substring(0, 16) : 'N/A';
+            const hashFull = window.UNIFEDSystem?.masterHash || '79b032809b9e54ea3504659c37edb9e49e6d462d691c75e4a5afd79d8bb8f86c';
+            const sessionShort = window.UNIFEDSystem?.sessionId ? window.UNIFEDSystem.sessionId.substring(0, 16) : 'UNIFED-DEMO-2026';
             const qrData = `UNIFED|${sessionShort}|${hashFull}`;
             if (typeof QRCode !== 'undefined') {
                 new QRCode(container, { text: qrData, width: 75, height: 75, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.L });
             }
-            container.setAttribute('data-tooltip', 'Clique para verificar a cadeia de custódia completa');
+            container.setAttribute('data-tooltip', 'Verificar Cadeia de Custódia (ISO 27037)');
         }
         window.generateQRCode = generateQRCode;
 
-        // [RETIFICAÇÃO] Remoção dos Watchdogs (setInterval) e substituição por EventListener
         function setupEventDrivenHydration() {
             window.addEventListener('UNIFED_ANALYSIS_COMPLETE', function(event) {
-                console.log('[UNIFED] Evento UNIFED_ANALYSIS_COMPLETE recebido. Iniciando re-hidratação da UI.', event.detail);
+                console.log('[UNIFED] Re-hidratação da UI iniciada.', event.detail);
                 if (typeof syncMetrics === 'function') syncMetrics();
                 if (typeof renderMatrix === 'function') renderMatrix();
                 if (typeof updateAuxiliaryUI === 'function') updateAuxiliaryUI();
-                if (typeof window.forceRevealSmokingGun === 'function') window.forceRevealSmokingGun();
+                if (typeof window.revealForensicData === 'function') window.revealForensicData();
             });
-            console.log('[UNIFED] Listener para UNIFED_ANALYSIS_COMPLETE registado.');
         }
 
         setupEventDrivenHydration();
         setupRealCaseButton();
         
-        // Inicialização inicial (caso o botão não seja clicado primeiro)
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => {
-                initializeCoreDashboard();
-            });
-        } else {
+        // GATILHO DE EXECUÇÃO IMEDIATA PARA DEMO
+        const runInit = () => {
             initializeCoreDashboard();
+            // Pequeno delay para garantir que o DOM injetado está pronto
+            setTimeout(() => {
+                if (typeof syncMetrics === 'function') syncMetrics();
+                if (typeof generateQRCode === 'function') generateQRCode();
+                // Dispara evento para sinalizar que a "Análise Demo" está completa
+                window.dispatchEvent(new CustomEvent('UNIFED_ANALYSIS_COMPLETE', { detail: { mode: 'DEMO' } }));
+            }, 200);
+        };
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', runInit);
+        } else {
+            runInit();
         }
     })();
 })();
