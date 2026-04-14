@@ -8444,20 +8444,23 @@ window.showToast = function(message, type = 'info') {
     }, 4000);
 };
 
-// ORQUESTRADOR DE CARREGAMENTO (Sincronização de Visibilidade)
-window.addEventListener('load', function () {
-    window.UNIFEDSystem = window.UNIFEDSystem || {};
-    window.UNIFEDSystem.demoMode = true; 
+// --- [CORREÇÃO ESTRUTURAL] GATILHO DE REVELAÇÃO AUTÓNOMA ---
+window.addEventListener('UNIFED_ANALYSIS_COMPLETE', function (e) {
+    console.log('[UNIFED] Evento UNIFED_ANALYSIS_COMPLETE detetado. Modo:', e.detail.mode);
 
+    // 1. Pequeno atraso para estabilização visual do DOM
     setTimeout(() => {
-        // 1. Ocultar Loading Overlay
+        // 2. Remoção do Overlay de Boas-vindas
         const loader = document.querySelector('.loading-overlay');
         if (loader) {
+            loader.style.transition = 'opacity 0.6s ease-in-out';
             loader.style.opacity = '0';
-            setTimeout(() => { loader.style.display = 'none'; }, 500);
+            setTimeout(() => { 
+                loader.style.display = 'none'; 
+            }, 600);
         }
 
-        // 2. Revelar Dashboard (Estado Zero-Knowledge -> Revelação)
+        // 3. Ativação do Contentor Principal
         const main = document.querySelector('.main-container');
         if (main) {
             main.style.display = 'flex';
@@ -8465,12 +8468,13 @@ window.addEventListener('load', function () {
             main.style.opacity = '1';
         }
 
-        // 3. Gatilho de revelação de dados periciais
-        if (typeof window.revealForensicData === 'function') {
-            window.revealForensicData();
+        // 4. Forçar visibilidade do Painel PURE injetado
+        const pure = document.getElementById('pureDashboard');
+        if (pure) {
+            pure.style.display = 'block';
+            pure.style.opacity = '1';
         }
-        
-        console.log('[UNIFED] Sistema pronto. Custódia Local Ativa.');
-    }, 400); 
+
+        console.log('[UNIFED] Abertura nominal concluída. Sistema em conformidade.');
+    }, 300);
 });
-// FIM DO SCRIPT - INTEGRIDADE VERIFICADA
