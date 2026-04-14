@@ -45,6 +45,7 @@
      * ─────────────────────────────
      * Torna visível o #pureDashboardWrapper e a secção #pureDashboard,
      * registando a activação no ForensicLogger quando disponível.
+     * Adicionalmente, invoca forceFinalState se disponível.
      *
      * @param {boolean} [forceReset=false]
      *   Quando true, repõe o wrapper a opacity:0 antes de animar —
@@ -116,6 +117,11 @@
             }
         } catch (_logErr) {
             // Logging é não-crítico — nunca bloquear o fluxo principal
+        }
+
+        // ── [RETIFICAÇÃO] Invocar força final de hidratação ──────────────────
+        if (typeof window.forceFinalState === 'function') {
+            window.forceFinalState();
         }
 
         console.log('[UNIFED-ACTIVATOR] _activatePurePanel() concluída — painel visível.');

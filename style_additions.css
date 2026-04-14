@@ -1170,7 +1170,7 @@ canvas {
 }
 
 /* ============================================================================
-   FIX 4.1: Enforcement de visibilidade forense
+   FIX 4.1: Enforcement de visibilidade forense (CSS Specificity Overriding)
    ============================================================================ */
 .forensic-revealed {
     opacity: 1 !important;
@@ -1206,6 +1206,9 @@ canvas {
     opacity: 1 !important;
     display: block !important;
     visibility: visible !important;
+    z-index: 9999 !important;
+    position: relative !important;
+    background: var(--bg-primary) !important;
 }
 
 /* Estilo do Selo de Selagem Local (Nível 1) */
@@ -1215,6 +1218,18 @@ canvas {
     background: rgba(0, 229, 255, 0.1);
     border-radius: 4px;
     display: inline-block;
+}
+
+/* Forçar anulação do estado Zero-Knowledge em ambiente de execução */
+body.forensic-revealed .pure-data-value,
+body.forensic-revealed .pure-mono,
+body.forensic-revealed .pure-atf-big,
+body.forensic-revealed .pure-zc-val,
+body.forensic-revealed .pure-sg-val,
+body.forensic-revealed .pure-delta-value {
+    opacity: 1 !important;
+    visibility: visible !important;
+    transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
 /* ============================================================================

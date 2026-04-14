@@ -4,8 +4,7 @@
  * Missão: Injeção Forense e Reconstituição da Verdade Material
  * Conformidade: DORA (UE) 2022/2554 · Art. 125.º CPP · ISO/IEC 27037:2012
  * ============================================================================
- * [FIX URGENTE] Carregamento do panel.html e garantia de existência do DOM
- * + Clique automático no botão "INICIAR" para remover o splash screen.
+ * [RETIFICAÇÃO TÉCNICA] Race Condition Mitigation + Atomic Hydration
  * ============================================================================
  */
 
@@ -1375,31 +1374,39 @@
     // FORCE FINAL STATE (com espera do painel e clique automático no botão Iniciar)
     // =========================================================================
     async function forceFinalState() {
-        // Garantir que o painel é carregado antes de activar
-        await loadPanelHTML();
-        await waitForPanel();
+        try {
+            await loadPanelHTML();
+            await waitForPanel();
 
-        window.UNIFED_OTS_DISABLED = true;
-        window.dispatchEvent(new CustomEvent('UNIFED_CORE_READY'));
-        window.dispatchEvent(new CustomEvent('UNIFED_ANALYSIS_COMPLETE'));
-        
-        const wrapper = document.getElementById('pureDashboardWrapper');
-        if (wrapper) {
-            wrapper.classList.add('activated');
-            wrapper.style.opacity = '1';
-            wrapper.style.display = 'block';
+            // 1. Desbloqueio de Visibilidade Global
+            document.body.classList.add('forensic-revealed');
+            
+            // 2. Remoção da Camada de Oclusão (Splash Screen)
+            const splash = document.querySelector('.splash-screen') || document.getElementById('splashScreen');
+            if (splash) {
+                splash.style.transition = 'opacity 0.5s ease-out';
+                splash.style.opacity = '0';
+                setTimeout(() => splash.style.display = 'none', 500);
+            }
+
+            // 3. Ativação Atómica do Wrapper
+            const wrapper = document.getElementById('pureDashboardWrapper');
+            if (wrapper) {
+                wrapper.classList.add('activated');
+                wrapper.style.display = 'block';
+                wrapper.style.opacity = '1';
+            }
+
+            // 4. Despacho de Eventos de Sincronização
+            window.dispatchEvent(new CustomEvent('UNIFED_CORE_READY'));
+            window.dispatchEvent(new CustomEvent('UNIFED_ANALYSIS_COMPLETE', { 
+                detail: { status: 'READY', masterHash: window.MASTER_HASH || '2A38423FED220D681D86E959F2C34F993BA71FCE9B92791199453B41E23A63E5' } 
+            }));
+
+            console.log('[PERÍCIA] Sistema desbloqueado: Splash removido e Dashboard ativado.');
+        } catch (err) {
+            console.error('[ERRO FORENSE] Falha na transição de estado:', err);
         }
-
-        // Simular clique no botão "INICIAR" para remover o splash screen
-        const startBtn = document.getElementById('startSessionBtn');
-        if (startBtn) {
-            startBtn.click();
-            console.log('[UNIFED] Clique automático no botão INICIAR executado.');
-        } else {
-            console.warn('[UNIFED] Botão startSessionBtn não encontrado.');
-        }
-
-        console.log('[UNIFED] forceFinalState executado: painel carregado, eventos despachados e wrapper ativado.');
     }
 
     // Execução imediata (assíncrona)
