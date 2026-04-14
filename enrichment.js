@@ -10,6 +10,8 @@
  * · Função renderATFChart() com controle de mutex.
  * · [FIX] openATFModal: injeção de temporalData estático (Q4-2024) quando sys.monthlyData está vazio.
  * · [FIX] renderDiscrepancyCharts: fallback dac7 corrigido de 7755.16 para 6276.55.
+ * · [FIX] Listener UNIFED_ANALYSIS_COMPLETE: uncloaking pós-performAudit() sem race condition.
+ * · [FIX] Listener UNIFED_EXECUTE_PERITIA: Chart.js Lazy Rendering após Estado 2.
  * · Estabilização do gráfico ATF no modal.
  * · Garantia de que todas as funções expõem logs para o ForensicLogger.
  * · CORREÇÃO CRÍTICA: removido bloco de código solto após generateLegalNarrative.
@@ -1271,9 +1273,27 @@ window.generateBurdenOfProofSection = generateBurdenOfProofSection;
 // 9. ADIÇÕES v13.12.2-i18n · POLÍTICA ZERO-OMISSÃO
 // ============================================================================
 (function _enrichmentZeroOmission() {
-    // ── Event-Based Lazy Rendering (DOC3 / 2026-04-14) ──────────────────────
+    // ── Listener UNIFED_ANALYSIS_COMPLETE (pós-performAudit()) ───────────────
+    // Resolve a race condition: enriquecimento só ocorre APÓS o motor nativo terminar.
+    window.addEventListener('UNIFED_ANALYSIS_COMPLETE', function _onAnalysisComplete(evt) {
+        console.log('[UNIFED-ENRICHMENT] UNIFED_ANALYSIS_COMPLETE recebido. A enriquecer UI...', (evt && evt.detail) || '');
+        var _sys = window.UNIFEDSystem || {};
+        // Re-mapear Smoking Guns e fluxos isentos com dados calculados pelo motor nativo
+        if (window.UNIFED_INTERNAL) {
+            if (typeof window.UNIFED_INTERNAL.syncMetrics   === 'function') window.UNIFED_INTERNAL.syncMetrics();
+            if (typeof window.UNIFED_INTERNAL.updateAuxiliaryUI === 'function') window.UNIFED_INTERNAL.updateAuxiliaryUI();
+        }
+        // Uncloaking atómico (latência zero)
+        document.querySelectorAll(
+            '.pure-data-value, .pure-delta-value, .pure-atf-big, ' +
+            '.smoking-gun-module, .pure-sg-val, [data-pt], [data-en]'
+        ).forEach(function(el) { el.classList.add('forensic-revealed'); });
+        console.log('[UNIFED-ENRICHMENT] Uncloaking concluído via UNIFED_ANALYSIS_COMPLETE.');
+    });
+
+    // ── Event-Based Lazy Rendering: UNIFED_EXECUTE_PERITIA ───────────────────
     window.addEventListener('UNIFED_EXECUTE_PERITIA', function _onPeritiaExecute(evt) {
-        console.log('[UNIFED-ENRICHMENT] UNIFED_EXECUTE_PERITIA recebido. Motor gráfico a inicializar...', (evt.detail || {}).masterHash || '');
+        console.log('[UNIFED-ENRICHMENT] UNIFED_EXECUTE_PERITIA recebido. Motor gráfico ATF a inicializar...', (evt.detail || {}).masterHash || '');
         if (typeof window.renderDiscrepancyCharts === 'function') window.renderDiscrepancyCharts();
         var _canvas = document.getElementById('atfChartCanvas');
         if (_canvas && typeof Chart !== 'undefined') {
