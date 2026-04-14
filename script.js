@@ -3157,43 +3157,42 @@ function resetUIVisual() {
 // ============================================================================
 // RETIFICAÇÃO: revealForensicData com classe CSS e suspensão do Nexus
 // ============================================================================
+/** 
+ * FIX 2.4: Revelação de IDs probatórios e orquestração de gráficos 
+ * Garante que o container existe e está visível antes da chamada ao Chart.js
+ */
 function revealForensicData() {
-    console.log('[UNIFED] Iniciando protocolo de revelação de dados forenses...');
+    const probatoryElements = [
+        '#smoking-gun-1', '#smoking-gun-2', '#area-cinzenta', 
+        '#colarinho-branco', '#bloco-rag-legal',
+        '.pure-data-value', '.pure-delta-value', '.pure-atf-big', 
+        '.pure-sg-val', '.pure-zc-val'
+    ];
 
-    // Suspender traduções do Nexus durante a transição
-    if (window.nexusSuspendTranslation) window.nexusSuspendTranslation(true);
-
-    // Adicionar classe ao dashboard para revelar os valores
-    const dashboard = document.getElementById('pureDashboard');
-    if (dashboard) dashboard.classList.add('forensic-revealed');
-
-    // 1. Orquestração de Métricas e Dashboards
-    if (typeof window.UNIFED_INTERNAL !== 'undefined' && window.UNIFED_INTERNAL.syncMetrics) {
-        window.UNIFED_INTERNAL.syncMetrics(true);
-    } else {
-        if (typeof updateDashboard === 'function') updateDashboard();
-        if (typeof updateModulesUI === 'function') updateModulesUI();
-        if (typeof renderChart === 'function') renderChart();
-        if (typeof renderDiscrepancyChart === 'function') renderDiscrepancyChart();
-    }
-
-    // 2. Acionamento de Gatilhos de Visibilidade Forçada (Smoking Gun)
-    if (typeof forceRevealSmokingGun === 'function') forceRevealSmokingGun();
-
-    // 3. REMOÇÃO DA MÁSCARA DE OPACIDADE (fallback para elementos antigos)
-    const forensicElements = document.querySelectorAll(
-        '.pure-data-value, .pure-atf-big, .pure-zc-val, .pure-sg-val, .pure-delta-value, .pure-atf-trend-val'
-    );
-    forensicElements.forEach(el => {
-        el.classList.add('forensic-revealed');
+    // 1. Uncloaking via CSS
+    probatoryElements.forEach(selector => {
+        document.querySelectorAll(selector).forEach(el => {
+            el.classList.add('forensic-revealed');
+        });
     });
 
-    // Reativar traduções do Nexus após um breve delay
-    setTimeout(() => {
-        if (window.nexusSuspendTranslation) window.nexusSuspendTranslation(false);
-    }, 300);
-
-    console.info('[UNIFED] Protocolo Zero-Knowledge encerrado. Dados em conformidade visual.');
+    // 2. Orquestração de Gráficos (Atraso de 50ms para garantir reflow do DOM)
+    requestAnimationFrame(() => {
+        setTimeout(() => {
+            if (typeof renderATFChart === 'function') {
+                console.log('[FORENSIC] Triggering ATF Chart Render...');
+                renderATFChart();
+            }
+            if (typeof renderDiscrepancyCharts === 'function') {
+                console.log('[FORENSIC] Triggering Discrepancy Charts...');
+                renderDiscrepancyCharts();
+            }
+            // Injeção de narrativa legal se existir
+            if (typeof window.generateLegalNarrative === 'function') {
+                window.generateLegalNarrative();
+            }
+        }, 50);
+    });
 }
 
 // ============================================================================
@@ -8467,64 +8466,6 @@ window.showToast = function(message, type = 'info') {
    
 window.renderChart = renderChart;
 window.renderDiscrepancyChart = renderDiscrepancyChart;
-
-// ============================================================================
-// FIX FORÇADO: Transição do Splash Screen para o Main Container
-// ============================================================================
-(function ensureSplashTransition() {
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', ensureSplashTransition);
-        return;
-    }
-    
-    const startBtn = document.getElementById('startSessionBtn');
-    const splashScreen = document.getElementById('splashScreen');
-    const mainContainer = document.getElementById('mainContainer');
-    
-    if (!startBtn || !splashScreen || !mainContainer) {
-        console.error('[UNIFED] Elementos críticos não encontrados:', {
-            startBtn: !!startBtn,
-            splashScreen: !!splashScreen,
-            mainContainer: !!mainContainer
-        });
-        return;
-    }
-    
-    // Evitar duplicação de listener
-    if (startBtn._splashListener) return;
-    startBtn._splashListener = true;
-    
-    startBtn.addEventListener('click', function() {
-        if (typeof ForensicLogger !== 'undefined') {
-            ForensicLogger.addEntry('SPLASH_SCREEN_DISMISSED', { action: 'Interface desbloqueada' });
-        }
-        splashScreen.style.opacity = '0';
-        setTimeout(function() {
-            splashScreen.style.display = 'none';
-            mainContainer.style.display = 'flex';
-            void mainContainer.offsetWidth; // forçar reflow
-            mainContainer.style.opacity = '1';
-            if (typeof logAudit === 'function') {
-                logAudit('Transição de estado UI: Splash -> Main. Sistema pronto para demonstração ELITE.', 'success');
-            }
-        }, 500);
-    });
-    
-    console.log('[UNIFED] Listener de transição do splash configurado com sucesso.');
-})();
-
-// Garantir que o select do ano fiscal seja populado
-(function ensureAnoFiscalPopulated() {
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function() {
-            if (typeof populateAnoFiscal === 'function') populateAnoFiscal();
-            if (typeof populateYears === 'function') populateYears();
-        });
-    } else {
-        if (typeof populateAnoFiscal === 'function') populateAnoFiscal();
-        if (typeof populateYears === 'function') populateYears();
-    }
-})();
 
 // ============================================================================
 // FIM DO FICHEIRO - UNIFED - PROBATUM v13.12.2-i18n

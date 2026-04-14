@@ -1170,5 +1170,30 @@ canvas {
 }
 
 /* ============================================================================
+   FIX 4.1: Enforcement de visibilidade forense
+   ============================================================================ */
+.forensic-revealed {
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: block !important;
+    transition: opacity 0.4s ease-in !important;
+}
+
+/* Variante para manter layouts de grid ou flex */
+.forensic-revealed.grid-layout {
+    display: grid !important;
+}
+
+.forensic-revealed.flex-layout {
+    display: flex !important;
+}
+
+/* Proteção contra ocultação de módulos críticos */
+#smoking-gun-1.forensic-revealed, 
+#smoking-gun-2.forensic-revealed {
+    border-left: 4px solid var(--pure-warn) !important;
+}
+
+/* ============================================================================
    FIM — UNIFED PROBATUM v13.12.1-FIX CONSOLIDADO
    ============================================================================ */

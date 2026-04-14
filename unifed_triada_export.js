@@ -199,42 +199,26 @@ function safeExport() {
     }
 
     // ========== FUNÇÃO DE RESTAURO DA TOOLBAR ORIGINAL ==========
+    /** * FIX 5.1: Event Delegation e Preservação de Listeners */
     function restoreOriginalToolbar() {
         const container = document.getElementById('export-tools-container');
-        if (!container) return false;
-        if (container.getAttribute('data-original-restored') === 'true') return true;
-
-        // [CORREÇÃO] Purga atómica para evitar duplicação
-        container.innerHTML = '';
-
-        // Remove botões da tríade
-        const triadaBtns = container.querySelectorAll('.btn-tool-pure');
-        triadaBtns.forEach(btn => btn.remove());
-
-        // Recria os 6 botões originais
-        const translations = window.translations?.[window.currentLang] || {};
-        const originalTools = [
-            { id: 'exportPDFBtn', icon: 'fa-file-pdf', label: translations.btnPDF || 'PARECER TÉCNICO', handler: () => window.exportPDF && window.exportPDF() },
-            { id: 'exportDOCXBtn', icon: 'fa-file-word', label: translations.btnDOCX || 'MINUTA WORD', handler: () => window.exportDOCX && window.exportDOCX() },
-            { id: 'atfModalBtn', icon: 'fa-chart-line', label: translations.btnATF || '⏳ TENDÊNCIA ATF', handler: () => window.openATFModal && window.openATFModal() },
-            { id: 'exportJSONBtn', icon: 'fa-file-code', label: translations.btnJSON || 'EXPORTAR JSON', handler: () => window.exportDataJSON && window.exportDataJSON() },
-            { id: 'resetBtn', icon: 'fa-redo-alt', label: translations.btnReset || 'REINICIAR', handler: () => window.resetSystem && window.resetSystem() },
-            { id: 'clearConsoleBtn', icon: 'fa-trash-alt', label: translations.clearConsoleBtnText || 'LIMPAR CONSOLE', handler: () => window.clearConsole && window.clearConsole() }
-        ];
-
-        originalTools.forEach(tool => {
-            const btn = document.createElement('button');
-            btn.id = tool.id;
-            btn.className = 'btn-tool';
-            btn.innerHTML = `<i class="fas ${tool.icon}"></i> <span>${tool.label}</span>`;
-            btn.onclick = tool.handler;
-            container.appendChild(btn);
-        });
+        if (!container) return;
 
         container.setAttribute('data-original-restored', 'true');
-        container.setAttribute('data-triada-injected', 'false');
-        console.log('[TRIADA] Toolbar original restaurada.');
-        return true;
+        
+        // Em vez de reconstruir o innerHTML, vamos apenas manipular visibilidade
+        // ou re-vincular os listeners globais
+        if (typeof setupMainListeners === 'function') {
+            setupMainListeners(); 
+        }
+        
+        // Proteção Atómica do Botão de Análise
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        if (analyzeBtn && !analyzeBtn.onclick) {
+            analyzeBtn.addEventListener('click', performAudit);
+        }
+        
+        _log('Toolbar restaurada e listeners re-vinculados via Event Delegation.');
     }
 
     // Inicialização da tríade (sem destruir a toolbar original)
