@@ -447,13 +447,13 @@ body {
 /* ---------------------------------------------------------------------
    4. MAIN LAYOUT
    --------------------------------------------------------------------- */
-/* RETIFICAÇÃO FINAL: style.css (Linhas ~424) */
+/* RETIFICAÇÃO v13.12.2: O estado inicial deve ser oculto para permitir hidratação */
 .main-container {
-    display: flex !important; /* Força a existência da estrutura */
+    display: none;             /* Oculto por padrão */
     flex-direction: column;
     min-height: 100vh;
-    opacity: 1;               /* Garante visibilidade */
-    transition: opacity 0.5s ease;
+    opacity: 0;                /* Invisível para permitir fade-in */
+    transition: opacity 0.8s ease-in-out; 
     width: 100%;
 }
 
