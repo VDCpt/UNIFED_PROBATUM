@@ -587,6 +587,7 @@ async function generateForensicLog(action, fileName, hash) {
     return entry;
 }
 
+// --- [MANTER] FUNÇÃO showBlockchainExplain ---
 function showBlockchainExplain(hash) {
     const existing = document.getElementById('tsaProductionPanel');
     if (existing) { existing.remove(); return; }
@@ -611,43 +612,20 @@ function showBlockchainExplain(hash) {
         </p>
         <p style="margin-bottom:0.8rem;line-height:1.6;color:#94a3b8;">
             O hash acima é <strong style="color:#4ade80;">matematicamente imutável</strong>.
-            Qualquer alteração ao ficheiro original produzirá um hash completamente diferente.
         </p>
-        <div style="background:rgba(0,229,255,0.05);border:1px solid rgba(0,229,255,0.2);
-                    padding:0.6rem 0.8rem;border-radius:3px;margin-bottom:0.8rem;">
+        <div style="background:rgba(0,229,255,0.05);border:1px solid rgba(0,229,255,0.2);padding:0.6rem 0.8rem;border-radius:3px;margin-bottom:0.8rem;">
             <div style="color:#00e5ff;font-size:0.65rem;margin-bottom:0.4rem;font-weight:700;">NÍVEIS DE CERTIFICAÇÃO</div>
             <div style="color:#4ade80;margin-bottom:0.2rem;">✔ Nível 1 (Interno): ACTIVO — Selagem PROBATUM</div>
             <div style="color:#f59e0b;">◷ Nível 2 (Externo): Requer API de produção TSA (RFC 3161)</div>
         </div>
         <button onclick="document.getElementById('tsaProductionPanel').remove()"
-            style="background:transparent;border:1px solid rgba(0,229,255,0.3);color:#00e5ff;
-                   padding:0.35rem 0.9rem;border-radius:2px;cursor:pointer;
-                   font-family:inherit;font-size:0.68rem;letter-spacing:1px;transition:background 0.2s;"
-            onmouseover="this.style.background='rgba(0,229,255,0.1)'"
-            onmouseout="this.style.background='transparent'">
+            style="background:transparent;border:1px solid rgba(0,229,255,0.3);color:#00e5ff;padding:0.35rem 0.9rem;border-radius:2px;cursor:pointer;font-family:inherit;font-size:0.68rem;letter-spacing:1px;">
             FECHAR
         </button>`;
     document.body.appendChild(el);
 }
 
-<div class="loading-overlay">
-    <div class="loading-content">
-        <div class="loading-spinner">
-            <i class="fas fa-microscope"></i>
-        </div>
-        <h2 data-pt="SISTEMA FORENSE UNIFED" data-en="UNIFED FORENSIC SYSTEM">SISTEMA FORENSE UNIFED</h2>
-        <p data-pt="A preparar prova pericial..." data-en="Preparing forensic evidence...">
-            A preparar prova pericial...
-        </p>
-        <div class="loading-progress">
-            <div class="loading-progress-bar" style="width: 65%;"></div>
-        </div>
-        <div class="loading-status" id="loadingStatus">
-            CUSTÓDIA: ATIVA (ISO 27037)
-        </div>
-    </div>
-</div>
-
+// --- [RESTAURADO] FUNÇÕES DE MODAL DE CUSTÓDIA ---
 function openCustodyChainModal() {
     const modal = document.getElementById('custodyModal');
     if (!modal) return;
@@ -655,7 +633,9 @@ function openCustodyChainModal() {
     if (sessionEl && typeof UNIFEDSystem !== 'undefined' && UNIFEDSystem.sessionId) {
         sessionEl.textContent = UNIFEDSystem.sessionId;
     }
-    renderCustodyLog(ForensicLogger.getLogs());
+    if (typeof ForensicLogger !== 'undefined') {
+        renderCustodyLog(ForensicLogger.getLogs());
+    }
     modal.classList.add('active');
     document.body.style.overflow = 'hidden';
 }
@@ -676,12 +656,13 @@ function renderCustodyLog(logs) {
         container.innerHTML = `
             <div class="custody-empty-state">
                 <i class="fas fa-inbox"></i>
-                Sem eventos registados. Faça upload de ficheiros para iniciar a cadeia de custódia.
+                Sem eventos registados.
             </div>`;
         if (countEl) countEl.textContent = '0';
         return;
     }
-
+    // Lógica de renderização continua aqui...
+}
     if (countEl) countEl.textContent = logs.length;
 
     const sorted = [...logs].reverse();
