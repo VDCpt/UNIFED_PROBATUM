@@ -650,35 +650,27 @@ function closeCustodyChainModal() {
 function renderCustodyLog(logs) {
     const container = document.getElementById('custodyLogContainer');
     const countEl = document.getElementById('custodyEntryCount');
+    
     if (!container) return;
 
     if (!logs || logs.length === 0) {
-        container.innerHTML = `
-            <div class="custody-empty-state">
-                <i class="fas fa-inbox"></i>
-                Sem eventos registados.
-            </div>`;
+        container.innerHTML = '<div class="custody-empty-state">Sem eventos registados.</div>';
         if (countEl) countEl.textContent = '0';
         return;
     }
-    // Lógica de renderização continua aqui...
-}
+
     if (countEl) countEl.textContent = logs.length;
 
-    const sorted = [...logs].reverse();
-    container.innerHTML = sorted.map(entry => {
-        const d = entry.data || {};
-        const hash = d.hash || '—';
-        const serial = d.serial || (d.rfc3161 && d.rfc3161.serialNumber) || '—';
-        const level = d.level || 'Certificação de Tempo Interna (Nível 1)';
-        const source = d.source || 'PROBATUM INTERNAL SEAL';
-        const fname = d.fileName || d.filename || '—';
-        const ts = entry.timestamp
-            ? entry.timestamp.replace('T', ' ').replace(/\.\d+Z$/, ' UTC')
-            : '—';
-        const hasHash = hash && hash.length === 64;
-        const stateClass = hasHash ? 'log-verified'
-            : (entry.action && entry.action.includes('ERROR') ? 'log-error' : 'log-pending');
+    // Início da renderização que enviou:
+    container.innerHTML = logs.map((entry, index) => {
+        const hasHash = !!entry.hash;
+        const hash = entry.hash || '';
+        const serial = (index + 1).toString().padStart(4, '0');
+        const stateClass = entry.type === 'error' ? 'state-critical' : 'state-valid';
+        const fname = entry.fileName || 'N/A';
+        const ts = entry.timestamp || new Date().toISOString();
+        const source = entry.source || 'SISTEMA';
+        const level = entry.level || 'INFORMATIVO';
 
         return `
             <div class="custody-entry ${stateClass}">
@@ -700,7 +692,6 @@ function renderCustodyLog(logs) {
             </div>`;
     }).join('');
 }
-
 function exportCustodyChainJSON() {
     const logs = ForensicLogger.getLogs();
     const payload = {
