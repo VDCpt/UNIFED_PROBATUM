@@ -8444,37 +8444,41 @@ window.showToast = function(message, type = 'info') {
     }, 4000);
 };
 
-// --- [CORREÇÃO ESTRUTURAL] GATILHO DE REVELAÇÃO AUTÓNOMA ---
-window.addEventListener('UNIFED_ANALYSIS_COMPLETE', function (e) {
-    console.log('[UNIFED] Evento UNIFED_ANALYSIS_COMPLETE detetado. Modo:', e.detail.mode);
-
-    // 1. Pequeno atraso para estabilização visual do DOM
-    setTimeout(() => {
-        // 2. Remoção do Overlay de Boas-vindas
-        const loader = document.querySelector('.loading-overlay');
-        if (loader) {
-            loader.style.transition = 'opacity 0.6s ease-in-out';
-            loader.style.opacity = '0';
-            setTimeout(() => { 
-                loader.style.display = 'none'; 
-            }, 600);
+// --- [PROBATUM] GATILHO DE ABERTURA AUTÓNOMA DE ALTA DISPONIBILIDADE ---
+window.addEventListener('UNIFED_ANALYSIS_COMPLETE', function () {
+    
+    // Função interna para garantir que o painel existe antes de revelar
+    const attemptReveal = () => {
+        const purePanel = document.getElementById('pureDashboard');
+        
+        if (!purePanel) {
+            // Se o painel ainda não estiver no DOM, espera 100ms e tenta de novo
+            console.warn('[UNIFED] Aguardando injeção do painel para abertura nominal...');
+            setTimeout(attemptReveal, 100);
+            return;
         }
 
-        // 3. Ativação do Contentor Principal
+        // Se chegamos aqui, o painel existe. Podemos abrir o ecrã.
+        console.log('[UNIFED] Painel detetado. Finalizando sequência de abertura...');
+        
+        const loader = document.querySelector('.loading-overlay');
         const main = document.querySelector('.main-container');
+
+        if (loader) {
+            loader.style.transition = 'opacity 0.6s ease';
+            loader.style.opacity = '0';
+            setTimeout(() => { loader.style.display = 'none'; }, 600);
+        }
+
         if (main) {
             main.style.display = 'flex';
-            main.offsetHeight; // Force reflow
             main.style.opacity = '1';
         }
 
-        // 4. Forçar visibilidade do Painel PURE injetado
-        const pure = document.getElementById('pureDashboard');
-        if (pure) {
-            pure.style.display = 'block';
-            pure.style.opacity = '1';
-        }
+        // Forçar a sincronização final agora que o painel existe
+        if (typeof syncMetrics === 'function') syncMetrics();
+        if (typeof window.revealForensicData === 'function') window.revealForensicData();
+    };
 
-        console.log('[UNIFED] Abertura nominal concluída. Sistema em conformidade.');
-    }, 300);
+    attemptReveal();
 });
