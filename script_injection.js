@@ -336,7 +336,7 @@
             <div id="triangulationMatrixContainer" class="pure-triangulation-box" style="margin:30px 0; border:1px solid #00E5FF; background:rgba(15,23,42,0.95); padding:20px; border-radius:12px;">
                 <h3 style="color:#00E5FF; margin-top:0; font-size:1rem;">${labels.title}</h3>
                 <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
-                    <thead><tr style="border-bottom:1px solid rgba(255,255,255,0.2);"><th style="text-align:left; padding:10px;">${labels.colSource}</th><th style="text-align:right; padding:10px;">${labels.colValue}</th><th style="text-align:right; padding:10px; color:#EF4444;">${labels.colDisc}</th><tr></thead>
+                    <thead><tr style="border-bottom:1px solid rgba(255,255,255,0.2);"><th style="text-align:left; padding:10px;">${labels.colSource}</th><th style="text-align:right; padding:10px;">${labels.colValue}</th><th style="text-align:right; padding:10px; color:#EF4444;">${labels.colDisc}</th></td></thead>
                     <tbody>
                         <tr><td style="padding:10px;">📄 SAF-T PT (${isEn ? 'Invoicing' : 'Faturação'})</td><td style="padding:10px; text-align:right;">${fmt(t.saftBruto)}</td><td style="padding:10px; text-align:right;">-${fmt(deltaSaft)}</td></tr>
                         <tr style="background:rgba(239,68,68,0.08);"><td style="padding:10px;">🌐 DAC7 (Plataforma A)</td><td style="padding:10px; text-align:right;">${fmt(t.dac7TotalPeriodo)}</td><td style="padding:10px; text-align:right;">-${fmt(deltaDac7)}</td></tr>
@@ -1368,25 +1368,6 @@
                 window.UNIFED_INTERNAL.updateAuxiliaryUI();
             }
             reveal(); // Instantâneo — sem setTimeout
-
-            // =========================================================================
-            // FORCE FINAL STATE – Garantia de Hidratação
-            // =========================================================================
-            const forceFinalState = () => {
-                window.UNIFED_OTS_DISABLED = true; // Força Selagem Local
-                window.dispatchEvent(new CustomEvent('UNIFED_CORE_READY'));
-                window.dispatchEvent(new CustomEvent('UNIFED_ANALYSIS_COMPLETE'));
-                
-                // Garante que o painel PureDashboardWrapper fica visível
-                const wrapper = document.getElementById('pureDashboardWrapper');
-                if (wrapper) {
-                    wrapper.classList.add('activated');
-                    wrapper.style.opacity = '1';
-                    wrapper.style.display = 'block';
-                }
-                console.log('[UNIFED] forceFinalState executado: eventos despachados e wrapper ativado.');
-            };
-            forceFinalState();
         };
 
         // Gatilho de execução
@@ -1398,5 +1379,26 @@
 
         console.log('%c[UNIFED] PATCH DE ELITE APLICADO: Pronto para demonstração.', 'color: #00e5ff; font-weight: bold;');
     })();
+
+    // =========================================================================
+    // FIX: Garantia de Hidratação (forceFinalState)
+    // =========================================================================
+    const forceFinalState = () => {
+        window.UNIFED_OTS_DISABLED = true; // Força Selagem Local
+        window.dispatchEvent(new CustomEvent('UNIFED_CORE_READY'));
+        window.dispatchEvent(new CustomEvent('UNIFED_ANALYSIS_COMPLETE'));
+        
+        // Garante que o painel PureDashboardWrapper fica visível
+        const wrapper = document.getElementById('pureDashboardWrapper');
+        if (wrapper) {
+            wrapper.classList.add('activated');
+            wrapper.style.opacity = '1';
+            wrapper.style.display = 'block';
+        }
+        console.log('[UNIFED] forceFinalState executado: eventos despachados e wrapper ativado.');
+    };
+
+    // Execução imediata pós-injeção
+    forceFinalState();
 
 })();

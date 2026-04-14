@@ -1194,7 +1194,9 @@ canvas {
     border-left: 4px solid var(--pure-warn) !important;
 }
 
-/* RETIFICAÇÃO DEFINITIVA DE VISIBILIDADE */
+/* ============================================================================
+   RETIFICAÇÃO DEFINITIVA DE VISIBILIDADE
+   ============================================================================ */
 #main-container {
     transition: opacity 0.5s ease-in-out;
 }
@@ -1214,3 +1216,7 @@ canvas {
     border-radius: 4px;
     display: inline-block;
 }
+
+/* ============================================================================
+   FIM — UNIFED PROBATUM v13.12.1-FIX CONSOLIDADO
+   ============================================================================ */
