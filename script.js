@@ -90,15 +90,30 @@ console.log('UNIFED - PROBATUM SCRIPT v13.12.2-i18n · DORA COMPLIANT · ATIVADO
         return typeof window.OpenTimestamps !== 'undefined';
     }
 
-    window.addEventListener('load', function () {
-        if (detectOTSLibrary()) {
-            console.log('[UNIFED-OTS] ✅ Handshake OK — window.OpenTimestamps disponível.');
-        } else {
-            console.info('[UNIFED-OTS] ⚙ Operação em Modo de Segurança Forense — OTS indisponível (CDN bloqueado). ' +
-                         'A funcionalidade OTS/Blockchain estará indisponível; o Nível 2 (PROBATUM interno) permanece ativo.');
+// --- RETIFICAÇÃO DA LINHA 90 À 108 ---
+window.addEventListener('load', function () {
+    const isOTSReady = detectOTSLibrary();
+    
+    if (isOTSReady) {
+        console.log('[UNIFED-OTS] ✅ Handshake OK — window.OpenTimestamps disponível.');
+    } else {
+        console.warn('[UNIFED-OTS] ⚙ Operação em Modo de Segurança Forense — OTS indisponível (CDN bloqueado).');
+        console.info('[UNIFED] Ativando Protocolo de Custódia Nível 2 (Selo Interno).');
+    }
+
+    // [MODIFICAÇÃO CRÍTICA]: Ativação de Prontidão para a Reunião
+    window.UNIFEDSystem = window.UNIFEDSystem || {};
+    window.UNIFEDSystem.demoMode = true; // Mantém modo demo disponível
+    
+    // Forçar a revelação da UI caso o sistema esteja parado no ecrã de boas-vindas
+    setTimeout(() => {
+        if (typeof revealForensicData === 'function') {
+            console.log('[UNIFED] Executando revealForensicData preventivo para modo DEMO.');
+            revealForensicData(); 
         }
-    });
-})();
+    }, 500); // Delay técnico de 500ms para garantir injeção do painel
+});
+// --- FIM DA RETIFICAÇÃO ---
 
 // ============================================================================
 // 2. DADOS DAS PLATAFORMAS
