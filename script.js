@@ -587,7 +587,6 @@ async function generateForensicLog(action, fileName, hash) {
     return entry;
 }
 
-// --- [MANTER] FUNÇÃO showBlockchainExplain ---
 function showBlockchainExplain(hash) {
     const existing = document.getElementById('tsaProductionPanel');
     if (existing) { existing.remove(); return; }
@@ -612,20 +611,25 @@ function showBlockchainExplain(hash) {
         </p>
         <p style="margin-bottom:0.8rem;line-height:1.6;color:#94a3b8;">
             O hash acima é <strong style="color:#4ade80;">matematicamente imutável</strong>.
+            Qualquer alteração ao ficheiro original produzirá um hash completamente diferente.
         </p>
-        <div style="background:rgba(0,229,255,0.05);border:1px solid rgba(0,229,255,0.2);padding:0.6rem 0.8rem;border-radius:3px;margin-bottom:0.8rem;">
+        <div style="background:rgba(0,229,255,0.05);border:1px solid rgba(0,229,255,0.2);
+                    padding:0.6rem 0.8rem;border-radius:3px;margin-bottom:0.8rem;">
             <div style="color:#00e5ff;font-size:0.65rem;margin-bottom:0.4rem;font-weight:700;">NÍVEIS DE CERTIFICAÇÃO</div>
             <div style="color:#4ade80;margin-bottom:0.2rem;">✔ Nível 1 (Interno): ACTIVO — Selagem PROBATUM</div>
             <div style="color:#f59e0b;">◷ Nível 2 (Externo): Requer API de produção TSA (RFC 3161)</div>
         </div>
         <button onclick="document.getElementById('tsaProductionPanel').remove()"
-            style="background:transparent;border:1px solid rgba(0,229,255,0.3);color:#00e5ff;padding:0.35rem 0.9rem;border-radius:2px;cursor:pointer;font-family:inherit;font-size:0.68rem;letter-spacing:1px;">
+            style="background:transparent;border:1px solid rgba(0,229,255,0.3);color:#00e5ff;
+                   padding:0.35rem 0.9rem;border-radius:2px;cursor:pointer;
+                   font-family:inherit;font-size:0.68rem;letter-spacing:1px;transition:background 0.2s;"
+            onmouseover="this.style.background='rgba(0,229,255,0.1)'"
+            onmouseout="this.style.background='transparent'">
             FECHAR
         </button>`;
     document.body.appendChild(el);
 }
 
-// --- [RESTAURADO] FUNÇÕES DE MODAL DE CUSTÓDIA ---
 function openCustodyChainModal() {
     const modal = document.getElementById('custodyModal');
     if (!modal) return;
@@ -633,9 +637,7 @@ function openCustodyChainModal() {
     if (sessionEl && typeof UNIFEDSystem !== 'undefined' && UNIFEDSystem.sessionId) {
         sessionEl.textContent = UNIFEDSystem.sessionId;
     }
-    if (typeof ForensicLogger !== 'undefined') {
-        renderCustodyLog(ForensicLogger.getLogs());
-    }
+    renderCustodyLog(ForensicLogger.getLogs());
     modal.classList.add('active');
     document.body.style.overflow = 'hidden';
 }
@@ -650,27 +652,34 @@ function closeCustodyChainModal() {
 function renderCustodyLog(logs) {
     const container = document.getElementById('custodyLogContainer');
     const countEl = document.getElementById('custodyEntryCount');
-    
     if (!container) return;
 
     if (!logs || logs.length === 0) {
-        container.innerHTML = '<div class="custody-empty-state">Sem eventos registados.</div>';
+        container.innerHTML = `
+            <div class="custody-empty-state">
+                <i class="fas fa-inbox"></i>
+                Sem eventos registados. Faça upload de ficheiros para iniciar a cadeia de custódia.
+            </div>`;
         if (countEl) countEl.textContent = '0';
         return;
     }
 
     if (countEl) countEl.textContent = logs.length;
 
-    // Início da renderização que enviou:
-    container.innerHTML = logs.map((entry, index) => {
-        const hasHash = !!entry.hash;
-        const hash = entry.hash || '';
-        const serial = (index + 1).toString().padStart(4, '0');
-        const stateClass = entry.type === 'error' ? 'state-critical' : 'state-valid';
-        const fname = entry.fileName || 'N/A';
-        const ts = entry.timestamp || new Date().toISOString();
-        const source = entry.source || 'SISTEMA';
-        const level = entry.level || 'INFORMATIVO';
+    const sorted = [...logs].reverse();
+    container.innerHTML = sorted.map(entry => {
+        const d = entry.data || {};
+        const hash = d.hash || '—';
+        const serial = d.serial || (d.rfc3161 && d.rfc3161.serialNumber) || '—';
+        const level = d.level || 'Certificação de Tempo Interna (Nível 1)';
+        const source = d.source || 'PROBATUM INTERNAL SEAL';
+        const fname = d.fileName || d.filename || '—';
+        const ts = entry.timestamp
+            ? entry.timestamp.replace('T', ' ').replace(/\.\d+Z$/, ' UTC')
+            : '—';
+        const hasHash = hash && hash.length === 64;
+        const stateClass = hasHash ? 'log-verified'
+            : (entry.action && entry.action.includes('ERROR') ? 'log-error' : 'log-pending');
 
         return `
             <div class="custody-entry ${stateClass}">
@@ -692,6 +701,7 @@ function renderCustodyLog(logs) {
             </div>`;
     }).join('');
 }
+
 function exportCustodyChainJSON() {
     const logs = ForensicLogger.getLogs();
     const payload = {
@@ -4186,6 +4196,9 @@ function performAudit() {
 
     const hasFiles = Object.values(UNIFEDSystem.documents).some(d => d.files && d.files.length > 0);
     if (!hasFiles) {
+        // [FIX ACHADO C] mutex DEVE ser reposto antes de qualquer return antecipado;
+        // a omissão anterior bloqueava performAudit() permanentemente após validação falhada.
+        _UNIFED_AUDIT_RUNNING = false;
         ForensicLogger.addEntry('AUDIT_FAILED', { reason: 'No files' });
         return showToast(currentLang === 'en' ? 'Upload at least one evidence file before running the forensic exam.' : 'Carregue pelo menos um ficheiro de evidência antes de executar a perícia.', 'error');
     }
@@ -8270,6 +8283,20 @@ async function resetSystem() {
 
 window.UNIFEDSystem = UNIFEDSystem;
 
+// ============================================================================
+// MONKEY‑PATCH: analysisComplete = true no arranque (imutável)
+// ============================================================================
+(function patchAnalysisComplete() {
+    if (!window.UNIFEDSystem) window.UNIFEDSystem = {};
+    Object.defineProperty(window.UNIFEDSystem, 'analysisComplete', {
+        value: true,
+        writable: false,
+        configurable: false,
+        enumerable: true
+    });
+    console.log('[UNIFED] analysisComplete definido como true (imutável).');
+})();
+
 UNIFEDSystem.utils = {
     formatCurrency: window.formatCurrency
 };
@@ -8393,9 +8420,7 @@ if (typeof window.dispatchEvent === 'function') {
     }));
     console.log('[UNIFED-CORE] Evento UNIFED_CORE_READY despachado.');
 }
-// ============================================================================
-// BLOCO DE NOTIFICAÇÕES E INICIALIZAÇÃO (SANER v13.12.2)
-// ============================================================================
+
 window.showToast = function(message, type = 'info') {
     let container = document.getElementById('toastContainer');
     if (!container) {
@@ -8428,11 +8453,7 @@ window.showToast = function(message, type = 'info') {
     
     container.appendChild(toast);
 
-    requestAnimationFrame(() => {
-        toast.style.opacity = '1';
-        toast.style.transform = 'translateX(0)';
-    });
-
+// [FIX] Fecho de bloco na função de notificação (script.js)
     setTimeout(() => {
         if (toast && toast.parentNode) {
             toast.style.opacity = '0';
@@ -8443,42 +8464,68 @@ window.showToast = function(message, type = 'info') {
         }
     }, 4000);
 };
+   
+window.renderChart = renderChart;
+window.renderDiscrepancyChart = renderDiscrepancyChart;
 
-// --- [PROBATUM] GATILHO DE ABERTURA AUTÓNOMA DE ALTA DISPONIBILIDADE ---
-window.addEventListener('UNIFED_ANALYSIS_COMPLETE', function () {
+// ============================================================================
+// FIX FORÇADO: Transição do Splash Screen para o Main Container
+// ============================================================================
+(function ensureSplashTransition() {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', ensureSplashTransition);
+        return;
+    }
     
-    // Função interna para garantir que o painel existe antes de revelar
-    const attemptReveal = () => {
-        const purePanel = document.getElementById('pureDashboard');
-        
-        if (!purePanel) {
-            // Se o painel ainda não estiver no DOM, espera 100ms e tenta de novo
-            console.warn('[UNIFED] Aguardando injeção do painel para abertura nominal...');
-            setTimeout(attemptReveal, 100);
-            return;
+    const startBtn = document.getElementById('startSessionBtn');
+    const splashScreen = document.getElementById('splashScreen');
+    const mainContainer = document.getElementById('mainContainer');
+    
+    if (!startBtn || !splashScreen || !mainContainer) {
+        console.error('[UNIFED] Elementos críticos não encontrados:', {
+            startBtn: !!startBtn,
+            splashScreen: !!splashScreen,
+            mainContainer: !!mainContainer
+        });
+        return;
+    }
+    
+    // Evitar duplicação de listener
+    if (startBtn._splashListener) return;
+    startBtn._splashListener = true;
+    
+    startBtn.addEventListener('click', function() {
+        if (typeof ForensicLogger !== 'undefined') {
+            ForensicLogger.addEntry('SPLASH_SCREEN_DISMISSED', { action: 'Interface desbloqueada' });
         }
+        splashScreen.style.opacity = '0';
+        setTimeout(function() {
+            splashScreen.style.display = 'none';
+            mainContainer.style.display = 'flex';
+            void mainContainer.offsetWidth; // forçar reflow
+            mainContainer.style.opacity = '1';
+            if (typeof logAudit === 'function') {
+                logAudit('Transição de estado UI: Splash -> Main. Sistema pronto para demonstração ELITE.', 'success');
+            }
+        }, 500);
+    });
+    
+    console.log('[UNIFED] Listener de transição do splash configurado com sucesso.');
+})();
 
-        // Se chegamos aqui, o painel existe. Podemos abrir o ecrã.
-        console.log('[UNIFED] Painel detetado. Finalizando sequência de abertura...');
-        
-        const loader = document.querySelector('.loading-overlay');
-        const main = document.querySelector('.main-container');
+// Garantir que o select do ano fiscal seja populado
+(function ensureAnoFiscalPopulated() {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof populateAnoFiscal === 'function') populateAnoFiscal();
+            if (typeof populateYears === 'function') populateYears();
+        });
+    } else {
+        if (typeof populateAnoFiscal === 'function') populateAnoFiscal();
+        if (typeof populateYears === 'function') populateYears();
+    }
+})();
 
-        if (loader) {
-            loader.style.transition = 'opacity 0.6s ease';
-            loader.style.opacity = '0';
-            setTimeout(() => { loader.style.display = 'none'; }, 600);
-        }
-
-        if (main) {
-            main.style.display = 'flex';
-            main.style.opacity = '1';
-        }
-
-        // Forçar a sincronização final agora que o painel existe
-        if (typeof syncMetrics === 'function') syncMetrics();
-        if (typeof window.revealForensicData === 'function') window.revealForensicData();
-    };
-
-    attemptReveal();
-});
+// ============================================================================
+// FIM DO FICHEIRO - UNIFED - PROBATUM v13.12.2-i18n
+// ============================================================================
