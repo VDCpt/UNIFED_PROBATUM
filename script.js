@@ -3272,7 +3272,6 @@ async function resetSystem() {
                 });
             }
         }
-    // [RETIFICAÇÃO CIRÚRGICA] - REMOÇÃO DE CHAVETA ÓRFÃ E ALINHAMENTO DE BLOCO
         if (typeof window._activatePurePanel === 'function') {
             window._activatePurePanel(true);
         }
@@ -3283,7 +3282,7 @@ async function resetSystem() {
     logAudit('🔄 Sistema reiniciado – todas as evidências e análises foram limpas.', 'success');
     showToast(currentLang === 'pt' ? 'Sistema reiniciado com sucesso.' : 'System reset successfully.', 'success');
     ForensicLogger.addEntry('SYSTEM_RESET_COMPLETED');
-} // <-- FECHO ÚNICO DA FUNÇÃO DE RESET
+}
 
 // BLOCO DE INICIALIZAÇÃO PÓS-RESET
 
@@ -4207,8 +4206,6 @@ function performAudit() {
 
     const hasFiles = Object.values(UNIFEDSystem.documents).some(d => d.files && d.files.length > 0);
     if (!hasFiles) {
-        // [FIX ACHADO C] mutex DEVE ser reposto antes de qualquer return antecipado;
-        // a omissão anterior bloqueava performAudit() permanentemente após validação falhada.
         _UNIFED_AUDIT_RUNNING = false;
         ForensicLogger.addEntry('AUDIT_FAILED', { reason: 'No files' });
         return showToast(currentLang === 'en' ? 'Upload at least one evidence file before running the forensic exam.' : 'Carregue pelo menos um ficheiro de evidência antes de executar a perícia.', 'error');
@@ -8433,7 +8430,6 @@ window.showToast = function(message, type = 'info') {
     
     container.appendChild(toast);
 
-// [FIX] Fecho de bloco na função de notificação (script.js)
     setTimeout(() => {
         if (toast && toast.parentNode) {
             toast.style.opacity = '0';
@@ -8447,6 +8443,71 @@ window.showToast = function(message, type = 'info') {
    
 window.renderChart = renderChart;
 window.renderDiscrepancyChart = renderDiscrepancyChart;
+
+// ============================================================================
+// RETIFICAÇÃO: Listener do botão "INICIAR METODOLOGIA" (#startSessionBtn)
+// Garante que a UI fica em estado Zero-Knowledge (Tabua Rasa)
+// ============================================================================
+function setupIniciarButton() {
+    const startBtn = document.getElementById('startSessionBtn');
+    if (!startBtn) return;
+    if (startBtn.getAttribute('data-iniciar-listener') === 'true') return;
+
+    startBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        console.log('[UNIFED] Botão INICIAR clicado — aplicando resetUIVisual (Tabua Rasa).');
+
+        // 1. Limpar todos os campos visuais (opacity:0, textos neutros)
+        if (typeof window.resetUIVisual === 'function') {
+            window.resetUIVisual();
+        } else {
+            document.querySelectorAll('.pure-data-value, .pure-sg-val, .pure-zc-val, .pure-delta-value, .pure-atf-big')
+                .forEach(el => {
+                    el.style.opacity = '0';
+                    el.textContent = '---';
+                });
+        }
+
+        // 2. Garantir que os módulos de alerta e discrepâncias estão ocultos
+        const alertModules = [
+            '#bigDataAlert', '#quantumBox', '#revenueGapCard', '#expenseGapCard',
+            '#omissaoDespesasPctCard', '#jurosCard', '#discrepancy5Card',
+            '#agravamentoBrutoCard', '#ircCard', '#iva6Card', '#iva23Card',
+            '#asfixiaFinanceiraCard'
+        ];
+        alertModules.forEach(sel => {
+            const el = document.querySelector(sel);
+            if (el) el.style.display = 'none';
+        });
+
+        // 3. Remover classe de revelação de todos os elementos
+        document.querySelectorAll('.forensic-revealed').forEach(el => {
+            el.classList.remove('forensic-revealed');
+        });
+
+        // 4. Prosseguir com a transição normal (splash → dashboard)
+        if (typeof window.forceFinalState === 'function') {
+            await window.forceFinalState();
+        } else {
+            console.warn('[UNIFED] forceFinalState não disponível. Transição manual necessária.');
+        }
+    });
+    startBtn.setAttribute('data-iniciar-listener', 'true');
+    console.log('[UNIFED] Listener associado ao botão INICIAR com resetUIVisual.');
+}
+
+// ============================================================================
+// Forçar resetUIVisual no arranque (Zero-Knowledge por defeito)
+// ============================================================================
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        if (typeof window.resetUIVisual === 'function') window.resetUIVisual();
+        setupIniciarButton();
+    });
+} else {
+    if (typeof window.resetUIVisual === 'function') window.resetUIVisual();
+    setupIniciarButton();
+}
 
 // ============================================================================
 // FIM DO FICHEIRO - UNIFED - PROBATUM v13.12.2-i18n

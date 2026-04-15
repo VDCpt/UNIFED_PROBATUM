@@ -1,17 +1,12 @@
 /**
  * UNIFED - PROBATUM · CASO REAL ANONIMIZADO v13.12.2-i18n (ASYNC + PERSIST)
  * ============================================================================
- * [CONSOLIDAÇÃO 2026-04-15]
- * - Mantida a estrutura completa e funcional do script_injection.js original.
- * - Integrada a alteração da retificação: o botão "CASO REAL ANONIMIZADO"
- *   apenas carrega as matrizes (contadores e dados brutos) sem executar a perícia.
+ * [RETIFICAÇÃO CIRÚRGICA 2026-04-15]
+ * - O botão "CASO REAL ANONIMIZADO" apenas carrega as matrizes (contadores e dados brutos)
+ *   sem executar a perícia.
  * - A execução dos cálculos (crossings, IVA, IRC, etc.) e a exibição visual
- *   do módulo DAC7 ficam retidas até à invocação do botão "EXECUTAR PERÍCIA",
- *   que dispara o evento UNIFED_EXECUTE_PERITIA.
- * - Removidas chamadas automáticas a calculateTwoAxisDiscrepancy,
- *   performForensicCrossings e dispatch de UNIFED_ANALYSIS_COMPLETE durante
- *   o carregamento do caso real.
- * - Adicionado listener para UNIFED_EXECUTE_PERITIA que executa a análise pendente.
+ *   dos módulos de discrepância ficam reservadas para o botão "EXECUTAR PERÍCIA".
+ * - Adicionado flag _unifedRawDataOnly para bloquear sincronização prematura.
  * ============================================================================
  */
 
@@ -828,6 +823,7 @@
                 // Marcar que os dados estão prontos, mas a análise ainda não foi executada
                 window._unifedDataLoaded = true;
                 window._unifedAnalysisPending = true;
+                window._unifedRawDataOnly = true;  // <-- Novo flag
 
                 return true;
             } catch (err) {
@@ -914,7 +910,8 @@
             t.iva23Omitido = ivaFalta;
             t.asfixiaFinanceira = asfixiaFinanceira;
 
-            // Sincronizar UI
+            // Sincronizar UI – agora com flag raw desligado
+            window._unifedRawDataOnly = false;
             if (typeof window.UNIFED_INTERNAL.syncMetrics === 'function') {
                 window.UNIFED_INTERNAL.syncMetrics();
             }
