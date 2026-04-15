@@ -246,6 +246,13 @@
                 const el = document.querySelector(`#pureDashboard #${id}`);
                 if (el) el.textContent = value;
             };
+            // Atualização global para elementos que possam estar fora do #pureDashboard
+            const setGlobalText = (id, value) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = value;
+                const alt = document.querySelector(`#${id}`);
+                if (alt) alt.textContent = value;
+            };
 
             // Mapeamento para elementos dentro de #pureDashboard
             const mapping = {
@@ -291,23 +298,27 @@
             
             Object.entries(mapping).forEach(([id, value]) => {
                 setScopedText(id, value);
+                // Fallback: tentar também como elemento global
+                const globalEl = document.getElementById(id);
+                if (globalEl && globalEl.textContent !== value) globalEl.textContent = value;
             });
 
-            // Elementos fora do #pureDashboard
-            setAnyText('evidenceCountTotal', totalEvidencias);
-            setAnyText('pure-evidence-count-display', totalEvidencias);
-            setAnyText('sessionIdDisplay', (sys && sys.sessionId) ? sys.sessionId : data.sessionId);
+            // Atualização específica para os elementos de "Zona Cinzenta" que aparecem no dashboard
+            setGlobalText('auxBoxCampanhasValue', fmt(fi.campanhas));
+            setGlobalText('auxBoxGorjetasValue', fmt(fi.gorjetas));
+            setGlobalText('auxBoxPortagensValue', fmt(fi.portagens));
+            setGlobalText('auxBoxTotalNSValue', fmt(fi.total));
+            setGlobalText('auxBoxCancelValue', fmt(t.cancelamentos || 0));
+            setGlobalText('auxDac7NoteValue', fmt(fi.total));
+            setGlobalText('auxDac7NoteValueQ', fmt(fi.total));
             
-            // Revenue Gap, Expense Gap, Percentagem (elementos no index.html)
+            // Atualização dos cards de gap
             const revenueGapCorrect = t.saftBruto - t.ganhos;
-            const expenseGapValueEl = document.getElementById('expenseGapValue');
-            if (expenseGapValueEl) expenseGapValueEl.textContent = fmt(discrepanciaC2);
-            const revenueGapValueEl = document.getElementById('revenueGapValue');
-            if (revenueGapValueEl) revenueGapValueEl.textContent = fmt(revenueGapCorrect);
-            const omissaoPctValueEl = document.getElementById('omissaoDespesasPctValue');
-            if (omissaoPctValueEl) omissaoPctValueEl.textContent = ((t.despesas / t.ganhos) * 100).toFixed(2) + '%';
+            setGlobalText('revenueGapValue', fmt(revenueGapCorrect));
+            setGlobalText('expenseGapValue', fmt(discrepanciaC2));
+            setGlobalText('omissaoDespesasPctValue', ((t.despesas / t.ganhos) * 100).toFixed(2) + '%');
             
-            // Forçar exibição dos cards de gap
+            // Forçar exibição dos cards
             const revenueCard = document.getElementById('revenueGapCard');
             if (revenueCard && Math.abs(revenueGapCorrect) > 0.01) revenueCard.style.display = 'block';
             const expenseCard = document.getElementById('expenseGapCard');
@@ -329,7 +340,7 @@
             const pureAtfNote = document.querySelector('#pureDashboard #pure-atf-note-text');
             if (pureAtfNote) pureAtfNote.textContent = 'Score de Persistência calculado pelo motor computeTemporalAnalysis() sobre 4 meses de histórico (Set/Out/Nov/Dez 2024). SP calculado sobre o lote global (dados verificados UNIFED-MMLADX8Q-CV69L). As discrepâncias absolutas (C2: €2.184,95 — 89,26% · C1: €1.951,42 — 23,72%) mantêm relevância jurídica independente.';
             
-            // Gráficos (se Chart.js disponível)
+            // Gráficos
             if (typeof Chart !== 'undefined') {
                 if (typeof window.renderChart === 'function') window.renderChart();
                 if (typeof window.renderDiscrepancyChart === 'function') window.renderDiscrepancyChart();
@@ -618,6 +629,9 @@
             const setScopedText = (id, val) => {
                 const el = document.querySelector(`#pureDashboard #${id}`);
                 if (el) el.textContent = (typeof val === 'number') ? _f(val) : val;
+                // Fallback global
+                const globalEl = document.getElementById(id);
+                if (globalEl) globalEl.textContent = (typeof val === 'number') ? _f(val) : val;
             };
             auxMapping.forEach(item => setScopedText(item.id, item.val));
             
@@ -934,6 +948,7 @@
         const { injectAuxiliaryBoxesCSS, injectMacroCard, updateAuxiliaryUI, forcePlatformReadOnly, removeZeroDac7Kpis, simulateEvidenceUpload, updateEvidenceCountersAndShow } = window.UNIFED_INTERNAL;
 
         let _initializing = false;
+        let _dataLoaded = false; // Evita múltiplos carregamentos
 
         function showClientIdentificationBlock() {
             let block = document.getElementById('clientIdentificationBlock');
@@ -1037,10 +1052,15 @@
         }
 
         async function initializeFullWithEvidence() {
+            if (_dataLoaded) {
+                console.log('[UNIFED] Dados já carregados, a saltar nova simulação.');
+                return;
+            }
             console.log('[UNIFED] A carregar evidências do caso real...');
             await waitForPureDashboard();
             try {
                 await simulateEvidenceUpload();
+                _dataLoaded = true;
                 updateEvidenceCountersAndShow();
                 if (typeof window.injectAuxiliaryHelperBoxes === 'function') window.injectAuxiliaryHelperBoxes();
                 if (typeof updateAuxiliaryUI === 'function') updateAuxiliaryUI();
@@ -1164,7 +1184,6 @@
                 new QRCode(container, { text: qrData, width: 75, height: 75, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.L });
             }
             container.setAttribute('data-tooltip', 'Clique para verificar a cadeia de custódia completa');
-            // Adicionar evento de clique para abrir modal de custódia
             container.onclick = () => {
                 if (typeof window.openCustodyChainModal === 'function') {
                     window.openCustodyChainModal();
@@ -1240,7 +1259,6 @@
             document.addEventListener('DOMContentLoaded', () => {
                 initializeCoreDashboard();
                 forceDataPtVisibility();
-                // Popular selects de ano fiscal
                 if (typeof populateAnoFiscal === 'function') populateAnoFiscal();
                 if (typeof populateYears === 'function') populateYears();
             });
@@ -1442,13 +1460,36 @@
                 mainContainer.style.opacity = '1';
             }
 
-            // 4. Despacho de Eventos de Sincronização
+            // 4. Forçar a atualização completa dos dados (mesmo sem clique no "CASO REAL")
+            //    Isso garante que os valores numéricos aparecem imediatamente.
+            if (window.UNIFED_INTERNAL && window.UNIFED_INTERNAL.syncMetrics) {
+                window.UNIFED_INTERNAL.syncMetrics();
+            }
+            if (window.UNIFED_INTERNAL && window.UNIFED_INTERNAL.renderMatrix) {
+                window.UNIFED_INTERNAL.renderMatrix();
+            }
+            if (window.UNIFED_INTERNAL && window.UNIFED_INTERNAL.updateAuxiliaryUI) {
+                window.UNIFED_INTERNAL.updateAuxiliaryUI();
+            }
+            // Forçar também a atualização das caixas auxiliares (campanhas, gorjetas, etc.)
+            const setGlobalText = (id, value) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = value;
+            };
+            const fi = _PDF_CASE.fluxosIsentos;
+            const fmtEuro = (v) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v);
+            setGlobalText('auxBoxCampanhasValue', fmtEuro(fi.campanhas));
+            setGlobalText('auxBoxGorjetasValue', fmtEuro(fi.gorjetas));
+            setGlobalText('auxBoxPortagensValue', fmtEuro(fi.portagens));
+            setGlobalText('auxBoxTotalNSValue', fmtEuro(fi.total));
+            
+            // 5. Despacho de Eventos de Sincronização
             window.dispatchEvent(new CustomEvent('UNIFED_CORE_READY'));
             window.dispatchEvent(new CustomEvent('UNIFED_ANALYSIS_COMPLETE', { 
                 detail: { status: 'READY', masterHash: window.activeForensicSession?.masterHash || _PDF_CASE.masterHash } 
             }));
 
-            console.log('[PERÍCIA] Sistema desbloqueado: Splash removido e Dashboard ativado.');
+            console.log('[PERÍCIA] Sistema desbloqueado: Splash removido, Dashboard ativado e dados preenchidos.');
         } catch (err) {
             console.error('[ERRO FORENSE] Falha na transição de estado:', err);
         }
@@ -1463,7 +1504,6 @@
     function setupIniciarButton() {
         const startBtn = document.getElementById('startSessionBtn');
         if (startBtn) {
-            // Remove qualquer listener duplicado (evita múltiplas execuções)
             if (startBtn.getAttribute('data-iniciar-listener') === 'true') return;
             
             startBtn.addEventListener('click', async (e) => {
@@ -1482,7 +1522,6 @@
         }
     }
 
-    // Aguarda o DOM estar pronto antes de associar o listener
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', setupIniciarButton);
     } else {
