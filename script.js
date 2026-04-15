@@ -3327,6 +3327,16 @@ function populateYears() {
         if (y === 2024) opt.selected = true;
         sel.appendChild(opt);
     }
+// No final do script.js, após a definição das funções:
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        populateAnoFiscal();
+        populateYears();
+    });
+} else {
+    populateAnoFiscal();
+    populateYears();
+}
 }
  
 function startClockAndDate() {

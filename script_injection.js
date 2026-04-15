@@ -1,10 +1,8 @@
 /**
  * UNIFED - PROBATUM · CASO REAL ANONIMIZADO v13.12.2-i18n (ASYNC + PERSIST)
  * ============================================================================
- * Missão: Injeção Forense e Reconstituição da Verdade Material
- * Conformidade: DORA (UE) 2022/2554 · Art. 125.º CPP · ISO/IEC 27037:2012
- * ============================================================================
- * [RETIFICAÇÃO TÉCNICA] forceFinalState com desbloqueio em cascata e remoção do splash
+ * [RETIFICAÇÃO FINAL] Mantém splash screen até clique no botão "INICIAR".
+ * Expõe forceFinalState globalmente. Corrige preenchimento de todos os dados.
  * ============================================================================
  */
 
@@ -42,7 +40,6 @@
             console.error('[UNIFED] #pureDashboardWrapper não encontrado no DOM.');
             return false;
         }
-        // Evitar duplicação
         if (wrapper.querySelector('#pureDashboard')) return true;
 
         try {
@@ -208,13 +205,6 @@
         if (!window.UNIFED_INTERNAL) return;
         const { data, fmt, set } = window.UNIFED_INTERNAL;
 
-/**
- * UNIFED - PROBATUM · CASO REAL ANONIMIZADO v13.12.2-i18n (ASYNC + PERSIST)
- * ============================================================================
- * [RETIFICAÇÃO] syncMetrics melhorado: corrige IRC, zona cinzenta, revenue/expense gaps e contador de evidências.
- * ============================================================================
- */
-
         window.UNIFED_INTERNAL.syncMetrics = function() {
             const dashboard = document.getElementById('pureDashboard');
             if (!dashboard) {
@@ -225,25 +215,20 @@
             console.log('[UNIFED] Iniciando Sincronização Forense...');
             
             const sys = window.UNIFEDSystem;
-            // Usar valores do sistema se disponíveis, senão fallback para o dataset estático
             const t = (sys && sys.analysis && sys.analysis.totals && sys.analysis.totals.ganhos > 0) ? sys.analysis.totals : data.totals;
             const c = (sys && sys.analysis && sys.analysis.crossings) ? sys.analysis.crossings : {};
             
-            // Discrepâncias (usar os valores já calculados pelo motor forense)
             const discrepanciaC2 = c.discrepanciaCritica || (t.despesas - t.faturaPlataforma);
             const percentC2 = c.percentagemOmissao || (t.despesas > 0 ? (discrepanciaC2 / t.despesas) * 100 : 0);
             const discrepanciaC1 = c.discrepanciaSaftVsDac7 || (t.saftBruto - t.dac7TotalPeriodo);
             const percentC1 = c.percentagemSaftVsDac7 || (t.saftBruto > 0 ? (discrepanciaC1 / t.saftBruto) * 100 : 0);
             
-            // IRC: usar o valor já calculado pelo performForensicCrossings (agravamentoAnual * 21%)
             const ircEstimadoCorreto = c.ircEstimado || (discrepanciaC2 * 0.21);
             const asfixiaFinanceira = t.asfixiaFinanceira || (t.saftBruto * 0.06);
             
-            // Fluxos isentos (zona cinzenta) – garantir que vêm do dataset ou do sistema
             const fi = data.fluxosIsentos;
             const totalNaoSujeitosCalc = fi.total;
             
-            // Contadores de evidências
             const getCounter = (docType, fallback) => {
                 if (sys && sys.documents && sys.documents[docType] && sys.documents[docType].totals) {
                     return sys.documents[docType].totals.records.toString();
@@ -253,12 +238,10 @@
             const totalEvidencias = (sys && sys.counts && sys.counts.total) ? sys.counts.total.toString() : 
                                     (data.counts.ctrl + data.counts.saft + data.counts.fat + data.counts.ext + data.counts.dac7).toString();
 
-            // Função auxiliar para definir texto em elementos que podem estar em qualquer lugar (não apenas dentro de #pureDashboard)
             const setAnyText = (id, value) => {
                 const el = document.getElementById(id);
                 if (el) el.textContent = value;
             };
-            // Para elementos dentro do #pureDashboard (escopo)
             const setScopedText = (id, value) => {
                 const el = document.querySelector(`#pureDashboard #${id}`);
                 if (el) el.textContent = value;
@@ -271,7 +254,7 @@
                 'pure-disc-c2': fmt(discrepanciaC2), 'pure-disc-c2-pct': percentC2.toFixed(2) + '%',
                 'pure-disc-saft-dac7': fmt(discrepanciaC1), 'pure-disc-saft-pct': percentC1.toFixed(2) + '%',
                 'pure-iva-6': fmt(t.iva6Omitido), 'pure-iva-23': fmt(t.iva23Omitido),
-                'pure-irc': fmt(ircEstimadoCorreto),   // CORRIGIDO: usa o valor correto do motor
+                'pure-irc': fmt(ircEstimadoCorreto),
                 'pure-disc-c2-grid': fmt(discrepanciaC2), 'pure-iva-devido': fmt(asfixiaFinanceira),
                 'pure-nao-sujeitos': fmt(totalNaoSujeitosCalc), 'pure-atf-sp': data.atf.score + '/100',
                 'pure-atf-trend': data.atf.trend, 'pure-atf-outliers': data.atf.outliers + ' outliers > 2σ',
@@ -310,21 +293,21 @@
                 setScopedText(id, value);
             });
 
-            // Atualizar elementos fora do #pureDashboard (contador total de evidências e gaps)
+            // Elementos fora do #pureDashboard
             setAnyText('evidenceCountTotal', totalEvidencias);
             setAnyText('pure-evidence-count-display', totalEvidencias);
+            setAnyText('sessionIdDisplay', (sys && sys.sessionId) ? sys.sessionId : data.sessionId);
             
-            // Atualizar Revenue Gap, Expense Gap e Percentagem (elementos no index.html)
-            const revenueGapValue = document.getElementById('revenueGapValue');
-            if (revenueGapValue) revenueGapValue.textContent = fmt(discrepanciaC1); // SAF-T vs DAC7? Não, revenue gap é SAF-T vs Ganhos. Melhor usar twoAxis.revenueGap
+            // Revenue Gap, Expense Gap, Percentagem (elementos no index.html)
             const revenueGapCorrect = t.saftBruto - t.ganhos;
-            if (revenueGapValue) revenueGapValue.textContent = fmt(revenueGapCorrect);
-            const expenseGapValue = document.getElementById('expenseGapValue');
-            if (expenseGapValue) expenseGapValue.textContent = fmt(discrepanciaC2);
-            const omissaoPctValue = document.getElementById('omissaoDespesasPctValue');
-            if (omissaoPctValue) omissaoPctValue.textContent = ((t.despesas / t.ganhos) * 100).toFixed(2) + '%';
+            const expenseGapValueEl = document.getElementById('expenseGapValue');
+            if (expenseGapValueEl) expenseGapValueEl.textContent = fmt(discrepanciaC2);
+            const revenueGapValueEl = document.getElementById('revenueGapValue');
+            if (revenueGapValueEl) revenueGapValueEl.textContent = fmt(revenueGapCorrect);
+            const omissaoPctValueEl = document.getElementById('omissaoDespesasPctValue');
+            if (omissaoPctValueEl) omissaoPctValueEl.textContent = ((t.despesas / t.ganhos) * 100).toFixed(2) + '%';
             
-            // Forçar exibição dos cards de gap se tiverem valores
+            // Forçar exibição dos cards de gap
             const revenueCard = document.getElementById('revenueGapCard');
             if (revenueCard && Math.abs(revenueGapCorrect) > 0.01) revenueCard.style.display = 'block';
             const expenseCard = document.getElementById('expenseGapCard');
@@ -332,7 +315,7 @@
             const omissaoCard = document.getElementById('omissaoDespesasPctCard');
             if (omissaoCard && t.despesas > 0 && t.ganhos > 0) omissaoCard.style.display = 'block';
             
-            // ... (resto do código: atualização de textos legais, etc.)
+            // Atualizar textos legais
             const sg1Legal = document.querySelector('#pureDashboard #pure-sg1-legal');
             if (sg1Legal) sg1Legal.textContent = 'Art. 23.º CIRC (Indutividade de Custos) · Art. 103.º RGIT (Fraude Fiscal)';
             const sg2Legal = document.querySelector('#pureDashboard #pure-sg2-legal');
@@ -354,7 +337,6 @@
                 console.warn('[UNIFED] Chart.js não disponível – gráficos não renderizados.');
             }
         };
-
         console.log('[UNIFED] Camada 2: OK.');
     })();
 
@@ -1182,6 +1164,14 @@
                 new QRCode(container, { text: qrData, width: 75, height: 75, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.L });
             }
             container.setAttribute('data-tooltip', 'Clique para verificar a cadeia de custódia completa');
+            // Adicionar evento de clique para abrir modal de custódia
+            container.onclick = () => {
+                if (typeof window.openCustodyChainModal === 'function') {
+                    window.openCustodyChainModal();
+                } else {
+                    console.warn('[UNIFED] openCustodyChainModal não disponível');
+                }
+            };
         }
         window.generateQRCode = generateQRCode;
 
@@ -1229,6 +1219,8 @@
             if (hashFullEl && sys.masterHash) hashFullEl.textContent = sys.masterHash;
             const hashPrefixEl = document.querySelector('#pure-hash-prefix-verdict');
             if (hashPrefixEl && sys.masterHash) hashPrefixEl.textContent = sys.masterHash.substring(0, 16).toUpperCase() + '...';
+            const sessionIdDisplay = document.getElementById('sessionIdDisplay');
+            if (sessionIdDisplay && sys.sessionId) sessionIdDisplay.textContent = sys.sessionId;
         }
 
         if (window.UNIFED_INTERNAL && window.UNIFED_INTERNAL.syncMetrics) {
@@ -1248,10 +1240,15 @@
             document.addEventListener('DOMContentLoaded', () => {
                 initializeCoreDashboard();
                 forceDataPtVisibility();
+                // Popular selects de ano fiscal
+                if (typeof populateAnoFiscal === 'function') populateAnoFiscal();
+                if (typeof populateYears === 'function') populateYears();
             });
         } else {
             initializeCoreDashboard();
             forceDataPtVisibility();
+            if (typeof populateAnoFiscal === 'function') populateAnoFiscal();
+            if (typeof populateYears === 'function') populateYears();
         }
     })();
 
@@ -1400,7 +1397,8 @@
     })();
 
     // =========================================================================
-    // FORCE FINAL STATE (Código A - Desbloqueio em cascata)
+    // FORCE FINAL STATE (sem remoção automática do splash)
+    // Esta função será chamada APENAS quando o utilizador clicar no botão "INICIAR"
     // =========================================================================
     async function forceFinalState() {
         try {
@@ -1410,7 +1408,7 @@
             // 1. Desbloqueio de Visibilidade Global
             document.body.classList.add('forensic-revealed');
 
-            // 2. Remoção da Camada de Oclusão (Splash Screen)
+            // 2. Remoção da Camada de Oclusão (Splash Screen) - SÓ AQUI
             const splash = document.getElementById('splashScreen');
             if (splash) {
                 splash.style.transition = 'opacity 0.5s ease-out';
@@ -1428,7 +1426,6 @@
                 wrapper.style.opacity = '1';
                 wrapper.style.visibility = 'visible';
 
-                // Desbloqueio explícito da secção interna (Cascading Uncloak)
                 const innerDashboard = document.getElementById('pureDashboard') || wrapper.querySelector('.pure-section');
                 if (innerDashboard) {
                     innerDashboard.classList.add('active');
@@ -1439,7 +1436,6 @@
                 }
             }
 
-            // Proteção de visibilidade do Main Container
             const mainContainer = document.getElementById('mainContainer');
             if (mainContainer) {
                 mainContainer.style.display = 'block';
@@ -1458,7 +1454,9 @@
         }
     }
 
-    // Execução imediata (assíncrona)
-    forceFinalState().catch(err => console.error('[UNIFED] Erro em forceFinalState:', err));
+    // Expor globalmente para que o botão "INICIAR" a possa chamar
+    window.forceFinalState = forceFinalState;
 
+    // NOTA: NÃO executar automaticamente. A transição será iniciada pelo clique no botão.
+    console.log('[UNIFED] script_injection.js carregado. Aguardando clique em "INICIAR".');
 })();

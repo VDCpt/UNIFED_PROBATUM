@@ -31,6 +31,14 @@
  * ============================================================================
  */
 
+/**
+ * ============================================================================
+ * UNIFED - PROBATUM · unifed_panel_activator.js
+ * ============================================================================
+ * Versão      : v1.0.0 · FIX-ACHADO-A + RETIFICAÇÃO C + SPLASH MANUAL
+ * ============================================================================
+ */
+
 (function _installPanelActivator() {
     'use strict';
 
@@ -40,51 +48,30 @@
     }
     window._PANEL_ACTIVATOR_INSTALLED = true;
 
-    /**
-     * _activatePurePanel(forceReset)
-     * ─────────────────────────────
-     * Torna visível o #pureDashboardWrapper e a secção #pureDashboard,
-     * registando a activação no ForensicLogger quando disponível.
-     *
-     * @param {boolean} [forceReset=false]
-     *   Quando true, repõe o wrapper a opacity:0 antes de animar —
-     *   útil para garantir a transição visual mesmo em re-activações.
-     * @returns {Promise<void>}
-     *   Resolve após a transição CSS (300ms) ou imediatamente se o
-     *   elemento não estiver presente (degradação silenciosa).
-     */
     window._activatePurePanel = async function _activatePurePanel(forceReset) {
         console.log('[UNIFED-ACTIVATOR] Invocando transição forçada...');
 
         const wrapper = document.getElementById('pureDashboardWrapper');
         const section = document.getElementById('pureDashboard');
 
-        // ── Degradação silenciosa: elemento ainda não injectado no DOM ───────
         if (!wrapper && !section) {
-            console.warn('[UNIFED-ACTIVATOR] #pureDashboardWrapper e #pureDashboard ausentes do DOM. ' +
-                         'Activação adiada — o painel ainda pode não ter sido injectado.');
+            console.warn('[UNIFED-ACTIVATOR] #pureDashboardWrapper e #pureDashboard ausentes do DOM.');
             return;
         }
 
-        // ── Forçar visibilidade da secção raiz ────────────────────────────────
         if (section) {
             section.style.display    = 'block';
             section.style.visibility = 'visible';
         }
 
         if (!wrapper) {
-            // Degradação: wrapper não existe, mas section existe — suficiente.
             console.warn('[UNIFED-ACTIVATOR] #pureDashboardWrapper ausente; usando #pureDashboard directamente.');
             return;
         }
 
-        // ── [FIX ACHADO A] Transição de opacidade ────────────────────────────
-        // O index.html define pureDashboardWrapper com opacity:0 por defeito.
-        // A transição CSS (opacity 0→1) garante experiência visual consistente.
         if (forceReset === true) {
             wrapper.style.opacity    = '0';
             wrapper.style.transition = 'none';
-            // Forçar reflow antes de restaurar transição
             void wrapper.offsetHeight;
         }
 
@@ -94,23 +81,17 @@
         wrapper.style.overflow   = 'visible';
         wrapper.style.transition = 'opacity 0.3s ease';
 
-        // Aguardar próximo frame de pintura para garantir que display:block
-        // foi processado antes de iniciar a transição de opacidade.
         await new Promise(resolve => requestAnimationFrame(resolve));
-
         wrapper.style.opacity = '1';
-
-        // Aguardar conclusão da transição CSS (300ms) antes de resolver
         await new Promise(resolve => setTimeout(resolve, 320));
 
-        // ── Gatilho para o script_injection realizar a hidratação final ──────
+        // Chamar a função global que remove o splash e ativa o dashboard
         if (typeof window.forceFinalState === 'function') {
-            window.forceFinalState();
+            await window.forceFinalState();
         } else {
             console.warn('[UNIFED-ACTIVATOR] forceFinalState não disponível. A transição pode estar incompleta.');
         }
 
-        // ── Log de auditoria (não-bloqueante) ─────────────────────────────────
         try {
             if (typeof window.ForensicLogger !== 'undefined' &&
                 typeof window.ForensicLogger.addEntry === 'function') {
@@ -123,12 +104,35 @@
             if (typeof window.logAudit === 'function') {
                 window.logAudit('[UNIFED-ACTIVATOR] #pureDashboardWrapper activado com sucesso.', 'success');
             }
-        } catch (_logErr) {
-            // Logging é não-crítico — nunca bloquear o fluxo principal
-        }
+        } catch (_logErr) {}
 
         console.log('[UNIFED-ACTIVATOR] _activatePurePanel() concluída — painel visível.');
     };
+
+    // CSS de segurança
+    (function _injectActivatorCSS() {
+        const STYLE_ID = 'unifed-activator-safety-css';
+        if (document.getElementById(STYLE_ID)) return;
+        const style       = document.createElement('style');
+        style.id          = STYLE_ID;
+        style.textContent = `
+            #pureDashboardWrapper.activated {
+                display:    block    !important;
+                opacity:    1        !important;
+                height:     auto     !important;
+                overflow:   visible  !important;
+                visibility: visible  !important;
+            }
+            #pureDashboardWrapper {
+                transition: opacity 0.3s ease;
+            }
+        `;
+        const target = document.head || document.documentElement;
+        target.appendChild(style);
+    })();
+
+    console.log('[UNIFED-ACTIVATOR] window._activatePurePanel registada (v1.0.0 · SPLASH MANUAL).');
+})();
 
     // ── CSS de segurança: impedir que regras externas escondam o wrapper ──────
     // Injecto inline para garantir presença mesmo antes de style.css carregar.
