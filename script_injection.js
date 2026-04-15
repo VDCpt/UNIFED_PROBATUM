@@ -1,8 +1,17 @@
 /**
  * UNIFED - PROBATUM · CASO REAL ANONIMIZADO v13.12.2-i18n (ASYNC + PERSIST)
  * ============================================================================
- * [RETIFICAÇÃO FINAL] Mantém splash screen até clique no botão "INICIAR".
- * Expõe forceFinalState globalmente. Corrige preenchimento de todos os dados.
+ * [CONSOLIDAÇÃO 2026-04-15]
+ * - Mantida a estrutura completa e funcional do script_injection.js original.
+ * - Integrada a alteração da retificação: o botão "CASO REAL ANONIMIZADO"
+ *   apenas carrega as matrizes (contadores e dados brutos) sem executar a perícia.
+ * - A execução dos cálculos (crossings, IVA, IRC, etc.) e a exibição visual
+ *   do módulo DAC7 ficam retidas até à invocação do botão "EXECUTAR PERÍCIA",
+ *   que dispara o evento UNIFED_EXECUTE_PERITIA.
+ * - Removidas chamadas automáticas a calculateTwoAxisDiscrepancy,
+ *   performForensicCrossings e dispatch de UNIFED_ANALYSIS_COMPLETE durante
+ *   o carregamento do caso real.
+ * - Adicionado listener para UNIFED_EXECUTE_PERITIA que executa a análise pendente.
  * ============================================================================
  */
 
@@ -648,7 +657,7 @@
     })();
 
     // =========================================================================
-    // Camada 5 – Simulação de Upload, Força de Plataforma e Inicialização
+    // Camada 5 – Simulação de Upload (modificada para não executar perícia automaticamente)
     // =========================================================================
     (function() {
         if (!window.UNIFED_INTERNAL) return;
@@ -779,32 +788,8 @@
                 sys.analysis.totals.dac7Q4 = t.dac7TotalPeriodo;
                 sys.analysis.totals.dac7TotalPeriodo = t.dac7TotalPeriodo;
 
-                const discrepanciaSaftVsDac7 = t.saftBruto - t.dac7TotalPeriodo;
-                const percentagemSaftVsDac7 = t.saftBruto > 0 ? (discrepanciaSaftVsDac7 / t.saftBruto) * 100 : 0;
-                const discrepanciaCritica = t.despesas - t.faturaPlataforma;
-                const percentagemOmissao = t.despesas > 0 ? (discrepanciaCritica / t.despesas) * 100 : 0;
-                const ivaFalta = discrepanciaCritica * 0.23;
-                const ivaFalta6 = discrepanciaCritica * 0.06;
-                const agravamentoBrutoIRC = discrepanciaCritica;
-                const ircEstimado = discrepanciaCritica * 0.21;
-                const asfixiaFinanceira = t.saftBruto * 0.06;
-
-                if (!sys.analysis.crossings) sys.analysis.crossings = {};
-                sys.analysis.crossings.discrepanciaSaftVsDac7 = discrepanciaSaftVsDac7;
-                sys.analysis.crossings.percentagemSaftVsDac7 = percentagemSaftVsDac7;
-                sys.analysis.crossings.discrepanciaCritica = discrepanciaCritica;
-                sys.analysis.crossings.percentagemOmissao = percentagemOmissao;
-                sys.analysis.crossings.ivaFalta = ivaFalta;
-                sys.analysis.crossings.ivaFalta6 = ivaFalta6;
-                sys.analysis.crossings.agravamentoBrutoIRC = agravamentoBrutoIRC;
-                sys.analysis.crossings.ircEstimado = ircEstimado;
-                sys.analysis.crossings.asfixiaFinanceira = asfixiaFinanceira;
-                sys.analysis.crossings.btor = t.despesas;
-                sys.analysis.crossings.btf = t.faturaPlataforma;
-                sys.analysis.crossings.c1_delta = discrepanciaSaftVsDac7;
-                sys.analysis.crossings.c1_pct = percentagemSaftVsDac7;
-                sys.analysis.crossings.c2_delta = discrepanciaCritica;
-                sys.analysis.crossings.c2_pct = percentagemOmissao;
+                // [RETIFICAÇÃO] NÃO executar cruzamentos nem despachar ANALYSIS_COMPLETE aqui
+                // Os cálculos ficarão pendentes até ao clique em "Executar Perícia"
 
                 if (!sys.client && data.client) {
                     sys.client = { name: data.client.name, nif: data.client.nif, platform: data.client.platform };
@@ -838,40 +823,11 @@
                 sys.masterHash = masterHashFull;
                 window.activeForensicSession = { sessionId: sys.sessionId, masterHash: masterHashFull };
 
-                console.log('[UNIFED] Evidências simuladas carregadas. Total: 15 ficheiros.');
+                console.log('[UNIFED] Evidências simuladas carregadas. Total: 15 ficheiros. Aguardando execução da perícia.');
 
-                if (typeof window.calculateTwoAxisDiscrepancy === 'function') {
-                    try {
-                        window.calculateTwoAxisDiscrepancy();
-                        console.log('[UNIFED-FIX-B] calculateTwoAxisDiscrepancy() executada no fluxo demo.');
-                    } catch (calcErr) {
-                        console.warn('[UNIFED-FIX-B] calculateTwoAxisDiscrepancy() falhou silenciosamente:', calcErr);
-                    }
-                }
-                if (typeof window.performForensicCrossings === 'function') {
-                    try {
-                        window.performForensicCrossings();
-                        console.log('[UNIFED-FIX-B] performForensicCrossings() executada no fluxo demo.');
-                    } catch (crossErr) {
-                        console.warn('[UNIFED-FIX-B] performForensicCrossings() falhou silenciosamente:', crossErr);
-                    }
-                } else {
-                    console.warn('[UNIFED-FIX-B] performForensicCrossings() não disponível — verifique ordem de carregamento de script.js.');
-                }
-
-                try {
-                    window.dispatchEvent(new CustomEvent('UNIFED_ANALYSIS_COMPLETE', {
-                        detail: {
-                            timestamp:  Date.now(),
-                            source:     'demo_mode_simulateEvidenceUpload',
-                            sessionId:  sys.sessionId || 'N/A',
-                            masterHash: sys.masterHash || 'N/A'
-                        }
-                    }));
-                    console.log('[UNIFED-FIX-B] UNIFED_ANALYSIS_COMPLETE despachado pelo fluxo demo.');
-                } catch (evtErr) {
-                    console.warn('[UNIFED-FIX-B] Falha ao despachar UNIFED_ANALYSIS_COMPLETE:', evtErr);
-                }
+                // Marcar que os dados estão prontos, mas a análise ainda não foi executada
+                window._unifedDataLoaded = true;
+                window._unifedAnalysisPending = true;
 
                 return true;
             } catch (err) {
@@ -912,10 +868,88 @@
             console.log('[UNIFED] Contadores de evidências atualizados e secção revelada.');
         }
 
+        // Função para executar a análise pendente (chamada pelo botão "Executar Perícia")
+        async function _executePendingAnalysis() {
+            if (!window._unifedAnalysisPending) {
+                console.log('[UNIFED] Nenhuma análise pendente ou já executada.');
+                return;
+            }
+            console.log('[UNIFED] Executando análise forense pendente...');
+            const sys = window.UNIFEDSystem;
+            if (!sys || !sys.analysis || !sys.analysis.totals) {
+                console.warn('[UNIFED] Dados insuficientes para executar a análise.');
+                return;
+            }
+
+            const t = sys.analysis.totals;
+            const discrepanciaSaftVsDac7 = t.saftBruto - t.dac7TotalPeriodo;
+            const percentagemSaftVsDac7 = t.saftBruto > 0 ? (discrepanciaSaftVsDac7 / t.saftBruto) * 100 : 0;
+            const discrepanciaCritica = t.despesas - t.faturaPlataforma;
+            const percentagemOmissao = t.despesas > 0 ? (discrepanciaCritica / t.despesas) * 100 : 0;
+            const ivaFalta = discrepanciaCritica * 0.23;
+            const ivaFalta6 = discrepanciaCritica * 0.06;
+            const agravamentoBrutoIRC = discrepanciaCritica;
+            const ircEstimado = discrepanciaCritica * 0.21;
+            const asfixiaFinanceira = t.saftBruto * 0.06;
+
+            if (!sys.analysis.crossings) sys.analysis.crossings = {};
+            sys.analysis.crossings.discrepanciaSaftVsDac7 = discrepanciaSaftVsDac7;
+            sys.analysis.crossings.percentagemSaftVsDac7 = percentagemSaftVsDac7;
+            sys.analysis.crossings.discrepanciaCritica = discrepanciaCritica;
+            sys.analysis.crossings.percentagemOmissao = percentagemOmissao;
+            sys.analysis.crossings.ivaFalta = ivaFalta;
+            sys.analysis.crossings.ivaFalta6 = ivaFalta6;
+            sys.analysis.crossings.agravamentoBrutoIRC = agravamentoBrutoIRC;
+            sys.analysis.crossings.ircEstimado = ircEstimado;
+            sys.analysis.crossings.asfixiaFinanceira = asfixiaFinanceira;
+            sys.analysis.crossings.btor = t.despesas;
+            sys.analysis.crossings.btf = t.faturaPlataforma;
+            sys.analysis.crossings.c1_delta = discrepanciaSaftVsDac7;
+            sys.analysis.crossings.c1_pct = percentagemSaftVsDac7;
+            sys.analysis.crossings.c2_delta = discrepanciaCritica;
+            sys.analysis.crossings.c2_pct = percentagemOmissao;
+
+            // Adicionar totais de IVA e IRC ao objeto totals para consistência
+            t.iva6Omitido = ivaFalta6;
+            t.iva23Omitido = ivaFalta;
+            t.asfixiaFinanceira = asfixiaFinanceira;
+
+            // Sincronizar UI
+            if (typeof window.UNIFED_INTERNAL.syncMetrics === 'function') {
+                window.UNIFED_INTERNAL.syncMetrics();
+            }
+            if (typeof window.UNIFED_INTERNAL.renderMatrix === 'function') {
+                window.UNIFED_INTERNAL.renderMatrix();
+            }
+            if (typeof window.UNIFED_INTERNAL.updateAuxiliaryUI === 'function') {
+                window.UNIFED_INTERNAL.updateAuxiliaryUI();
+            }
+
+            // Disparar eventos para outros módulos (enrichment, gráficos)
+            window.dispatchEvent(new CustomEvent('UNIFED_ANALYSIS_COMPLETE', {
+                detail: {
+                    timestamp: Date.now(),
+                    source: 'executePendingAnalysis',
+                    sessionId: sys.sessionId || 'N/A',
+                    masterHash: sys.masterHash || 'N/A'
+                }
+            }));
+            window.dispatchEvent(new CustomEvent('UNIFED_EXECUTE_PERITIA', {
+                detail: {
+                    timestamp: new Date().toISOString(),
+                    masterHash: sys.masterHash || 'N/A'
+                }
+            }));
+
+            window._unifedAnalysisPending = false;
+            console.log('[UNIFED] Análise forense concluída e UI atualizada.');
+        }
+
         window.UNIFED_INTERNAL.forcePlatformReadOnly = _forcePlatformReadOnly;
         window.UNIFED_INTERNAL.removeZeroDac7Kpis = _removeZeroDac7Kpis;
         window.UNIFED_INTERNAL.simulateEvidenceUpload = _simulateEvidenceUpload;
         window.UNIFED_INTERNAL.updateEvidenceCountersAndShow = _updateEvidenceCountersAndShow;
+        window.UNIFED_INTERNAL.executePendingAnalysis = _executePendingAnalysis;
         console.log('[UNIFED] Camada 5: OK.');
     })();
 
@@ -945,10 +979,10 @@
     (function() {
         if (!window.UNIFED_INTERNAL) return;
         const { data, fmt, set, syncMetrics, renderMatrix } = window.UNIFED_INTERNAL;
-        const { injectAuxiliaryBoxesCSS, injectMacroCard, updateAuxiliaryUI, forcePlatformReadOnly, removeZeroDac7Kpis, simulateEvidenceUpload, updateEvidenceCountersAndShow } = window.UNIFED_INTERNAL;
+        const { injectAuxiliaryBoxesCSS, injectMacroCard, updateAuxiliaryUI, forcePlatformReadOnly, removeZeroDac7Kpis, simulateEvidenceUpload, updateEvidenceCountersAndShow, executePendingAnalysis } = window.UNIFED_INTERNAL;
 
         let _initializing = false;
-        let _dataLoaded = false; // Evita múltiplos carregamentos
+        let _dataLoaded = false;
 
         function showClientIdentificationBlock() {
             let block = document.getElementById('clientIdentificationBlock');
@@ -1077,7 +1111,7 @@
                 showClientIdentificationBlock();
                 if (typeof window.renderChart === 'function') window.renderChart();
                 if (typeof window.renderDiscrepancyChart === 'function') window.renderDiscrepancyChart();
-                console.log('[UNIFED] ✅ Evidências carregadas e secção revelada.');
+                console.log('[UNIFED] ✅ Evidências carregadas e secção revelada. Aguardando execução da perícia.');
             } catch (err) {
                 console.error('[UNIFED] Falha ao carregar evidências:', err);
             }
@@ -1094,6 +1128,28 @@
                 if (typeof window.correctRomanIndices === 'function') window.correctRomanIndices();
                 console.info('[UNIFED-FIX] Data Hydration concluída com sucesso via Hook Cirúrgico.');
             };
+        }
+
+        // Listener para o botão "Executar Perícia" (analyzeBtn)
+        function setupAnalyzeButton() {
+            const analyzeBtn = document.getElementById('analyzeBtn');
+            if (!analyzeBtn) {
+                console.warn('[UNIFED] Botão #analyzeBtn não encontrado. O sistema pode não executar a perícia automaticamente.');
+                return;
+            }
+            if (analyzeBtn.getAttribute('data-analyze-listener') === 'true') return;
+            
+            analyzeBtn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                console.log('[UNIFED] Botão EXECUTAR PERÍCIA clicado — a executar análise pendente.');
+                if (typeof executePendingAnalysis === 'function') {
+                    await executePendingAnalysis();
+                } else {
+                    console.error('[UNIFED] executePendingAnalysis não está disponível');
+                }
+            });
+            analyzeBtn.setAttribute('data-analyze-listener', 'true');
+            console.log('[UNIFED] Listener associado ao botão "EXECUTAR PERÍCIA" (#analyzeBtn).');
         }
 
         function setupRealCaseButton() {
@@ -1254,6 +1310,7 @@
 
         setupEventDrivenHydration();
         setupRealCaseButton();
+        setupAnalyzeButton();  // Adiciona o listener para o botão "Executar Perícia"
         
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {

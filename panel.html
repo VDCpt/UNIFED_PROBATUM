@@ -9,6 +9,11 @@
     - Adicionadas diretivas de visibilidade forçada (display:block !important)
       nos módulos críticos para prevenir ocultação por scripts secundários.
   ============================================================================
+  CONSOLIDAÇÃO COM panel(2).html (2026-04-15):
+    - Mantida versão original (estrutura, textos, visibilidade)
+    - Adicionados ids nos smoking guns (#smoking-gun-1, #smoking-gun-2)
+    - Adicionado bloco #bloco-rag-legal (Síntese Jurídica Pericial, oculto)
+  ============================================================================
 -->
 
 <section id="pureDashboard" class="pure-section" aria-label="Painel Caso Real Anonimizado v13.12.2-i18n">
@@ -141,7 +146,7 @@
               data-en="II. DISCREPANCIES FOUND — CROWN EVIDENCE">II. DISCREPÂNCIAS APURADAS — PROVA RAINHA</span>
       </h3>
       <div class="pure-smoking-guns">
-        <div class="pure-sg pure-sg-critical smoking-gun-module">
+        <div class="pure-sg pure-sg-critical smoking-gun-module" id="smoking-gun-2">
           <div class="pure-sg-label" id="pure-sg2-label"
                data-pt="SMOKING GUN 2 — Despesas/Comissões (Extrato) vs Comissões Faturadas (BTF)"
                data-en="SMOKING GUN 2 — Expenses/Commissions (Statement) vs Invoiced Commissions (BTF)">SMOKING GUN 2 — Despesas/Comissões (Extrato) vs Comissões Faturadas (BTF)</div>
@@ -150,7 +155,7 @@
           <div class="pure-sg-delta"><span id="pure-sg2-delta-label" data-pt="OMISSÃO:" data-en="OMISSION:">OMISSÃO:</span><span id="pure-disc-c2" class="pure-delta-value">€ 0,00</span><span id="pure-disc-c2-pct" class="pure-delta-pct">0,00%</span></div>
           <div class="pure-sg-legal" id="pure-sg2-legal" data-pt="Art. 36.º n.º 11 CIVA · Art. 119.º RGIT" data-en="Art. 36(11) CIVA · Art. 119 RGIT">Art. 36.º n.º 11 CIVA · Art. 119.º RGIT</div>
         </div>
-        <div class="pure-sg pure-sg-secondary smoking-gun-module">
+        <div class="pure-sg pure-sg-secondary smoking-gun-module" id="smoking-gun-1">
           <div class="pure-sg-label" id="pure-sg1-label"
                data-pt="SMOKING GUN 1 — SAF-T Bruto vs Reportado DAC7 (AT)"
                data-en="SMOKING GUN 1 — SAF-T Gross vs DAC7 Reported (TA)">SMOKING GUN 1 — SAF-T Bruto vs Reportado DAC7 (AT)</div>
@@ -211,6 +216,12 @@
         <div class="pure-verdict-block"><div class="pure-verdict-label" id="pure-verdict-label" data-pt="VEREDICTO PERICIAL" data-en="EXPERT VERDICT">VEREDICTO PERICIAL</div><div id="pure-verdict" class="pure-verdict-value" data-pt="RISCO CRÍTICO · DESVIO PADRÃO > 2σ" data-en="CRITICAL RISK · STANDARD DEVIATION > 2σ">RISCO CRÍTICO · DESVIO PADRÃO > 2σ</div><div id="pure-verdict-pct" class="pure-verdict-pct">89,26%</div><div class="pure-verdict-basis" id="pure-verdict-basis" data-pt="Art. 119.º RGIT · Art. 125.º CPP" data-en="Art. 119 RGIT · Art. 125 CPP">Art. 119.º RGIT · Art. 125.º CPP</div></div>
         <div class="pure-integrity-block"><div class="pure-verdict-label" id="pure-integrity-label" data-pt="INTEGRIDADE SHA-256" data-en="SHA-256 INTEGRITY">INTEGRIDADE SHA-256</div><div id="pure-hash-prefix-verdict" class="pure-mono pure-hash-lg">5150e767...</div><div class="pure-verdict-basis" id="pure-integrity-basis1" data-pt="RFC 3161 · ISO/IEC 27037:2012" data-en="RFC 3161 · ISO/IEC 27037:2012">RFC 3161 · ISO/IEC 27037:2012</div><div class="pure-verdict-basis" id="pure-integrity-basis2" style="margin-top:4px" data-pt="Dados reais · demoMode: false · DORA Compliant" data-en="Real data · demoMode: false · DORA Compliant">Dados reais · demoMode: false · DORA Compliant</div></div>
       </div>
+    </div>
+
+    <!-- BLOCO RAG LEGAL (adicionado a partir de panel(2).html, mantido oculto) -->
+    <div class="pure-card white-collar-module" id="bloco-rag-legal" style="display:none; opacity:0;">
+      <h3 class="pure-card-title"><span class="pure-icon">⚖️</span> SÍNTESE JURÍDICA PERICIAL (RAG)</h3>
+      <div id="rag-content" style="font-size: 0.75rem; color: #cbd5e1; line-height: 1.6;"></div>
     </div>
 
   </div> <!-- FIM: pure-card-grid -->
