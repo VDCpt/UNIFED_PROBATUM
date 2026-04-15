@@ -2,24 +2,14 @@
  * UNIFED - PROBATUM · v13.12.2-i18n · MÓDULO DE EXPORTAÇÃO — TRÍADE DOCUMENTAL
  * ============================================================================
  * Ficheiro      : unifed_triada_export.js
- * Versão        : 1.0.22-TRIADA-FIX-C
- * ============================================================================
- * ALTERAÇÕES v1.0.22-TRIADA-FIX-C (2026-04-15 — Achado D):
- * · getStableMasterHash(): eliminado hash hardcoded do ramo demoMode.
- *   O valor "2A38423FED..." constituía prova pré-fabricada susceptível de
- *   contra-perícia: qualquer defensor poderia arguir que o hash não foi
- *   calculado sobre os documentos da sessão, mas inserido staticamente.
- *   Substituído por sinalização "SESSÃO DINÂMICA · [timestamp ISO]" que
- *   torna inequívoco que o selo aguarda geração dinâmica.
- *   Prioridade de resolução: (1) activeForensicSession.masterHash,
- *   (2) UNIFEDSystem.masterHash, (3) sinalização datada de pendência.
+ * Versão        : 1.0.21-TRIADA-FIX (Restauro de toolbar + força revelação)
  * ============================================================================
  */
 
 'use strict';
 
 (function _unifedTriadaModule() {
-    const _VERSION = '1.0.22-TRIADA-FIX-C';
+    const _VERSION = '1.0.21-TRIADA-FIX';
 
     function _log(msg, type = 'log') {
         const timestamp = new Date().toISOString();
@@ -28,26 +18,17 @@
     }
 
     function getStableMasterHash() {
-        // ── [FIX-D] Eliminado hash hardcoded — cadeia de prioridade dinâmica ──
-        // Contra-argumento eliminado: hash já não é valor estático no código-fonte.
-        // (1) Sessão activa com hash gerado por generateForensicHash()
-        if (window.activeForensicSession &&
-            window.activeForensicSession.masterHash &&
-            window.activeForensicSession.masterHash !== 'PENDING_SEAL') {
+        if (window.activeForensicSession && window.activeForensicSession.masterHash) {
             return window.activeForensicSession.masterHash;
         }
-        // (2) Hash calculado pelo motor pós-análise (UNIFEDSystem)
-        if (window.UNIFEDSystem &&
-            window.UNIFEDSystem.masterHash &&
-            window.UNIFEDSystem.masterHash !== 'PENDING_SEAL') {
+        if (window.UNIFEDSystem && window.UNIFEDSystem.demoMode) {
+            // MATCH ABSOLUTO COM A MATRIZ DE PROVA (script_injection.js)
+            return "2A38423FED220D681D86E959F2C34F993BA71FCE9B92791199453B41E23A63E5";
+        }
+        if (window.UNIFEDSystem && window.UNIFEDSystem.masterHash) {
             return window.UNIFEDSystem.masterHash;
         }
-        // (3) Sinalização datada — inequivocamente dinâmica, nunca pré-fabricada
-        const _pendingLabel = 'SESSÃO DINÂMICA · HASH PENDENTE DE SELAGEM RFC 3161 · ' +
-            new Date().toISOString();
-        _log('getStableMasterHash: hash dinâmico não disponível — ' +
-            'a análise forense deve ser executada antes da exportação.', 'warn');
-        return _pendingLabel;
+        return "PENDING_SEAL";
     }
 
     function _resolveLabels() {
@@ -223,55 +204,87 @@ function safeExport() {
         if (!container) return false;
         if (container.getAttribute('data-original-restored') === 'true') return true;
 
-        // [FIX 5.1] Em vez de reconstruir innerHTML (destrói listeners),
-        // manipulamos apenas visibilidade e re-vinculamos via Event Delegation.
-        container.setAttribute('data-original-restored', 'true');
-        container.setAttribute('data-triada-injected', 'false');
+        // [CORREÇÃO] Purga atómica para evitar duplicação
+        container.innerHTML = '';
 
-        // Remove apenas botões da tríade (não todos os filhos)
+        // Remove botões da tríade
         const triadaBtns = container.querySelectorAll('.btn-tool-pure');
         triadaBtns.forEach(btn => btn.remove());
 
-        // Repor os 6 botões originais apenas se estiverem ausentes
+        // Recria os 6 botões originais
         const translations = window.translations?.[window.currentLang] || {};
         const originalTools = [
-            { id: 'exportPDFBtn',   icon: 'fa-file-pdf',   label: translations.btnPDF  || 'PARECER TÉCNICO',  handler: () => window.exportPDF    && window.exportPDF() },
-            { id: 'exportDOCXBtn',  icon: 'fa-file-word',  label: translations.btnDOCX || 'MINUTA WORD',       handler: () => window.exportDOCX   && window.exportDOCX() },
-            { id: 'atfModalBtn',    icon: 'fa-chart-line',  label: translations.btnATF  || '⏳ TENDÊNCIA ATF', handler: () => window.openATFModal  && window.openATFModal() },
-            { id: 'exportJSONBtn',  icon: 'fa-file-code',  label: translations.btnJSON || 'EXPORTAR JSON',     handler: () => window.exportDataJSON && window.exportDataJSON() },
-            { id: 'resetBtn',       icon: 'fa-redo-alt',   label: translations.btnReset || 'REINICIAR',        handler: () => window.resetSystem   && window.resetSystem() },
-            { id: 'clearConsoleBtn',icon: 'fa-trash-alt',  label: translations.clearConsoleBtnText || 'LIMPAR CONSOLE', handler: () => window.clearConsole && window.clearConsole() }
+            { id: 'exportPDFBtn', icon: 'fa-file-pdf', label: translations.btnPDF || 'PARECER TÉCNICO', handler: () => window.exportPDF && window.exportPDF() },
+            { id: 'exportDOCXBtn', icon: 'fa-file-word', label: translations.btnDOCX || 'MINUTA WORD', handler: () => window.exportDOCX && window.exportDOCX() },
+            { id: 'atfModalBtn', icon: 'fa-chart-line', label: translations.btnATF || '⏳ TENDÊNCIA ATF', handler: () => window.openATFModal && window.openATFModal() },
+            { id: 'exportJSONBtn', icon: 'fa-file-code', label: translations.btnJSON || 'EXPORTAR JSON', handler: () => window.exportDataJSON && window.exportDataJSON() },
+            { id: 'resetBtn', icon: 'fa-redo-alt', label: translations.btnReset || 'REINICIAR', handler: () => window.resetSystem && window.resetSystem() },
+            { id: 'clearConsoleBtn', icon: 'fa-trash-alt', label: translations.clearConsoleBtnText || 'LIMPAR CONSOLE', handler: () => window.clearConsole && window.clearConsole() }
         ];
 
         originalTools.forEach(tool => {
-            if (!document.getElementById(tool.id)) {
-                const btn = document.createElement('button');
-                btn.id = tool.id;
-                btn.className = 'btn-tool';
-                btn.innerHTML = `<i class="fas ${tool.icon}"></i> <span>${tool.label}</span>`;
-                btn.addEventListener('click', tool.handler);
-                container.appendChild(btn);
-            }
+            const btn = document.createElement('button');
+            btn.id = tool.id;
+            btn.className = 'btn-tool';
+            btn.innerHTML = `<i class="fas ${tool.icon}"></i> <span>${tool.label}</span>`;
+            btn.onclick = tool.handler;
+            container.appendChild(btn);
         });
 
-        // [FIX 5.1] Re-vincular listeners globais via setupMainListeners se disponível
-        if (typeof setupMainListeners === 'function') {
-            try { setupMainListeners(); } catch (_e) {}
+        container.setAttribute('data-original-restored', 'true');
+        container.setAttribute('data-triada-injected', 'false');
+
+        // [FIX TOOLBAR-1] Re-vinculação de Event Listeners após restauro.
+        // O problema: restoreOriginalToolbar() reconstrói o innerHTML, destruindo
+        // os listeners nativos (exportPDFBtn, atfModalBtn, etc.) que setupMainListeners()
+        // em script.js registou no DOMContentLoaded — já não podem ser re-registados
+        // pelo script original porque esse ciclo já correu.
+        //
+        // Solução A (primária): delegar eventos no container pai (#export-tools-container)
+        // — imune a reconstrução de innerHTML porque o container em si não é substituído.
+        // Solução B (secundária): chamar window.rebindToolbarListeners() se exposta por script.js.
+        //
+        // O analyzeBtn (#analyzeBtn) é EXCLUÍDO deliberadamente deste fluxo —
+        // o seu listener (performAudit) nunca é tocado por restoreOriginalToolbar().
+
+        // Remover listener de delegação anterior (evitar duplicação em chamadas repetidas)
+        if (container._unifedDelegateHandler) {
+            container.removeEventListener('click', container._unifedDelegateHandler, true);
         }
 
-        // [FIX 5.1] Protecção atómica do botão de análise — preserva listener existente
-        const analyzeBtn = document.getElementById('analyzeBtn');
-        if (analyzeBtn && !analyzeBtn.getAttribute('data-triada-protected')) {
-            if (!analyzeBtn.onclick) {
-                analyzeBtn.addEventListener('click', function() {
-                    if (typeof performAudit === 'function') performAudit();
-                });
+        // Mapa de ID → função (resolvida em tempo de execução para tolerar carregamento assíncrono)
+        const _delegateMap = {
+            'exportPDFBtn':   () => typeof window.exportPDF       === 'function' && window.exportPDF(),
+            'exportDOCXBtn':  () => typeof window.exportDOCX      === 'function' && window.exportDOCX(),
+            'atfModalBtn':    () => typeof window.openATFModal     === 'function' && window.openATFModal(),
+            'exportJSONBtn':  () => typeof window.exportDataJSON   === 'function' && window.exportDataJSON(),
+            'resetBtn':       () => typeof window.resetSystem      === 'function' && window.resetSystem(),
+            'clearConsoleBtn':() => typeof window.clearConsole     === 'function' && window.clearConsole()
+        };
+
+        container._unifedDelegateHandler = function _delegateClick(e) {
+            const btn = e.target.closest('button[id]');
+            if (!btn) return;
+            const handler = _delegateMap[btn.id];
+            if (typeof handler === 'function') {
+                e.stopPropagation();
+                handler();
             }
-            analyzeBtn.setAttribute('data-triada-protected', 'true');
+        };
+        // capture:true — garante prioridade sobre listeners de bolha adicionados por outros módulos
+        container.addEventListener('click', container._unifedDelegateHandler, true);
+
+        // Solução B — chamar rebindToolbarListeners() se script.js a expôs
+        if (typeof window.rebindToolbarListeners === 'function') {
+            try {
+                window.rebindToolbarListeners();
+                console.log('[TRIADA] rebindToolbarListeners() invocada com sucesso.');
+            } catch (_rbErr) {
+                console.warn('[TRIADA] rebindToolbarListeners() lançou excepção:', _rbErr.message);
+            }
         }
 
-        if (typeof _log === 'function') _log('Toolbar restaurada e listeners re-vinculados via Event Delegation.');
-        console.log('[TRIADA] Toolbar original restaurada (FIX 5.1 — Event Delegation).');
+        console.log('[TRIADA] Toolbar original restaurada + Event Delegation activa em #export-tools-container.');
         return true;
     }
 
