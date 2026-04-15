@@ -1,12 +1,10 @@
 /**
  * UNIFED - PROBATUM · CASO REAL ANONIMIZADO v13.12.2-i18n (ASYNC + PERSIST)
  * ============================================================================
- * [RETIFICAÇÃO CIRÚRGICA 2026-04-15]
- * - O botão "CASO REAL ANONIMIZADO" apenas carrega as matrizes (contadores e dados brutos)
- *   sem executar a perícia.
- * - A execução dos cálculos (crossings, IVA, IRC, etc.) e a exibição visual
- *   dos módulos de discrepância ficam reservadas para o botão "EXECUTAR PERÍCIA".
- * - Adicionado flag _unifedRawDataOnly para bloquear sincronização prematura.
+ * [MERGE CIRÚRGICO 2026-04-15]
+ * - Base: script_injection.js (original, mais recente)
+ * - Adicionados campos extras em crossings (btor, btf, c1_delta, c1_pct, c2_delta, c2_pct)
+ * - Adicionada função forceRenderFix para garantir exibição de gráficos
  * ============================================================================
  */
 
@@ -135,6 +133,7 @@
         }
     });
 
+    // [NOVO] forceRenderFix - garante que secções de gráfico fiquem visíveis
     function forceRenderFix() {
         const charts = document.querySelectorAll('.chart-section');
         charts.forEach(c => {
@@ -392,7 +391,7 @@
             <div id="triangulationMatrixContainer" class="pure-triangulation-box" style="margin:30px 0; border:1px solid #00E5FF; background:rgba(15,23,42,0.95); padding:20px; border-radius:12px;">
                 <h3 style="color:#00E5FF; margin-top:0; font-size:1rem;">${labels.title}</h3>
                 <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
-                    <thead><tr style="border-bottom:1px solid rgba(255,255,255,0.2);"><th style="text-align:left; padding:10px;">${labels.colSource}</th><th style="text-align:right; padding:10px;">${labels.colValue}</th><th style="text-align:right; padding:10px; color:#EF4444;">${labels.colDisc}</th></tr></thead>
+                    <thead><tr style="border-bottom:1px solid rgba(255,255,255,0.2);"><th style="text-align:left; padding:10px;">${labels.colSource}</th><th style="text-align:right; padding:10px;">${labels.colValue}</th><th style="text-align:right; padding:10px; color:#EF4444;">${labels.colDisc}</th><tr></thead>
                     <tbody>
                         <tr><td style="padding:10px;">📄 SAF-T PT (${isEn ? 'Invoicing' : 'Faturação'})</td><td style="padding:10px; text-align:right;">${fmt(t.saftBruto)}</td><td style="padding:10px; text-align:right;">-${fmt(deltaSaft)}</td></tr>
                         <tr style="background:rgba(239,68,68,0.08);"><td style="padding:10px;">🌐 DAC7 (Plataforma A)</td><td style="padding:10px; text-align:right;">${fmt(t.dac7TotalPeriodo)}</td><td style="padding:10px; text-align:right;">-${fmt(deltaDac7)}</td></tr>
@@ -823,7 +822,7 @@
                 // Marcar que os dados estão prontos, mas a análise ainda não foi executada
                 window._unifedDataLoaded = true;
                 window._unifedAnalysisPending = true;
-                window._unifedRawDataOnly = true;  // <-- Novo flag
+                window._unifedRawDataOnly = true;
 
                 return true;
             } catch (err) {
@@ -898,6 +897,8 @@
             sys.analysis.crossings.agravamentoBrutoIRC = agravamentoBrutoIRC;
             sys.analysis.crossings.ircEstimado = ircEstimado;
             sys.analysis.crossings.asfixiaFinanceira = asfixiaFinanceira;
+
+            // [NOVO] Campos adicionais provenientes do script_injection(2).js
             sys.analysis.crossings.btor = t.despesas;
             sys.analysis.crossings.btf = t.faturaPlataforma;
             sys.analysis.crossings.c1_delta = discrepanciaSaftVsDac7;
@@ -1307,7 +1308,7 @@
 
         setupEventDrivenHydration();
         setupRealCaseButton();
-        setupAnalyzeButton();  // Adiciona o listener para o botão "Executar Perícia"
+        setupAnalyzeButton();
         
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {

@@ -14,6 +14,7 @@
  *   - generateBurdenOfProofSection adicionada
  * · Mantidas todas as funções originais e estrutura de dados
  * · Removidas duplicações e garantida a visibilidade original do dashboard
+ * · EXPOSIÇÃO GLOBAL: window.generateLegalNarrative adicionada para compatibilidade
  * ============================================================================
  */
 
@@ -1217,6 +1218,7 @@ window.renderSankeyToImage     = renderSankeyToImage;
 window.generateTemporalChartImage = generateTemporalChartImage;
 window.computeTemporalAnalysis = computeTemporalAnalysis;
 window.openATFModal            = openATFModal;
+window.generateLegalNarrative  = generateLegalNarrative;   // <-- ADICIONADO: exposição global
 
 function generateBurdenOfProofSection(discrepancyValue) {
     if (!discrepancyValue || discrepancyValue <= 0) return '';
