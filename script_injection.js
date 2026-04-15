@@ -1457,6 +1457,37 @@
     // Expor globalmente para que o botão "INICIAR" a possa chamar
     window.forceFinalState = forceFinalState;
 
-    // NOTA: NÃO executar automaticamente. A transição será iniciada pelo clique no botão.
+    // =========================================================================
+    // CORREÇÃO: Adiciona o listener ao botão "INICIAR METODOLOGIA" (#startSessionBtn)
+    // =========================================================================
+    function setupIniciarButton() {
+        const startBtn = document.getElementById('startSessionBtn');
+        if (startBtn) {
+            // Remove qualquer listener duplicado (evita múltiplas execuções)
+            if (startBtn.getAttribute('data-iniciar-listener') === 'true') return;
+            
+            startBtn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                console.log('[UNIFED] Botão INICIAR clicado — a iniciar forceFinalState()');
+                if (typeof window.forceFinalState === 'function') {
+                    await window.forceFinalState();
+                } else {
+                    console.error('[UNIFED] forceFinalState não está disponível');
+                }
+            });
+            startBtn.setAttribute('data-iniciar-listener', 'true');
+            console.log('[UNIFED] Listener associado ao botão "INICIAR METODOLOGIA" (#startSessionBtn).');
+        } else {
+            console.warn('[UNIFED] Botão #startSessionBtn não encontrado no DOM. O sistema pode não arrancar corretamente.');
+        }
+    }
+
+    // Aguarda o DOM estar pronto antes de associar o listener
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', setupIniciarButton);
+    } else {
+        setupIniciarButton();
+    }
+
     console.log('[UNIFED] script_injection.js carregado. Aguardando clique em "INICIAR".');
 })();
