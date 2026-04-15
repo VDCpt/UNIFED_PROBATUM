@@ -208,6 +208,13 @@
         if (!window.UNIFED_INTERNAL) return;
         const { data, fmt, set } = window.UNIFED_INTERNAL;
 
+/**
+ * UNIFED - PROBATUM · CASO REAL ANONIMIZADO v13.12.2-i18n (ASYNC + PERSIST)
+ * ============================================================================
+ * [RETIFICAÇÃO] syncMetrics melhorado: corrige IRC, zona cinzenta, revenue/expense gaps e contador de evidências.
+ * ============================================================================
+ */
+
         window.UNIFED_INTERNAL.syncMetrics = function() {
             const dashboard = document.getElementById('pureDashboard');
             if (!dashboard) {
@@ -218,45 +225,59 @@
             console.log('[UNIFED] Iniciando Sincronização Forense...');
             
             const sys = window.UNIFEDSystem;
+            // Usar valores do sistema se disponíveis, senão fallback para o dataset estático
             const t = (sys && sys.analysis && sys.analysis.totals && sys.analysis.totals.ganhos > 0) ? sys.analysis.totals : data.totals;
-            const aux = (sys && sys.auxiliaryData && sys.auxiliaryData.extractedAt) ? sys.auxiliaryData : data.totals;
+            const c = (sys && sys.analysis && sys.analysis.crossings) ? sys.analysis.crossings : {};
             
-            const discrepanciaC2 = t.despesas - t.faturaPlataforma;
-            const percentC2 = (t.despesas > 0) ? (discrepanciaC2 / t.despesas) * 100 : 0;
-            const discrepanciaC1 = t.saftBruto - t.dac7TotalPeriodo;
-            const percentC1 = (t.saftBruto > 0) ? (discrepanciaC1 / t.saftBruto) * 100 : 0;
-            const ircEstimado = discrepanciaC2 * 0.21;
-            const asfixiaFinanceira = t.saftBruto * 0.06;
+            // Discrepâncias (usar os valores já calculados pelo motor forense)
+            const discrepanciaC2 = c.discrepanciaCritica || (t.despesas - t.faturaPlataforma);
+            const percentC2 = c.percentagemOmissao || (t.despesas > 0 ? (discrepanciaC2 / t.despesas) * 100 : 0);
+            const discrepanciaC1 = c.discrepanciaSaftVsDac7 || (t.saftBruto - t.dac7TotalPeriodo);
+            const percentC1 = c.percentagemSaftVsDac7 || (t.saftBruto > 0 ? (discrepanciaC1 / t.saftBruto) * 100 : 0);
             
+            // IRC: usar o valor já calculado pelo performForensicCrossings (agravamentoAnual * 21%)
+            const ircEstimadoCorreto = c.ircEstimado || (discrepanciaC2 * 0.21);
+            const asfixiaFinanceira = t.asfixiaFinanceira || (t.saftBruto * 0.06);
+            
+            // Fluxos isentos (zona cinzenta) – garantir que vêm do dataset ou do sistema
             const fi = data.fluxosIsentos;
             const totalNaoSujeitosCalc = fi.total;
             
+            // Contadores de evidências
             const getCounter = (docType, fallback) => {
                 if (sys && sys.documents && sys.documents[docType] && sys.documents[docType].totals) {
                     return sys.documents[docType].totals.records.toString();
                 }
                 return fallback;
             };
+            const totalEvidencias = (sys && sys.counts && sys.counts.total) ? sys.counts.total.toString() : 
+                                    (data.counts.ctrl + data.counts.saft + data.counts.fat + data.counts.ext + data.counts.dac7).toString();
 
+            // Função auxiliar para definir texto em elementos que podem estar em qualquer lugar (não apenas dentro de #pureDashboard)
+            const setAnyText = (id, value) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = value;
+            };
+            // Para elementos dentro do #pureDashboard (escopo)
             const setScopedText = (id, value) => {
                 const el = document.querySelector(`#pureDashboard #${id}`);
                 if (el) el.textContent = value;
             };
 
+            // Mapeamento para elementos dentro de #pureDashboard
             const mapping = {
                 'pure-ganhos': fmt(t.ganhos), 'pure-despesas': fmt(t.despesas), 'pure-liquido': fmt(t.ganhosLiquidos),
                 'pure-saft': fmt(t.saftBruto), 'pure-dac7': fmt(t.dac7TotalPeriodo), 'pure-fatura': fmt(t.faturaPlataforma),
                 'pure-disc-c2': fmt(discrepanciaC2), 'pure-disc-c2-pct': percentC2.toFixed(2) + '%',
                 'pure-disc-saft-dac7': fmt(discrepanciaC1), 'pure-disc-saft-pct': percentC1.toFixed(2) + '%',
-                'pure-iva-6': fmt(t.iva6Omitido), 'pure-iva-23': fmt(t.iva23Omitido), 'pure-irc': fmt(ircEstimado),
+                'pure-iva-6': fmt(t.iva6Omitido), 'pure-iva-23': fmt(t.iva23Omitido),
+                'pure-irc': fmt(ircEstimadoCorreto),   // CORRIGIDO: usa o valor correto do motor
                 'pure-disc-c2-grid': fmt(discrepanciaC2), 'pure-iva-devido': fmt(asfixiaFinanceira),
                 'pure-nao-sujeitos': fmt(totalNaoSujeitosCalc), 'pure-atf-sp': data.atf.score + '/100',
                 'pure-atf-trend': data.atf.trend, 'pure-atf-outliers': data.atf.outliers + ' outliers > 2σ',
                 'pure-atf-meses': '2.º Semestre 2024 — 4 meses com dados (Set–Dez)',
-                'pure-sg-1-val': fmt(discrepanciaC2),
-                'pure-sg-1-pct': percentC2.toFixed(2) + '%',
-                'pure-sg-2-val': fmt(discrepanciaC1),
-                'pure-sg-2-pct': percentC1.toFixed(2) + '%',
+                'pure-sg-1-val': fmt(discrepanciaC2), 'pure-sg-1-pct': percentC2.toFixed(2) + '%',
+                'pure-sg-2-val': fmt(discrepanciaC1), 'pure-sg-2-pct': percentC1.toFixed(2) + '%',
                 'pure-nc-campanhas': fmt(fi.campanhas),
                 'pure-nc-gorjetas': fmt(fi.gorjetas),
                 'pure-nc-portagens': fmt(fi.portagens),
@@ -278,28 +299,40 @@
                 'pure-fat-qty': getCounter('invoices', data.counts.fat.toString()),
                 'pure-ext-qty': getCounter('statements', data.counts.ext.toString()),
                 'pure-dac7-qty': getCounter('dac7', data.counts.dac7.toString()),
-                'pure-ganhos-tri': fmt(t.ganhos),
-                'pure-despesas-tri': fmt(t.despesas),
-                'pure-liquido-tri': fmt(t.ganhosLiquidos),
-                'pure-fatura-tri': fmt(t.faturaPlataforma),
-                'pure-counter-ctrl': getCounter('control', '0'),
-                'pure-counter-saft': getCounter('saft', '0'),
-                'pure-counter-fat': getCounter('invoices', '0'),
-                'pure-counter-ext': getCounter('statements', '0'),
+                'pure-ganhos-tri': fmt(t.ganhos), 'pure-despesas-tri': fmt(t.despesas),
+                'pure-liquido-tri': fmt(t.ganhosLiquidos), 'pure-fatura-tri': fmt(t.faturaPlataforma),
+                'pure-counter-ctrl': getCounter('control', '0'), 'pure-counter-saft': getCounter('saft', '0'),
+                'pure-counter-fat': getCounter('invoices', '0'), 'pure-counter-ext': getCounter('statements', '0'),
                 'pure-counter-dac7': getCounter('dac7', '0')
             };
             
             Object.entries(mapping).forEach(([id, value]) => {
                 setScopedText(id, value);
             });
+
+            // Atualizar elementos fora do #pureDashboard (contador total de evidências e gaps)
+            setAnyText('evidenceCountTotal', totalEvidencias);
+            setAnyText('pure-evidence-count-display', totalEvidencias);
             
-            if (typeof Chart !== 'undefined') {
-                if (typeof window.renderChart === 'function') window.renderChart();
-                if (typeof window.renderDiscrepancyChart === 'function') window.renderDiscrepancyChart();
-            } else {
-                console.warn('[UNIFED] Chart.js não disponível – gráficos não renderizados.');
-            }
+            // Atualizar Revenue Gap, Expense Gap e Percentagem (elementos no index.html)
+            const revenueGapValue = document.getElementById('revenueGapValue');
+            if (revenueGapValue) revenueGapValue.textContent = fmt(discrepanciaC1); // SAF-T vs DAC7? Não, revenue gap é SAF-T vs Ganhos. Melhor usar twoAxis.revenueGap
+            const revenueGapCorrect = t.saftBruto - t.ganhos;
+            if (revenueGapValue) revenueGapValue.textContent = fmt(revenueGapCorrect);
+            const expenseGapValue = document.getElementById('expenseGapValue');
+            if (expenseGapValue) expenseGapValue.textContent = fmt(discrepanciaC2);
+            const omissaoPctValue = document.getElementById('omissaoDespesasPctValue');
+            if (omissaoPctValue) omissaoPctValue.textContent = ((t.despesas / t.ganhos) * 100).toFixed(2) + '%';
             
+            // Forçar exibição dos cards de gap se tiverem valores
+            const revenueCard = document.getElementById('revenueGapCard');
+            if (revenueCard && Math.abs(revenueGapCorrect) > 0.01) revenueCard.style.display = 'block';
+            const expenseCard = document.getElementById('expenseGapCard');
+            if (expenseCard && Math.abs(discrepanciaC2) > 0.01) expenseCard.style.display = 'block';
+            const omissaoCard = document.getElementById('omissaoDespesasPctCard');
+            if (omissaoCard && t.despesas > 0 && t.ganhos > 0) omissaoCard.style.display = 'block';
+            
+            // ... (resto do código: atualização de textos legais, etc.)
             const sg1Legal = document.querySelector('#pureDashboard #pure-sg1-legal');
             if (sg1Legal) sg1Legal.textContent = 'Art. 23.º CIRC (Indutividade de Custos) · Art. 103.º RGIT (Fraude Fiscal)';
             const sg2Legal = document.querySelector('#pureDashboard #pure-sg2-legal');
@@ -312,19 +345,16 @@
             if (pureIrcSub) pureIrcSub.textContent = 'Art. 17.º CIRC';
             const pureAtfNote = document.querySelector('#pureDashboard #pure-atf-note-text');
             if (pureAtfNote) pureAtfNote.textContent = 'Score de Persistência calculado pelo motor computeTemporalAnalysis() sobre 4 meses de histórico (Set/Out/Nov/Dez 2024). SP calculado sobre o lote global (dados verificados UNIFED-MMLADX8Q-CV69L). As discrepâncias absolutas (C2: €2.184,95 — 89,26% · C1: €1.951,42 — 23,72%) mantêm relevância jurídica independente.';
-            const omissaoPctEl = document.querySelector('#pureDashboard #omissaoDespesasPctValue');
-            if (omissaoPctEl) omissaoPctEl.textContent = ((t.despesas / t.ganhos) * 100).toFixed(2) + '%';
-            const sg2BtorEl = document.querySelector('#pureDashboard #pure-sg2-btor-val');
-            if (sg2BtorEl) sg2BtorEl.textContent = fmt(t.despesas);
-            const sg2BtfEl = document.querySelector('#pureDashboard #pure-sg2-btf-val');
-            if (sg2BtfEl) sg2BtfEl.textContent = fmt(t.faturaPlataforma);
-            const sg1SaftEl = document.querySelector('#pureDashboard #pure-sg1-saft-val');
-            if (sg1SaftEl) sg1SaftEl.textContent = fmt(t.saftBruto);
-            const sg1Dac7El = document.querySelector('#pureDashboard #pure-sg1-dac7-val');
-            if (sg1Dac7El) sg1Dac7El.textContent = fmt(t.dac7TotalPeriodo);
-            const asfixiaEl = document.querySelector('#pureDashboard #pure-iva-devido');
-            if (asfixiaEl) asfixiaEl.textContent = fmt(asfixiaFinanceira);
+            
+            // Gráficos (se Chart.js disponível)
+            if (typeof Chart !== 'undefined') {
+                if (typeof window.renderChart === 'function') window.renderChart();
+                if (typeof window.renderDiscrepancyChart === 'function') window.renderDiscrepancyChart();
+            } else {
+                console.warn('[UNIFED] Chart.js não disponível – gráficos não renderizados.');
+            }
         };
+
         console.log('[UNIFED] Camada 2: OK.');
     })();
 

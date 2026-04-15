@@ -4841,17 +4841,10 @@ function showTwoAxisAlerts() {
 
     const revenueGapCard = document.getElementById('revenueGapCard');
     const revenueGapValue = document.getElementById('revenueGapValue');
-
     if (revenueGapCard && revenueGapValue) {
         if (twoAxis.revenueGapActive) {
             revenueGapCard.style.display = 'block';
             revenueGapValue.textContent = formatCurrency(twoAxis.revenueGap);
-
-            if (Math.abs(twoAxis.revenueGap) > 100) {
-                revenueGapCard.classList.add('alert-intermitent');
-            } else {
-                revenueGapCard.classList.remove('alert-intermitent');
-            }
         } else {
             revenueGapCard.style.display = 'none';
         }
@@ -4859,17 +4852,10 @@ function showTwoAxisAlerts() {
 
     const expenseGapCard = document.getElementById('expenseGapCard');
     const expenseGapValue = document.getElementById('expenseGapValue');
-
     if (expenseGapCard && expenseGapValue) {
         if (twoAxis.expenseGapActive) {
             expenseGapCard.style.display = 'block';
             expenseGapValue.textContent = formatCurrency(twoAxis.expenseGap);
-
-            if (Math.abs(twoAxis.expenseGap) > 50) {
-                expenseGapCard.classList.add('alert-intermitent');
-            } else {
-                expenseGapCard.classList.remove('alert-intermitent');
-            }
         } else {
             expenseGapCard.style.display = 'none';
         }
@@ -4877,30 +4863,13 @@ function showTwoAxisAlerts() {
 
     const omissaoCard = document.getElementById('omissaoDespesasPctCard');
     const omissaoValue = document.getElementById('omissaoDespesasPctValue');
-    const omissaoDesc = document.getElementById('omissaoDespesasPctDesc');
-
     if (omissaoCard && omissaoValue) {
         const despesas = totals.despesas || 0;
         const ganhos = totals.ganhos || 0;
         const pct = (ganhos > 0) ? (despesas / ganhos) * 100 : 0;
-
         if (ganhos > 0 && despesas > 0) {
             omissaoCard.style.display = 'block';
             omissaoValue.textContent = pct.toLocaleString(currentLang === 'en' ? 'en-GB' : 'pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' %';
-            if (omissaoDesc) {
-                omissaoDesc.textContent = currentLang === 'en'
-                    ? `(${formatCurrency(despesas)} / ${formatCurrency(ganhos)}) × 100  [Expenses/Commissions / Earnings]`
-                    : `(${formatCurrency(despesas)} / ${formatCurrency(ganhos)}) × 100  [Despesas/Comissões / Ganhos]`;
-            }
-            if (pct > 25) {
-                omissaoCard.classList.add('omissao-threshold-alert');
-                omissaoCard.classList.remove('alert-intermitent');
-                omissaoCard.classList.remove('box-border-blink');
-            } else {
-                omissaoCard.classList.remove('omissao-threshold-alert');
-                omissaoCard.classList.remove('alert-intermitent');
-                omissaoCard.classList.remove('box-border-blink');
-            }
         } else {
             omissaoCard.style.display = 'none';
         }

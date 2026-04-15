@@ -1263,5 +1263,68 @@ body.forensic-revealed .pure-zc-val {
 }
 
 /* ============================================================================
+   RETIFICAÇÕES DE VISIBILIDADE E PREENCHIMENTO DE DADOS (v13.12.2-i18n)
+   ============================================================================ */
+
+/* Forçar anulação do estado Zero-Knowledge em ambiente de execução */
+body.forensic-revealed .pure-data-value,
+body.forensic-revealed .pure-mono,
+body.forensic-revealed .pure-atf-big,
+body.forensic-revealed .pure-zc-val {
+    opacity: 1 !important;
+    visibility: visible !important;
+    transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Garantir que o Dashboard se sobreponha a qualquer resquício de UI anterior */
+#pureDashboardWrapper.activated {
+    z-index: 9999 !important;
+    position: relative !important;
+    background: var(--bg-primary) !important;
+}
+
+/* Assegurar que os filhos diretos do wrapper ativado não colapsam */
+#pureDashboardWrapper.activated #pureDashboard,
+#pureDashboardWrapper.activated .pure-section {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    height: auto !important;
+    min-height: 100vh !important;
+    z-index: 10000 !important;
+    position: relative !important;
+}
+
+/* Proteção de legibilidade e contraste (Prevenção de texto invisível) */
+#pureDashboardWrapper.activated {
+    color: #f8fafc !important;
+}
+
+/* Forçar que os elementos da zona cinzenta fiquem visíveis */
+#pure-nc-campanhas, #pure-nc-gorjetas, #pure-nc-portagens, #pure-nc-total {
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Garantir que os cards de gap aparecem quando têm conteúdo */
+#revenueGapCard, #expenseGapCard, #omissaoDespesasPctCard {
+    transition: all 0.2s ease;
+}
+
+/* Assegurar que o contador de evidências é visível */
+#evidenceCountTotal, #pure-evidence-count-display {
+    font-weight: bold;
+    color: var(--accent-primary);
+}
+
+/* Prevenir que o Chart.js canva seja ocultado por overflow */
+canvas#mainChart, canvas#discrepancyChart, canvas#atfChartCanvas {
+    max-width: 100%;
+    height: auto;
+    background: rgba(0,0,0,0.2);
+    border-radius: 4px;
+}
+
+/* ============================================================================
    FIM — UNIFED PROBATUM v13.12.2-i18n CONSOLIDADO
    ============================================================================ */
