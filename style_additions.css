@@ -1169,70 +1169,162 @@ canvas {
     padding-bottom: 0;
 }
 
-
 /* ============================================================================
-   FIM — UNIFED PROBATUM v13.12.1-FIX CONSOLIDADO
+   FIX 4.1: Enforcement de visibilidade forense (CSS Specificity Overriding)
    ============================================================================ */
-
-/* ============================================================================
-   [FIX REVELAÇÃO — v13.12.2-RETIF] BLOCO PROBATÓRIO — CLASSE DE REVELAÇÃO
-   ============================================================================
-   Problema: colisão de especificidade entre `display: none !important` do
-   HTML/CSS original e as tentativas de revelação via JS.
-   Solução: a classe .forensic-revealed é adicionada APÓS display:block inline
-   ter sido aplicado por JS (revealForensicData / UNIFED_ANALYSIS_COMPLETE),
-   garantindo que a cascata CSS não reverte a visibilidade.
-
-   Ordem de especificidade deliberada:
-     1. JS aplica `el.style.display = 'block'` (inline — máxima prioridade)
-     2. JS adiciona .forensic-revealed
-     3. As regras abaixo reforçam opacity e visibility contra !important externos
-   ============================================================================ */
-
-/* Revelação genérica — qualquer elemento com .forensic-revealed */
 .forensic-revealed {
-    opacity:    1          !important;
-    visibility: visible    !important;
-    display:    block      !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: block !important;
+    transition: opacity 0.4s ease-in !important;
 }
 
-/* Variante para contentores em grelha (kpi-cards, módulos de análise) */
-.forensic-revealed.grid-layout,
-.forensic-revealed.pure-card-grid,
-.forensic-revealed.kpi-grid {
+/* Variante para manter layouts de grid ou flex */
+.forensic-revealed.grid-layout {
     display: grid !important;
 }
 
-/* Variante flex (linhas de métricas) */
-.forensic-revealed.flex-row,
-.forensic-revealed.pure-subject-header,
-.forensic-revealed.pure-toolbar {
+.forensic-revealed.flex-layout {
     display: flex !important;
 }
 
-/* Blocos probatórios específicos — garantia de visibilidade mesmo sem rAF */
-#smoking-gun-1.forensic-revealed,
-#smoking-gun-2.forensic-revealed,
-#area-cinzenta.forensic-revealed,
-#colarinho-branco.forensic-revealed,
-#bloco-rag-legal.forensic-revealed {
-    display:    block   !important;
-    opacity:    1       !important;
+/* Proteção contra ocultação de módulos críticos */
+#smoking-gun-1.forensic-revealed, 
+#smoking-gun-2.forensic-revealed {
+    border-left: 4px solid var(--pure-warn) !important;
+}
+
+/* ============================================================================
+   RETIFICAÇÃO DEFINITIVA DE VISIBILIDADE
+   ============================================================================ */
+#main-container {
+    transition: opacity 0.5s ease-in-out;
+}
+
+/* Garante que o wrapper nunca fica invisível após a ativação */
+#pureDashboardWrapper.activated {
+    opacity: 1 !important;
+    display: block !important;
     visibility: visible !important;
-    height:     auto    !important;
-    overflow:   visible !important;
-    max-height: none    !important;
-    clip:       auto    !important;
-    clip-path:  none    !important;
-    transform:  none    !important;
+    z-index: 9999 !important;
+    position: relative !important;
+    background: var(--bg-primary) !important;
 }
 
-/* Transição suave na revelação — não interferir com gráficos Chart.js */
-#smoking-gun-1,
-#smoking-gun-2,
-#area-cinzenta,
-#colarinho-branco,
-#bloco-rag-legal {
-    transition: opacity 0.3s ease, visibility 0.3s ease;
+/* Estilo do Selo de Selagem Local (Nível 1) */
+#pure-tsa-anchor {
+    border: 1px solid var(--pure-accent);
+    padding: 4px 8px;
+    background: rgba(0, 229, 255, 0.1);
+    border-radius: 4px;
+    display: inline-block;
 }
 
+/* ============================================================================
+   UNIFED - PROBATUM · v13.12.2-i18n · ESTILOS DO PAINEL DE CASO REAL
+   ============================================================================
+   (mantenha todo o conteúdo existente acima)
+   ============================================================================ */
+
+/* [RETIFICAÇÃO TÉCNICA - style_additions.css] */
+
+/* Forçar anulação do estado Zero-Knowledge em ambiente de execução */
+body.forensic-revealed .pure-data-value,
+body.forensic-revealed .pure-mono,
+body.forensic-revealed .pure-atf-big,
+body.forensic-revealed .pure-zc-val {
+    opacity: 1 !important;
+    visibility: visible !important;
+    transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Garantir que o Dashboard se sobreponha a qualquer resquício de UI anterior */
+#pureDashboardWrapper.activated {
+    z-index: 9999 !important;
+    position: relative !important;
+    background: var(--bg-primary) !important;
+}
+
+/* Assegurar que os filhos diretos do wrapper ativado não colapsam */
+#pureDashboardWrapper.activated #pureDashboard,
+#pureDashboardWrapper.activated .pure-section {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    height: auto !important;
+    min-height: 100vh !important;
+    z-index: 10000 !important;
+    position: relative !important;
+}
+
+/* Proteção de legibilidade e contraste (Prevenção de texto invisível) */
+#pureDashboardWrapper.activated {
+    color: #f8fafc !important;
+}
+
+/* ============================================================================
+   RETIFICAÇÕES DE VISIBILIDADE E PREENCHIMENTO DE DADOS (v13.12.2-i18n)
+   ============================================================================ */
+
+/* Forçar anulação do estado Zero-Knowledge em ambiente de execução */
+body.forensic-revealed .pure-data-value,
+body.forensic-revealed .pure-mono,
+body.forensic-revealed .pure-atf-big,
+body.forensic-revealed .pure-zc-val {
+    opacity: 1 !important;
+    visibility: visible !important;
+    transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Garantir que o Dashboard se sobreponha a qualquer resquício de UI anterior */
+#pureDashboardWrapper.activated {
+    z-index: 9999 !important;
+    position: relative !important;
+    background: var(--bg-primary) !important;
+}
+
+/* Assegurar que os filhos diretos do wrapper ativado não colapsam */
+#pureDashboardWrapper.activated #pureDashboard,
+#pureDashboardWrapper.activated .pure-section {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    height: auto !important;
+    min-height: 100vh !important;
+    z-index: 10000 !important;
+    position: relative !important;
+}
+
+/* Proteção de legibilidade e contraste (Prevenção de texto invisível) */
+#pureDashboardWrapper.activated {
+    color: #f8fafc !important;
+}
+
+/* Forçar que os elementos da zona cinzenta fiquem visíveis */
+#pure-nc-campanhas, #pure-nc-gorjetas, #pure-nc-portagens, #pure-nc-total {
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Garantir que os cards de gap aparecem quando têm conteúdo */
+#revenueGapCard, #expenseGapCard, #omissaoDespesasPctCard {
+    transition: all 0.2s ease;
+}
+
+/* Assegurar que o contador de evidências é visível */
+#evidenceCountTotal, #pure-evidence-count-display {
+    font-weight: bold;
+    color: var(--accent-primary);
+}
+
+/* Prevenir que o Chart.js canva seja ocultado por overflow */
+canvas#mainChart, canvas#discrepancyChart, canvas#atfChartCanvas {
+    max-width: 100%;
+    height: auto;
+    background: rgba(0,0,0,0.2);
+    border-radius: 4px;
+}
+
+/* ============================================================================
+   FIM — UNIFED PROBATUM v13.12.2-i18n CONSOLIDADO
+   ============================================================================ */

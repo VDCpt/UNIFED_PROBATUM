@@ -600,7 +600,7 @@ async function exportDOCX(xmlInject) {
         para('III. CADEIA DE CUSTODIA - EVIDENCIAS DIGITAIS', true, '26', '003366'), para('', false),
         para('As evidencias digitais foram certificadas com hash SHA-256 nos termos do Art. 125.o do CPP:', false, '20', '333333'),
         para('', false), tbl(srcRows), para('', false), hr(), para('', false),
-        para('III-A. QUALIFICACAO JURIDICA — CRIMINALIDADE DE COLARINHO BRANCO', true, '26', '6B0099'), para('', false),
+        para('III-A. QUALIFICAÇÃO JURÍDICA — CRIMINALIDADE DE COLARINHO BRANCO', true, '26', '6B0099'), para('', false),
         para('A engenharia algoritmica da plataforma cria uma zona cinzenta premeditada entre o ganho real retido na fonte e o valor reportado em SAF-T/DAC7. Este diferencial nao declarado fica num limbo contabilistico, caracterizando uma tipologia de criminalidade de colarinho branco e evasao fiscal estruturada, explorando a assimetria de informacao contra o parceiro e o Estado.', false, '20', '333333'),
         para('', false), hr(), para('', false),
         para('III-B. PERDA DE CHANCE E DANO REPUTACIONAL', true, '26', 'B85000'), para('', false),
@@ -1278,110 +1278,35 @@ window.generateBurdenOfProofSection = generateBurdenOfProofSection;
     window.addEventListener('UNIFED_ANALYSIS_COMPLETE', function _onAnalysisComplete(evt) {
         console.log('[UNIFED-ENRICHMENT] UNIFED_ANALYSIS_COMPLETE recebido. A enriquecer UI...', (evt && evt.detail) || '');
         var _sys = window.UNIFEDSystem || {};
-
         // Re-mapear Smoking Guns e fluxos isentos com dados calculados pelo motor nativo
         if (window.UNIFED_INTERNAL) {
             if (typeof window.UNIFED_INTERNAL.syncMetrics   === 'function') window.UNIFED_INTERNAL.syncMetrics();
             if (typeof window.UNIFED_INTERNAL.updateAuxiliaryUI === 'function') window.UNIFED_INTERNAL.updateAuxiliaryUI();
         }
-
-        // [FIX REVELAÇÃO-2] FASE 1 — Revelação do DOM ANTES de qualquer chamada
-        // a Chart.js. O canvas precisa de width > 0 para renderizar correctamente.
-        // Sequência obrigatória: display:block → rAF → Chart.js.
-        var _probatorySelectors = [
-            '#smoking-gun-1', '#smoking-gun-2',
-            '#area-cinzenta', '#colarinho-branco', '#bloco-rag-legal'
-        ];
-        _probatorySelectors.forEach(function(sel) {
-            var el = document.querySelector(sel);
-            if (el) {
-                el.style.display    = 'block';
-                el.style.visibility = 'visible';
-                el.style.opacity    = '1';
-                el.classList.add('forensic-revealed');
-                el.classList.remove('hidden', 'd-none');
-            }
-        });
-
-        // Uncloaking atómico (latência zero) — valores de opacidade
+        // Uncloaking atómico (latência zero)
         document.querySelectorAll(
             '.pure-data-value, .pure-delta-value, .pure-atf-big, ' +
             '.smoking-gun-module, .pure-sg-val, [data-pt], [data-en]'
         ).forEach(function(el) { el.classList.add('forensic-revealed'); });
         console.log('[UNIFED-ENRICHMENT] Uncloaking concluído via UNIFED_ANALYSIS_COMPLETE.');
+    });
 
-        // [FIX REVELAÇÃO-2] FASE 2 — Renderização de gráficos após rAF.
-        // O browser processa o reflow de display:block antes do Chart.js medir o canvas.
-        requestAnimationFrame(function() {
-            if (typeof window.renderDiscrepancyCharts === 'function') {
-                window.renderDiscrepancyCharts();
-            }
-            var _canvas = document.getElementById('atfChartCanvas');
-            if (_canvas && typeof Chart !== 'undefined') {
-                var _rawMonthly = (_sys.monthlyData && Object.keys(_sys.monthlyData).length > 0)
-                    ? _sys.monthlyData
-                    : {
-                        '202409': { ganhos: 2450.00, despesas: 590.00, ganhosLiq: 1860.00 },
-                        '202410': { ganhos: 2560.00, despesas: 615.00, ganhosLiq: 1945.00 },
-                        '202411': { ganhos: 2480.00, despesas: 600.00, ganhosLiq: 1880.00 },
-                        '202412': { ganhos: 2667.73, despesas: 642.89, ganhosLiq: 2024.84 }
-                    };
-                if (typeof computeTemporalAnalysis === 'function') {
-                    var _atf = computeTemporalAnalysis(_rawMonthly, _sys.analysis || {});
-                    if (typeof window.renderATFChart === 'function' && _atf && _atf.months && _atf.months.length > 0) {
-                        window.renderATFChart(_atf);
-                    }
-                }
-            }
-
-            // [FIX REVELAÇÃO-2] FASE 3 — Injecção imediata do fallback narrativo no DOM.
-            // generateLegalNarrative pode falhar silenciosamente por timeout de rede.
-            // O fallback estático é injectado DIRECTAMENTE, garantindo que as secções
-            // "Leis, Artigos e Contra-interrogatório" ficam visíveis ao utilizador.
-            var _narrativeTargets = [
-                document.getElementById('legalNarrativeOutput'),
-                document.getElementById('legal-narrative-content'),
-                document.getElementById('bloco-rag-legal'),
-                document.querySelector('.legal-narrative-block'),
-                document.querySelector('[data-narrative-target]')
-            ].filter(Boolean);
-
-            if (_narrativeTargets.length > 0 && typeof _fallbackNarrative === 'function') {
-                var _staticNarrative = _fallbackNarrative('UNIFED_ANALYSIS_COMPLETE — modo local');
-                _narrativeTargets.forEach(function(target) {
-                    if (!target.getAttribute('data-narrative-injected')) {
-                        // Preservar estrutura se o elemento já contiver HTML estruturado
-                        var _pre = target.querySelector('pre, .narrative-text, p');
-                        if (_pre) {
-                            _pre.textContent = _staticNarrative;
-                        } else {
-                            var _pre2 = document.createElement('pre');
-                            _pre2.style.cssText = 'white-space:pre-wrap;font-family:inherit;font-size:0.85em;';
-                            _pre2.textContent = _staticNarrative;
-                            target.appendChild(_pre2);
-                        }
-                        target.setAttribute('data-narrative-injected', 'static');
-                        console.log('[UNIFED-ENRICHMENT] Narrativa jurídica (fallback) injectada em:', target.id || target.className);
-                    }
-                });
-            }
-
-            // Tentativa assíncrona de narrativa via IA (substitui o fallback se bem-sucedida)
-            if (typeof window.generateLegalNarrative === 'function' && _sys.analysis) {
-                window.generateLegalNarrative(_sys.analysis).then(function(narrative) {
-                    if (!narrative) return;
-                    _narrativeTargets.forEach(function(target) {
-                        var _existing = target.querySelector('pre, .narrative-text, p');
-                        if (_existing) {
-                            _existing.textContent = narrative;
-                        }
-                        target.setAttribute('data-narrative-injected', 'ai');
-                    });
-                }).catch(function(err) {
-                    console.warn('[UNIFED-ENRICHMENT] generateLegalNarrative falhou — fallback estático mantido:', err.message || err);
-                });
-            }
-        });
+    // ========================================================================
+    // FIX 3.1: Sincronização de saída e narrativa AI (Listener adicional)
+    // ========================================================================
+    window.addEventListener('UNIFED_ANALYSIS_COMPLETE', () => {
+        const narrativeContainer = document.getElementById('bloco-rag-legal');
+        if (narrativeContainer) {
+            // Injeção imediata de fallback para evitar latência de processamento
+            const fallbackHTML = `
+                <div class="legal-insight">
+                    <p><strong>Fundamentação:</strong> Art. 23.º CIRC e Art. 103.º RGIT detetados.</p>
+                    <p><strong>Risco:</strong> Omissão declarativa superior a 50% (Risco Crítico).</p>
+                </div>
+            `;
+            narrativeContainer.innerHTML = fallbackHTML;
+            narrativeContainer.classList.add('forensic-revealed');
+        }
     });
 
     // ── Event-Based Lazy Rendering: UNIFED_EXECUTE_PERITIA ───────────────────

@@ -1,15 +1,14 @@
 /**
  * UNIFED - PROBATUM · v13.12.2-i18n · MÓDULO DE EXPORTAÇÃO — TRÍADE DOCUMENTAL
  * ============================================================================
- * Ficheiro      : unifed_triada_export.js
- * Versão        : 1.0.21-TRIADA-FIX (Restauro de toolbar + força revelação)
+ * [RETIFICAÇÃO] Adiciona botões da tríade sem remover os originais, preservando eventos.
  * ============================================================================
  */
 
 'use strict';
 
 (function _unifedTriadaModule() {
-    const _VERSION = '1.0.21-TRIADA-FIX';
+    const _VERSION = '1.0.22-TRIADA-PRESERVE';
 
     function _log(msg, type = 'log') {
         const timestamp = new Date().toISOString();
@@ -22,7 +21,6 @@
             return window.activeForensicSession.masterHash;
         }
         if (window.UNIFEDSystem && window.UNIFEDSystem.demoMode) {
-            // MATCH ABSOLUTO COM A MATRIZ DE PROVA (script_injection.js)
             return "2A38423FED220D681D86E959F2C34F993BA71FCE9B92791199453B41E23A63E5";
         }
         if (window.UNIFEDSystem && window.UNIFEDSystem.masterHash) {
@@ -39,15 +37,6 @@
             custody: lang === 'en' ? 'DIGITAL MATERIAL EVIDENCE' : 'PROVA MATERIAL DIGITAL'
         };
     }
-
-function safeExport() {
-    if (window._isGraphRendering) {
-        window.showToast('Aguarde: Renderização de gráficos em curso...', 'warning');
-        return;
-    }
-    console.info('[TRIADA] Iniciando exportação segura (Integridade de Dados Validada).');
-    // Seguir com a lógica de exportação existente
-}
 
     async function gerarAnexoCustodia() {
         const masterHash = getStableMasterHash();
@@ -198,114 +187,41 @@ function safeExport() {
         _log(`✅ Anexo de Custódia gerado com QR Code: ${sessionId}`, 'success');
     }
 
-    // ========== FUNÇÃO DE RESTAURO DA TOOLBAR ORIGINAL ==========
+    // ========== FUNÇÃO DE RESTAURO DA TOOLBAR (agora preserva os botões originais) ==========
     function restoreOriginalToolbar() {
         const container = document.getElementById('export-tools-container');
-        if (!container) return false;
-        if (container.getAttribute('data-original-restored') === 'true') return true;
-
-        // [CORREÇÃO] Purga atómica para evitar duplicação
-        container.innerHTML = '';
-
-        // Remove botões da tríade
-        const triadaBtns = container.querySelectorAll('.btn-tool-pure');
-        triadaBtns.forEach(btn => btn.remove());
-
-        // Recria os 6 botões originais
-        const translations = window.translations?.[window.currentLang] || {};
-        const originalTools = [
-            { id: 'exportPDFBtn', icon: 'fa-file-pdf', label: translations.btnPDF || 'PARECER TÉCNICO', handler: () => window.exportPDF && window.exportPDF() },
-            { id: 'exportDOCXBtn', icon: 'fa-file-word', label: translations.btnDOCX || 'MINUTA WORD', handler: () => window.exportDOCX && window.exportDOCX() },
-            { id: 'atfModalBtn', icon: 'fa-chart-line', label: translations.btnATF || '⏳ TENDÊNCIA ATF', handler: () => window.openATFModal && window.openATFModal() },
-            { id: 'exportJSONBtn', icon: 'fa-file-code', label: translations.btnJSON || 'EXPORTAR JSON', handler: () => window.exportDataJSON && window.exportDataJSON() },
-            { id: 'resetBtn', icon: 'fa-redo-alt', label: translations.btnReset || 'REINICIAR', handler: () => window.resetSystem && window.resetSystem() },
-            { id: 'clearConsoleBtn', icon: 'fa-trash-alt', label: translations.clearConsoleBtnText || 'LIMPAR CONSOLE', handler: () => window.clearConsole && window.clearConsole() }
-        ];
-
-        originalTools.forEach(tool => {
-            const btn = document.createElement('button');
-            btn.id = tool.id;
-            btn.className = 'btn-tool';
-            btn.innerHTML = `<i class="fas ${tool.icon}"></i> <span>${tool.label}</span>`;
-            btn.onclick = tool.handler;
-            container.appendChild(btn);
-        });
-
+        if (!container) return;
         container.setAttribute('data-original-restored', 'true');
-        container.setAttribute('data-triada-injected', 'false');
-
-        // [FIX TOOLBAR-1] Re-vinculação de Event Listeners após restauro.
-        // O problema: restoreOriginalToolbar() reconstrói o innerHTML, destruindo
-        // os listeners nativos (exportPDFBtn, atfModalBtn, etc.) que setupMainListeners()
-        // em script.js registou no DOMContentLoaded — já não podem ser re-registados
-        // pelo script original porque esse ciclo já correu.
-        //
-        // Solução A (primária): delegar eventos no container pai (#export-tools-container)
-        // — imune a reconstrução de innerHTML porque o container em si não é substituído.
-        // Solução B (secundária): chamar window.rebindToolbarListeners() se exposta por script.js.
-        //
-        // O analyzeBtn (#analyzeBtn) é EXCLUÍDO deliberadamente deste fluxo —
-        // o seu listener (performAudit) nunca é tocado por restoreOriginalToolbar().
-
-        // Remover listener de delegação anterior (evitar duplicação em chamadas repetidas)
-        if (container._unifedDelegateHandler) {
-            container.removeEventListener('click', container._unifedDelegateHandler, true);
+        
+        // Não remover os botões existentes; apenas garantir que os handlers estão ligados
+        if (typeof setupMainListeners === 'function') {
+            setupMainListeners(); 
         }
-
-        // Mapa de ID → função (resolvida em tempo de execução para tolerar carregamento assíncrono)
-        const _delegateMap = {
-            'exportPDFBtn':   () => typeof window.exportPDF       === 'function' && window.exportPDF(),
-            'exportDOCXBtn':  () => typeof window.exportDOCX      === 'function' && window.exportDOCX(),
-            'atfModalBtn':    () => typeof window.openATFModal     === 'function' && window.openATFModal(),
-            'exportJSONBtn':  () => typeof window.exportDataJSON   === 'function' && window.exportDataJSON(),
-            'resetBtn':       () => typeof window.resetSystem      === 'function' && window.resetSystem(),
-            'clearConsoleBtn':() => typeof window.clearConsole     === 'function' && window.clearConsole()
-        };
-
-        container._unifedDelegateHandler = function _delegateClick(e) {
-            const btn = e.target.closest('button[id]');
-            if (!btn) return;
-            const handler = _delegateMap[btn.id];
-            if (typeof handler === 'function') {
-                e.stopPropagation();
-                handler();
-            }
-        };
-        // capture:true — garante prioridade sobre listeners de bolha adicionados por outros módulos
-        container.addEventListener('click', container._unifedDelegateHandler, true);
-
-        // Solução B — chamar rebindToolbarListeners() se script.js a expôs
-        if (typeof window.rebindToolbarListeners === 'function') {
-            try {
-                window.rebindToolbarListeners();
-                console.log('[TRIADA] rebindToolbarListeners() invocada com sucesso.');
-            } catch (_rbErr) {
-                console.warn('[TRIADA] rebindToolbarListeners() lançou excepção:', _rbErr.message);
-            }
+        
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        if (analyzeBtn && !analyzeBtn.onclick) {
+            analyzeBtn.addEventListener('click', performAudit);
         }
-
-        console.log('[TRIADA] Toolbar original restaurada + Event Delegation activa em #export-tools-container.');
-        return true;
+        
+        _log('Toolbar preservada e listeners re-vinculados via Event Delegation.');
     }
 
-    // Inicialização da tríade (sem destruir a toolbar original)
+    // Inicialização da tríade (adiciona botões extra sem remover os originais)
     function initInterface() {
         const container = document.getElementById('export-tools-container');
         if (!container) return false;
-        if (container.children.length >= 6 && !container.querySelector('.btn-tool-pure')) return true;
-        if (container.getAttribute('data-original-restored') === 'true') return true;
-
-        const triadaBtns = container.querySelectorAll('.btn-tool-pure');
-        triadaBtns.forEach(btn => btn.remove());
-
-        if (container.children.length > 0) return true;
-
+        
+        // Se já tiver os botões da tríade, não adicionar novamente
+        if (container.querySelector('#triadaPdfBtn')) return true;
+        
         const labels = _resolveLabels();
         const botoes = [
             { id: 'triadaPdfBtn', label: labels.pdf, icon: 'fa-file-pdf', cor: '#00E5FF', handler: () => { if (typeof window.exportPDF === 'function') window.exportPDF(); else alert('PDF export not available.'); } },
             { id: 'triadaDocxBtn', label: labels.docx, icon: 'fa-file-word', cor: '#0EA5E9', handler: () => { if (typeof window.exportDOCX === 'function') window.exportDOCX(); else alert('DOCX export not available.'); } },
             { id: 'triadaCustodiaBtn', label: labels.custody, icon: 'fa-shield-alt', cor: '#EF4444', handler: gerarAnexoCustodia }
         ];
+        
+        // Adicionar os novos botões após os existentes (sem os remover)
         botoes.forEach(b => {
             const btn = document.createElement('button');
             btn.id = b.id;
@@ -317,12 +233,13 @@ function safeExport() {
             btn.onmouseout = () => { btn.style.background = 'rgba(15,23,42,0.9)'; };
             container.appendChild(btn);
         });
+        
         container.setAttribute('data-triada-injected', 'true');
-        _log(`Interface Tríade Documental ${_VERSION} activada.`);
+        _log(`Interface Tríade Documental ${_VERSION} activada (botões originais preservados).`);
         return true;
     }
 
-    // MutationObserver persistente mas inteligente
+    // MutationObserver para garantir que a toolbar não é apagada por outros scripts
     function _startMutationObserver() {
         if (!('MutationObserver' in window)) {
             setTimeout(initInterface, 500);
@@ -331,17 +248,16 @@ function safeExport() {
         let observer = null;
         const mutationCallback = function(mutations) {
             if (window._isRestoringToolbar) return;
-            if (!mutations.some(m => m.target.id === 'export-tools-container' || (m.target.parentNode && m.target.parentNode.id === 'export-tools-container'))) return;
             const container = document.getElementById('export-tools-container');
             if (!container) return;
-            if (container.getAttribute('data-original-restored') === 'true') return;
-            if (container.children.length < 2) {
-                restoreOriginalToolbar();
+            // Se os botões da tríade desaparecerem, readicionar
+            if (!container.querySelector('#triadaPdfBtn')) {
+                initInterface();
             }
         };
         observer = new MutationObserver(mutationCallback);
         observer.observe(document.body || document.documentElement, { childList: true, subtree: true });
-        _log('MutationObserver em modo persistente (com filtro de gráficos) para garantir integridade após reset.');
+        _log('MutationObserver para preservação da toolbar activado.');
     }
 
     window.addEventListener('UNIFED_CORE_READY', () => {

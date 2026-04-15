@@ -3142,21 +3142,6 @@ function resetUIVisual() {
         const el = document.querySelector(sel);
         if (el) el.style.display = 'none';
     });
-    // [FIX DAC7-2] Restauro dos 4 cartões DAC7 para estado zero.
-    // Necessário porque _removeZeroDac7Kpis() pode ter ocultado cartões
-    // em execuções anteriores (data-dac7-hidden). Sem este bloco, uma segunda
-    // perícia encontra contentores display:none e os valores ficam invisíveis.
-    ['dac7Q1Value', 'dac7Q2Value', 'dac7Q3Value', 'dac7Q4Value'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) {
-            el.textContent = '0,00 €';
-            const card = el.closest('.kpi-card');
-            const target = card || el;
-            target.style.display = 'block';
-            target.removeAttribute('data-dac7-hidden');
-        }
-    });
-
     const consoleEl = document.getElementById('consoleOutput');
     if (consoleEl) {
         consoleEl.innerHTML = '<div class="log-entry log-system">[SISTEMA] Aguardando inicialização. Interface limpa.</div>';
@@ -3172,97 +3157,42 @@ function resetUIVisual() {
 // ============================================================================
 // RETIFICAÇÃO: revealForensicData com classe CSS e suspensão do Nexus
 // ============================================================================
+/** 
+ * FIX 2.4: Revelação de IDs probatórios e orquestração de gráficos 
+ * Garante que o container existe e está visível antes da chamada ao Chart.js
+ */
 function revealForensicData() {
-    console.log('[UNIFED] Iniciando protocolo de revelação de dados forenses...');
-
-    // Suspender traduções do Nexus durante a transição
-    if (window.nexusSuspendTranslation) window.nexusSuspendTranslation(true);
-
-    // Adicionar classe ao dashboard para revelar os valores
-    const dashboard = document.getElementById('pureDashboard');
-    if (dashboard) dashboard.classList.add('forensic-revealed');
-
-    // 1. Orquestração de Métricas e Dashboards
-    if (typeof window.UNIFED_INTERNAL !== 'undefined' && window.UNIFED_INTERNAL.syncMetrics) {
-        window.UNIFED_INTERNAL.syncMetrics(true);
-    } else {
-        if (typeof updateDashboard === 'function') updateDashboard();
-        if (typeof updateModulesUI === 'function') updateModulesUI();
-        if (typeof renderChart === 'function') renderChart();
-        if (typeof renderDiscrepancyChart === 'function') renderDiscrepancyChart();
-    }
-
-    // 2. Acionamento de Gatilhos de Visibilidade Forçada (Smoking Gun)
-    if (typeof forceRevealSmokingGun === 'function') forceRevealSmokingGun();
-
-    // 3. REMOÇÃO DA MÁSCARA DE OPACIDADE (fallback para elementos antigos)
-    const forensicElements = document.querySelectorAll(
-        '.pure-data-value, .pure-atf-big, .pure-zc-val, .pure-sg-val, .pure-delta-value, .pure-atf-trend-val'
-    );
-    forensicElements.forEach(el => {
-        el.classList.add('forensic-revealed');
-    });
-
-    // [FIX REVELAÇÃO-1] Revelação explícita dos blocos probatórios críticos.
-    // Sequência obrigatória: (a) forçar display:block ANTES de qualquer chamada
-    // a Chart.js — o canvas precisa de dimensões não-nulas para renderizar.
-    // (b) Só depois chamar renderATFChart() e renderDiscrepancyCharts().
-    const _probatoryIds = [
-        'smoking-gun-1',
-        'smoking-gun-2',
-        'area-cinzenta',
-        'colarinho-branco',
-        'bloco-rag-legal'
+    const probatoryElements = [
+        '#smoking-gun-1', '#smoking-gun-2', '#area-cinzenta', 
+        '#colarinho-branco', '#bloco-rag-legal',
+        '.pure-data-value', '.pure-delta-value', '.pure-atf-big', 
+        '.pure-sg-val', '.pure-zc-val'
     ];
-    _probatoryIds.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) {
-            // Fase 1 — tornar visível no layout (Chart.js precisa de width > 0)
-            el.style.display = 'block';
-            el.style.visibility = 'visible';
-            el.style.opacity   = '1';
+
+    // 1. Uncloaking via CSS
+    probatoryElements.forEach(selector => {
+        document.querySelectorAll(selector).forEach(el => {
             el.classList.add('forensic-revealed');
-            // Limpar eventuais classes de ocultação herdadas
-            el.classList.remove('hidden', 'd-none');
-        }
+        });
     });
 
-    // Fase 2 — renderizar gráficos APÓS os contentores terem display:block.
-    // Usar requestAnimationFrame para garantir que o browser processou o reflow
-    // antes de Chart.js tentar medir o canvas pai.
+    // 2. Orquestração de Gráficos (Atraso de 50ms para garantir reflow do DOM)
     requestAnimationFrame(() => {
-        if (typeof window.renderATFChart === 'function') {
-            const _sys = window.UNIFEDSystem || {};
-            const _rawMonthly = (_sys.monthlyData && Object.keys(_sys.monthlyData).length > 0)
-                ? _sys.monthlyData
-                : null;
-            if (_rawMonthly && typeof computeTemporalAnalysis === 'function') {
-                const _atf = computeTemporalAnalysis(_rawMonthly, _sys.analysis || {});
-                if (_atf && _atf.months && _atf.months.length > 0) {
-                    window.renderATFChart(_atf);
-                }
+        setTimeout(() => {
+            if (typeof renderATFChart === 'function') {
+                console.log('[FORENSIC] Triggering ATF Chart Render...');
+                renderATFChart();
             }
-        }
-        if (typeof window.renderDiscrepancyCharts === 'function') {
-            window.renderDiscrepancyCharts();
-        }
-        // fallback para função singular (enrichment.js anterior)
-        if (typeof window.renderDiscrepancyChart === 'function') {
-            window.renderDiscrepancyChart();
-        }
+            if (typeof renderDiscrepancyCharts === 'function') {
+                console.log('[FORENSIC] Triggering Discrepancy Charts...');
+                renderDiscrepancyCharts();
+            }
+            // Injeção de narrativa legal se existir
+            if (typeof window.generateLegalNarrative === 'function') {
+                window.generateLegalNarrative();
+            }
+        }, 50);
     });
-
-    // Registar estado de sessão — usado por filterDAC7ByPeriod (FIX DAC7-3)
-    if (typeof UNIFEDSystem !== 'undefined') {
-        UNIFEDSystem.analiseState = 'CONCLUIDA';
-    }
-
-    // Reativar traduções do Nexus após transição CSS (300ms)
-    setTimeout(() => {
-        if (window.nexusSuspendTranslation) window.nexusSuspendTranslation(false);
-    }, 300);
-
-    console.info('[UNIFED] Protocolo Zero-Knowledge encerrado. Dados em conformidade visual.');
 }
 
 // ============================================================================
@@ -3356,6 +3286,7 @@ async function resetSystem() {
 } // <-- FECHO ÚNICO DA FUNÇÃO DE RESET
 
 // BLOCO DE INICIALIZAÇÃO PÓS-RESET
+
 if (typeof logAudit === 'function') {
     logAudit('SISTEMA UNIFED - PROBATUM v13.12.2-i18n · DORA COMPLIANT · MODO PROFISSIONAL ATIVADO', 'success');
 }
@@ -3371,6 +3302,17 @@ if (typeof injectAuxiliaryHelperBoxes === 'function') injectAuxiliaryHelperBoxes
 setTimeout(() => {
     if (typeof forensicDataSynchronization === 'function') forensicDataSynchronization();
 }, 1000);
+
+// Garantir que os selects de ano são populados (sem recursão)
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        if (typeof populateAnoFiscal === 'function') populateAnoFiscal();
+        if (typeof populateYears === 'function') populateYears();
+    });
+} else {
+    if (typeof populateAnoFiscal === 'function') populateAnoFiscal();
+    if (typeof populateYears === 'function') populateYears();
+}
 
 // [RESTAURAÇÃO] FUNÇÕES DE INTERFACE BLOQUEADAS PELO ERRO DE SINTAXE
 function populateAnoFiscal() {
@@ -3560,10 +3502,10 @@ function setupMainListeners() {
     const resetBtn = document.getElementById('resetBtn');
     if (resetBtn) resetBtn.addEventListener('click', resetSystem);
 
-    // [FIX FRAGMENTO SOLTO] Reintegrado aqui a partir do bloco órfão que
-    // existia ao nível de módulo (linhas 3597-3612 do ficheiro anterior).
-    // O clearConsoleBtn precisa de ser vinculado DENTRO de setupMainListeners()
-    // para garantir que o DOM já está pronto quando o listener é registado.
+    setupUploadListeners();
+}
+
+function setupClearConsoleButton() {
     const clearBtn = document.getElementById('clearConsoleBtn');
     if (clearBtn) {
         clearBtn.addEventListener('click', () => {
@@ -3576,43 +3518,11 @@ function setupMainListeners() {
                 ForensicLogger.addEntry('CONSOLE_PURGED', { nonDestructive: true });
             }
         });
-        console.log('[UNIFED] Listener clearConsoleBtn configurado (purga não-destrutiva).');
+        console.log('Listener clearConsoleBtn configurado (purga não-destrutiva)');
+    } else {
+        console.error('Botão clearConsoleBtn não encontrado');
     }
-
-    setupUploadListeners();
 }
-
-// [FIX TOOLBAR-2] Expõe rebindToolbarListeners() globalmente.
-// Chamada por unifed_triada_export.js::restoreOriginalToolbar() após reconstrução
-// do innerHTML da toolbar. Vincula apenas os botões de exportação/reset —
-// o analyzeBtn é tratado em bloco isolado (listener directo em setupMainListeners).
-window.rebindToolbarListeners = function rebindToolbarListeners() {
-    // analyzeBtn — isolado: nunca removido por restoreOriginalToolbar()
-    const analyzeBtn = document.getElementById('analyzeBtn');
-    if (analyzeBtn && !analyzeBtn.getAttribute('data-rebind-done')) {
-        analyzeBtn.addEventListener('click', performAudit);
-        analyzeBtn.setAttribute('data-rebind-done', 'true');
-    }
-
-    const _toolBindings = [
-        { id: 'exportPDFBtn',    fn: () => typeof exportPDF      === 'function' && exportPDF()      },
-        { id: 'exportDOCXBtn',   fn: () => typeof window.exportDOCX === 'function' && window.exportDOCX() },
-        { id: 'atfModalBtn',     fn: () => typeof window.openATFModal === 'function' && window.openATFModal() },
-        { id: 'exportJSONBtn',   fn: () => typeof exportDataJSON === 'function' && exportDataJSON()  },
-        { id: 'resetBtn',        fn: () => typeof resetSystem    === 'function' && resetSystem()     },
-        { id: 'clearConsoleBtn', fn: () => typeof clearConsole   === 'function' && clearConsole()    }
-    ];
-    _toolBindings.forEach(({ id, fn }) => {
-        const el = document.getElementById(id);
-        if (el) {
-            // Clonar nó para remover listeners antigos acumulados
-            const clone = el.cloneNode(true);
-            el.parentNode && el.parentNode.replaceChild(clone, el);
-            document.getElementById(id)?.addEventListener('click', fn);
-        }
-    });
-    console.log('[UNIFED] rebindToolbarListeners() — listeners de toolbar re-vinculados.');
-};
 
 function setupDragAndDrop() {
     const dropZone = document.getElementById('globalDropZone');
@@ -4313,11 +4223,6 @@ function performAudit() {
         analyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + (currentLang === 'en' ? 'RUNNING FORENSIC EXAM BIG DATA...' : 'A EXECUTAR PERÍCIA BIG DATA...');
     }
 
-    // [FIX LATÊNCIA-1] O atraso artificial de 1000ms existe para simular
-    // processamento em modo real. Em demoMode ou casoRealAnonimizado, o
-    // conjunto de dados já está pré-carregado em memória — o delay é suprimido.
-    const _auditDelay = (UNIFEDSystem.demoMode === true || UNIFEDSystem.casoRealAnonimizado === true) ? 0 : 1000;
-
     setTimeout(() => {
         try {
             const saftBruto = UNIFEDSystem.documents.saft?.totals?.bruto || 0;
@@ -4479,7 +4384,7 @@ function performAudit() {
                 else analyzeBtn.innerHTML = `<i class="fas fa-search-dollar"></i> ${translations[currentLang].btnAnalyze}`;
             }
         }
-    }, _auditDelay);
+    }, 1000);
 }
 
 function updateSmokingGunUI() {
@@ -4908,17 +4813,7 @@ function filterDAC7ByPeriod() {
 
     const visible = visibilityMap[periodo] || [1, 2, 3, 4];
 
-    // [FIX DAC7-3] A lógica de ocultação por valor-zero só é activada quando
-    // a sessão já completou a análise (analiseState === 'CONCLUIDA') ou em
-    // modos demo/casoReal após performAudit(). No arranque / Zero-Knowledge,
-    // todos os cartões permanecem visíveis — impede que sessão anterior
-    // destrua DOM da seguinte.
-    const _sessionConcluida = (typeof UNIFEDSystem !== 'undefined') &&
-        (UNIFEDSystem.analiseState === 'CONCLUIDA' ||
-         UNIFEDSystem.demoMode === true ||
-         UNIFEDSystem.casoRealAnonimizado === true);
-    const _isDemoHide = _sessionConcluida;
-
+    const _isDemoHide = (typeof UNIFEDSystem !== 'undefined' && UNIFEDSystem.demoMode === true);
     [1, 2, 3, 4].forEach(q => {
         const card = document.getElementById(`dac7Q${q}Value`)?.closest('.kpi-card');
         if (card) {
@@ -4958,17 +4853,10 @@ function showTwoAxisAlerts() {
 
     const revenueGapCard = document.getElementById('revenueGapCard');
     const revenueGapValue = document.getElementById('revenueGapValue');
-
     if (revenueGapCard && revenueGapValue) {
         if (twoAxis.revenueGapActive) {
             revenueGapCard.style.display = 'block';
             revenueGapValue.textContent = formatCurrency(twoAxis.revenueGap);
-
-            if (Math.abs(twoAxis.revenueGap) > 100) {
-                revenueGapCard.classList.add('alert-intermitent');
-            } else {
-                revenueGapCard.classList.remove('alert-intermitent');
-            }
         } else {
             revenueGapCard.style.display = 'none';
         }
@@ -4976,17 +4864,10 @@ function showTwoAxisAlerts() {
 
     const expenseGapCard = document.getElementById('expenseGapCard');
     const expenseGapValue = document.getElementById('expenseGapValue');
-
     if (expenseGapCard && expenseGapValue) {
         if (twoAxis.expenseGapActive) {
             expenseGapCard.style.display = 'block';
             expenseGapValue.textContent = formatCurrency(twoAxis.expenseGap);
-
-            if (Math.abs(twoAxis.expenseGap) > 50) {
-                expenseGapCard.classList.add('alert-intermitent');
-            } else {
-                expenseGapCard.classList.remove('alert-intermitent');
-            }
         } else {
             expenseGapCard.style.display = 'none';
         }
@@ -4994,30 +4875,13 @@ function showTwoAxisAlerts() {
 
     const omissaoCard = document.getElementById('omissaoDespesasPctCard');
     const omissaoValue = document.getElementById('omissaoDespesasPctValue');
-    const omissaoDesc = document.getElementById('omissaoDespesasPctDesc');
-
     if (omissaoCard && omissaoValue) {
         const despesas = totals.despesas || 0;
         const ganhos = totals.ganhos || 0;
         const pct = (ganhos > 0) ? (despesas / ganhos) * 100 : 0;
-
         if (ganhos > 0 && despesas > 0) {
             omissaoCard.style.display = 'block';
             omissaoValue.textContent = pct.toLocaleString(currentLang === 'en' ? 'en-GB' : 'pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' %';
-            if (omissaoDesc) {
-                omissaoDesc.textContent = currentLang === 'en'
-                    ? `(${formatCurrency(despesas)} / ${formatCurrency(ganhos)}) × 100  [Expenses/Commissions / Earnings]`
-                    : `(${formatCurrency(despesas)} / ${formatCurrency(ganhos)}) × 100  [Despesas/Comissões / Ganhos]`;
-            }
-            if (pct > 25) {
-                omissaoCard.classList.add('omissao-threshold-alert');
-                omissaoCard.classList.remove('alert-intermitent');
-                omissaoCard.classList.remove('box-border-blink');
-            } else {
-                omissaoCard.classList.remove('omissao-threshold-alert');
-                omissaoCard.classList.remove('alert-intermitent');
-                omissaoCard.classList.remove('box-border-blink');
-            }
         } else {
             omissaoCard.style.display = 'none';
         }
@@ -8583,64 +8447,6 @@ window.showToast = function(message, type = 'info') {
    
 window.renderChart = renderChart;
 window.renderDiscrepancyChart = renderDiscrepancyChart;
-
-// ============================================================================
-// FIX FORÇADO: Transição do Splash Screen para o Main Container
-// ============================================================================
-(function ensureSplashTransition() {
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', ensureSplashTransition);
-        return;
-    }
-    
-    const startBtn = document.getElementById('startSessionBtn');
-    const splashScreen = document.getElementById('splashScreen');
-    const mainContainer = document.getElementById('mainContainer');
-    
-    if (!startBtn || !splashScreen || !mainContainer) {
-        console.error('[UNIFED] Elementos críticos não encontrados:', {
-            startBtn: !!startBtn,
-            splashScreen: !!splashScreen,
-            mainContainer: !!mainContainer
-        });
-        return;
-    }
-    
-    // Evitar duplicação de listener
-    if (startBtn._splashListener) return;
-    startBtn._splashListener = true;
-    
-    startBtn.addEventListener('click', function() {
-        if (typeof ForensicLogger !== 'undefined') {
-            ForensicLogger.addEntry('SPLASH_SCREEN_DISMISSED', { action: 'Interface desbloqueada' });
-        }
-        splashScreen.style.opacity = '0';
-        setTimeout(function() {
-            splashScreen.style.display = 'none';
-            mainContainer.style.display = 'flex';
-            void mainContainer.offsetWidth; // forçar reflow
-            mainContainer.style.opacity = '1';
-            if (typeof logAudit === 'function') {
-                logAudit('Transição de estado UI: Splash -> Main. Sistema pronto para demonstração ELITE.', 'success');
-            }
-        }, 500);
-    });
-    
-    console.log('[UNIFED] Listener de transição do splash configurado com sucesso.');
-})();
-
-// Garantir que o select do ano fiscal seja populado
-(function ensureAnoFiscalPopulated() {
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function() {
-            if (typeof populateAnoFiscal === 'function') populateAnoFiscal();
-            if (typeof populateYears === 'function') populateYears();
-        });
-    } else {
-        if (typeof populateAnoFiscal === 'function') populateAnoFiscal();
-        if (typeof populateYears === 'function') populateYears();
-    }
-})();
 
 // ============================================================================
 // FIM DO FICHEIRO - UNIFED - PROBATUM v13.12.2-i18n
