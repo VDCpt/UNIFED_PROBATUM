@@ -1585,5 +1585,17 @@
         setupIniciarButton();
     }
 
+    // =========================================================================
+    // INSTRUÇÃO TÉCNICA 1: Re-ancorar modais para prevenir bloqueio por Z-Index
+    // =========================================================================
+    function reAnchorModals() {
+        const wrapper = document.getElementById('pureDashboardWrapper');
+        const custodyModal = document.getElementById('custodyModal');
+        const hashModal = document.getElementById('hashModal'); // Inclui QR Code
+        if (wrapper && custodyModal) wrapper.appendChild(custodyModal);
+        if (wrapper && hashModal) wrapper.appendChild(hashModal);
+    }
+    document.addEventListener('UNIFED_CORE_READY', reAnchorModals);
+
     console.log('[UNIFED] script_injection.js carregado. Aguardando clique em "INICIAR".');
 })();

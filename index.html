@@ -11,10 +11,11 @@
 
     <script>
    (function loadOTSOptimized() {
-    var otsLib = 'https://unpkg.com/javascript-opentimestamps@0.0.12/dist/opentimestamps.min.js';
+    // [AÇÃO DEEPSEEK]: Substituir chamada CDN direta no index.html
+    var otsLib = 'https://api.unifed.com/ots-proxy?url=' + encodeURIComponent('https://unpkg.com/javascript-opentimestamps@0.0.12/dist/opentimestamps.min.js');
     var s = document.createElement('script');
     s.src = otsLib;
-    s.onload = function() { console.log('[UNIFED] OTS Original carregado.'); };
+    s.onload = function() { console.log('[UNIFED] OTS Original carregado via proxy.'); };
     s.onerror = function() {
         console.warn('[UNIFED] Falha na CDN OTS. Ativando Custódia Nível 2 (Selo Local).');
         window.OTS_FALLBACK = true;

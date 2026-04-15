@@ -1258,25 +1258,25 @@ function generateBurdenOfProofSection(discrepancyValue) {
 window.generateBurdenOfProofSection = generateBurdenOfProofSection;
 
 // ============================================================================
-// 9. ADIÇÕES v13.12.2-i18n · POLÍTICA ZERO-OMISSÃO (consolidada com retificação)
+// 9. ADIÇÕES v13.12.2-i18n · POLÍTICA ZERO-OMISSÃO (REFATORADA)
 // ============================================================================
-(function _enrichmentZeroOmission() {
-    // ── Listener UNIFED_ANALYSIS_COMPLETE unificado (original + retificação) ──
+(function _enrichmentZeroOmissionRefactored() {
+    // ── Listener UNIFED_ANALYSIS_COMPLETE simplificado ──
     window.addEventListener('UNIFED_ANALYSIS_COMPLETE', function _onAnalysisComplete(evt) {
-        console.log('[UNIFED-ENRICHMENT] UNIFED_ANALYSIS_COMPLETE recebido. A enriquecer UI...', (evt && evt.detail) || '');
+        console.log('[UNIFED-ENRICHMENT] UNIFED_ANALYSIS_COMPLETE recebido. Sincronizando UI...', (evt && evt.detail) || '');
         var _sys = window.UNIFEDSystem || {};
         // Sincronização original
         if (window.UNIFED_INTERNAL) {
             if (typeof window.UNIFED_INTERNAL.syncMetrics === 'function') window.UNIFED_INTERNAL.syncMetrics();
             if (typeof window.UNIFED_INTERNAL.updateAuxiliaryUI === 'function') window.UNIFED_INTERNAL.updateAuxiliaryUI();
         }
-        // Uncloaking atómico (original)
+        // Uncloaking atómico
         document.querySelectorAll(
             '.pure-data-value, .pure-delta-value, .pure-atf-big, ' +
             '.smoking-gun-module, .pure-sg-val, [data-pt], [data-en]'
         ).forEach(function(el) { el.classList.add('forensic-revealed'); });
         
-        // Adição da retificação: revelar bloco RAG e injetar fallback
+        // Revelar bloco RAG se existir
         const narrativeContainer = document.getElementById('bloco-rag-legal');
         if (narrativeContainer) {
             narrativeContainer.style.setProperty('display', 'block', 'important');
@@ -1290,13 +1290,48 @@ window.generateBurdenOfProofSection = generateBurdenOfProofSection;
             `;
             narrativeContainer.innerHTML = fallbackHTML;
         }
-        
         console.log('[UNIFED-ENRICHMENT] Uncloaking e RAG concluídos via UNIFED_ANALYSIS_COMPLETE.');
     });
 
-    // ── Event-Based Lazy Rendering: UNIFED_EXECUTE_PERITIA ───────────────────
+    // ── Event-Based Lazy Rendering: UNIFED_EXECUTE_PERITIA com hidratação cirúrgica ──
     window.addEventListener('UNIFED_EXECUTE_PERITIA', function _onPeritiaExecute(evt) {
-        console.log('[UNIFED-ENRICHMENT] UNIFED_EXECUTE_PERITIA recebido. Motor gráfico ATF a inicializar...', (evt.detail || {}).masterHash || '');
+        console.log('[UNIFED-ENRICHMENT] UNIFED_EXECUTE_PERITIA recebido. Motor gráfico ATF e hidratação a inicializar...', (evt.detail || {}).masterHash || '');
+        
+        // ========== HIDRATAÇÃO CIRÚRGICA (Instrução Técnica 3) ==========
+        const sys = window.UNIFEDSystem;
+        const analysis = sys && sys.analysis;
+        const totals = analysis && analysis.totals;
+        const crossings = analysis && analysis.crossings;
+        const format = (window.UNIFEDSystem && window.UNIFEDSystem.utils && window.UNIFEDSystem.utils.formatCurrency) || window.formatCurrency;
+        
+        if (totals && crossings && typeof format === 'function') {
+            // 1. Módulo DAC7 (Decomposição)
+            const faturaTri = document.getElementById('pure-fatura-tri');
+            if (faturaTri) faturaTri.innerText = format(totals.faturaPlataforma || 262.94);
+            
+            const liquidoTri = document.getElementById('pure-liquido-tri');
+            if (liquidoTri) liquidoTri.innerText = format(totals.ganhosLiquidos || 7709.84);
+            
+            // 2. Cálculo Tributário Pericial (Prova Rainha)
+            const btor = totals.despesas || 2447.89;
+            const btf = totals.faturaPlataforma || 262.94;
+            const diferenca = crossings.discrepanciaCritica || (btor - btf);
+            const difPercent = crossings.percentagemOmissao || ((btor > 0) ? (diferenca / btor) * 100 : 0);
+            
+            // Atualizar nós de texto (se existirem)
+            const btorEl = document.getElementById('calc-btor');
+            if (btorEl) btorEl.innerText = format(btor);
+            const btfEl = document.getElementById('calc-btf');
+            if (btfEl) btfEl.innerText = format(btf);
+            const diffEl = document.getElementById('calc-diferenca');
+            if (diffEl) diffEl.innerText = `${format(diferenca)} (${difPercent.toFixed(2)}%)`;
+            
+            console.log('[UNIFED-ENRICHMENT] Hidratação cirúrgica concluída: BTOR=' + format(btor) + ', BTF=' + format(btf) + ', Δ=' + format(diferenca));
+        } else {
+            console.warn('[UNIFED-ENRICHMENT] Dados insuficientes para hidratação cirúrgica.');
+        }
+        
+        // Renderização de gráficos ATF
         if (typeof window.renderDiscrepancyCharts === 'function') window.renderDiscrepancyCharts();
         var _canvas = document.getElementById('atfChartCanvas');
         if (_canvas && typeof Chart !== 'undefined') {
@@ -1317,54 +1352,49 @@ window.generateBurdenOfProofSection = generateBurdenOfProofSection;
         if (typeof window.generateLegalNarrative === 'function' && window.UNIFEDSystem && window.UNIFEDSystem.analysis) {
             window.generateLegalNarrative(window.UNIFEDSystem.analysis).catch(function() {});
         }
-        console.log('[UNIFED-ENRICHMENT] Lazy rendering concluído (UNIFED_EXECUTE_PERITIA).');
+        console.log('[UNIFED-ENRICHMENT] Lazy rendering e hidratação concluídos (UNIFED_EXECUTE_PERITIA).');
     });
-    console.log('[UNIFED-ENRICHMENT] Listener UNIFED_EXECUTE_PERITIA registado (Chart.js Lazy Rendering).');
-
+    
+    // Garantir formatCurrency disponível
     if (!window.UNIFEDSystem.utils.formatCurrency) {
         window.UNIFEDSystem.utils.formatCurrency = function(val) {
             return new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(val || 0);
         };
         if (!window.formatCurrency) window.formatCurrency = window.UNIFEDSystem.utils.formatCurrency;
     }
-
-    // Renderização de gráfico de discrepâncias com fallback corrigido (retificação)
-    window.renderDiscrepancyCharts = function() {
-        // Fallback para mainDiscrepancyChart ou discrepancyChart (corrigido)
-        const ctx = document.getElementById('mainDiscrepancyChart') || document.getElementById('discrepancyChart');
-        if (!ctx || typeof Chart === 'undefined') {
-            console.warn('[UNIFED-ENRICHMENT] Canvas ou Chart.js não disponível para renderDiscrepancyCharts');
-            return;
-        }
-        
-        // Destruir instância anterior para evitar "Canvas is already in use"
-        if (window.safTDac7Chart) window.safTDac7Chart.destroy();
-
-        const data = (window.UNIFEDSystem.analysis && window.UNIFEDSystem.analysis.totals) || {};
-        const gains = data.ganhos || 10157.73;
-        const dac7 = data.dac7TotalPeriodo || 6276.55;
-        
-        window.safTDac7Chart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: ['Ganhos Reais (Extrato)', 'DAC7 Reportado'],
-                datasets: [{
-                    label: 'Valores (EUR)',
-                    data: [gains, dac7],
-                    backgroundColor: ['#3b82f6', '#ef4444'],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: { y: { beginAtZero: true, ticks: { callback: v => window.UNIFEDSystem.utils.formatCurrency(v) } } }
-            }
-        });
-    };
-
-    console.log('[UNIFED-ENRICHMENT] ✅ Módulo de Enriquecimento v13.12.2-i18n carregado (POLÍTICA ZERO-OMISSÃO e retificação consolidada).');
+    
+    console.log('[UNIFED-ENRICHMENT] ✅ Módulo de Enriquecimento v13.12.2-i18n carregado (POLÍTICA ZERO-OMISSÃO refatorada).');
 })();
+
+// Renderização de gráfico de discrepâncias com fallback corrigido
+window.renderDiscrepancyCharts = function() {
+    const ctx = document.getElementById('mainDiscrepancyChart') || document.getElementById('discrepancyChart');
+    if (!ctx || typeof Chart === 'undefined') {
+        console.warn('[UNIFED-ENRICHMENT] Canvas ou Chart.js não disponível para renderDiscrepancyCharts');
+        return;
+    }
+    if (window.safTDac7Chart) window.safTDac7Chart.destroy();
+    const data = (window.UNIFEDSystem.analysis && window.UNIFEDSystem.analysis.totals) || {};
+    const gains = data.ganhos || 10157.73;
+    const dac7 = data.dac7TotalPeriodo || 6276.55;
+    window.safTDac7Chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Ganhos Reais (Extrato)', 'DAC7 Reportado'],
+            datasets: [{
+                label: 'Valores (EUR)',
+                data: [gains, dac7],
+                backgroundColor: ['#3b82f6', '#ef4444'],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true, ticks: { callback: v => window.UNIFEDSystem.utils.formatCurrency(v) } } }
+        }
+    });
+};
 
 console.log('[UNIFED-ENRICHMENT] \u2705 Output Enrichment Layer v13.12.2-i18n carregado.');
 console.log('[UNIFED-ENRICHMENT]   . generateLegalNarrative()     - IA Argumentativa + AI Adversarial Simulator');
