@@ -3286,6 +3286,7 @@ async function resetSystem() {
 } // <-- FECHO ÚNICO DA FUNÇÃO DE RESET
 
 // BLOCO DE INICIALIZAÇÃO PÓS-RESET
+
 if (typeof logAudit === 'function') {
     logAudit('SISTEMA UNIFED - PROBATUM v13.12.2-i18n · DORA COMPLIANT · MODO PROFISSIONAL ATIVADO', 'success');
 }
@@ -3301,6 +3302,17 @@ if (typeof injectAuxiliaryHelperBoxes === 'function') injectAuxiliaryHelperBoxes
 setTimeout(() => {
     if (typeof forensicDataSynchronization === 'function') forensicDataSynchronization();
 }, 1000);
+
+// Garantir que os selects de ano são populados (sem recursão)
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        if (typeof populateAnoFiscal === 'function') populateAnoFiscal();
+        if (typeof populateYears === 'function') populateYears();
+    });
+} else {
+    if (typeof populateAnoFiscal === 'function') populateAnoFiscal();
+    if (typeof populateYears === 'function') populateYears();
+}
 
 // [RESTAURAÇÃO] FUNÇÕES DE INTERFACE BLOQUEADAS PELO ERRO DE SINTAXE
 function populateAnoFiscal() {
@@ -3327,16 +3339,6 @@ function populateYears() {
         if (y === 2024) opt.selected = true;
         sel.appendChild(opt);
     }
-// No final do script.js, após a definição das funções:
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        populateAnoFiscal();
-        populateYears();
-    });
-} else {
-    populateAnoFiscal();
-    populateYears();
-}
 }
  
 function startClockAndDate() {
