@@ -2,7 +2,7 @@
  * ============================================================================
  * UNIFED - PROBATUM · unifed_panel_activator.js
  * ============================================================================
- * Versão      : v1.0.0 · FIX-ACHADO-A + RETIFICAÇÃO C
+ * Versão      : v1.0.0 · FIX-ACHADO-A + RETIFICAÇÃO C + SPLASH MANUAL
  * Gerado em   : 2026-04-15
  * Conformidade: DORA (UE) 2022/2554 · Art. 125.º CPP · ISO/IEC 27037:2012
  * ============================================================================
@@ -28,24 +28,6 @@
  *
  * GARANTIA DE IDEMPOTÊNCIA:
  *   Guarda _PANEL_ACTIVATOR_INSTALLED previne re-execução em double-load.
- * ============================================================================
- */
-
-/**
- * ============================================================================
- * UNIFED - PROBATUM · unifed_panel_activator.js
- * ============================================================================
- * Versão      : v1.0.0 · FIX-ACHADO-A + RETIFICAÇÃO C + SPLASH MANUAL
- * ============================================================================
- */
-
-/**
- * ============================================================================
- * UNIFED - PROBATUM · unifed_panel_activator.js
- * ============================================================================
- * Versão      : v1.0.0 · FIX-ACHADO-A + RETIFICAÇÃO C + SPLASH MANUAL
- * Gerado em   : 2026-04-15
- * Conformidade: DORA (UE) 2022/2554 · Art. 125.º CPP · ISO/IEC 27037:2012
  * ============================================================================
  */
 
@@ -95,7 +77,6 @@
         wrapper.style.opacity = '1';
         await new Promise(resolve => setTimeout(resolve, 320));
 
-        // Chamar a função global que remove o splash e ativa o dashboard
         if (typeof window.forceFinalState === 'function') {
             await window.forceFinalState();
         } else {
@@ -119,7 +100,7 @@
         console.log('[UNIFED-ACTIVATOR] _activatePurePanel() concluída — painel visível.');
     };
 
-    // CSS de segurança
+    // ── CSS de segurança: impedir que regras externas escondam o wrapper ──────
     (function _injectActivatorCSS() {
         const STYLE_ID = 'unifed-activator-safety-css';
         if (document.getElementById(STYLE_ID)) return;
@@ -141,60 +122,5 @@
         target.appendChild(style);
     })();
 
-    console.log('[UNIFED-ACTIVATOR] window._activatePurePanel registada (v1.0.0 · SPLASH MANUAL).');
-})();
-    // CSS de segurança
-    (function _injectActivatorCSS() {
-        const STYLE_ID = 'unifed-activator-safety-css';
-        if (document.getElementById(STYLE_ID)) return;
-        const style       = document.createElement('style');
-        style.id          = STYLE_ID;
-        style.textContent = `
-            #pureDashboardWrapper.activated {
-                display:    block    !important;
-                opacity:    1        !important;
-                height:     auto     !important;
-                overflow:   visible  !important;
-                visibility: visible  !important;
-            }
-            #pureDashboardWrapper {
-                transition: opacity 0.3s ease;
-            }
-        `;
-        const target = document.head || document.documentElement;
-        target.appendChild(style);
-    })();
-
-    console.log('[UNIFED-ACTIVATOR] window._activatePurePanel registada (v1.0.0 · SPLASH MANUAL).');
-})();
-
-    // ── CSS de segurança: impedir que regras externas escondam o wrapper ──────
-    // Injecto inline para garantir presença mesmo antes de style.css carregar.
-    (function _injectActivatorCSS() {
-        const STYLE_ID = 'unifed-activator-safety-css';
-        if (document.getElementById(STYLE_ID)) return;
-
-        const style       = document.createElement('style');
-        style.id          = STYLE_ID;
-        style.textContent = `
-            /* [UNIFED-ACTIVATOR] Garante que o wrapper não fica colapsado
-               por regras de altura ou overflow conflituantes após activação */
-            #pureDashboardWrapper.activated {
-                display:    block    !important;
-                opacity:    1        !important;
-                height:     auto     !important;
-                overflow:   visible  !important;
-                visibility: visible  !important;
-            }
-            /* Transição suave sem interferir com animações existentes */
-            #pureDashboardWrapper {
-                transition: opacity 0.3s ease;
-            }
-        `;
-        const target = document.head || document.documentElement;
-        target.appendChild(style);
-    })();
-
-    console.log('[UNIFED-ACTIVATOR] window._activatePurePanel registada (v1.0.0 · FIX-ACHADO-A + RETIFICAÇÃO C).');
-
+    console.log('[UNIFED-ACTIVATOR] window._activatePurePanel registada (v1.0.0 · FIX-ACHADO-A + RETIFICAÇÃO C + SPLASH MANUAL).');
 })();
