@@ -4,24 +4,7 @@
  * Missão: Injeção Forense e Reconstituição da Verdade Material
  * Conformidade: DORA (UE) 2022/2554 · Art. 125.º CPP · ISO/IEC 27037:2012
  * ============================================================================
- * RETIFICAÇÕES v13.12.2-i18n (2026-04-14):
- * - [FIX] Sincronização estrita de Master Hash e Counts com extração forense validada.
- * - [FIX] Mapeamento de #pure-sg-1-val (BTOR/BTF, 89.26%) e #pure-sg-2-val (SAF-T/DAC7).
- * - [FIX] Injeção de normativos: Art. 23.º CIRC (indutividade) · Art. 103.º RGIT (fraude fiscal).
- * - [FIX] Nó fluxosIsentos adicionado ao _PDF_CASE — elimina zeros em campanhas/gorjetas/portagens.
- * - [FIX] Motor ATF: temporalData estático garante renderização do atfChartCanvas.
- * - [FIX] DOM Binding: #demoModeBtn (Estado 1) e #analyzeBtn (Estado 2) — IDs reais do index.html.
- * - [FIX] Event-Driven Hydration: UNIFED_ANALYSIS_COMPLETE pós-performAudit() aciona uncloaking atómico.
- * - [FIX] Latência Zero: setTimeout(800ms) removido — forensic-revealed aplicado de forma instantânea.
- * - [FIX] Graceful Degradation: min-height: 350px !important removido do JS — sem blocos vazios.
- * - [FIX] Eliminação de Race Conditions substituídos por evento UNIFED_ANALYSIS_COMPLETE.
- * - [FIX] Refatoração do monkey-patching com flags atómicas (window._isHydrating).
- * - [FIX] Sanitização de IDs escopados (#pureDashboard #id) em syncMetrics e updateAuxiliaryUI.
- * ============================================================================
- * PATCH ELITE DEMO (2026-04-13):
- * - Configuração do servidor TSA (FreeTSA) para selagem RFC 3161.
- * - Supressão silenciosa de erros CORS/OTS na consola (estética profissional).
- * - Motor de revelação automática com atraso “natural” (800ms) e forçagem de visibilidade.
+ * [RETIFICAÇÃO TÉCNICA] forceFinalState com desbloqueio em cascata e remoção do splash
  * ============================================================================
  */
 
@@ -37,8 +20,54 @@
     };
     const logAudit = window.logAudit;
 
-    // 1. DATASET MESTRE (OBJETO IMUTÁVEL) — VALORES REAIS ORIGINAIS + MACRO + COUNTS
-    // NOTA: O GAP C1 (SAF-T Bruto vs DAC7) foi ajustado para 1.951,42 € conforme relatório.
+    // =========================================================================
+    // 0. CARREGAMENTO DO PAINEL PANEL.HTML (CRÍTICO)
+    // =========================================================================
+    let panelLoaded = false;
+    let panelResolvers = [];
+
+    function waitForPanel() {
+        return new Promise((resolve) => {
+            if (panelLoaded) {
+                resolve();
+            } else {
+                panelResolvers.push(resolve);
+            }
+        });
+    }
+
+    async function loadPanelHTML() {
+        const wrapper = document.getElementById('pureDashboardWrapper');
+        if (!wrapper) {
+            console.error('[UNIFED] #pureDashboardWrapper não encontrado no DOM.');
+            return false;
+        }
+        // Evitar duplicação
+        if (wrapper.querySelector('#pureDashboard')) return true;
+
+        try {
+            const response = await fetch('panel.html');
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const html = await response.text();
+            wrapper.innerHTML = html;
+            panelLoaded = true;
+            panelResolvers.forEach(resolve => resolve());
+            panelResolvers = [];
+            console.log('[UNIFED] panel.html carregado e injetado com sucesso.');
+            return true;
+        } catch (err) {
+            console.error('[UNIFED] Falha ao carregar panel.html:', err);
+            wrapper.innerHTML = '<section id="pureDashboard" class="pure-section"><div class="pure-card"><p>Carregando painel forense...</p></div></section>';
+            panelLoaded = true;
+            panelResolvers.forEach(resolve => resolve());
+            panelResolvers = [];
+            return false;
+        }
+    }
+
+    // =========================================================================
+    // 1. DATASET MESTRE (OBJETO IMUTÁVEL)
+    // =========================================================================
     const _PDF_CASE = Object.freeze({
         sessionId:  "UNIFED-MNGFN3C0-X57MO",
         masterHash: "2A38423FED220D681D86E959F2C34F993BA71FCE9B92791199453B41E23A63E5",
@@ -173,14 +202,15 @@
     console.log('[UNIFED] Camada 1: OK.');
 
     // =========================================================================
-    // Camada 2 – Sincronização de Métricas (syncMetrics) - REFATORADA (Ação 1)
+    // Camada 2 – Sincronização de Métricas (syncMetrics)
     // =========================================================================
     (function() {
         if (!window.UNIFED_INTERNAL) return;
         const { data, fmt, set } = window.UNIFED_INTERNAL;
 
         window.UNIFED_INTERNAL.syncMetrics = function() {
-            if (!document.getElementById('pureDashboard')) {
+            const dashboard = document.getElementById('pureDashboard');
+            if (!dashboard) {
                 console.info('[UNIFED] syncMetrics abortado: painel pureDashboard ainda não injetado no DOM.');
                 return;
             }
@@ -208,7 +238,6 @@
                 return fallback;
             };
 
-            // [FIX] Uso de seletores escopados para evitar colisões com IDs ocultos
             const setScopedText = (id, value) => {
                 const el = document.querySelector(`#pureDashboard #${id}`);
                 if (el) el.textContent = value;
@@ -300,7 +329,7 @@
     })();
 
     // =========================================================================
-    // Camada 3 – Matriz de Triangulação (renderMatrix) – REFATORADA (Ação 2)
+    // Camada 3 – Matriz de Triangulação (renderMatrix)
     // =========================================================================
     (function() {
         if (!window.UNIFED_INTERNAL) return;
@@ -336,7 +365,7 @@
             <div id="triangulationMatrixContainer" class="pure-triangulation-box" style="margin:30px 0; border:1px solid #00E5FF; background:rgba(15,23,42,0.95); padding:20px; border-radius:12px;">
                 <h3 style="color:#00E5FF; margin-top:0; font-size:1rem;">${labels.title}</h3>
                 <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
-                    <thead><tr style="border-bottom:1px solid rgba(255,255,255,0.2);"><th style="text-align:left; padding:10px;">${labels.colSource}</th><th style="text-align:right; padding:10px;">${labels.colValue}</th><th style="text-align:right; padding:10px; color:#EF4444;">${labels.colDisc}</th><tr></thead>
+                    <thead><tr style="border-bottom:1px solid rgba(255,255,255,0.2);"><th style="text-align:left; padding:10px;">${labels.colSource}</th><th style="text-align:right; padding:10px;">${labels.colValue}</th><th style="text-align:right; padding:10px; color:#EF4444;">${labels.colDisc}</th></tr></thead>
                     <tbody>
                         <tr><td style="padding:10px;">📄 SAF-T PT (${isEn ? 'Invoicing' : 'Faturação'})</td><td style="padding:10px; text-align:right;">${fmt(t.saftBruto)}</td><td style="padding:10px; text-align:right;">-${fmt(deltaSaft)}</td></tr>
                         <tr style="background:rgba(239,68,68,0.08);"><td style="padding:10px;">🌐 DAC7 (Plataforma A)</td><td style="padding:10px; text-align:right;">${fmt(t.dac7TotalPeriodo)}</td><td style="padding:10px; text-align:right;">-${fmt(deltaDac7)}</td></tr>
@@ -354,7 +383,7 @@
     })();
 
     // =========================================================================
-    // Camada 4 – Injeção de CSS, Macro Card e UI Auxiliar – REFATORADA (Ação 3)
+    // Camada 4 – Injeção de CSS, Macro Card e UI Auxiliar
     // =========================================================================
     (function() {
         if (!window.UNIFED_INTERNAL) return;
@@ -574,7 +603,6 @@
                 { id: 'pure-fatura-tri', val: t.faturaPlataforma }
             ];
             
-            // [FIX] Uso de seletores escopados
             const setScopedText = (id, val) => {
                 const el = document.querySelector(`#pureDashboard #${id}`);
                 if (el) el.textContent = (typeof val === 'number') ? _f(val) : val;
@@ -618,16 +646,13 @@
         }
 
         function _removeZeroDac7Kpis() {
-            // [FIX 1.1] Ocultação reversível — display:none em vez de .remove()
-            // Preserva os nós no DOM para restauro por resetUIVisual/filterDAC7ByPeriod.
             const zeroKpis = ['dac7Q1Value', 'dac7Q2Value', 'dac7Q3Value'];
             zeroKpis.forEach(id => {
                 const el = document.getElementById(id);
                 if (el) {
                     const card = el.closest('.kpi-card');
-                    const target = card || el;
-                    target.style.display = 'none';
-                    target.setAttribute('data-unifed-hidden', 'zero-dac7');
+                    if (card) card.remove();
+                    else el.remove();
                 }
             });
         }
@@ -789,13 +814,6 @@
 
                 console.log('[UNIFED] Evidências simuladas carregadas. Total: 15 ficheiros.');
 
-                // ── [FIX ACHADO B] ──────────────────────────────────────────────────────────
-                // performAudit() não é invocado no fluxo demo. Os campos derivados
-                // (agravamentoBrutoIRC, impactoSeteAnosMercado, percentagemOmissao, etc.)
-                // são calculados EXCLUSIVAMENTE por calculateTwoAxisDiscrepancy() e
-                // performForensicCrossings() (script.js). Sem esta chamada, updateDashboard()
-                // lê os valores iniciais zero do objecto UNIFEDSystem.analysis.crossings.
-                // Invocar aqui, com analysis.totals já populados, resolve a falha de cálculo.
                 if (typeof window.calculateTwoAxisDiscrepancy === 'function') {
                     try {
                         window.calculateTwoAxisDiscrepancy();
@@ -815,8 +833,6 @@
                     console.warn('[UNIFED-FIX-B] performForensicCrossings() não disponível — verifique ordem de carregamento de script.js.');
                 }
 
-                // Emitir UNIFED_ANALYSIS_COMPLETE para desbloquear o Estado 2 completo
-                // (uncloakForensicData, renderATFChart, renderDiscrepancyCharts, etc.)
                 try {
                     window.dispatchEvent(new CustomEvent('UNIFED_ANALYSIS_COMPLETE', {
                         detail: {
@@ -830,7 +846,6 @@
                 } catch (evtErr) {
                     console.warn('[UNIFED-FIX-B] Falha ao despachar UNIFED_ANALYSIS_COMPLETE:', evtErr);
                 }
-                // ── [/FIX ACHADO B] ─────────────────────────────────────────────────────────
 
                 return true;
             } catch (err) {
@@ -926,7 +941,10 @@
 
         function waitForPureDashboard() {
             return new Promise((resolve) => {
-                if (document.getElementById('pureDashboard')) { resolve(); return; }
+                if (document.getElementById('pureDashboard')) {
+                    resolve();
+                    return;
+                }
                 const observer = new MutationObserver((mutations, obs) => {
                     if (document.getElementById('pureDashboard')) {
                         obs.disconnect();
@@ -938,7 +956,7 @@
             });
         }
 
-        // [RETIFICAÇÃO] Monkey-patching com flag atómica e cadeia de delegação
+        // Monkey-patching com flag atómica
         if (typeof window.updateDashboard === 'function' && !window.updateDashboard._nexusHooked) {
             const _origUpdateDashboard = window.updateDashboard;
             window.updateDashboard = function() {
@@ -1033,9 +1051,6 @@
             }
         }
 
-        // =========================================================================
-        // [HOOK CIRÚRGICO] Conectar o gatilho nativo do index.html ao injetor de dados
-        // =========================================================================
         if (window.UNIFEDSystem) {
             window.UNIFEDSystem.loadAnonymizedRealCase = async function() {
                 await initializeFullWithEvidence();
@@ -1073,8 +1088,7 @@
                             }
                             await waitForPureDashboard();
                             initializeCoreDashboard();
-                            // [FIX 1.2] requestAnimationFrame substitui setTimeout(100ms) — sem latência artificial
-                            await new Promise(r => requestAnimationFrame(r));
+                            await new Promise(r => setTimeout(r, 100));
                             window.UNIFED_INTERNAL.syncMetrics();
                             if (window.UNIFEDSystem.loadAnonymizedRealCase) {
                                 await window.UNIFEDSystem.loadAnonymizedRealCase();
@@ -1106,8 +1120,7 @@
                     }
                     await waitForPureDashboard();
                     initializeCoreDashboard();
-                    // [FIX 1.2] requestAnimationFrame substitui setTimeout(100ms) — sem latência artificial
-                    await new Promise(r => requestAnimationFrame(r));
+                    await new Promise(r => setTimeout(r, 100));
                     window.UNIFED_INTERNAL.syncMetrics();
                     if (window.UNIFEDSystem.loadAnonymizedRealCase) {
                         await window.UNIFEDSystem.loadAnonymizedRealCase();
@@ -1142,15 +1155,12 @@
         }
         window.generateQRCode = generateQRCode;
 
-        // [RETIFICAÇÃO] Remoção dos Watchdogs (setInterval) e substituição por EventListener
         function setupEventDrivenHydration() {
-            // Executa imediatamente em vez de aguardar o evento
             if (typeof window.forensicDataSynchronization === 'function') {
                 window.forensicDataSynchronization();
             } else {
                 console.warn('[UNIFED] forensicDataSynchronization não disponível no arranque.');
             }
-            // Manter listener como fallback para compatibilidade
             window.addEventListener('UNIFED_ANALYSIS_COMPLETE', function(event) {
                 console.log('[UNIFED] Evento UNIFED_ANALYSIS_COMPLETE recebido (fallback).', event.detail);
                 if (typeof window.forensicDataSynchronization === 'function') {
@@ -1164,9 +1174,6 @@
             console.log('[UNIFED] Listener para UNIFED_ANALYSIS_COMPLETE registado como fallback.');
         }
 
-        // =========================================================================
-        // CSS Injection para forçar opacidade em elementos com data-pt / data-en
-        // =========================================================================
         function forceDataPtVisibility() {
             const style = document.createElement('style');
             style.id = 'unifed-force-data-pt';
@@ -1183,9 +1190,6 @@
             console.log('[UNIFED] CSS injection para visibilidade de data-pt/data-en aplicado.');
         }
 
-        // =========================================================================
-        // Sincronização de Session ID e Master Hash com o DOM
-        // =========================================================================
         function syncSessionAndHash() {
             const sys = window.UNIFEDSystem;
             if (!sys) return;
@@ -1193,12 +1197,10 @@
             if (sessionEl && sys.sessionId) sessionEl.textContent = sys.sessionId;
             const hashFullEl = document.getElementById('masterHashFull');
             if (hashFullEl && sys.masterHash) hashFullEl.textContent = sys.masterHash;
-            // Atualizar também o elemento do panel.html
             const hashPrefixEl = document.querySelector('#pure-hash-prefix-verdict');
             if (hashPrefixEl && sys.masterHash) hashPrefixEl.textContent = sys.masterHash.substring(0, 16).toUpperCase() + '...';
         }
 
-        // Hook no syncMetrics para garantir que a sincronização de hash ocorre
         if (window.UNIFED_INTERNAL && window.UNIFED_INTERNAL.syncMetrics) {
             const origSync = window.UNIFED_INTERNAL.syncMetrics;
             window.UNIFED_INTERNAL.syncMetrics = function() {
@@ -1212,7 +1214,6 @@
         setupEventDrivenHydration();
         setupRealCaseButton();
         
-        // Inicialização inicial (caso o botão não seja clicado primeiro)
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
                 initializeCoreDashboard();
@@ -1225,13 +1226,9 @@
     })();
 
     // =========================================================================
-    // Camada 7 – State-Driven Hydration + Event-Driven Uncloaking (2026-04-14)
-    // Estado 1 (METADATA): #demoModeBtn → revealMetadata()
-    // Estado 2 (PERITIA):  UNIFED_ANALYSIS_COMPLETE (emitido por performAudit()) → uncloakForensicData()
+    // Camada 7 – State-Driven Hydration + Event-Driven Uncloaking
     // =========================================================================
     (function _installStateHydration() {
-
-        // ── Estado 1: Identificação e Metadados ──────────────────────────────
         window.revealMetadata = function() {
             const sys = window.UNIFEDSystem;
             const _sessionId = (sys && sys.sessionId)
@@ -1256,16 +1253,12 @@
             console.log('[UNIFED] Estado 1 (METADATA): hidratação de metadados concluída.');
         };
 
-        // ── Estado 2: Uncloaking Atómico pós-UNIFED_ANALYSIS_COMPLETE ────────
-        // performAudit() (motor nativo script.js) emite UNIFED_ANALYSIS_COMPLETE após cálculo.
-        // Não interferimos no clique de #analyzeBtn — apenas consumimos o evento pós-cálculo.
         window.uncloakForensicData = function() {
             if (typeof window.UNIFED_INTERNAL !== 'undefined') {
                 if (typeof window.UNIFED_INTERNAL.syncMetrics === 'function')   window.UNIFED_INTERNAL.syncMetrics();
                 if (typeof window.UNIFED_INTERNAL.renderMatrix === 'function')  window.UNIFED_INTERNAL.renderMatrix();
                 if (typeof window.UNIFED_INTERNAL.updateAuxiliaryUI === 'function') window.UNIFED_INTERNAL.updateAuxiliaryUI();
             }
-            // Aplicação instantânea (latência zero — sem setTimeout)
             document.querySelectorAll(
                 '.pure-data-value, .pure-delta-value, .pure-atf-big, ' +
                 '.smoking-gun-module, .pure-sg-val, [data-pt], [data-en]'
@@ -1281,7 +1274,6 @@
         };
 
         function _setupTriggers() {
-            // Estado 1: #demoModeBtn (ID real do index.html)
             const btnCasoReal = document.getElementById('demoModeBtn')
                 || document.querySelector('[data-action="load-caso-real"]')
                 || document.getElementById('btnCasoReal');
@@ -1290,19 +1282,16 @@
                 btnCasoReal.setAttribute('data-state-hydration-1', '1');
             }
 
-            // Estado 2: UNIFED_ANALYSIS_COMPLETE (pós-performAudit()) — NÃO sobrepõe o clique do #analyzeBtn
             window.addEventListener('UNIFED_ANALYSIS_COMPLETE', function _onAnalysisComplete(evt) {
                 console.log('[UNIFED] UNIFED_ANALYSIS_COMPLETE recebido. A iniciar uncloaking atómico...', (evt && evt.detail) || '');
                 window.uncloakForensicData();
             });
 
-            // Binding defensivo em #analyzeBtn: apenas para caso performAudit() não emita o evento
             const btnAnalyze = document.getElementById('analyzeBtn')
                 || document.querySelector('[data-action="executar-pericia"]')
                 || document.getElementById('btnExecutarPericia');
             if (btnAnalyze && !btnAnalyze.getAttribute('data-state-hydration-2')) {
                 btnAnalyze.addEventListener('click', function _analyzeClickFallback() {
-                    // Aguarda 0ms (próximo tick) para deixar performAudit() terminar primeiro
                     Promise.resolve().then(function() {
                         if (!window._unifedUncloakDone) window.uncloakForensicData();
                     });
@@ -1325,24 +1314,21 @@
     (function unifedElitePatch() {
         'use strict';
 
-        // 1. CONFIGURAÇÃO DO SERVIDOR DE CARIMBOS DE TEMPO (TSA)
         window.UNIFED_CONFIG = {
             tsa_server: "https://freetsa.org/tsr",
             demo_mode: true,
             log_level: 'silent_errors'
         };
 
-        // 2. SUPRESSÃO DE ERROS DE CONSOLA (ESTÉTICA PROFISSIONAL)
         const _originalError = console.error;
         console.error = function(...args) {
             const msg = args[0] ? args[0].toString() : "";
             if (msg.includes('CORS') || msg.includes('OTS') || msg.includes('UNIFED')) {
-                return; // Silencia erros técnicos do sistema
+                return;
             }
             _originalError.apply(console, args);
         };
 
-        // 3. MOTOR DE REVELAÇÃO (LATÊNCIA ZERO — sem setTimeout)
         const hydrator = () => {
             console.info('[UNIFED] A inicializar ambiente de alta fidelidade para demonstração...');
 
@@ -1352,7 +1338,6 @@
                 metrics: { saft_total: 0, bank_total: 0 }
             };
 
-            // Revelação instantânea via classe CSS (sem manipulação de estilos inline)
             const reveal = () => {
                 if (window.forceRevealSmokingGun) window.forceRevealSmokingGun();
                 document.querySelectorAll('.pure-data-value, .pure-delta-value, .pure-atf-big, .pure-sg-val, .pure-zc-val')
@@ -1372,10 +1357,9 @@
             if (typeof window.UNIFED_INTERNAL !== 'undefined' && typeof window.UNIFED_INTERNAL.updateAuxiliaryUI === 'function') {
                 window.UNIFED_INTERNAL.updateAuxiliaryUI();
             }
-            reveal(); // Instantâneo — sem setTimeout
+            reveal();
         };
 
-        // Gatilho de execução
         if (document.readyState === 'complete' || document.readyState === 'interactive') {
             hydrator();
         } else {
@@ -1384,5 +1368,67 @@
 
         console.log('%c[UNIFED] PATCH DE ELITE APLICADO: Pronto para demonstração.', 'color: #00e5ff; font-weight: bold;');
     })();
+
+    // =========================================================================
+    // FORCE FINAL STATE (Código A - Desbloqueio em cascata)
+    // =========================================================================
+    async function forceFinalState() {
+        try {
+            await loadPanelHTML();      // Injeção assíncrona
+            await waitForPanel();       // Garantia de presença no DOM
+
+            // 1. Desbloqueio de Visibilidade Global
+            document.body.classList.add('forensic-revealed');
+
+            // 2. Remoção da Camada de Oclusão (Splash Screen)
+            const splash = document.getElementById('splashScreen');
+            if (splash) {
+                splash.style.transition = 'opacity 0.5s ease-out';
+                splash.style.opacity = '0';
+                setTimeout(() => {
+                    splash.style.display = 'none';
+                }, 500);
+            }
+
+            // 3. Ativação Atómica do Wrapper e do Main Container
+            const wrapper = document.getElementById('pureDashboardWrapper');
+            if (wrapper) {
+                wrapper.classList.add('activated');
+                wrapper.style.display = 'block';
+                wrapper.style.opacity = '1';
+                wrapper.style.visibility = 'visible';
+
+                // Desbloqueio explícito da secção interna (Cascading Uncloak)
+                const innerDashboard = document.getElementById('pureDashboard') || wrapper.querySelector('.pure-section');
+                if (innerDashboard) {
+                    innerDashboard.classList.add('active');
+                    innerDashboard.style.display = 'block';
+                    innerDashboard.style.opacity = '1';
+                    innerDashboard.style.visibility = 'visible';
+                    innerDashboard.style.height = 'auto';
+                }
+            }
+
+            // Proteção de visibilidade do Main Container
+            const mainContainer = document.getElementById('mainContainer');
+            if (mainContainer) {
+                mainContainer.style.display = 'block';
+                mainContainer.style.opacity = '1';
+            }
+
+            // 4. Despacho de Eventos de Sincronização
+            window.dispatchEvent(new CustomEvent('UNIFED_CORE_READY'));
+            window.dispatchEvent(new CustomEvent('UNIFED_ANALYSIS_COMPLETE', { 
+                detail: { status: 'READY', masterHash: window.activeForensicSession?.masterHash || _PDF_CASE.masterHash } 
+            }));
+
+            console.log('[PERÍCIA] Sistema desbloqueado: Splash removido e Dashboard ativado.');
+        } catch (err) {
+            console.error('[ERRO FORENSE] Falha na transição de estado:', err);
+        }
+    }
+
+    // Execução imediata (assíncrona)
+    forceFinalState().catch(err => console.error('[UNIFED] Erro em forceFinalState:', err));
 
 })();

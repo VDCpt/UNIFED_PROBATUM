@@ -2,8 +2,8 @@
  * ============================================================================
  * UNIFED - PROBATUM · unifed_panel_activator.js
  * ============================================================================
- * Versão      : v1.0.0 · FIX-ACHADO-A
- * Gerado em   : 2026-04-14
+ * Versão      : v1.0.0 · FIX-ACHADO-A + RETIFICAÇÃO C
+ * Gerado em   : 2026-04-15
  * Conformidade: DORA (UE) 2022/2554 · Art. 125.º CPP · ISO/IEC 27037:2012
  * ============================================================================
  * ÂMBITO:
@@ -54,6 +54,8 @@
      *   elemento não estiver presente (degradação silenciosa).
      */
     window._activatePurePanel = async function _activatePurePanel(forceReset) {
+        console.log('[UNIFED-ACTIVATOR] Invocando transição forçada...');
+
         const wrapper = document.getElementById('pureDashboardWrapper');
         const section = document.getElementById('pureDashboard');
 
@@ -100,6 +102,13 @@
 
         // Aguardar conclusão da transição CSS (300ms) antes de resolver
         await new Promise(resolve => setTimeout(resolve, 320));
+
+        // ── Gatilho para o script_injection realizar a hidratação final ──────
+        if (typeof window.forceFinalState === 'function') {
+            window.forceFinalState();
+        } else {
+            console.warn('[UNIFED-ACTIVATOR] forceFinalState não disponível. A transição pode estar incompleta.');
+        }
 
         // ── Log de auditoria (não-bloqueante) ─────────────────────────────────
         try {
@@ -148,6 +157,6 @@
         target.appendChild(style);
     })();
 
-    console.log('[UNIFED-ACTIVATOR] window._activatePurePanel registada (v1.0.0 · FIX-ACHADO-A).');
+    console.log('[UNIFED-ACTIVATOR] window._activatePurePanel registada (v1.0.0 · FIX-ACHADO-A + RETIFICAÇÃO C).');
 
 })();
