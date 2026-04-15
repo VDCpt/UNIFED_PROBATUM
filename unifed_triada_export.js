@@ -199,26 +199,61 @@ function safeExport() {
     }
 
     // ========== FUNÇÃO DE RESTAURO DA TOOLBAR ORIGINAL ==========
-    /** * FIX 5.1: Event Delegation e Preservação de Listeners */
     function restoreOriginalToolbar() {
         const container = document.getElementById('export-tools-container');
-        if (!container) return;
+        if (!container) return false;
+        if (container.getAttribute('data-original-restored') === 'true') return true;
 
+        // [FIX 5.1] Em vez de reconstruir innerHTML (destrói listeners),
+        // manipulamos apenas visibilidade e re-vinculamos via Event Delegation.
         container.setAttribute('data-original-restored', 'true');
-        
-        // Em vez de reconstruir o innerHTML, vamos apenas manipular visibilidade
-        // ou re-vincular os listeners globais
+        container.setAttribute('data-triada-injected', 'false');
+
+        // Remove apenas botões da tríade (não todos os filhos)
+        const triadaBtns = container.querySelectorAll('.btn-tool-pure');
+        triadaBtns.forEach(btn => btn.remove());
+
+        // Repor os 6 botões originais apenas se estiverem ausentes
+        const translations = window.translations?.[window.currentLang] || {};
+        const originalTools = [
+            { id: 'exportPDFBtn',   icon: 'fa-file-pdf',   label: translations.btnPDF  || 'PARECER TÉCNICO',  handler: () => window.exportPDF    && window.exportPDF() },
+            { id: 'exportDOCXBtn',  icon: 'fa-file-word',  label: translations.btnDOCX || 'MINUTA WORD',       handler: () => window.exportDOCX   && window.exportDOCX() },
+            { id: 'atfModalBtn',    icon: 'fa-chart-line',  label: translations.btnATF  || '⏳ TENDÊNCIA ATF', handler: () => window.openATFModal  && window.openATFModal() },
+            { id: 'exportJSONBtn',  icon: 'fa-file-code',  label: translations.btnJSON || 'EXPORTAR JSON',     handler: () => window.exportDataJSON && window.exportDataJSON() },
+            { id: 'resetBtn',       icon: 'fa-redo-alt',   label: translations.btnReset || 'REINICIAR',        handler: () => window.resetSystem   && window.resetSystem() },
+            { id: 'clearConsoleBtn',icon: 'fa-trash-alt',  label: translations.clearConsoleBtnText || 'LIMPAR CONSOLE', handler: () => window.clearConsole && window.clearConsole() }
+        ];
+
+        originalTools.forEach(tool => {
+            if (!document.getElementById(tool.id)) {
+                const btn = document.createElement('button');
+                btn.id = tool.id;
+                btn.className = 'btn-tool';
+                btn.innerHTML = `<i class="fas ${tool.icon}"></i> <span>${tool.label}</span>`;
+                btn.addEventListener('click', tool.handler);
+                container.appendChild(btn);
+            }
+        });
+
+        // [FIX 5.1] Re-vincular listeners globais via setupMainListeners se disponível
         if (typeof setupMainListeners === 'function') {
-            setupMainListeners(); 
+            try { setupMainListeners(); } catch (_e) {}
         }
-        
-        // Proteção Atómica do Botão de Análise
+
+        // [FIX 5.1] Protecção atómica do botão de análise — preserva listener existente
         const analyzeBtn = document.getElementById('analyzeBtn');
-        if (analyzeBtn && !analyzeBtn.onclick) {
-            analyzeBtn.addEventListener('click', performAudit);
+        if (analyzeBtn && !analyzeBtn.getAttribute('data-triada-protected')) {
+            if (!analyzeBtn.onclick) {
+                analyzeBtn.addEventListener('click', function() {
+                    if (typeof performAudit === 'function') performAudit();
+                });
+            }
+            analyzeBtn.setAttribute('data-triada-protected', 'true');
         }
-        
-        _log('Toolbar restaurada e listeners re-vinculados via Event Delegation.');
+
+        if (typeof _log === 'function') _log('Toolbar restaurada e listeners re-vinculados via Event Delegation.');
+        console.log('[TRIADA] Toolbar original restaurada (FIX 5.1 — Event Delegation).');
+        return true;
     }
 
     // Inicialização da tríade (sem destruir a toolbar original)

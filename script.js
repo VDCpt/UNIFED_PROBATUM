@@ -3147,6 +3147,19 @@ function resetUIVisual() {
         consoleEl.innerHTML = '<div class="log-entry log-system">[SISTEMA] Aguardando inicialização. Interface limpa.</div>';
     }
     console.log('[UNIFED] resetUIVisual: UI limpa (estado Zero-Knowledge ampliado).');
+
+    // [FIX 2.1] Restauro dos cartões DAC7 ocultados por _removeZeroDac7Kpis (display:none reversível)
+    [1, 2, 3, 4].forEach(q => {
+        const el = document.getElementById(`dac7Q${q}Value`);
+        if (el) {
+            const card = el.closest('.kpi-card');
+            const target = card || el;
+            if (target.getAttribute('data-unifed-hidden') === 'zero-dac7') {
+                target.style.display = '';
+                target.removeAttribute('data-unifed-hidden');
+            }
+        }
+    });
 }
 
 /**
@@ -3155,28 +3168,46 @@ function resetUIVisual() {
  */
 
 // ============================================================================
-// RETIFICAÇÃO: revealForensicData com classe CSS e suspensão do Nexus
+// FIX 2.4: revealForensicData — IDs probatórios + orquestração de gráficos
+// Garante que o container existe e está visível antes da chamada ao Chart.js
 // ============================================================================
-/** 
- * FIX 2.4: Revelação de IDs probatórios e orquestração de gráficos 
- * Garante que o container existe e está visível antes da chamada ao Chart.js
- */
 function revealForensicData() {
-    const probatoryElements = [
-        '#smoking-gun-1', '#smoking-gun-2', '#area-cinzenta', 
-        '#colarinho-branco', '#bloco-rag-legal',
-        '.pure-data-value', '.pure-delta-value', '.pure-atf-big', 
-        '.pure-sg-val', '.pure-zc-val'
-    ];
+    console.log('[UNIFED] Iniciando protocolo de revelação de dados forenses...');
 
-    // 1. Uncloaking via CSS
-    probatoryElements.forEach(selector => {
+    // Suspender traduções do Nexus durante a transição
+    if (window.nexusSuspendTranslation) window.nexusSuspendTranslation(true);
+
+    // Adicionar classe ao dashboard para revelar os valores
+    const dashboard = document.getElementById('pureDashboard');
+    if (dashboard) dashboard.classList.add('forensic-revealed');
+
+    // 1. Orquestração de Métricas e Dashboards
+    if (typeof window.UNIFED_INTERNAL !== 'undefined' && window.UNIFED_INTERNAL.syncMetrics) {
+        window.UNIFED_INTERNAL.syncMetrics(true);
+    } else {
+        if (typeof updateDashboard === 'function') updateDashboard();
+        if (typeof updateModulesUI === 'function') updateModulesUI();
+        if (typeof renderChart === 'function') renderChart();
+        if (typeof renderDiscrepancyChart === 'function') renderDiscrepancyChart();
+    }
+
+    // 2. Acionamento de Gatilhos de Visibilidade Forçada (Smoking Gun)
+    if (typeof forceRevealSmokingGun === 'function') forceRevealSmokingGun();
+
+    // 3. Uncloaking via CSS — IDs probatórios + seletores de classe
+    const probatorySelectors = [
+        '#smoking-gun-1', '#smoking-gun-2', '#area-cinzenta',
+        '#colarinho-branco', '#bloco-rag-legal',
+        '.pure-data-value', '.pure-delta-value', '.pure-atf-big',
+        '.pure-sg-val', '.pure-zc-val', '.pure-atf-trend-val'
+    ];
+    probatorySelectors.forEach(selector => {
         document.querySelectorAll(selector).forEach(el => {
             el.classList.add('forensic-revealed');
         });
     });
 
-    // 2. Orquestração de Gráficos (Atraso de 50ms para garantir reflow do DOM)
+    // 4. Orquestração de Gráficos — atraso de 50ms para garantir reflow do DOM
     requestAnimationFrame(() => {
         setTimeout(() => {
             if (typeof renderATFChart === 'function') {
@@ -3187,12 +3218,18 @@ function revealForensicData() {
                 console.log('[FORENSIC] Triggering Discrepancy Charts...');
                 renderDiscrepancyCharts();
             }
-            // Injeção de narrativa legal se existir
             if (typeof window.generateLegalNarrative === 'function') {
                 window.generateLegalNarrative();
             }
         }, 50);
     });
+
+    // 5. Reativar traduções do Nexus
+    setTimeout(() => {
+        if (window.nexusSuspendTranslation) window.nexusSuspendTranslation(false);
+    }, 350);
+
+    console.info('[UNIFED] Protocolo Zero-Knowledge encerrado. Dados em conformidade visual.');
 }
 
 // ============================================================================
@@ -4211,6 +4248,9 @@ function performAudit() {
         analyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + (currentLang === 'en' ? 'RUNNING FORENSIC EXAM BIG DATA...' : 'A EXECUTAR PERÍCIA BIG DATA...');
     }
 
+    // [FIX 2.3] Bypass de latência para demoMode / casoRealAnonimizado — 0ms; caso real: 1000ms
+    const _auditDelay = (UNIFEDSystem.demoMode === true || UNIFEDSystem.casoRealAnonimizado === true) ? 0 : 1000;
+
     setTimeout(() => {
         try {
             const saftBruto = UNIFEDSystem.documents.saft?.totals?.bruto || 0;
@@ -4372,7 +4412,7 @@ function performAudit() {
                 else analyzeBtn.innerHTML = `<i class="fas fa-search-dollar"></i> ${translations[currentLang].btnAnalyze}`;
             }
         }
-    }, 1000);
+    }, _auditDelay);
 }
 
 function updateSmokingGunUI() {
@@ -4801,10 +4841,18 @@ function filterDAC7ByPeriod() {
 
     const visible = visibilityMap[periodo] || [1, 2, 3, 4];
 
-    const _isDemoHide = (typeof UNIFEDSystem !== 'undefined' && UNIFEDSystem.demoMode === true);
+    // [FIX 2.2] Guarda de sessão: _isDemoHide só actua se a sessão for demo/casoReal
+    // e se os cartões ainda não tiverem sido ocultados por _removeZeroDac7Kpis (data-unifed-hidden),
+    // evitando sobrepor o estado de ocultação reversível com uma remoção implícita.
+    const _isDemoHide = (typeof UNIFEDSystem !== 'undefined' &&
+        (UNIFEDSystem.demoMode === true || UNIFEDSystem.casoRealAnonimizado === true) &&
+        window._unifedDemoHideEnabled !== false);
     [1, 2, 3, 4].forEach(q => {
-        const card = document.getElementById(`dac7Q${q}Value`)?.closest('.kpi-card');
+        const el = document.getElementById(`dac7Q${q}Value`);
+        const card = el ? el.closest('.kpi-card') : null;
         if (card) {
+            // Não reclassificar cartões já geridos por _removeZeroDac7Kpis
+            if (card.getAttribute('data-unifed-hidden') === 'zero-dac7') return;
             const qVal = dac7[`q${q}`] || 0;
             const hide = !visible.includes(q) || (_isDemoHide && qVal === 0);
             card.style.display = hide ? 'none' : '';
@@ -8466,6 +8514,64 @@ window.showToast = function(message, type = 'info') {
    
 window.renderChart = renderChart;
 window.renderDiscrepancyChart = renderDiscrepancyChart;
+
+// ============================================================================
+// FIX FORÇADO: Transição do Splash Screen para o Main Container
+// ============================================================================
+(function ensureSplashTransition() {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', ensureSplashTransition);
+        return;
+    }
+    
+    const startBtn = document.getElementById('startSessionBtn');
+    const splashScreen = document.getElementById('splashScreen');
+    const mainContainer = document.getElementById('mainContainer');
+    
+    if (!startBtn || !splashScreen || !mainContainer) {
+        console.error('[UNIFED] Elementos críticos não encontrados:', {
+            startBtn: !!startBtn,
+            splashScreen: !!splashScreen,
+            mainContainer: !!mainContainer
+        });
+        return;
+    }
+    
+    // Evitar duplicação de listener
+    if (startBtn._splashListener) return;
+    startBtn._splashListener = true;
+    
+    startBtn.addEventListener('click', function() {
+        if (typeof ForensicLogger !== 'undefined') {
+            ForensicLogger.addEntry('SPLASH_SCREEN_DISMISSED', { action: 'Interface desbloqueada' });
+        }
+        splashScreen.style.opacity = '0';
+        setTimeout(function() {
+            splashScreen.style.display = 'none';
+            mainContainer.style.display = 'flex';
+            void mainContainer.offsetWidth; // forçar reflow
+            mainContainer.style.opacity = '1';
+            if (typeof logAudit === 'function') {
+                logAudit('Transição de estado UI: Splash -> Main. Sistema pronto para demonstração ELITE.', 'success');
+            }
+        }, 500);
+    });
+    
+    console.log('[UNIFED] Listener de transição do splash configurado com sucesso.');
+})();
+
+// Garantir que o select do ano fiscal seja populado
+(function ensureAnoFiscalPopulated() {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof populateAnoFiscal === 'function') populateAnoFiscal();
+            if (typeof populateYears === 'function') populateYears();
+        });
+    } else {
+        if (typeof populateAnoFiscal === 'function') populateAnoFiscal();
+        if (typeof populateYears === 'function') populateYears();
+    }
+})();
 
 // ============================================================================
 // FIM DO FICHEIRO - UNIFED - PROBATUM v13.12.2-i18n

@@ -1170,66 +1170,39 @@ canvas {
 }
 
 /* ============================================================================
-   FIX 4.1: Enforcement de visibilidade forense (CSS Specificity Overriding)
+   FIX 4.1: Enforcement de visibilidade forense
+   Quebra o "Estado Zero-Knowledge" quando a classe .forensic-revealed é aplicada
    ============================================================================ */
 .forensic-revealed {
-    opacity: 1 !important;
-    visibility: visible !important;
-    display: block !important;
+    opacity:    1         !important;
+    visibility: visible   !important;
+    display:    block     !important;
     transition: opacity 0.4s ease-in !important;
 }
 
-/* Variante para manter layouts de grid ou flex */
+/* Variante para containers com layout grid */
 .forensic-revealed.grid-layout {
     display: grid !important;
 }
 
+/* Variante para containers com layout flex */
 .forensic-revealed.flex-layout {
     display: flex !important;
 }
 
-/* Proteção contra ocultação de módulos críticos */
-#smoking-gun-1.forensic-revealed, 
+/* Proteção visual dos módulos de prova crítica */
+#smoking-gun-1.forensic-revealed,
 #smoking-gun-2.forensic-revealed {
-    border-left: 4px solid var(--pure-warn) !important;
+    border-left: 4px solid var(--pure-warn, #f59e0b) !important;
 }
 
-/* ============================================================================
-   RETIFICAÇÃO DEFINITIVA DE VISIBILIDADE
-   ============================================================================ */
-#main-container {
-    transition: opacity 0.5s ease-in-out;
-}
-
-/* Garante que o wrapper nunca fica invisível após a ativação */
-#pureDashboardWrapper.activated {
-    opacity: 1 !important;
-    display: block !important;
-    visibility: visible !important;
-    z-index: 9999 !important;
-    position: relative !important;
-    background: var(--bg-primary) !important;
-}
-
-/* Estilo do Selo de Selagem Local (Nível 1) */
-#pure-tsa-anchor {
-    border: 1px solid var(--pure-accent);
-    padding: 4px 8px;
-    background: rgba(0, 229, 255, 0.1);
-    border-radius: 4px;
-    display: inline-block;
-}
-
-/* Forçar anulação do estado Zero-Knowledge em ambiente de execução */
-body.forensic-revealed .pure-data-value,
-body.forensic-revealed .pure-mono,
-body.forensic-revealed .pure-atf-big,
-body.forensic-revealed .pure-zc-val,
-body.forensic-revealed .pure-sg-val,
-body.forensic-revealed .pure-delta-value {
-    opacity: 1 !important;
-    visibility: visible !important;
-    transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1) !important;
+/* Garantia de visibilidade para elementos de valor puro */
+.pure-data-value.forensic-revealed,
+.pure-delta-value.forensic-revealed,
+.pure-atf-big.forensic-revealed,
+.pure-sg-val.forensic-revealed,
+.pure-zc-val.forensic-revealed {
+    display: inline-block !important;
 }
 
 /* ============================================================================
