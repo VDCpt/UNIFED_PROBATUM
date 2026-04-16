@@ -1,10 +1,10 @@
 /**
  * UNIFED - PROBATUM · CASO REAL ANONIMIZADO v13.12.2-i18n (ASYNC + PERSIST)
  * ============================================================================
- * [MERGE CIRÚRGICO 2026-04-15]
- * - Base: script_injection.js (original, mais recente)
- * - Adicionados campos extras em crossings (btor, btf, c1_delta, c1_pct, c2_delta, c2_pct)
- * - Adicionada função forceRenderFix para garantir exibição de gráficos
+ * [MERGE CIRÚRGICO 2026-04-15 + RETIFICAÇÃO TIME-2/TIME-3]
+ * - Garantia de que _PDF_CASE.totals é transferido para UNIFEDSystem.documents
+ * - Função ensureDemoDataLoaded() para carregamento idempotente
+ * - Melhorada sincronização da UI após clique "CASO REAL"
  * ============================================================================
  */
 
@@ -65,7 +65,7 @@
     }
 
     // =========================================================================
-    // 1. DATASET MESTRE (OBJETO IMUTÁVEL)
+    // 1. DATASET MESTRE (OBJETO IMUTÁVEL) – valores hardcoded do caso real
     // =========================================================================
     const _PDF_CASE = Object.freeze({
         sessionId:  "UNIFED-MNGFN3C0-X57MO",
@@ -391,7 +391,7 @@
             <div id="triangulationMatrixContainer" class="pure-triangulation-box" style="margin:30px 0; border:1px solid #00E5FF; background:rgba(15,23,42,0.95); padding:20px; border-radius:12px;">
                 <h3 style="color:#00E5FF; margin-top:0; font-size:1rem;">${labels.title}</h3>
                 <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
-                    <thead><tr style="border-bottom:1px solid rgba(255,255,255,0.2);"><th style="text-align:left; padding:10px;">${labels.colSource}</th><th style="text-align:right; padding:10px;">${labels.colValue}</th><th style="text-align:right; padding:10px; color:#EF4444;">${labels.colDisc}</th><tr></thead>
+                    <thead><tr style="border-bottom:1px solid rgba(255,255,255,0.2);"><th style="text-align:left; padding:10px;">${labels.colSource}</th><th style="text-align:right; padding:10px;">${labels.colValue}</th><th style="text-align:right; padding:10px; color:#EF4444;">${labels.colDisc}</th></tr></thead>
                     <tbody>
                         <tr><td style="padding:10px;">📄 SAF-T PT (${isEn ? 'Invoicing' : 'Faturação'})</td><td style="padding:10px; text-align:right;">${fmt(t.saftBruto)}</td><td style="padding:10px; text-align:right;">-${fmt(deltaSaft)}</td></tr>
                         <tr style="background:rgba(239,68,68,0.08);"><td style="padding:10px;">🌐 DAC7 (Plataforma A)</td><td style="padding:10px; text-align:right;">${fmt(t.dac7TotalPeriodo)}</td><td style="padding:10px; text-align:right;">-${fmt(deltaDac7)}</td></tr>
@@ -781,9 +781,24 @@
                 sys.analysis.totals.dac7Q1 = 0; sys.analysis.totals.dac7Q2 = 0; sys.analysis.totals.dac7Q3 = 0;
                 sys.analysis.totals.dac7Q4 = t.dac7TotalPeriodo;
                 sys.analysis.totals.dac7TotalPeriodo = t.dac7TotalPeriodo;
+                sys.analysis.totals.iva6Omitido = t.iva6Omitido;
+                sys.analysis.totals.iva23Omitido = t.iva23Omitido;
+                sys.analysis.totals.asfixiaFinanceira = t.asfixiaFinanceira;
 
-                // [RETIFICAÇÃO] NÃO executar cruzamentos nem despachar ANALYSIS_COMPLETE aqui
-                // Os cálculos ficarão pendentes até ao clique em "Executar Perícia"
+                // Garantir que os campos cruciais estão definidos também em crossings (para gráficos)
+                if (!sys.analysis.crossings) sys.analysis.crossings = {};
+                const discrepanciaCritica = t.despesas - t.faturaPlataforma;
+                const percentOmissao = t.despesas > 0 ? (discrepanciaCritica / t.despesas) * 100 : 0;
+                sys.analysis.crossings.discrepanciaCritica = discrepanciaCritica;
+                sys.analysis.crossings.percentagemOmissao = percentOmissao;
+                sys.analysis.crossings.btor = t.despesas;
+                sys.analysis.crossings.btf = t.faturaPlataforma;
+                sys.analysis.crossings.ivaFalta = discrepanciaCritica * 0.23;
+                sys.analysis.crossings.ivaFalta6 = discrepanciaCritica * 0.06;
+                sys.analysis.crossings.ircEstimado = discrepanciaCritica * 0.21;
+                sys.analysis.crossings.asfixiaFinanceira = t.saftBruto * 0.06;
+                sys.analysis.crossings.discrepanciaSaftVsDac7 = t.saftBruto - t.dac7TotalPeriodo;
+                sys.analysis.crossings.percentagemSaftVsDac7 = t.saftBruto > 0 ? ((t.saftBruto - t.dac7TotalPeriodo) / t.saftBruto) * 100 : 0;
 
                 if (!sys.client && data.client) {
                     sys.client = { name: data.client.name, nif: data.client.nif, platform: data.client.platform };
@@ -898,7 +913,7 @@
             sys.analysis.crossings.ircEstimado = ircEstimado;
             sys.analysis.crossings.asfixiaFinanceira = asfixiaFinanceira;
 
-            // [NOVO] Campos adicionais provenientes do script_injection(2).js
+            // Campos adicionais provenientes do script_injection(2).js
             sys.analysis.crossings.btor = t.despesas;
             sys.analysis.crossings.btf = t.faturaPlataforma;
             sys.analysis.crossings.c1_delta = discrepanciaSaftVsDac7;
@@ -943,11 +958,36 @@
             console.log('[UNIFED] Análise forense concluída e UI atualizada.');
         }
 
+        // =========================================================================
+        // NOVA FUNÇÃO: ensureDemoDataLoaded() – Garante que os dados do caso real
+        // estão carregados antes da perícia (FIX TIME-2)
+        // =========================================================================
+        async function ensureDemoDataLoaded() {
+            if (window._unifedDataLoaded && window.UNIFEDSystem && window.UNIFEDSystem.analysis && 
+                window.UNIFEDSystem.analysis.totals && window.UNIFEDSystem.analysis.totals.ganhos > 0) {
+                console.log('[UNIFED] Dados do caso real já carregados. Nada a fazer.');
+                return true;
+            }
+            console.log('[UNIFED] A carregar dados do caso real (ensureDemoDataLoaded)...');
+            await waitForPanel();
+            await _simulateEvidenceUpload();
+            _updateEvidenceCountersAndShow();
+            if (typeof window.UNIFED_INTERNAL.syncMetrics === 'function') {
+                window.UNIFED_INTERNAL.syncMetrics();
+            }
+            if (typeof window.UNIFED_INTERNAL.updateAuxiliaryUI === 'function') {
+                window.UNIFED_INTERNAL.updateAuxiliaryUI();
+            }
+            console.log('[UNIFED] Dados do caso real carregados com sucesso.');
+            return true;
+        }
+
         window.UNIFED_INTERNAL.forcePlatformReadOnly = _forcePlatformReadOnly;
         window.UNIFED_INTERNAL.removeZeroDac7Kpis = _removeZeroDac7Kpis;
         window.UNIFED_INTERNAL.simulateEvidenceUpload = _simulateEvidenceUpload;
         window.UNIFED_INTERNAL.updateEvidenceCountersAndShow = _updateEvidenceCountersAndShow;
         window.UNIFED_INTERNAL.executePendingAnalysis = _executePendingAnalysis;
+        window.ensureDemoDataLoaded = ensureDemoDataLoaded; // Exposição global
         console.log('[UNIFED] Camada 5: OK.');
     })();
 
@@ -977,7 +1017,7 @@
     (function() {
         if (!window.UNIFED_INTERNAL) return;
         const { data, fmt, set, syncMetrics, renderMatrix } = window.UNIFED_INTERNAL;
-        const { injectAuxiliaryBoxesCSS, injectMacroCard, updateAuxiliaryUI, forcePlatformReadOnly, removeZeroDac7Kpis, simulateEvidenceUpload, updateEvidenceCountersAndShow, executePendingAnalysis } = window.UNIFED_INTERNAL;
+        const { injectAuxiliaryBoxesCSS, injectMacroCard, updateAuxiliaryUI, forcePlatformReadOnly, removeZeroDac7Kpis, simulateEvidenceUpload, updateEvidenceCountersAndShow, executePendingAnalysis, ensureDemoDataLoaded } = window.UNIFED_INTERNAL;
 
         let _initializing = false;
         let _dataLoaded = false;
@@ -1140,6 +1180,8 @@
             analyzeBtn.addEventListener('click', async (e) => {
                 e.preventDefault();
                 console.log('[UNIFED] Botão EXECUTAR PERÍCIA clicado — a executar análise pendente.');
+                // Antes de executar, garantir que os dados estão carregados
+                await ensureDemoDataLoaded();
                 if (typeof executePendingAnalysis === 'function') {
                     await executePendingAnalysis();
                 } else {
@@ -1175,7 +1217,8 @@
                             await waitForPureDashboard();
                             initializeCoreDashboard();
                             await new Promise(r => setTimeout(r, 100));
-                            window.UNIFED_INTERNAL.syncMetrics();
+                            // Garantir que os dados são carregados antes de continuar
+                            await ensureDemoDataLoaded();
                             if (window.UNIFEDSystem.loadAnonymizedRealCase) {
                                 await window.UNIFEDSystem.loadAnonymizedRealCase();
                             } else {
@@ -1207,7 +1250,8 @@
                     await waitForPureDashboard();
                     initializeCoreDashboard();
                     await new Promise(r => setTimeout(r, 100));
-                    window.UNIFED_INTERNAL.syncMetrics();
+                    // Garantir que os dados são carregados antes de continuar
+                    await ensureDemoDataLoaded();
                     if (window.UNIFEDSystem.loadAnonymizedRealCase) {
                         await window.UNIFEDSystem.loadAnonymizedRealCase();
                     } else {

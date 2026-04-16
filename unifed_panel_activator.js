@@ -75,7 +75,7 @@
 
         await new Promise(resolve => requestAnimationFrame(resolve));
         wrapper.style.opacity = '1';
-        await new Promise(resolve => setTimeout(resolve, 320));
+        await new Promise(resolve => setTimeout(resolve, 350));
 
         if (typeof window.forceFinalState === 'function') {
             await window.forceFinalState();

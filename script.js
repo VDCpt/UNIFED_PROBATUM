@@ -4205,7 +4205,7 @@ function simulateUpload(type, count) {
 
 let _UNIFED_AUDIT_RUNNING = false;
 
-function performAudit() {
+async function performAudit() {
     if (_UNIFED_AUDIT_RUNNING === true) {
         console.log('%c[UNIFED] ⚠ performAudit() bloqueada por mutex — ciclo de re-entrada prevenido.', 'color:#f59e0b;font-weight:bold;');
         return;
@@ -4216,6 +4216,32 @@ function performAudit() {
         _UNIFED_AUDIT_RUNNING = false;
         return showToast(currentLang === 'en' ? 'Register the taxpayer first.' : 'Registe o sujeito passivo primeiro.', 'error');
     }
+
+    // =========================================================================
+    // VALIDAÇÃO RIGOROSA DE PRÉ-CONDIÇÃO (FIX TIME-3)
+    // =========================================================================
+    const hasNonZeroTotals = () => {
+        const totals = UNIFEDSystem.analysis?.totals;
+        return totals && (totals.ganhos > 0 || totals.saftBruto > 0 || totals.despesas > 0);
+    };
+
+    if (!hasNonZeroTotals()) {
+        console.warn('[UNIFED] performAudit: Nenhum dado de evidência encontrado (totais a zero). Tentando carregar caso real...');
+        if (typeof window.ensureDemoDataLoaded === 'function') {
+            await window.ensureDemoDataLoaded();
+            await new Promise(resolve => setTimeout(resolve, 300)); // aguarda propagação
+        } else {
+            console.error('[UNIFED] ensureDemoDataLoaded não disponível. Abortando perícia.');
+            _UNIFED_AUDIT_RUNNING = false;
+            return showToast(currentLang === 'en' ? 'No evidence data found. Please load the Real Case first.' : 'Nenhum dado de evidência encontrado. Carregue o Caso Real primeiro.', 'error');
+        }
+    }
+
+    if (!hasNonZeroTotals()) {
+        _UNIFED_AUDIT_RUNNING = false;
+        return showToast(currentLang === 'en' ? 'Insufficient data to run forensic exam.' : 'Dados insuficientes para executar a perícia.', 'error');
+    }
+    // =========================================================================
 
     ForensicLogger.addEntry('AUDIT_STARTED');
 
@@ -4374,7 +4400,6 @@ function performAudit() {
             
             revealForensicData();
 
-            // [RETIFICAÇÃO v13.12.2-i18n] Disparo do evento para re-hidratação da UI externa (script_injection, etc.)
             try {
                 window.dispatchEvent(new CustomEvent('UNIFED_ANALYSIS_COMPLETE', { detail: { timestamp: Date.now() } }));
                 console.log('[UNIFED] Evento UNIFED_ANALYSIS_COMPLETE despachado.');
