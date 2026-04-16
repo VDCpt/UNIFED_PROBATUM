@@ -1,14 +1,14 @@
 /**
  * UNIFED - PROBATUM · v13.12.2-i18n · MÓDULO DE EXPORTAÇÃO — TRÍADE DOCUMENTAL
  * ============================================================================
- * [RETIFICAÇÃO] Adiciona botões da tríade sem remover os originais, preservando eventos.
+ * [RETIFICAÇÃO] Adiciona botões da tríade numa linha secundária, sem remover os originais.
  * ============================================================================
  */
 
 'use strict';
 
 (function _unifedTriadaModule() {
-    const _VERSION = '1.0.22-TRIADA-PRESERVE';
+    const _VERSION = '1.0.23-TRIADA-SECONDARY-ROW';
 
     function _log(msg, type = 'log') {
         const timestamp = new Date().toISOString();
@@ -187,13 +187,12 @@
         _log(`✅ Anexo de Custódia gerado com QR Code: ${sessionId}`, 'success');
     }
 
-    // ========== FUNÇÃO DE RESTAURO DA TOOLBAR (agora preserva os botões originais) ==========
+    // ========== FUNÇÃO DE RESTAURO DA TOOLBAR ==========
     function restoreOriginalToolbar() {
         const container = document.getElementById('export-tools-container');
         if (!container) return;
         container.setAttribute('data-original-restored', 'true');
         
-        // Não remover os botões existentes; apenas garantir que os handlers estão ligados
         if (typeof setupMainListeners === 'function') {
             setupMainListeners(); 
         }
@@ -206,20 +205,29 @@
         _log('Toolbar preservada e listeners re-vinculados via Event Delegation.');
     }
 
-    // Inicialização da tríade (adiciona botões extra sem remover os originais)
+    // ========== INICIALIZAÇÃO DA TRÍADE (linha secundária) ==========
     function initInterface() {
-        // ========== OCULTAR BOTÕES INDESEJADOS ==========
+        const container = document.getElementById('export-tools-container');
+        if (!container) return false;
+        
+        // Se já tiver os botões da tríade, não adicionar novamente
+        if (container.querySelector('#triadaPdfBtn')) return true;
+        
+        // Ocultar os botões indesejados (se existirem)
         const hideButtons = ['exportDOCXBtn', 'atfModalBtn'];
         hideButtons.forEach(id => {
             const btn = document.getElementById(id);
             if (btn) btn.style.display = 'none';
         });
         
-        const container = document.getElementById('export-tools-container');
-        if (!container) return false;
-        
-        // Se já tiver os botões da tríade, não adicionar novamente
-        if (container.querySelector('#triadaPdfBtn')) return true;
+        // Garantir que a linha secundária existe; se não, criá-la
+        let secondaryRow = document.getElementById('secondary-toolbar');
+        if (!secondaryRow) {
+            secondaryRow = document.createElement('div');
+            secondaryRow.id = 'secondary-toolbar';
+            secondaryRow.className = 'toolbar-row toolbar-row-secondary';
+            container.appendChild(secondaryRow);
+        }
         
         const labels = _resolveLabels();
         const botoes = [
@@ -228,7 +236,6 @@
             { id: 'triadaCustodiaBtn', label: labels.custody, icon: 'fa-shield-alt', cor: '#EF4444', handler: gerarAnexoCustodia }
         ];
         
-        // Adicionar os novos botões após os existentes (sem os remover)
         botoes.forEach(b => {
             const btn = document.createElement('button');
             btn.id = b.id;
@@ -238,11 +245,11 @@
             btn.onclick = b.handler;
             btn.onmouseover = () => { btn.style.background = 'rgba(30,41,59,1)'; };
             btn.onmouseout = () => { btn.style.background = 'rgba(15,23,42,0.9)'; };
-            container.appendChild(btn);
+            secondaryRow.appendChild(btn);
         });
         
         container.setAttribute('data-triada-injected', 'true');
-        _log(`Interface Tríade Documental ${_VERSION} activada (botões originais preservados).`);
+        _log(`Interface Tríade Documental ${_VERSION} activada (botões na segunda linha).`);
         return true;
     }
 

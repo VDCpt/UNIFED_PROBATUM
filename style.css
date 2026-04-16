@@ -3662,3 +3662,59 @@ body.dual-screen .stat-card p {
         white-space: normal;
     }
 }
+
+/* ============================================================================
+   NOVA ESTRUTURA DE TOOLBAR COM DUAS LINHAS (v13.12.2-i18n)
+   ============================================================================ */
+/* Toolbar com duas linhas */
+#export-tools-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.toolbar-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+}
+
+.toolbar-row .btn-tool,
+.toolbar-row .btn-tool-pure {
+    flex: 1 1 0;
+    min-width: 140px;
+    text-align: center;
+    justify-content: center;
+    white-space: nowrap;
+}
+
+/* Primeira linha: 4 botões com largura igual */
+.toolbar-row-primary .btn-tool {
+    flex-basis: calc(25% - 0.5rem);
+}
+
+/* Segunda linha: 3 botões com largura igual */
+.toolbar-row-secondary .btn-tool-pure {
+    flex-basis: calc(33.333% - 0.5rem);
+}
+
+@media (max-width: 768px) {
+    .toolbar-row .btn-tool,
+    .toolbar-row .btn-tool-pure {
+        flex: 1 1 auto;
+        min-width: 100px;
+        white-space: normal;
+    }
+    .toolbar-row-primary .btn-tool,
+    .toolbar-row-secondary .btn-tool-pure {
+        flex-basis: calc(50% - 0.5rem);
+    }
+}
+
+@media (max-width: 480px) {
+    .toolbar-row-primary .btn-tool,
+    .toolbar-row-secondary .btn-tool-pure {
+        flex-basis: 100%;
+    }
+}

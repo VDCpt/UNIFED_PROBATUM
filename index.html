@@ -272,18 +272,23 @@
                 
                 <div class="toolbar-section">
                     <div class="toolbar-grid" id="export-tools-container">
-                        <button id="exportPDFBtn" class="btn-tool" disabled>
-                            <i class="fas fa-file-pdf"></i> <span id="btnPDF">PARECER TÉCNICO</span>
-                        </button>
-                        <button id="exportJSONBtn" class="btn-tool">
-                            <i class="fas fa-file-code"></i> <span id="btnJSON">EXPORTAR JSON</span>
-                        </button>
-                        <button id="resetBtn" class="btn-tool">
-                            <i class="fas fa-redo-alt"></i> <span id="btnReset">REINICIAR</span>
-                        </button>
-                        <button id="clearConsoleBtn" class="btn-tool">
-                            <i class="fas fa-trash-alt"></i> <span id="clearConsoleBtnText">LIMPAR CONSOLE</span>
-                        </button>
+                        <!-- Primeira linha: botões nativos -->
+                        <div class="toolbar-row toolbar-row-primary" id="primary-toolbar">
+                            <button id="exportPDFBtn" class="btn-tool" disabled>
+                                <i class="fas fa-file-pdf"></i> <span id="btnPDF">PARECER TÉCNICO</span>
+                            </button>
+                            <button id="exportJSONBtn" class="btn-tool">
+                                <i class="fas fa-file-code"></i> <span id="btnJSON">EXPORTAR JSON</span>
+                            </button>
+                            <button id="resetBtn" class="btn-tool">
+                                <i class="fas fa-redo-alt"></i> <span id="btnReset">REINICIAR</span>
+                            </button>
+                            <button id="clearConsoleBtn" class="btn-tool">
+                                <i class="fas fa-trash-alt"></i> <span id="clearConsoleBtnText">LIMPAR CONSOLE</span>
+                            </button>
+                        </div>
+                        <!-- Segunda linha: botões da Tríade (serão injetados dinamicamente) -->
+                        <div class="toolbar-row toolbar-row-secondary" id="secondary-toolbar"></div>
                     </div>
                 </div>
 
