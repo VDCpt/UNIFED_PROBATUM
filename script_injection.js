@@ -1,10 +1,11 @@
 /**
  * UNIFED - PROBATUM · CASO REAL ANONIMIZADO v13.12.2-i18n (ASYNC + PERSIST)
  * ============================================================================
- * [MERGE CIRÚRGICO 2026-04-15 + RETIFICAÇÃO TIME-2/TIME-3]
+ * [MERGE CIRÚRGICO 2026-04-15 + RETIFICAÇÃO TIME-2/TIME-3 + ZERO-KNOWLEDGE FIX]
  * - Garantia de que _PDF_CASE.totals é transferido para UNIFEDSystem.documents
  * - Função ensureDemoDataLoaded() para carregamento idempotente
  * - Melhorada sincronização da UI após clique "CASO REAL"
+ * - CORREÇÃO: Estado inicial zero-knowledge (tudo a zeros)
  * ============================================================================
  */
 
@@ -202,7 +203,7 @@
     console.log('[UNIFED] Camada 1: OK.');
 
     // =========================================================================
-    // Camada 2 – Sincronização de Métricas (syncMetrics)
+    // Camada 2 – Sincronização de Métricas (syncMetrics) - CORRIGIDA
     // =========================================================================
     (function() {
         if (!window.UNIFED_INTERNAL) return;
@@ -218,7 +219,32 @@
             console.log('[UNIFED] Iniciando Sincronização Forense...');
             
             const sys = window.UNIFEDSystem;
-            const t = (sys && sys.analysis && sys.analysis.totals && sys.analysis.totals.ganhos > 0) ? sys.analysis.totals : data.totals;
+            
+            // Determina se os dados reais já foram carregados (via caso real)
+            const dadosReaisCarregados = (sys && sys.analysis && sys.analysis.totals && sys.analysis.totals.ganhos > 0);
+            
+            let t;
+            if (dadosReaisCarregados) {
+                t = sys.analysis.totals;
+            } else if (window._unifedDataLoaded === true) {
+                // Caso real já foi ativado (mas análise ainda não executada) – usa os totais de demonstração
+                t = data.totals;
+            } else {
+                // Estado zero‑knowledge: todos os valores a zero
+                t = {
+                    ganhos: 0,
+                    despesas: 0,
+                    ganhosLiquidos: 0,
+                    saftBruto: 0,
+                    dac7TotalPeriodo: 0,
+                    faturaPlataforma: 0,
+                    iva6Omitido: 0,
+                    iva23Omitido: 0,
+                    asfixiaFinanceira: 0,
+                    cancelamentos: 0
+                };
+            }
+            
             const c = (sys && sys.analysis && sys.analysis.crossings) ? sys.analysis.crossings : {};
             
             const discrepanciaC2 = c.discrepanciaCritica || (t.despesas - t.faturaPlataforma);
@@ -230,16 +256,16 @@
             const asfixiaFinanceira = t.asfixiaFinanceira || (t.saftBruto * 0.06);
             
             const fi = data.fluxosIsentos;
-            const totalNaoSujeitosCalc = fi.total;
+            const totalNaoSujeitosCalc = (window._unifedDataLoaded === true) ? fi.total : 0;
             
             const getCounter = (docType, fallback) => {
                 if (sys && sys.documents && sys.documents[docType] && sys.documents[docType].totals) {
                     return sys.documents[docType].totals.records.toString();
                 }
-                return fallback;
+                return (window._unifedDataLoaded === true) ? fallback : "0";
             };
             const totalEvidencias = (sys && sys.counts && sys.counts.total) ? sys.counts.total.toString() : 
-                                    (data.counts.ctrl + data.counts.saft + data.counts.fat + data.counts.ext + data.counts.dac7).toString();
+                                    (window._unifedDataLoaded === true ? (data.counts.ctrl + data.counts.saft + data.counts.fat + data.counts.ext + data.counts.dac7).toString() : "0");
 
             const setAnyText = (id, value) => {
                 const el = document.getElementById(id);
@@ -271,22 +297,23 @@
                 'pure-atf-meses': '2.º Semestre 2024 — 4 meses com dados (Set–Dez)',
                 'pure-sg-1-val': fmt(discrepanciaC2), 'pure-sg-1-pct': percentC2.toFixed(2) + '%',
                 'pure-sg-2-val': fmt(discrepanciaC1), 'pure-sg-2-pct': percentC1.toFixed(2) + '%',
-                'pure-nc-campanhas': fmt(fi.campanhas),
-                'pure-nc-gorjetas': fmt(fi.gorjetas),
-                'pure-nc-portagens': fmt(fi.portagens),
-                'pure-nc-total': fmt(fi.total),
-                'pure-verdict': 'RISCO CRÍTICO · DESVIO PADRÃO > 2σ',
-                'pure-verdict-pct': percentC2.toFixed(2) + '%',
-                'pure-session-id': (sys && sys.sessionId) ? sys.sessionId : data.sessionId,
-                'pure-hash-prefix': (sys && sys.masterHash) ? sys.masterHash.substring(0, 12).toUpperCase() + '...' : data.masterHash.substring(0, 12) + '...',
-                'pure-hash-prefix-verdict': (sys && sys.masterHash) ? sys.masterHash.substring(0, 16).toUpperCase() + '...' : data.masterHash.substring(0, 16) + '...',
-                'pure-subject-name': data.client.name, 'pure-subject-nif': data.client.nif,
-                'pure-subject-platform': data.client.platform, 'pure-ganhos-extrato': fmt(t.ganhos),
-                'pure-despesas-extrato': fmt(t.despesas), 'pure-ganhos-liquidos-extrato': fmt(t.ganhosLiquidos),
-                'pure-saft-bruto-val': fmt(t.saftBruto), 'pure-dac7-val': fmt(t.dac7TotalPeriodo),
-                'pure-atf-zscore': data.atf.zScore.toString(), 'pure-atf-confianca': data.atf.confianca,
-                'pure-atf-score-val': data.atf.score + '/100', 'pure-iva-devido-val': fmt(asfixiaFinanceira),
-                'pure-impacto-macro': fmt(data.macro_analysis.estimated_systemic_gap),
+                'pure-nc-campanhas': fmt(window._unifedDataLoaded === true ? fi.campanhas : 0),
+                'pure-nc-gorjetas': fmt(window._unifedDataLoaded === true ? fi.gorjetas : 0),
+                'pure-nc-portagens': fmt(window._unifedDataLoaded === true ? fi.portagens : 0),
+                'pure-nc-total': fmt(totalNaoSujeitosCalc),
+                'pure-verdict': dadosReaisCarregados ? 'RISCO CRÍTICO · DESVIO PADRÃO > 2σ' : 'AGUARDANDO PERÍCIA',
+                'pure-verdict-pct': dadosReaisCarregados ? percentC2.toFixed(2) + '%' : '0.00%',
+                'pure-session-id': (sys && sys.sessionId) ? sys.sessionId : (window._unifedDataLoaded === true ? data.sessionId : '--------'),
+                'pure-hash-prefix': (sys && sys.masterHash) ? sys.masterHash.substring(0, 12).toUpperCase() + '...' : (window._unifedDataLoaded === true ? data.masterHash.substring(0, 12) + '...' : '---'),
+                'pure-hash-prefix-verdict': (sys && sys.masterHash) ? sys.masterHash.substring(0, 16).toUpperCase() + '...' : (window._unifedDataLoaded === true ? data.masterHash.substring(0, 16) + '...' : '---'),
+                'pure-subject-name': (window._unifedDataLoaded === true) ? data.client.name : '---',
+                'pure-subject-nif': (window._unifedDataLoaded === true) ? data.client.nif : '---',
+                'pure-subject-platform': (window._unifedDataLoaded === true) ? data.client.platform : '---',
+                'pure-ganhos-extrato': fmt(t.ganhos), 'pure-despesas-extrato': fmt(t.despesas),
+                'pure-ganhos-liquidos-extrato': fmt(t.ganhosLiquidos), 'pure-saft-bruto-val': fmt(t.saftBruto),
+                'pure-dac7-val': fmt(t.dac7TotalPeriodo), 'pure-atf-zscore': data.atf.zScore.toString(),
+                'pure-atf-confianca': data.atf.confianca, 'pure-atf-score-val': data.atf.score + '/100',
+                'pure-iva-devido-val': fmt(asfixiaFinanceira), 'pure-impacto-macro': fmt(data.macro_analysis.estimated_systemic_gap),
                 'pure-ctrl-qty': getCounter('control', data.counts.ctrl.toString()),
                 'pure-saft-qty': getCounter('saft', data.counts.saft.toString()),
                 'pure-fat-qty': getCounter('invoices', data.counts.fat.toString()),
@@ -307,41 +334,40 @@
             });
 
             // Atualização específica para os elementos de "Zona Cinzenta" que aparecem no dashboard
-            setGlobalText('auxBoxCampanhasValue', fmt(fi.campanhas));
-            setGlobalText('auxBoxGorjetasValue', fmt(fi.gorjetas));
-            setGlobalText('auxBoxPortagensValue', fmt(fi.portagens));
-            setGlobalText('auxBoxTotalNSValue', fmt(fi.total));
+            setGlobalText('auxBoxCampanhasValue', fmt(window._unifedDataLoaded === true ? fi.campanhas : 0));
+            setGlobalText('auxBoxGorjetasValue', fmt(window._unifedDataLoaded === true ? fi.gorjetas : 0));
+            setGlobalText('auxBoxPortagensValue', fmt(window._unifedDataLoaded === true ? fi.portagens : 0));
+            setGlobalText('auxBoxTotalNSValue', fmt(totalNaoSujeitosCalc));
             setGlobalText('auxBoxCancelValue', fmt(t.cancelamentos || 0));
-            setGlobalText('auxDac7NoteValue', fmt(fi.total));
-            setGlobalText('auxDac7NoteValueQ', fmt(fi.total));
+            setGlobalText('auxDac7NoteValue', fmt(totalNaoSujeitosCalc));
+            setGlobalText('auxDac7NoteValueQ', fmt(totalNaoSujeitosCalc));
             
-            // Atualização dos cards de gap
+            // Atualização dos cards de gap – apenas se dados reais carregados
             const revenueGapCorrect = t.saftBruto - t.ganhos;
             setGlobalText('revenueGapValue', fmt(revenueGapCorrect));
             setGlobalText('expenseGapValue', fmt(discrepanciaC2));
-            setGlobalText('omissaoDespesasPctValue', ((t.despesas / t.ganhos) * 100).toFixed(2) + '%');
+            const omissaoPct = (t.despesas > 0 && t.ganhos > 0) ? ((t.despesas / t.ganhos) * 100) : 0;
+            setGlobalText('omissaoDespesasPctValue', omissaoPct.toFixed(2) + '%');
             
-            // Forçar exibição dos cards
+            // Forçar exibição dos cards (apenas se valores > 0 e dados reais carregados)
             const revenueCard = document.getElementById('revenueGapCard');
-            if (revenueCard && Math.abs(revenueGapCorrect) > 0.01) revenueCard.style.display = 'block';
+            if (revenueCard) revenueCard.style.display = (dadosReaisCarregados && Math.abs(revenueGapCorrect) > 0.01) ? 'block' : 'none';
             const expenseCard = document.getElementById('expenseGapCard');
-            if (expenseCard && Math.abs(discrepanciaC2) > 0.01) expenseCard.style.display = 'block';
+            if (expenseCard) expenseCard.style.display = (dadosReaisCarregados && Math.abs(discrepanciaC2) > 0.01) ? 'block' : 'none';
             const omissaoCard = document.getElementById('omissaoDespesasPctCard');
-            if (omissaoCard && t.despesas > 0 && t.ganhos > 0) omissaoCard.style.display = 'block';
+            if (omissaoCard) omissaoCard.style.display = (dadosReaisCarregados && t.despesas > 0 && t.ganhos > 0) ? 'block' : 'none';
             
-            // Atualizar textos legais
+            // Atualizar textos legais (apenas se dados reais carregados)
             const sg1Legal = document.querySelector('#pureDashboard #pure-sg1-legal');
-            if (sg1Legal) sg1Legal.textContent = 'Art. 23.º CIRC (Indutividade de Custos) · Art. 103.º RGIT (Fraude Fiscal)';
+            if (sg1Legal) sg1Legal.textContent = dadosReaisCarregados ? 'Art. 23.º CIRC (Indutividade de Custos) · Art. 103.º RGIT (Fraude Fiscal)' : '---';
             const sg2Legal = document.querySelector('#pureDashboard #pure-sg2-legal');
-            if (sg2Legal) sg2Legal.textContent = 'Diretiva DAC7 (UE) 2021/514 · Art. 103.º RGIT (Fraude Fiscal) · DL n.º 41/2023';
+            if (sg2Legal) sg2Legal.textContent = dadosReaisCarregados ? 'Diretiva DAC7 (UE) 2021/514 · Art. 103.º RGIT (Fraude Fiscal) · DL n.º 41/2023' : '---';
             const verdictBasis = document.querySelector('#pureDashboard #pure-verdict-basis');
-            if (verdictBasis) verdictBasis.textContent = 'Art. 119.º RGIT · Art. 125.º CPP';
+            if (verdictBasis) verdictBasis.textContent = dadosReaisCarregados ? 'Art. 119.º RGIT · Art. 125.º CPP' : '---';
             const pureIva23Sub = document.querySelector('#pureDashboard #pure-iva23-sub');
-            if (pureIva23Sub) pureIva23Sub.textContent = 'Art. 2.º n.º 1 al. i) CIVA';
+            if (pureIva23Sub) pureIva23Sub.textContent = dadosReaisCarregados ? 'Art. 2.º n.º 1 al. i) CIVA' : '---';
             const pureIrcSub = document.querySelector('#pureDashboard #pure-irc-sub');
-            if (pureIrcSub) pureIrcSub.textContent = 'Art. 17.º CIRC';
-            const pureAtfNote = document.querySelector('#pureDashboard #pure-atf-note-text');
-            if (pureAtfNote) pureAtfNote.textContent = 'Score de Persistência calculado pelo motor computeTemporalAnalysis() sobre 4 meses de histórico (Set/Out/Nov/Dez 2024). SP calculado sobre o lote global (dados verificados UNIFED-MMLADX8Q-CV69L). As discrepâncias absolutas (C2: €2.184,95 — 89,26% · C1: €1.951,42 — 23,72%) mantêm relevância jurídica independente.';
+            if (pureIrcSub) pureIrcSub.textContent = dadosReaisCarregados ? 'Art. 17.º CIRC' : '---';
             
             // Gráficos
             if (typeof Chart !== 'undefined') {
@@ -355,7 +381,7 @@
     })();
 
     // =========================================================================
-    // Camada 3 – Matriz de Triangulação (renderMatrix)
+    // Camada 3 – Matriz de Triangulação (renderMatrix) - CORRIGIDA
     // =========================================================================
     (function() {
         if (!window.UNIFED_INTERNAL) return;
@@ -368,7 +394,23 @@
             if (existingMatrix) existingMatrix.remove();
 
             const sys = window.UNIFEDSystem;
-            const t = (sys && sys.analysis && sys.analysis.totals && sys.analysis.totals.ganhos > 0) ? sys.analysis.totals : data.totals;
+            
+            const dadosReaisCarregados = (sys && sys.analysis && sys.analysis.totals && sys.analysis.totals.ganhos > 0);
+            
+            let t;
+            if (dadosReaisCarregados) {
+                t = sys.analysis.totals;
+            } else if (window._unifedDataLoaded === true) {
+                t = data.totals;
+            } else {
+                t = {
+                    ganhos: 0,
+                    despesas: 0,
+                    saftBruto: 0,
+                    dac7TotalPeriodo: 0,
+                    faturaPlataforma: 0
+                };
+            }
             
             const deltaSaft = t.ganhos - t.saftBruto;
             const deltaDac7 = t.ganhos - t.dac7TotalPeriodo;
@@ -400,7 +442,7 @@
                     </tbody>
                 </table>
                 <div style="margin-top: 15px; font-size: 0.7rem; color: #94a3b8; border-top: 1px solid rgba(0,229,255,0.2); padding-top: 10px;">
-                    <strong>${labels.footnote}</strong> ${labels.footnoteText}${fmt(deltaFatura)} (${((deltaFatura/t.despesas)*100).toFixed(2)}%) ${labels.footnoteConfig}
+                    <strong>${labels.footnote}</strong> ${labels.footnoteText}${fmt(deltaFatura)} (${t.despesas > 0 ? ((deltaFatura/t.despesas)*100).toFixed(2) : '0.00'}%) ${labels.footnoteConfig}
                 </div>
             </div>`;
             target.insertAdjacentHTML('beforeend', matrixHtml);
@@ -581,12 +623,30 @@
             if (!document.getElementById('pureDashboard')) return;
             
             const sys = window.UNIFEDSystem;
-            const t = (sys && sys.analysis && sys.analysis.totals && sys.analysis.totals.ganhos > 0) ? sys.analysis.totals : data.totals;
-            const aux = (sys && sys.auxiliaryData && sys.auxiliaryData.extractedAt) ? sys.auxiliaryData : data.totals;
+            const dadosReaisCarregados = (sys && sys.analysis && sys.analysis.totals && sys.analysis.totals.ganhos > 0);
+            
+            let t;
+            if (dadosReaisCarregados) {
+                t = sys.analysis.totals;
+            } else if (window._unifedDataLoaded === true) {
+                t = data.totals;
+            } else {
+                t = {
+                    ganhos: 0,
+                    despesas: 0,
+                    ganhosLiquidos: 0,
+                    saftBruto: 0,
+                    dac7TotalPeriodo: 0,
+                    faturaPlataforma: 0,
+                    iva6Omitido: 0,
+                    iva23Omitido: 0,
+                    asfixiaFinanceira: 0
+                };
+            }
             
             const _f = (typeof _fmt === 'function') ? _fmt : (v) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v || 0);
             const fi2 = data.fluxosIsentos;
-            const totalNaoSujeitosCalc = fi2.total;
+            const totalNaoSujeitosCalc = (window._unifedDataLoaded === true) ? fi2.total : 0;
             
             const auxMapping = [
                 { id: 'pure-ganhos', val: t.ganhos }, { id: 'pure-despesas', val: t.despesas }, { id: 'pure-liquido', val: t.ganhosLiquidos },
@@ -597,32 +657,37 @@
                 { id: 'pure-nao-sujeitos', val: totalNaoSujeitosCalc }, { id: 'pure-atf-sp', val: data.atf.score + '/100' }, { id: 'pure-atf-trend', val: data.atf.trend },
                 { id: 'pure-atf-outliers', val: data.atf.outliers + ' outliers > 2σ' }, { id: 'pure-atf-meses', val: '2.º Semestre 2024 — 4 meses com dados (Set–Dez)' },
                 { id: 'pure-sg-1-val', val: t.despesas - t.faturaPlataforma },
-                { id: 'pure-sg-1-pct', val: ((t.despesas - t.faturaPlataforma) / t.despesas * 100).toFixed(2) + '%' },
+                { id: 'pure-sg-1-pct', val: ((t.despesas - t.faturaPlataforma) / (t.despesas || 1) * 100).toFixed(2) + '%' },
                 { id: 'pure-sg-2-val', val: t.saftBruto - t.dac7TotalPeriodo },
-                { id: 'pure-sg-2-pct', val: ((t.saftBruto - t.dac7TotalPeriodo) / t.saftBruto * 100).toFixed(2) + '%' },
-                { id: 'pure-nc-campanhas', val: fi2.campanhas },
-                { id: 'pure-nc-gorjetas', val: fi2.gorjetas },
-                { id: 'pure-nc-portagens', val: fi2.portagens },
-                { id: 'pure-nc-total', val: fi2.total },
-                { id: 'pure-verdict', val: 'RISCO CRÍTICO · DESVIO PADRÃO > 2σ' },
-                { id: 'pure-verdict-pct', val: ((t.despesas - t.faturaPlataforma) / t.despesas * 100).toFixed(2) + '%' },
-                { id: 'pure-hash-prefix-verdict', val: (sys && sys.masterHash) ? sys.masterHash.substring(0, 16).toUpperCase() + '...' : data.masterHash.substring(0, 16) + '...' },
-                { id: 'pure-session-id', val: (sys && sys.sessionId) ? sys.sessionId : data.sessionId },
-                { id: 'pure-hash-prefix', val: (sys && sys.masterHash) ? sys.masterHash.substring(0, 12).toUpperCase() + '...' : data.masterHash.substring(0, 12) + '...' },
-                { id: 'pure-subject-name', val: data.client.name }, { id: 'pure-subject-nif', val: data.client.nif },
-                { id: 'pure-subject-platform', val: data.client.platform }, { id: 'pure-ganhos-extrato', val: t.ganhos }, { id: 'pure-despesas-extrato', val: t.despesas },
+                { id: 'pure-sg-2-pct', val: ((t.saftBruto - t.dac7TotalPeriodo) / (t.saftBruto || 1) * 100).toFixed(2) + '%' },
+                { id: 'pure-nc-campanhas', val: window._unifedDataLoaded === true ? fi2.campanhas : 0 },
+                { id: 'pure-nc-gorjetas', val: window._unifedDataLoaded === true ? fi2.gorjetas : 0 },
+                { id: 'pure-nc-portagens', val: window._unifedDataLoaded === true ? fi2.portagens : 0 },
+                { id: 'pure-nc-total', val: totalNaoSujeitosCalc },
+                { id: 'pure-verdict', val: dadosReaisCarregados ? 'RISCO CRÍTICO · DESVIO PADRÃO > 2σ' : 'AGUARDANDO PERÍCIA' },
+                { id: 'pure-verdict-pct', val: dadosReaisCarregados ? ((t.despesas - t.faturaPlataforma) / (t.despesas || 1) * 100).toFixed(2) + '%' : '0.00%' },
+                { id: 'pure-hash-prefix-verdict', val: (sys && sys.masterHash) ? sys.masterHash.substring(0, 16).toUpperCase() + '...' : (window._unifedDataLoaded === true ? data.masterHash.substring(0, 16) + '...' : '---') },
+                { id: 'pure-session-id', val: (sys && sys.sessionId) ? sys.sessionId : (window._unifedDataLoaded === true ? data.sessionId : '--------') },
+                { id: 'pure-hash-prefix', val: (sys && sys.masterHash) ? sys.masterHash.substring(0, 12).toUpperCase() + '...' : (window._unifedDataLoaded === true ? data.masterHash.substring(0, 12) + '...' : '---') },
+                { id: 'pure-subject-name', val: (window._unifedDataLoaded === true) ? data.client.name : '---' },
+                { id: 'pure-subject-nif', val: (window._unifedDataLoaded === true) ? data.client.nif : '---' },
+                { id: 'pure-subject-platform', val: (window._unifedDataLoaded === true) ? data.client.platform : '---' },
+                { id: 'pure-ganhos-extrato', val: t.ganhos }, { id: 'pure-despesas-extrato', val: t.despesas },
                 { id: 'pure-ganhos-liquidos-extrato', val: t.ganhosLiquidos }, { id: 'pure-saft-bruto-val', val: t.saftBruto }, { id: 'pure-dac7-val', val: t.dac7TotalPeriodo },
                 { id: 'pure-atf-zscore', val: data.atf.zScore }, { id: 'pure-atf-confianca', val: data.atf.confianca }, { id: 'pure-atf-score-val', val: data.atf.score + '/100' },
                 { id: 'pure-iva-devido-val', val: t.asfixiaFinanceira }, { id: 'pure-impacto-macro', val: data.macro_analysis.estimated_systemic_gap },
-                { id: 'pure-ctrl-qty', val: data.counts.ctrl }, { id: 'pure-saft-qty', val: data.counts.saft }, { id: 'pure-fat-qty', val: data.counts.fat },
-                { id: 'pure-ext-qty', val: data.counts.ext }, { id: 'pure-dac7-qty', val: data.counts.dac7 },
-                { id: 'auxBoxCampanhasValue', val: fi2.campanhas },
-                { id: 'auxBoxPortagensValue', val: fi2.portagens },
-                { id: 'auxBoxGorjetasValue', val: fi2.gorjetas },
-                { id: 'auxBoxTotalNSValue', val: fi2.total },
+                { id: 'pure-ctrl-qty', val: (window._unifedDataLoaded === true) ? data.counts.ctrl : 0 },
+                { id: 'pure-saft-qty', val: (window._unifedDataLoaded === true) ? data.counts.saft : 0 },
+                { id: 'pure-fat-qty', val: (window._unifedDataLoaded === true) ? data.counts.fat : 0 },
+                { id: 'pure-ext-qty', val: (window._unifedDataLoaded === true) ? data.counts.ext : 0 },
+                { id: 'pure-dac7-qty', val: (window._unifedDataLoaded === true) ? data.counts.dac7 : 0 },
+                { id: 'auxBoxCampanhasValue', val: window._unifedDataLoaded === true ? fi2.campanhas : 0 },
+                { id: 'auxBoxPortagensValue', val: window._unifedDataLoaded === true ? fi2.portagens : 0 },
+                { id: 'auxBoxGorjetasValue', val: window._unifedDataLoaded === true ? fi2.gorjetas : 0 },
+                { id: 'auxBoxTotalNSValue', val: totalNaoSujeitosCalc },
                 { id: 'auxBoxCancelValue', val: 0.00 },
-                { id: 'auxDac7NoteValue', val: fi2.total },
-                { id: 'auxDac7NoteValueQ', val: fi2.total },
+                { id: 'auxDac7NoteValue', val: totalNaoSujeitosCalc },
+                { id: 'auxDac7NoteValueQ', val: totalNaoSujeitosCalc },
                 { id: 'pure-ganhos-tri', val: t.ganhos },
                 { id: 'pure-despesas-tri', val: t.despesas },
                 { id: 'pure-liquido-tri', val: t.ganhosLiquidos },
@@ -913,7 +978,7 @@
             sys.analysis.crossings.ircEstimado = ircEstimado;
             sys.analysis.crossings.asfixiaFinanceira = asfixiaFinanceira;
 
-            // Campos adicionais provenientes do script_injection(2).js
+            // Campos adicionais
             sys.analysis.crossings.btor = t.despesas;
             sys.analysis.crossings.btf = t.faturaPlataforma;
             sys.analysis.crossings.c1_delta = discrepanciaSaftVsDac7;
@@ -1498,7 +1563,7 @@
                 mainContainer.style.opacity = '1';
             }
             
-            // 5. Despacho de Eventos de Sincronização
+            // 5. Despacho de Eventos de Sincronização (apenas eventos, sem dados)
             window.dispatchEvent(new CustomEvent('UNIFED_CORE_READY'));
             window.dispatchEvent(new CustomEvent('UNIFED_ANALYSIS_COMPLETE', { 
                 detail: { status: 'READY', masterHash: window.activeForensicSession?.masterHash || _PDF_CASE.masterHash } 
