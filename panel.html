@@ -14,6 +14,12 @@
     - Adicionados ids nos smoking guns (#smoking-gun-1, #smoking-gun-2)
     - Adicionado bloco #bloco-rag-legal (Síntese Jurídica Pericial, oculto)
   ============================================================================
+  MODIFICAÇÕES POSTERIORES (2026-04-16):
+    - ATF (#pureATFCard) oculto inicialmente (display: none, data-forensic-module="atf")
+    - Zona Cinzenta (#pureZonaCinzentaCard) oculto inicialmente (display: none, data-forensic-module="greyzone")
+    - Gráfico de discrepância (.chart-section) oculto inicialmente (display: none)
+    - GAP de conciliação C1 substituído por placeholder dinâmico (display: none)
+  ============================================================================
 -->
 
 <section id="pureDashboard" class="pure-section" aria-label="Painel Caso Real Anonimizado v13.12.2-i18n">
@@ -88,8 +94,8 @@
       <div class="pure-card-trend">Indicador de Probabilidade de Insolvência Forçada</div>
     </div>
 
-    <!-- GRÁFICO DE DISCREPÂNCIA GARANTIDO -->
-    <div class="chart-section" id="pure-chart-container">
+    <!-- GRÁFICO DE DISCREPÂNCIA GARANTIDO - OCULTO INICIALMENTE -->
+    <div class="chart-section" id="pure-chart-container" style="display: none;">
       <div class="pure-chart-wrapper">
         <canvas id="discrepancyChart"></canvas>
       </div>
@@ -178,8 +184,8 @@
       </div>
     </div>
 
-    <!-- PAINEL III – ATF -->
-    <div class="pure-card" id="pureATFCard">
+    <!-- PAINEL III – ATF - OCULTO INICIALMENTE -->
+    <div class="pure-card" id="pureATFCard" style="display: none;" data-forensic-module="atf">
       <h3 class="pure-card-title"><span class="pure-icon">⏳</span><span id="pure-card3-title" data-pt="III. ANÁLISE TEMPORAL FORENSE (ATF) — LOTE GLOBAL (2.º SEMESTRE 2024)" data-en="III. FORENSIC TEMPORAL ANALYSIS (ATF) — GLOBAL BATCH (2nd SEMESTER 2024)">III. ANÁLISE TEMPORAL FORENSE (ATF) — LOTE GLOBAL (2.º SEMESTRE 2024)</span></h3>
       <div class="pure-atf-grid">
         <div class="pure-atf-block pure-atf-sp"><div class="pure-atf-label" id="pure-atf-sp-label" data-pt="SCORE DE PERSISTÊNCIA" data-en="PERSISTENCE SCORE">SCORE DE PERSISTÊNCIA</div><div id="pure-atf-sp" class="pure-atf-big">40<span style="font-size:1rem;opacity:0.6">/100</span></div><div class="pure-atf-classify" id="pure-atf-status" data-pt="OMISSÃO PONTUAL / RISCO MODERADO" data-en="OCCASIONAL OMISSION / MODERATE RISK">OMISSÃO PONTUAL / RISCO MODERADO</div><div class="pure-atf-bar"><div class="pure-atf-bar-fill" style="width:40%;background:#F59E0B"></div></div></div>
@@ -191,8 +197,8 @@
       <div style="text-align:center;margin-top:16px"><button onclick="if(typeof openATFModal === 'function') openATFModal();" class="pure-btn-atf" id="pure-atf-btn" data-pt="⏳ ABRIR ANÁLISE TEMPORAL FORENSE COMPLETA" data-en="⏳ OPEN COMPLETE FORENSIC TEMPORAL ANALYSIS" title="Abrir modal ATF completo / Open complete ATF modal"><span id="pure-atf-btn-text">⏳ ABRIR ANÁLISE TEMPORAL FORENSE COMPLETA</span></button></div>
     </div>
 
-    <!-- PAINEL IV – ZONA CINZENTA - VISIBILIDADE FORÇADA -->
-    <div class="pure-card white-collar-module" id="pureZonaCinzentaCard" style="display:block !important; opacity:1 !important;">
+    <!-- PAINEL IV – ZONA CINZENTA - OCULTO INICIALMENTE -->
+    <div class="pure-card white-collar-module" id="pureZonaCinzentaCard" style="display: none;" data-forensic-module="greyzone">
       <h3 class="pure-card-title"><span class="pure-icon">🔍</span><span id="pure-card4-title" data-pt="IV. ZONA CINZENTA — VALORES NÃO SUJEITOS A COMISSÃO (ISOLADOS)" data-en="IV. GREY ZONE — VALUES NOT SUBJECT TO COMMISSION (ISOLATED)">IV. ZONA CINZENTA — VALORES NÃO SUJEITOS A COMISSÃO (ISOLADOS)</span></h3>
       <p class="pure-zc-intro" id="pure-zc-intro"><span id="pure-zc-intro-text" data-pt="O sistema isolou" data-en="The system isolated">O sistema isolou</span><strong id="pure-zc-amount">€ 451,00</strong><span id="pure-zc-intro-end" data-pt="em fluxos não sujeitos a comissão pela plataforma (Campanhas + Gorjetas — mês de Outubro). A reconciliação DAC7 deve verificar se estes valores foram indevidamente incluídos na base de reporte à AT, explicando parte da discrepância C1." data-en="in flows not subject to commission by the platform (Campaigns + Tips — October month). DAC7 reconciliation must verify whether these values were improperly included in the reporting base to the TA, explaining part of the C1 discrepancy.">em fluxos não sujeitos a comissão pela plataforma (Campanhas + Gorjetas — mês de Outubro). A reconciliação DAC7 deve verificar se estes valores foram indevidamente incluídos na base de reporte à AT, explicando parte da discrepância C1.</span></p>
       <div class="pure-zc-grid">
@@ -202,9 +208,9 @@
         <div class="pure-zc-item"><span class="pure-zc-label" id="pure-zc-cancelamentos-label" data-pt="Taxas de Cancelamento (total período)" data-en="Cancellation Fees (total period)">Taxas de Cancelamento (total período)</span><span id="pure-nc-cancelamentos" class="pure-zc-val">€ 0,00</span><span class="pure-zc-tag" id="pure-zc-cancelamentos-tag" data-pt="já em Ganhos · comissão incluída nos −Despesas" data-en="already in Earnings · commission included in −Expenses">já em Ganhos · comissão incluída nos −Despesas</span></div>
         <div class="pure-zc-item pure-zc-total"><span class="pure-zc-label" id="pure-zc-total-label" data-pt="Total Não Sujeitos (Out 2024)" data-en="Total Not Subject (Oct 2024)">Total Não Sujeitos (Out 2024)</span><span id="pure-nc-total" class="pure-zc-val">€ 0,00</span><span class="pure-zc-tag" id="pure-zc-total-tag" data-pt="Fora da base tributável TVDE" data-en="Outside TVDE taxable base">Fora da base tributável TVDE</span></div>
       </div>
-      <!-- GAP DE CONCILIAÇÃO (C1) fixado em 1.951,42 € -->
-      <div style="color: #ef4444; border-left: 2px solid #ef4444; padding-left: 8px; margin-top: 10px;">
-        <strong>GAP DE CONCILIAÇÃO (C1): 1.951,42 €</strong><br>
+      <!-- GAP DE CONCILIAÇÃO (C1) - placeholder dinâmico, oculto inicialmente -->
+      <div id="gapConciliacaoC1" style="color: #ef4444; border-left: 2px solid #ef4444; padding-left: 8px; margin-top: 10px; display: none;">
+        <strong>GAP DE CONCILIAÇÃO (C1): <span id="gapC1Value">0,00 €</span></strong><br>
         <span style="font-size: 0.8em;">Estado: Indício de Omissão Declarativa (Base Bruta não justificada por fluxos isentos).</span>
       </div>
       <div class="pure-zc-question" id="pure-zc-question"><strong id="pure-zc-question-strong" data-pt="Questão para contraditório (Art. 327.º CPP):" data-en="Question for contradiction (Art. 327 CPP):">Questão para contraditório (Art. 327.º CPP):</strong><span id="pure-zc-question-text" data-pt="Pode a plataforma confirmar se os €451,00 em Gorjetas e Campanhas (isentos de comissão nos termos da Lei TVDE) foram incluídos na base de cálculo do reporte DAC7? Se sim, qual o fundamento legal?" data-en="Can the platform confirm whether the €451.00 in Tips and Campaigns (commission-exempt under the TVDE Law) were included in the calculation basis of the DAC7 report? If so, what is the legal basis?">Pode a plataforma confirmar se os €451,00 em Gorjetas e Campanhas (isentos de comissão nos termos da Lei TVDE) foram incluídos na base de cálculo do reporte DAC7? Se sim, qual o fundamento legal?</span></div>

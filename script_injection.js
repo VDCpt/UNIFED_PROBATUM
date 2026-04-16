@@ -6,6 +6,7 @@
  * - Função ensureDemoDataLoaded() para carregamento idempotente
  * - Melhorada sincronização da UI após clique "CASO REAL"
  * - CORREÇÃO: Estado inicial zero-knowledge (tudo a zeros)
+ * - ADIÇÃO: Controle de visibilidade dos módulos forenses (updateForensicModulesVisibility)
  * ============================================================================
  */
 
@@ -1021,6 +1022,11 @@
 
             window._unifedAnalysisPending = false;
             console.log('[UNIFED] Análise forense concluída e UI atualizada.');
+
+            // Mostrar os módulos forenses após a análise
+            if (typeof window.updateForensicModulesVisibility === 'function') {
+                window.updateForensicModulesVisibility(true);
+            }
         }
 
         // =========================================================================
@@ -1044,6 +1050,11 @@
                 window.UNIFED_INTERNAL.updateAuxiliaryUI();
             }
             console.log('[UNIFED] Dados do caso real carregados com sucesso.');
+
+            // Mostrar os módulos forenses após carregar os dados
+            if (typeof window.updateForensicModulesVisibility === 'function') {
+                window.updateForensicModulesVisibility(true);
+            }
             return true;
         }
 
@@ -1518,6 +1529,36 @@
     })();
 
     // =========================================================================
+    // NOVA FUNÇÃO: Controle de visibilidade dos módulos forenses
+    // =========================================================================
+    function updateForensicModulesVisibility(show) {
+        const modules = ['pureATFCard', 'pureZonaCinzentaCard', 'pureMacroCard'];
+        modules.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = show ? 'block' : 'none';
+        });
+        // Mostrar/esconder o gráfico (último .chart-section)
+        const chartSection = document.querySelector('.chart-section:last-of-type');
+        if (chartSection) chartSection.style.display = show ? 'block' : 'none';
+        // Mostrar/esconder o gap de conciliação
+        const gapEl = document.getElementById('gapConciliacaoC1');
+        if (gapEl) gapEl.style.display = show ? 'block' : 'none';
+        // Se show for true e houver dados reais, atualizar o valor do gap
+        if (show && window.UNIFEDSystem && window.UNIFEDSystem.analysis && window.UNIFEDSystem.analysis.crossings) {
+            const gapValue = window.UNIFEDSystem.analysis.crossings.discrepanciaSaftVsDac7 || 0;
+            const gapSpan = document.getElementById('gapC1Value');
+            if (gapSpan) {
+                const fmt = window.UNIFED_INTERNAL && window.UNIFED_INTERNAL.fmt ? window.UNIFED_INTERNAL.fmt : (v) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v);
+                gapSpan.textContent = fmt(gapValue);
+            }
+        }
+        console.log(`[UNIFED] Visibilidade dos módulos forenses: ${show ? 'mostrar' : 'ocultar'}`);
+    }
+
+    // Expor globalmente para que possa ser chamada por outros módulos
+    window.updateForensicModulesVisibility = updateForensicModulesVisibility;
+
+    // =========================================================================
     // FORCE FINAL STATE (sem remoção automática do splash)
     // Esta função será chamada APENAS quando o utilizador clicar no botão "INICIAR"
     // =========================================================================
@@ -1561,6 +1602,11 @@
             if (mainContainer) {
                 mainContainer.style.display = 'block';
                 mainContainer.style.opacity = '1';
+            }
+            
+            // 4. Ocultar os módulos forenses (zero-knowledge state)
+            if (typeof updateForensicModulesVisibility === 'function') {
+                updateForensicModulesVisibility(false);
             }
             
             // 5. Despacho de Eventos de Sincronização (apenas eventos, sem dados)
