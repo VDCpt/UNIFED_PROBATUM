@@ -324,6 +324,14 @@
             </div>
         </div>
 
+        <!-- CONTAINER DO GRÁFICO MAINCHART (oculto conforme retificação cirúrgica) -->
+        <div id="mainChartContainer" class="chart-section" style="display: none;">
+            <h3 id="chartTitle"><i class="fas fa-chart-line"></i> ANÁLISE DE DISCREPÂNCIAS · GAP FORENSE</h3>
+            <div class="chart-container">
+                <canvas id="mainChart"></canvas>
+            </div>
+        </div>
+
         <div class="pure-card-grid">
             <!-- RISCO ASFIXIA -->
             <div class="pure-card pure-card-warn" id="card-asfixia">
@@ -332,7 +340,7 @@
                 <div class="pure-card-trend">Indicador de Probabilidade de Insolvência Forçada</div>
             </div>
 
-            <!-- GRÁFICO DISCREPÂNCIA (OCULTO) -->
+            <!-- GRÁFICO DISCREPÂNCIA (OCULTO) - já com display none -->
             <div class="chart-section" id="pure-chart-container" style="display: none;">
                 <div class="pure-chart-wrapper"><canvas id="discrepancyChart"></canvas></div>
             </div>
@@ -397,7 +405,6 @@
             <!-- PAINEL IV - ZONA CINZENTA (completa, mas com valores hardcoded removidos e placeholder) -->
             <div class="pure-card white-collar-module" id="pureZonaCinzentaCard" style="display: none;" data-forensic-module="greyzone">
                 <h3 class="pure-card-title"><span class="pure-icon">🔍</span><span id="pure-card4-title" data-pt="IV. ZONA CINZENTA — VALORES NÃO SUJEITOS A COMISSÃO (ISOLADOS)" data-en="IV. GREY ZONE — VALUES NOT SUBJECT TO COMMISSION (ISOLATED)">IV. ZONA CINZENTA — VALORES NÃO SUJEITOS A COMISSÃO (ISOLADOS)</span></h3>
-                <!-- CORREÇÃO 1: remover hardcoded €451,00 e texto fixo -->
                 <p class="pure-zc-intro" id="pure-zc-intro">
                     <span id="pure-zc-intro-text" data-pt="O sistema isolou" data-en="The system isolated">O sistema isolou</span>
                     <strong id="pure-zc-amount">€ 0,00</strong>
@@ -410,12 +417,10 @@
                     <div class="pure-zc-item"><span class="pure-zc-label" id="pure-zc-cancelamentos-label" data-pt="Taxas de Cancelamento (total período)" data-en="Cancellation Fees (total period)">Taxas de Cancelamento (total período)</span><span id="pure-nc-cancelamentos" class="pure-zc-val">€ 0,00</span><span class="pure-zc-tag" id="pure-zc-cancelamentos-tag" data-pt="já em Ganhos · comissão incluída nos −Despesas" data-en="already in Earnings · commission included in −Expenses">já em Ganhos · comissão incluída nos −Despesas</span></div>
                     <div class="pure-zc-item pure-zc-total"><span class="pure-zc-label" id="pure-zc-total-label" data-pt="Total Não Sujeitos (Out 2024)" data-en="Total Not Subject (Oct 2024)">Total Não Sujeitos (Out 2024)</span><span id="pure-nc-total" class="pure-zc-val">€ 0,00</span><span class="pure-zc-tag" id="pure-zc-total-tag" data-pt="Fora da base tributável TVDE" data-en="Outside TVDE taxable base">Fora da base tributável TVDE</span></div>
                 </div>
-                <!-- GAP conciliação C1 (oculto) -->
                 <div id="gapConciliacaoC1" style="color: #ef4444; border-left: 2px solid #ef4444; padding-left: 8px; margin-top: 10px; display: none;">
                     <strong>GAP DE CONCILIAÇÃO (C1): <span id="gapC1Value">0,00 €</span></strong><br>
                     <span style="font-size: 0.8em;">Estado: Indício de Omissão Declarativa (Base Bruta não justificada por fluxos isentos).</span>
                 </div>
-                <!-- CORREÇÃO 2: questão do contraditório como placeholder -->
                 <div class="pure-zc-question" id="pure-zc-question">
                     <strong id="pure-zc-question-strong" data-pt="Questão para contraditório (Art. 327.º CPP):" data-en="Question for contradiction (Art. 327 CPP):">Questão para contraditório (Art. 327.º CPP):</strong>
                     <span id="pure-zc-question-text" data-pt="Aguardando carregamento do caso real." data-en="Awaiting real case loading.">Aguardando carregamento do caso real.</span>
@@ -458,10 +463,11 @@
     </section>
 </div>
 
-<!-- Script mínimo para garantir valores zero e visibilidade correta -->
 <script>
     (function() {
-        // Garantir que o container do gráfico e os cartões ATF/Zona Cinzenta fiquem ocultos
+        // Garantir que o container do gráfico mainChart e o pure-chart-container fiquem ocultos
+        const mainChartContainer = document.getElementById('mainChartContainer');
+        if(mainChartContainer) mainChartContainer.style.display = 'none';
         const chartContainer = document.getElementById('pure-chart-container');
         if(chartContainer) chartContainer.style.display = 'none';
         const atfCard = document.getElementById('pureATFCard');

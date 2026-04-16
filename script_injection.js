@@ -8,6 +8,7 @@
  * - CORREÇÃO: Estado inicial zero-knowledge (tudo a zeros)
  * - ADIÇÃO: Controle de visibilidade dos módulos forenses (updateForensicModulesVisibility)
  * - CORREÇÃO: Injeção do card macro com display:none quando dados reais não carregados
+ * - RETIFICAÇÃO: Gráficos apenas renderizados quando dados reais disponíveis
  * ============================================================================
  */
 
@@ -136,9 +137,9 @@
         }
     });
 
-    // [NOVO] forceRenderFix - garante que secções de gráfico fiquem visíveis
+    // [MODIFICADA] forceRenderFix - não força exibição dos gráficos principais (para manter zero‑knowledge)
     function forceRenderFix() {
-        const charts = document.querySelectorAll('.chart-section');
+        const charts = document.querySelectorAll('.chart-section:not(#mainChartContainer):not(#pure-chart-container)');
         charts.forEach(c => {
             if (c.querySelector('canvas') || c.querySelector('.chart-placeholder')) {
                 c.style.display = 'block';
@@ -147,7 +148,8 @@
         });
         window.dispatchEvent(new Event('resize'));
     }
-    window.addEventListener('load', forceRenderFix);
+    // Comentada a linha que adicionava o listener automaticamente para evitar renderização precoce
+    // window.addEventListener('load', forceRenderFix);
 
     // 2. ESCUDO SILENCIOSO PARA CORS (TSA / FREETSA FALLBACK)
     (function _installCORSSilentShield() {
@@ -205,7 +207,7 @@
     console.log('[UNIFED] Camada 1: OK.');
 
     // =========================================================================
-    // Camada 2 – Sincronização de Métricas (syncMetrics) - CORRIGIDA
+    // Camada 2 – Sincronização de Métricas (syncMetrics) - CORRIGIDA (gráficos removidos)
     // =========================================================================
     (function() {
         if (!window.UNIFED_INTERNAL) return;
@@ -373,13 +375,10 @@
             const pureIrcSub = document.querySelector('#pureDashboard #pure-irc-sub');
             if (pureIrcSub) pureIrcSub.textContent = dadosReaisCarregados ? 'Art. 17.º CIRC' : '---';
             
-            // Gráficos
-            if (typeof Chart !== 'undefined') {
-                if (typeof window.renderChart === 'function') window.renderChart();
-                if (typeof window.renderDiscrepancyChart === 'function') window.renderDiscrepancyChart();
-            } else {
-                console.warn('[UNIFED] Chart.js não disponível – gráficos não renderizados.');
-            }
+            // =================================================================
+            // A renderização dos gráficos será feita apenas quando os dados reais estiverem disponíveis
+            // (via ensureDemoDataLoaded ou executePendingAnalysis)
+            // =================================================================
         };
         console.log('[UNIFED] Camada 2: OK.');
     })();
@@ -437,7 +436,7 @@
             <div id="triangulationMatrixContainer" class="pure-triangulation-box" style="margin:30px 0; border:1px solid #00E5FF; background:rgba(15,23,42,0.95); padding:20px; border-radius:12px;">
                 <h3 style="color:#00E5FF; margin-top:0; font-size:1rem;">${labels.title}</h3>
                 <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
-                    <thead><tr style="border-bottom:1px solid rgba(255,255,255,0.2);"><th style="text-align:left; padding:10px;">${labels.colSource}</th><th style="text-align:right; padding:10px;">${labels.colValue}</th><th style="text-align:right; padding:10px; color:#EF4444;">${labels.colDisc}</th></tr></thead>
+                    <thead><tr style="border-bottom:1px solid rgba(255,255,255,0.2);"><th style="text-align:left; padding:10px;">${labels.colSource}</th><th style="text-align:right; padding:10px;">${labels.colValue}</th><th style="text-align:right; padding:10px; color:#EF4444;">${labels.colDisc}</th><tr></thead>
                     <tbody>
                         <tr><td style="padding:10px;">📄 SAF-T PT (${isEn ? 'Invoicing' : 'Faturação'})</td><td style="padding:10px; text-align:right;">${fmt(t.saftBruto)}</td><td style="padding:10px; text-align:right;">-${fmt(deltaSaft)}</td></tr>
                         <tr style="background:rgba(239,68,68,0.08);"><td style="padding:10px;">🌐 DAC7 (Plataforma A)</td><td style="padding:10px; text-align:right;">${fmt(t.dac7TotalPeriodo)}</td><td style="padding:10px; text-align:right;">-${fmt(deltaDac7)}</td></tr>
@@ -1020,6 +1019,11 @@
                 window.UNIFED_INTERNAL.updateAuxiliaryUI();
             }
 
+            // Renderizar gráficos com os dados da análise
+            if (typeof window.renderForensicCharts === 'function') {
+                window.renderForensicCharts();
+            }
+
             // Disparar eventos para outros módulos (enrichment, gráficos)
             window.dispatchEvent(new CustomEvent('UNIFED_ANALYSIS_COMPLETE', {
                 detail: {
@@ -1065,12 +1069,18 @@
             if (typeof window.UNIFED_INTERNAL.updateAuxiliaryUI === 'function') {
                 window.UNIFED_INTERNAL.updateAuxiliaryUI();
             }
-            console.log('[UNIFED] Dados do caso real carregados com sucesso.');
-
+            
+            // Agora renderizar os gráficos com os dados de demonstração
+            if (typeof window.renderForensicCharts === 'function') {
+                window.renderForensicCharts();
+            }
+            
             // Mostrar os módulos forenses após carregar os dados
             if (typeof window.updateForensicModulesVisibility === 'function') {
                 window.updateForensicModulesVisibility(true);
             }
+            
+            console.log('[UNIFED] Dados do caso real carregados com sucesso.');
             return true;
         }
 
@@ -1545,7 +1555,21 @@
     })();
 
     // =========================================================================
-    // NOVA FUNÇÃO: Controle de visibilidade dos módulos forenses (CORRIGIDA)
+    // FUNÇÃO GLOBAL PARA RENDERIZAR GRÁFICOS SOB DEMANDA
+    // =========================================================================
+    function renderForensicCharts() {
+        if (typeof window.renderChart === 'function') {
+            window.renderChart();
+        }
+        if (typeof window.renderDiscrepancyChart === 'function') {
+            window.renderDiscrepancyChart();
+        }
+        console.log('[UNIFED] Gráficos renderizados com dados reais.');
+    }
+    window.renderForensicCharts = renderForensicCharts;
+
+    // =========================================================================
+    // CONTROLE DE VISIBILIDADE DOS MÓDULOS FORENSES (CORRIGIDO)
     // =========================================================================
     function updateForensicModulesVisibility(show) {
         const modules = [
@@ -1560,15 +1584,14 @@
             if (el) el.style.display = show ? 'block' : 'none';
         });
         
-        // --- Ocultar/mostrar o gráfico SAF-T vs DAC7 (mainDiscrepancyChart) ---
-        const discChartContainer = document.querySelector('#mainDiscrepancyChart')?.closest('.chart-section');
-        if (discChartContainer) discChartContainer.style.display = show ? 'block' : 'none';
-        
-        // --- Ocultar/mostrar o gráfico de barras principal (mainChart) se existir ---
-        const mainChartContainer = document.querySelector('#mainChart')?.closest('.chart-section');
+        // Controlar os containers dos gráficos
+        const mainChartContainer = document.getElementById('mainChartContainer');
         if (mainChartContainer) mainChartContainer.style.display = show ? 'block' : 'none';
         
-        // --- Gap de conciliação C1 ---
+        const discChartContainer = document.getElementById('pure-chart-container');
+        if (discChartContainer) discChartContainer.style.display = show ? 'block' : 'none';
+        
+        // Gap de conciliação C1
         const gapEl = document.getElementById('gapConciliacaoC1');
         if (gapEl) gapEl.style.display = show ? 'block' : 'none';
         
@@ -1584,8 +1607,6 @@
         
         console.log(`[UNIFED] Visibilidade dos módulos forenses: ${show ? 'mostrar' : 'ocultar'}`);
     }
-
-    // Expor globalmente para que possa ser chamada por outros módulos
     window.updateForensicModulesVisibility = updateForensicModulesVisibility;
 
     // =========================================================================
