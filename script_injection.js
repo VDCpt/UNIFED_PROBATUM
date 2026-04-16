@@ -1597,6 +1597,39 @@
             await loadPanelHTML();      // Injeção assíncrona
             await waitForPanel();       // Garantia de presença no DOM
 
+            // =========================================================================
+            // RETIFICAÇÃO: Garantir que a SESSÃO aparece preenchida
+            // =========================================================================
+            // Assegura que o objeto UNIFEDSystem existe
+            if (!window.UNIFEDSystem) {
+                window.UNIFEDSystem = {
+                    sessionId: null,
+                    documents: {},
+                    analysis: {},
+                    counts: {}
+                };
+            }
+            // Gera um sessionId caso ainda não exista
+            if (!window.UNIFEDSystem.sessionId) {
+                // Função local que replica a lógica de generateSessionId do script.js
+                const generateSessionId = () => {
+                    return 'UNIFED-' + Date.now().toString(36).toUpperCase() + '-' +
+                           Math.random().toString(36).substring(2, 7).toUpperCase();
+                };
+                window.UNIFEDSystem.sessionId = generateSessionId();
+                // Se existir a função global generateSessionId, usar para consistência
+                if (typeof window.generateSessionId === 'function') {
+                    window.UNIFEDSystem.sessionId = window.generateSessionId();
+                }
+            }
+            // Atualiza os elementos que exibem o sessionId
+            const sessionSpans = document.querySelectorAll('#sessionIdDisplay, #pure-session-id');
+            sessionSpans.forEach(span => {
+                if (span) span.textContent = window.UNIFEDSystem.sessionId;
+            });
+            console.log('[UNIFED] Session ID garantido:', window.UNIFEDSystem.sessionId);
+            // =========================================================================
+
             // 1. Desbloqueio de Visibilidade Global
             document.body.classList.add('forensic-revealed');
 

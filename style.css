@@ -3634,3 +3634,31 @@ body.dual-screen .stat-card p {
     max-width: 100%;
     display: inline-block;
 }
+
+/* ============================================================================
+   RETIFICAÇÃO: UNIFORMIZAR LARGURA DOS 7 BOTÕES DA TOOLBAR (v13.12.2-i18n)
+   ============================================================================ */
+.toolbar-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+}
+
+.toolbar-grid .btn-tool,
+.toolbar-grid .btn-tool-pure {
+    flex: 1 1 0;
+    min-width: 130px;
+    text-align: center;
+    justify-content: center;
+    white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+    .toolbar-grid .btn-tool,
+    .toolbar-grid .btn-tool-pure {
+        flex: 1 1 auto;
+        min-width: 100px;
+        white-space: normal;
+    }
+}

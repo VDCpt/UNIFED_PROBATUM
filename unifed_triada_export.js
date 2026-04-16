@@ -208,6 +208,13 @@
 
     // Inicialização da tríade (adiciona botões extra sem remover os originais)
     function initInterface() {
+        // ========== OCULTAR BOTÕES INDESEJADOS ==========
+        const hideButtons = ['exportDOCXBtn', 'atfModalBtn'];
+        hideButtons.forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) btn.style.display = 'none';
+        });
+        
         const container = document.getElementById('export-tools-container');
         if (!container) return false;
         
