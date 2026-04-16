@@ -11,6 +11,7 @@
  *   3. MOTOR PREDITIVO ATF          — Forecasting 6M (Regressão Linear + Chart.js)
  *   4. BLOCKCHAIN EVIDENCE EXPLORER — OTS Individual por Ficheiro (SHA-256 + DOM UI)
  *   5. ENFORCE BILINGUAL INTEGRITY — Loop breaker para evitar piscas (EV-003)
+ *   6. PERITIA EXECUTION GUARD      — Zero‑knowledge check para UNIFED_EXECUTE_PERITIA
  * 
  * [RETIFICAÇÃO v13.12.2-i18n]: Refatoração do monkey-patching com flag atómica window._isHydrating
  * ============================================================================
@@ -928,4 +929,26 @@ window.UNIFEDSystem = window.UNIFEDSystem || {};
     }
 })();
 
-console.info('%c[NEXUS · UNIFED-PROBATUM · v13.12.2-i18n]\n' + '%c  M1 · Passive Network Observer       — Proxy Wrapper Transparente ATIVO (ISO/IEC 27037:2012)\n' + '  M2 · RAG Jurisprudencial DOCX         — Hook exportDOCX() instalado\n' + '  M3 · Motor Preditivo ATF (6M)         — Hook openATFModal() instalado\n' + '  M4 · Blockchain Evidence Explorer     — MutationObserver #custodyModal ativo\n' + '  M5 · Bilingual Integrity (EV-003)    — Loop breaker activo\n' + '  M6 · Extensão Core v13.12.2-i18n      — Fallback de integridade e forceReveal\n' + '  M7 · Integridade Visual               — sealCanvas() disponível\n' + '  Modo: Read-Only · DORA (UE) 2022/2554 · ISO/IEC 27037:2012 · Art. 125.o CPP', 'color:#00E5FF;font-family:Courier New,monospace;font-weight:700;font-size:0.9em;', 'color:rgba(0,229,255,0.65);font-family:Courier New,monospace;font-size:0.8em;');
+// ============================================================================
+// MÓDULO 6 · PERITIA EXECUTION GUARD — Zero-knowledge check for UNIFED_EXECUTE_PERITIA
+// ============================================================================
+(function _peritiaExecutionGuard() {
+    window.addEventListener('UNIFED_EXECUTE_PERITIA', function _onPeritiaExecute(evt) {
+        console.log('[UNIFED-ENRICHMENT] UNIFED_EXECUTE_PERITIA recebido...', (evt.detail || {}).masterHash || '');
+        
+        // Verificar se há dados reais
+        const sys = window.UNIFEDSystem;
+        const hasRealData = (sys && sys.analysis && sys.analysis.totals && sys.analysis.totals.ganhos > 0) ||
+                            (window._unifedDataLoaded === true);
+        if (!hasRealData) {
+            console.log('[NEXUS] Estado zero-knowledge: a ignorar execução de peritIA.');
+            return;
+        }
+        // NOTA: O código original que renderiza gráficos deve ser mantido aqui.
+        // Como não foi fornecido, este listener apenas previne a execução indevida.
+        // Caso exista lógica adicional, deve ser inserida a seguir a esta guarda.
+        console.warn('[NEXUS] O listener para UNIFED_EXECUTE_PERITIA foi acionado mas nenhuma ação adicional foi definida (apenas guarda zero-knowledge).');
+    });
+})();
+
+console.info('%c[NEXUS · UNIFED-PROBATUM · v13.12.2-i18n]\n' + '%c  M1 · Passive Network Observer       — Proxy Wrapper Transparente ATIVO (ISO/IEC 27037:2012)\n' + '  M2 · RAG Jurisprudencial DOCX         — Hook exportDOCX() instalado\n' + '  M3 · Motor Preditivo ATF (6M)         — Hook openATFModal() instalado\n' + '  M4 · Blockchain Evidence Explorer     — MutationObserver #custodyModal ativo\n' + '  M5 · Bilingual Integrity (EV-003)    — Loop breaker activo\n' + '  M6 · Peritia Execution Guard         — Zero‑knowledge check para UNIFED_EXECUTE_PERITIA\n' + '  M7 · Extensão Core v13.12.2-i18n      — Fallback de integridade e forceReveal\n' + '  M8 · Integridade Visual               — sealCanvas() disponível\n' + '  Modo: Read-Only · DORA (UE) 2022/2554 · ISO/IEC 27037:2012 · Art. 125.o CPP', 'color:#00E5FF;font-family:Courier New,monospace;font-weight:700;font-size:0.9em;', 'color:rgba(0,229,255,0.65);font-family:Courier New,monospace;font-size:0.8em;');
