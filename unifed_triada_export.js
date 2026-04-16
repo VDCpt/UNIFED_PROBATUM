@@ -232,7 +232,24 @@
         const labels = _resolveLabels();
         const botoes = [
             { id: 'triadaPdfBtn', label: labels.pdf, icon: 'fa-file-pdf', cor: '#00E5FF', handler: () => { if (typeof window.exportPDF === 'function') window.exportPDF(); else alert('PDF export not available.'); } },
-            { id: 'triadaDocxBtn', label: labels.docx, icon: 'fa-file-word', cor: '#0EA5E9', handler: () => { if (typeof window.exportDOCX === 'function') window.exportDOCX(); else alert('DOCX export not available.'); } },
+            { 
+                id: 'triadaDocxBtn', 
+                label: labels.docx, 
+                icon: 'fa-file-word', 
+                cor: '#0EA5E9', 
+                handler: () => { 
+                    if (typeof window.exportDOCX === 'function') {
+                        window.exportDOCX();
+                    } else {
+                        console.warn('[TRIADA] exportDOCX ainda não disponível – aguardar...');
+                        // Tentar novamente após pequeno atraso
+                        setTimeout(() => {
+                            if (typeof window.exportDOCX === 'function') window.exportDOCX();
+                            else alert('DOCX export not available yet. Please try again.');
+                        }, 500);
+                    }
+                } 
+            },
             { id: 'triadaCustodiaBtn', label: labels.custody, icon: 'fa-shield-alt', cor: '#EF4444', handler: gerarAnexoCustodia }
         ];
         

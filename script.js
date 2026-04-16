@@ -4919,10 +4919,33 @@ function selectQuestions(riskKey) {
     ForensicLogger.addEntry('QUESTIONS_SELECTED', { count: UNIFEDSystem.analysis.selectedQuestions.length, riskKey });
 }
 
+// ============================================================================
+// FUNÇÃO filterDAC7ByPeriod (CORRIGIDA para não ocultar cards em zero-knowledge)
+// ============================================================================
+
 function filterDAC7ByPeriod() {
     const periodo = UNIFEDSystem.selectedPeriodo || 'anual';
     const dac7 = UNIFEDSystem.documents.dac7.totals;
-
+    
+    // RETIFICAÇÃO: Verificar se existem dados reais
+    const hasRealData = (UNIFEDSystem.analysis.totals && 
+                         (UNIFEDSystem.analysis.totals.ganhos > 0 || 
+                          UNIFEDSystem.analysis.totals.dac7TotalPeriodo > 0));
+    
+    // Se não há dados reais, mostrar todos os 4 cards com zeros
+    if (!hasRealData) {
+        [1, 2, 3, 4].forEach(q => {
+            const card = document.getElementById(`dac7Q${q}Value`)?.closest('.kpi-card');
+            if (card) card.style.display = '';
+            const valueEl = document.getElementById(`dac7Q${q}Value`);
+            if (valueEl) valueEl.textContent = formatCurrency(0);
+        });
+        if (UNIFEDSystem.analysis.totals) {
+            UNIFEDSystem.analysis.totals.dac7TotalPeriodo = 0;
+        }
+        return 0;
+    }
+    
     const visibilityMap = {
         'anual': [1, 2, 3, 4],
         '1s': [1, 2],

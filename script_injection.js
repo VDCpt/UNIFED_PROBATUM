@@ -755,16 +755,24 @@
             console.log('[UNIFED] Plataforma forçada para "Plataforma A" em modo read‑only.');
         }
 
+        // =========================================================================
+        // FUNÇÃO CORRIGIDA: _removeZeroDac7Kpis – manter cards visíveis com valor zero
+        // =========================================================================
         function _removeZeroDac7Kpis() {
-            const zeroKpis = ['dac7Q1Value', 'dac7Q2Value', 'dac7Q3Value'];
-            zeroKpis.forEach(id => {
+            // RETIFICAÇÃO: Manter os 4 cards visíveis com valores zero
+            // Não remover nenhum card do DOM
+            const allDac7Cards = ['dac7Q1Value', 'dac7Q2Value', 'dac7Q3Value', 'dac7Q4Value'];
+            const fmtLocal = window.UNIFED_INTERNAL?.fmt || ((v) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v));
+            allDac7Cards.forEach(id => {
                 const el = document.getElementById(id);
                 if (el) {
+                    // Garantir que o card está visível e com valor zero
+                    el.textContent = fmtLocal(0);
                     const card = el.closest('.kpi-card');
-                    if (card) card.remove();
-                    else el.remove();
+                    if (card) card.style.display = '';
                 }
             });
+            console.log('[UNIFED] Cards DAC7 mantidos visíveis com valores zero.');
         }
 
         async function _simulateEvidenceUpload() {
@@ -1204,7 +1212,8 @@
                     if (typeof injectMacroCard === 'function') injectMacroCard();
                     if (typeof injectAuxiliaryBoxesCSS === 'function') injectAuxiliaryBoxesCSS();
                     if (typeof forcePlatformReadOnly === 'function') forcePlatformReadOnly();
-                    if (typeof removeZeroDac7Kpis === 'function') removeZeroDac7Kpis();
+                    // REMOVIDA a chamada a removeZeroDac7Kpis() para manter os cards DAC7 visíveis
+                    // if (typeof removeZeroDac7Kpis === 'function') removeZeroDac7Kpis();  // ← REMOVER ESTA LINHA.
                     if (document.getElementById('pureDashboard')) {
                         if (typeof updateAuxiliaryUI === 'function') updateAuxiliaryUI();
                         document.querySelectorAll('.chart-section').forEach(section => { 
@@ -1394,11 +1403,20 @@
         }
         window.generateQRCode = generateQRCode;
 
+        // =========================================================================
+        // FUNÇÃO CORRIGIDA: setupEventDrivenHydration – aguarda carregamento do script
+        // =========================================================================
         function setupEventDrivenHydration() {
             if (typeof window.forensicDataSynchronization === 'function') {
                 window.forensicDataSynchronization();
             } else {
-                console.warn('[UNIFED] forensicDataSynchronization não disponível no arranque.');
+                console.log('[UNIFED] forensicDataSynchronization será carregado posteriormente.');
+                // Aguardar o evento de carregamento do script
+                window.addEventListener('load', function() {
+                    if (typeof window.forensicDataSynchronization === 'function') {
+                        window.forensicDataSynchronization();
+                    }
+                });
             }
             window.addEventListener('UNIFED_ANALYSIS_COMPLETE', function(event) {
                 console.log('[UNIFED] Evento UNIFED_ANALYSIS_COMPLETE recebido (fallback).', event.detail);
