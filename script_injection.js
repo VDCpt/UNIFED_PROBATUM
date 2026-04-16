@@ -24,6 +24,12 @@
 (function() {
     'use strict';
 
+    // =========================================================================
+    // EXPOSIÇÃO GLOBAL ANTECIPADA (garantia de disponibilidade)
+    // =========================================================================
+    window.ensureDemoDataLoaded = null;
+    window.executePendingAnalysis = null;
+
     window.logAudit = window.logAudit || function(msg, level = 'info') {
         const prefix = '[UNIFED] ';
         if (level === 'error') console.error(prefix + msg);
@@ -444,7 +450,7 @@
             <div id="triangulationMatrixContainer" class="pure-triangulation-box" style="margin:30px 0; border:1px solid #00E5FF; background:rgba(15,23,42,0.95); padding:20px; border-radius:12px;">
                 <h3 style="color:#00E5FF; margin-top:0; font-size:1rem;">${labels.title}</h3>
                 <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
-                    <thead><tr style="border-bottom:1px solid rgba(255,255,255,0.2);"><th style="text-align:left; padding:10px;">${labels.colSource}</th><th style="text-align:right; padding:10px;">${labels.colValue}</th><th style="text-align:right; padding:10px; color:#EF4444;">${labels.colDisc}</th></tr></thead>
+                    <thead><tr style="border-bottom:1px solid rgba(255,255,255,0.2);"><th style="text-align:left; padding:10px;">${labels.colSource}</th><th style="text-align:right; padding:10px;">${labels.colValue}</th><th style="text-align:right; padding:10px; color:#EF4444;">${labels.colDisc}</th><tr></thead>
                     <tbody>
                         <tr><td style="padding:10px;">📄 SAF-T PT (${isEn ? 'Invoicing' : 'Faturação'})</td><td style="padding:10px; text-align:right;">${fmt(t.saftBruto)}</td><td style="padding:10px; text-align:right;">-${fmt(deltaSaft)}</td></tr>
                         <tr style="background:rgba(239,68,68,0.08);"><td style="padding:10px;">🌐 DAC7 (Plataforma A)</td><td style="padding:10px; text-align:right;">${fmt(t.dac7TotalPeriodo)}</td><td style="padding:10px; text-align:right;">-${fmt(deltaDac7)}</td></tr>
@@ -1105,9 +1111,26 @@
         window.UNIFED_INTERNAL.simulateEvidenceUpload = _simulateEvidenceUpload;
         window.UNIFED_INTERNAL.updateEvidenceCountersAndShow = _updateEvidenceCountersAndShow;
         window.UNIFED_INTERNAL.executePendingAnalysis = _executePendingAnalysis;
-        // Exposição global
+        window.UNIFED_INTERNAL.ensureDemoDataLoaded = ensureDemoDataLoaded;   // <-- adicionar
+
+        // Exposição global directa
         window.ensureDemoDataLoaded = ensureDemoDataLoaded;
+        window.executePendingAnalysis = _executePendingAnalysis;
+
         console.log('[UNIFED] Camada 5: OK.');
+    })();
+
+    // =========================================================================
+    // GARANTIA DE EXPOSIÇÃO GLOBAL (fallback)
+    // =========================================================================
+    (function ensureGlobals() {
+        if (typeof window.ensureDemoDataLoaded !== 'function') {
+            console.warn('[UNIFED] ensureDemoDataLoaded ainda não definida. Tentando obter de UNIFED_INTERNAL...');
+            if (window.UNIFED_INTERNAL && typeof window.UNIFED_INTERNAL.ensureDemoDataLoaded === 'function') {
+                window.ensureDemoDataLoaded = window.UNIFED_INTERNAL.ensureDemoDataLoaded;
+                window.executePendingAnalysis = window.UNIFED_INTERNAL.executePendingAnalysis;
+            }
+        }
     })();
 
     // =========================================================================
@@ -1306,7 +1329,7 @@
         function setupAnalyzeButton() {
             const analyzeBtn = document.getElementById('analyzeBtn');
             if (!analyzeBtn) {
-                console.warn('[UNIFED] Botão #analyzeBtn não encontrado. O sistema pode não executar a perícia automaticamente.');
+                console.warn('[UNIFED] Botão #analyzeBtn não encontrado.');
                 return;
             }
             if (analyzeBtn.getAttribute('data-analyze-listener') === 'true') return;
@@ -1315,22 +1338,26 @@
                 e.preventDefault();
                 console.log('[UNIFED] Botão EXECUTAR PERÍCIA clicado — a executar análise pendente.');
                 
-                // Fallback: se ensureDemoDataLoaded não existir, tenta carregar os dados directamente
-                if (typeof ensureDemoDataLoaded !== 'function' && typeof window.ensureDemoDataLoaded === 'function') {
-                    window.ensureDemoDataLoaded = ensureDemoDataLoaded;
+                let loadFn = window.ensureDemoDataLoaded;
+                if (typeof loadFn !== 'function' && window.UNIFED_INTERNAL && typeof window.UNIFED_INTERNAL.ensureDemoDataLoaded === 'function') {
+                    loadFn = window.UNIFED_INTERNAL.ensureDemoDataLoaded;
+                    window.ensureDemoDataLoaded = loadFn;
+                }
+                let execFn = window.executePendingAnalysis;
+                if (typeof execFn !== 'function' && window.UNIFED_INTERNAL && typeof window.UNIFED_INTERNAL.executePendingAnalysis === 'function') {
+                    execFn = window.UNIFED_INTERNAL.executePendingAnalysis;
+                    window.executePendingAnalysis = execFn;
                 }
                 
-                if (typeof window.ensureDemoDataLoaded === 'function') {
-                    await window.ensureDemoDataLoaded();
+                if (typeof loadFn === 'function') {
+                    await loadFn();
                 } else {
                     console.error('[UNIFED] Impossível carregar dados do caso real. A perícia não será executada.');
                     return;
                 }
                 
-                if (typeof executePendingAnalysis === 'function') {
-                    await executePendingAnalysis();
-                } else if (typeof window.UNIFED_INTERNAL?.executePendingAnalysis === 'function') {
-                    await window.UNIFED_INTERNAL.executePendingAnalysis();
+                if (typeof execFn === 'function') {
+                    await execFn();
                 } else {
                     console.error('[UNIFED] executePendingAnalysis não está disponível');
                 }
@@ -1364,7 +1391,6 @@
                             await waitForPureDashboard();
                             initializeCoreDashboard();
                             await new Promise(r => setTimeout(r, 100));
-                            // Garantir que os dados são carregados antes de continuar
                             // CORREÇÃO DEFENSIVA: verificar se a função existe
                             if (typeof ensureDemoDataLoaded !== 'function') {
                                 console.error('[UNIFED] ensureDemoDataLoaded não está disponível. Recarregue a página.');
@@ -1392,9 +1418,19 @@
             targetButton.addEventListener('click', async function(e) {
                 e.preventDefault();
                 if (_initializing) return;
-
                 logAudit('Iniciando transição para Caso Real Anonimizado...', 'info');
-
+                
+                // Garantir que a função está disponível
+                let loadFn = window.ensureDemoDataLoaded;
+                if (typeof loadFn !== 'function' && window.UNIFED_INTERNAL && typeof window.UNIFED_INTERNAL.ensureDemoDataLoaded === 'function') {
+                    loadFn = window.UNIFED_INTERNAL.ensureDemoDataLoaded;
+                    window.ensureDemoDataLoaded = loadFn;
+                }
+                if (typeof loadFn !== 'function') {
+                    console.error('[UNIFED] ensureDemoDataLoaded não disponível mesmo após tentativa. Abortando.');
+                    return;
+                }
+                
                 try {
                     if (typeof window._activatePurePanel === 'function') {
                         await window._activatePurePanel();
@@ -1402,18 +1438,12 @@
                     await waitForPureDashboard();
                     initializeCoreDashboard();
                     await new Promise(r => setTimeout(r, 100));
-                    // CORREÇÃO DEFENSIVA: verificar se a função existe
-                    if (typeof ensureDemoDataLoaded !== 'function') {
-                        console.error('[UNIFED] ensureDemoDataLoaded não está disponível. Recarregue a página.');
-                        return;
-                    }
-                    await ensureDemoDataLoaded();
+                    await loadFn();
                     if (window.UNIFEDSystem.loadAnonymizedRealCase) {
                         await window.UNIFEDSystem.loadAnonymizedRealCase();
                     } else {
                         await initializeFullWithEvidence();
                     }
-
                     if (typeof window.correctRomanIndices === 'function') {
                         window.correctRomanIndices();
                     }
@@ -1683,6 +1713,25 @@
     window.updateForensicModulesVisibility = updateForensicModulesVisibility;
 
     // =========================================================================
+    // Função para activar todos os botões (adicione antes de forceFinalState)
+    // =========================================================================
+    function forceEnableAllButtons() {
+        const buttonIds = [
+            'analyzeBtn', 'exportPDFBtn', 'exportJSONBtn', 'resetBtn', 'clearConsoleBtn',
+            'exportDOCXBtn', 'atfModalBtn', 'demoModeBtn', 'registerClientBtnFixed',
+            'openEvidenceModalBtn', 'forensicWipeBtn', 'custodyChainTriggerBtn'
+        ];
+        buttonIds.forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) btn.disabled = false;
+        });
+        document.querySelectorAll('.btn-tool, .btn-tool-pure, .btn-forensic, .evidence-management-btn-solid').forEach(btn => {
+            btn.disabled = false;
+        });
+        console.log('[UNIFED] Todos os botões foram forçados a ativo.');
+    }
+
+    // =========================================================================
     // FORCE FINAL STATE (sem remoção automática do splash)
     // Esta função será chamada APENAS quando o utilizador clicar no botão "INICIAR"
     // =========================================================================
@@ -1730,6 +1779,8 @@
                 wrapper.style.display = 'block';
                 wrapper.style.opacity = '1';
                 wrapper.style.visibility = 'visible';
+
+                forceEnableAllButtons();  // <-- adicionar
 
                 const innerDashboard = document.getElementById('pureDashboard') || wrapper.querySelector('.pure-section');
                 if (innerDashboard) {
