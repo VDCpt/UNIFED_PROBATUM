@@ -10,6 +10,10 @@
  * - CORREÇÃO: Injeção do card macro com display:none quando dados reais não carregados
  * - RETIFICAÇÃO: Gráficos apenas renderizados quando dados reais disponíveis
  * ============================================================================
+ * CORREÇÕES ADICIONAIS (2026-04-16):
+ * 1. Verificação defensiva em ensureDemoDataLoaded no listener do botão "CASO REAL"
+ * 2. Remoção de chamadas prematuras de gráficos e forceRevealSmokingGun em loadAnonymizedRealCase
+ * ============================================================================
  */
 
 (function() {
@@ -63,7 +67,6 @@
             wrapper.innerHTML = '<section id="pureDashboard" class="pure-section"><div class="pure-card"><p>Carregando painel forense...</p></div></section>';
             panelLoaded = true;
             panelResolvers.forEach(resolve => resolve());
-            panelResolvers = [];
             return false;
         }
     }
@@ -436,7 +439,7 @@
             <div id="triangulationMatrixContainer" class="pure-triangulation-box" style="margin:30px 0; border:1px solid #00E5FF; background:rgba(15,23,42,0.95); padding:20px; border-radius:12px;">
                 <h3 style="color:#00E5FF; margin-top:0; font-size:1rem;">${labels.title}</h3>
                 <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
-                    <thead><tr style="border-bottom:1px solid rgba(255,255,255,0.2);"><th style="text-align:left; padding:10px;">${labels.colSource}</th><th style="text-align:right; padding:10px;">${labels.colValue}</th><th style="text-align:right; padding:10px; color:#EF4444;">${labels.colDisc}</th><tr></thead>
+                    <thead><tr style="border-bottom:1px solid rgba(255,255,255,0.2);"><th style="text-align:left; padding:10px;">${labels.colSource}</th><th style="text-align:right; padding:10px;">${labels.colValue}</th><th style="text-align:right; padding:10px; color:#EF4444;">${labels.colDisc}</th></tr></thead>
                     <tbody>
                         <tr><td style="padding:10px;">📄 SAF-T PT (${isEn ? 'Invoicing' : 'Faturação'})</td><td style="padding:10px; text-align:right;">${fmt(t.saftBruto)}</td><td style="padding:10px; text-align:right;">-${fmt(deltaSaft)}</td></tr>
                         <tr style="background:rgba(239,68,68,0.08);"><td style="padding:10px;">🌐 DAC7 (Plataforma A)</td><td style="padding:10px; text-align:right;">${fmt(t.dac7TotalPeriodo)}</td><td style="padding:10px; text-align:right;">-${fmt(deltaDac7)}</td></tr>
@@ -1258,24 +1261,25 @@
                 }
 
                 showClientIdentificationBlock();
-                if (typeof window.renderChart === 'function') window.renderChart();
-                if (typeof window.renderDiscrepancyChart === 'function') window.renderDiscrepancyChart();
+                // Removidas chamadas prematuras de gráficos e forceRevealSmokingGun
                 console.log('[UNIFED] ✅ Evidências carregadas e secção revelada. Aguardando execução da perícia.');
             } catch (err) {
                 console.error('[UNIFED] Falha ao carregar evidências:', err);
             }
         }
 
+        // =========================================================================
+        // FUNÇÃO CORRIGIDA: loadAnonymizedRealCase sem renderizações antecipadas
+        // =========================================================================
         if (window.UNIFEDSystem) {
             window.UNIFEDSystem.loadAnonymizedRealCase = async function() {
                 await initializeFullWithEvidence();
-                if (typeof window.updateDashboard === 'function') window.updateDashboard();
-                if (typeof window.updateModulesUI === 'function') window.updateModulesUI();
-                if (typeof window.renderChart === 'function') window.renderChart();
-                if (typeof window.renderDiscrepancyChart === 'function') window.renderDiscrepancyChart();
-                if (typeof window.forceRevealSmokingGun === 'function') window.forceRevealSmokingGun();
+                // As três linhas seguintes foram REMOVIDAS para evitar gráficos/módulos antes da perícia:
+                // if (typeof window.renderChart === 'function') window.renderChart();
+                // if (typeof window.renderDiscrepancyChart === 'function') window.renderDiscrepancyChart();
+                // if (typeof window.forceRevealSmokingGun === 'function') window.forceRevealSmokingGun();
                 if (typeof window.correctRomanIndices === 'function') window.correctRomanIndices();
-                console.info('[UNIFED-FIX] Data Hydration concluída com sucesso via Hook Cirúrgico.');
+                console.info('[UNIFED-FIX] Data Hydration concluída (gráficos e módulos aguardam perícia).');
             };
         }
 
@@ -1329,6 +1333,11 @@
                             initializeCoreDashboard();
                             await new Promise(r => setTimeout(r, 100));
                             // Garantir que os dados são carregados antes de continuar
+                            // CORREÇÃO DEFENSIVA: verificar se a função existe
+                            if (typeof ensureDemoDataLoaded !== 'function') {
+                                console.error('[UNIFED] ensureDemoDataLoaded não está disponível. Recarregue a página.');
+                                return;
+                            }
                             await ensureDemoDataLoaded();
                             if (window.UNIFEDSystem.loadAnonymizedRealCase) {
                                 await window.UNIFEDSystem.loadAnonymizedRealCase();
@@ -1361,7 +1370,11 @@
                     await waitForPureDashboard();
                     initializeCoreDashboard();
                     await new Promise(r => setTimeout(r, 100));
-                    // Garantir que os dados são carregados antes de continuar
+                    // CORREÇÃO DEFENSIVA: verificar se a função existe
+                    if (typeof ensureDemoDataLoaded !== 'function') {
+                        console.error('[UNIFED] ensureDemoDataLoaded não está disponível. Recarregue a página.');
+                        return;
+                    }
                     await ensureDemoDataLoaded();
                     if (window.UNIFEDSystem.loadAnonymizedRealCase) {
                         await window.UNIFEDSystem.loadAnonymizedRealCase();
@@ -1379,7 +1392,7 @@
             }, { capture: true });
 
             targetButton.setAttribute('data-unifed-active', 'true');
-            console.log('[UNIFED] Listener associado ao botão "CASO REAL ANONIMIZADO" com espera assíncrona.');
+            console.log('[UNIFED] Listener associado ao botão "CASO REAL ANONIMIZADO" com espera assíncrona e verificação defensiva.');
         }
 
         function generateQRCode() {

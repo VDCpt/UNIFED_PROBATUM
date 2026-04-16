@@ -8410,7 +8410,6 @@ window.injectAuxiliaryHelperBoxes = injectAuxiliaryHelperBoxes;
 window.resetAuxiliaryData = resetAuxiliaryData;
 window.exportPDF = exportPDF;
 window.exportDataJSON = exportDataJSON;
-window.exportDOCX = exportDOCX;
 window.resetSystem = resetSystem;
 window.clearConsole = clearConsole;
 window.renderChart = renderChart;
