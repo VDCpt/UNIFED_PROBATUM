@@ -1453,67 +1453,6 @@
     })();
 
     // =========================================================================
-    // PATCH ELITE DEMO (2026-04-13)
-    // =========================================================================
-    (function unifedElitePatch() {
-        'use strict';
-
-        window.UNIFED_CONFIG = {
-            tsa_server: "https://freetsa.org/tsr",
-            demo_mode: true,
-            log_level: 'silent_errors'
-        };
-
-        const _originalError = console.error;
-        console.error = function(...args) {
-            const msg = args[0] ? args[0].toString() : "";
-            if (msg.includes('CORS') || msg.includes('OTS') || msg.includes('UNIFED')) {
-                return;
-            }
-            _originalError.apply(console, args);
-        };
-
-        const hydrator = () => {
-            console.info('[UNIFED] A inicializar ambiente de alta fidelidade para demonstração...');
-
-            window.UNIFEDSystem = window.UNIFEDSystem || {};
-            window.UNIFEDSystem.analysis = window.UNIFEDSystem.analysis || {
-                discrepancies: [],
-                metrics: { saft_total: 0, bank_total: 0 }
-            };
-
-            const reveal = () => {
-                if (window.forceRevealSmokingGun) window.forceRevealSmokingGun();
-                document.querySelectorAll('.pure-data-value, .pure-delta-value, .pure-atf-big, .pure-sg-val, .pure-zc-val')
-                    .forEach(el => { el.classList.add('forensic-revealed'); });
-                const tAnchor = document.getElementById('pure-tsa-anchor');
-                if (tAnchor) {
-                    tAnchor.innerHTML = 'Selo de Tempo RFC 3161: <span style="color: #00e5ff; font-weight: bold;">VALIDADO VIA FREETSA.ORG</span>';
-                }
-            };
-
-            if (typeof window.UNIFED_INTERNAL !== 'undefined' && typeof window.UNIFED_INTERNAL.syncMetrics === 'function') {
-                window.UNIFED_INTERNAL.syncMetrics();
-            }
-            if (typeof window.UNIFED_INTERNAL !== 'undefined' && typeof window.UNIFED_INTERNAL.renderMatrix === 'function') {
-                window.UNIFED_INTERNAL.renderMatrix();
-            }
-            if (typeof window.UNIFED_INTERNAL !== 'undefined' && typeof window.UNIFED_INTERNAL.updateAuxiliaryUI === 'function') {
-                window.UNIFED_INTERNAL.updateAuxiliaryUI();
-            }
-            reveal();
-        };
-
-        if (document.readyState === 'complete' || document.readyState === 'interactive') {
-            hydrator();
-        } else {
-            window.addEventListener('load', hydrator);
-        }
-
-        console.log('%c[UNIFED] PATCH DE ELITE APLICADO: Pronto para demonstração.', 'color: #00e5ff; font-weight: bold;');
-    })();
-
-    // =========================================================================
     // FORCE FINAL STATE (sem remoção automática do splash)
     // Esta função será chamada APENAS quando o utilizador clicar no botão "INICIAR"
     // =========================================================================
@@ -1558,29 +1497,6 @@
                 mainContainer.style.display = 'block';
                 mainContainer.style.opacity = '1';
             }
-
-            // 4. Forçar a atualização completa dos dados (mesmo sem clique no "CASO REAL")
-            //    Isso garante que os valores numéricos aparecem imediatamente.
-            if (window.UNIFED_INTERNAL && window.UNIFED_INTERNAL.syncMetrics) {
-                window.UNIFED_INTERNAL.syncMetrics();
-            }
-            if (window.UNIFED_INTERNAL && window.UNIFED_INTERNAL.renderMatrix) {
-                window.UNIFED_INTERNAL.renderMatrix();
-            }
-            if (window.UNIFED_INTERNAL && window.UNIFED_INTERNAL.updateAuxiliaryUI) {
-                window.UNIFED_INTERNAL.updateAuxiliaryUI();
-            }
-            // Forçar também a atualização das caixas auxiliares (campanhas, gorjetas, etc.)
-            const setGlobalText = (id, value) => {
-                const el = document.getElementById(id);
-                if (el) el.textContent = value;
-            };
-            const fi = _PDF_CASE.fluxosIsentos;
-            const fmtEuro = (v) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v);
-            setGlobalText('auxBoxCampanhasValue', fmtEuro(fi.campanhas));
-            setGlobalText('auxBoxGorjetasValue', fmtEuro(fi.gorjetas));
-            setGlobalText('auxBoxPortagensValue', fmtEuro(fi.portagens));
-            setGlobalText('auxBoxTotalNSValue', fmtEuro(fi.total));
             
             // 5. Despacho de Eventos de Sincronização
             window.dispatchEvent(new CustomEvent('UNIFED_CORE_READY'));
@@ -1588,7 +1504,7 @@
                 detail: { status: 'READY', masterHash: window.activeForensicSession?.masterHash || _PDF_CASE.masterHash } 
             }));
 
-            console.log('[PERÍCIA] Sistema desbloqueado: Splash removido, Dashboard ativado e dados preenchidos.');
+            console.log('[PERÍCIA] Sistema desbloqueado: Splash removido, Dashboard ativado (zero‑knowledge).');
         } catch (err) {
             console.error('[ERRO FORENSE] Falha na transição de estado:', err);
         }
