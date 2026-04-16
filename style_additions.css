@@ -1326,5 +1326,12 @@ canvas#mainChart, canvas#discrepancyChart, canvas#atfChartCanvas {
 }
 
 /* ============================================================================
+   FIX: Ocultação forçada da Zona Cinzenta quando display: none está presente
+   ============================================================================ */
+#pureZonaCinzentaCard[style*="display: none"] {
+    display: none !important;
+}
+
+/* ============================================================================
    FIM — UNIFED PROBATUM v13.12.2-i18n CONSOLIDADO
    ============================================================================ */

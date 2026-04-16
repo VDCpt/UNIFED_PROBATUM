@@ -1263,34 +1263,44 @@ window.generateBurdenOfProofSection = generateBurdenOfProofSection;
 // 9. ADIÇÕES v13.12.2-i18n · POLÍTICA ZERO-OMISSÃO (REFATORADA)
 // ============================================================================
 (function _enrichmentZeroOmissionRefactored() {
-    // ── Listener UNIFED_ANALYSIS_COMPLETE simplificado ──
+    // ── Listener UNIFED_ANALYSIS_COMPLETE modificado (correção do bloco RAG) ──
     window.addEventListener('UNIFED_ANALYSIS_COMPLETE', function _onAnalysisComplete(evt) {
         console.log('[UNIFED-ENRICHMENT] UNIFED_ANALYSIS_COMPLETE recebido. Sincronizando UI...', (evt && evt.detail) || '');
         var _sys = window.UNIFEDSystem || {};
+        
         // Sincronização original
         if (window.UNIFED_INTERNAL) {
             if (typeof window.UNIFED_INTERNAL.syncMetrics === 'function') window.UNIFED_INTERNAL.syncMetrics();
             if (typeof window.UNIFED_INTERNAL.updateAuxiliaryUI === 'function') window.UNIFED_INTERNAL.updateAuxiliaryUI();
         }
+        
         // Uncloaking atómico
         document.querySelectorAll(
             '.pure-data-value, .pure-delta-value, .pure-atf-big, ' +
             '.smoking-gun-module, .pure-sg-val, [data-pt], [data-en]'
         ).forEach(function(el) { el.classList.add('forensic-revealed'); });
         
-        // Revelar bloco RAG se existir
+        // --- BLOCO RAG: só exibir se houver dados reais carregados ---
         const narrativeContainer = document.getElementById('bloco-rag-legal');
         if (narrativeContainer) {
-            narrativeContainer.style.setProperty('display', 'block', 'important');
-            narrativeContainer.style.setProperty('opacity', '1', 'important');
-            narrativeContainer.classList.add('forensic-revealed');
-            const fallbackHTML = `
-                <div class="legal-insight" style="font-size: 0.75rem; color: #cbd5e1; line-height: 1.6;">
-                    <p><strong>Fundamentação Legal Direta:</strong> Art. 23.º CIRC e Art. 103.º RGIT detetados com base num diferencial material de 2.184,95 € entre o BTOR e o BTF.</p>
-                    <p><strong>Riscos Judiciais:</strong> A omissão declarativa calculada excede o rácio de 50% (89,26%). Configura-se infração continuada. A retenção ilícita na origem inverte o ónus da prova (Art. 344.º n.º 2 C.C.).</p>
-                </div>
-            `;
-            narrativeContainer.innerHTML = fallbackHTML;
+            // Verifica se os totais reais estão disponíveis (perícia já executada ou caso real carregado)
+            const hasRealData = (_sys.analysis && _sys.analysis.totals && _sys.analysis.totals.ganhos > 0);
+            if (hasRealData) {
+                narrativeContainer.style.setProperty('display', 'block', 'important');
+                narrativeContainer.style.setProperty('opacity', '1', 'important');
+                narrativeContainer.classList.add('forensic-revealed');
+                // Se quiser, pode manter o fallback ou gerar conteúdo real
+                const fallbackHTML = `
+                    <div class="legal-insight" style="font-size: 0.75rem; color: #cbd5e1; line-height: 1.6;">
+                        <p><strong>Fundamentação Legal Direta:</strong> Art. 23.º CIRC e Art. 103.º RGIT detetados com base num diferencial material de 2.184,95 € entre o BTOR e o BTF.</p>
+                        <p><strong>Riscos Judiciais:</strong> A omissão declarativa calculada excede o rácio de 50% (89,26%). Configura-se infração continuada. A retenção ilícita na origem inverte o ónus da prova (Art. 344.º n.º 2 C.C.).</p>
+                    </div>
+                `;
+                narrativeContainer.innerHTML = fallbackHTML;
+            } else {
+                // Estado zero-knowledge: garante que o bloco fica oculto
+                narrativeContainer.style.setProperty('display', 'none', 'important');
+            }
         }
         console.log('[UNIFED-ENRICHMENT] Uncloaking e RAG concluídos via UNIFED_ANALYSIS_COMPLETE.');
     });

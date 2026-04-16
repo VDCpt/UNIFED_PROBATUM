@@ -7,6 +7,7 @@
  * - Melhorada sincronização da UI após clique "CASO REAL"
  * - CORREÇÃO: Estado inicial zero-knowledge (tudo a zeros)
  * - ADIÇÃO: Controle de visibilidade dos módulos forenses (updateForensicModulesVisibility)
+ * - CORREÇÃO: Injeção do card macro com display:none quando dados reais não carregados
  * ============================================================================
  */
 
@@ -479,11 +480,15 @@
             console.log('[UNIFED] CSS injetado.');
         }
 
+        // =========================================================================
+        // FUNÇÃO CORRIGIDA: _injectMacroCard com controlo de visibilidade inicial
+        // =========================================================================
         function _injectMacroCard() {
             const target = document.getElementById('pureDashboard');
             if (!target || document.getElementById('pureMacroCard')) return;
             const macro = data.macro_analysis;
             if (!macro) return;
+            
             const monthlyLoss = (macro.sector_drivers || 38000) * (macro.avg_monthly_discrepancy || 546.24);
             
             const cardDiv = document.createElement('div');
@@ -616,6 +621,15 @@
             disclaimerDiv.appendChild(document.createTextNode(' '));
             disclaimerDiv.appendChild(disclaimerSpan);
             cardDiv.appendChild(disclaimerDiv);
+            
+            // =================================================================
+            // CORREÇÃO: verificar se dados reais estão carregados e ocultar card inicialmente se necessário
+            // =================================================================
+            const dadosReaisCarregados = (window.UNIFEDSystem && window.UNIFEDSystem.analysis && 
+                                          window.UNIFEDSystem.analysis.totals && window.UNIFEDSystem.analysis.totals.ganhos > 0);
+            if (!dadosReaisCarregados && !window._unifedDataLoaded) {
+                cardDiv.style.display = 'none';
+            }
             
             target.appendChild(cardDiv);
         }
@@ -1529,20 +1543,44 @@
     })();
 
     // =========================================================================
-    // NOVA FUNÇÃO: Controle de visibilidade dos módulos forenses
+    // NOVA FUNÇÃO: Controle de visibilidade dos módulos forenses (CORRIGIDA)
     // =========================================================================
     function updateForensicModulesVisibility(show) {
         const modules = ['pureATFCard', 'pureZonaCinzentaCard', 'pureMacroCard'];
         modules.forEach(id => {
             const el = document.getElementById(id);
-            if (el) el.style.display = show ? 'block' : 'none';
+            if (el) {
+                if (!show) {
+                    el.setAttribute('data-oculto', 'true');
+                    el.style.setProperty('display', 'none', 'important');
+                } else {
+                    el.removeAttribute('data-oculto');
+                    el.style.display = 'block';
+                }
+            }
         });
         // Mostrar/esconder o gráfico (último .chart-section)
         const chartSection = document.querySelector('.chart-section:last-of-type');
-        if (chartSection) chartSection.style.display = show ? 'block' : 'none';
+        if (chartSection) {
+            if (!show) {
+                chartSection.setAttribute('data-oculto', 'true');
+                chartSection.style.setProperty('display', 'none', 'important');
+            } else {
+                chartSection.removeAttribute('data-oculto');
+                chartSection.style.display = 'block';
+            }
+        }
         // Mostrar/esconder o gap de conciliação
         const gapEl = document.getElementById('gapConciliacaoC1');
-        if (gapEl) gapEl.style.display = show ? 'block' : 'none';
+        if (gapEl) {
+            if (!show) {
+                gapEl.setAttribute('data-oculto', 'true');
+                gapEl.style.setProperty('display', 'none', 'important');
+            } else {
+                gapEl.removeAttribute('data-oculto');
+                gapEl.style.display = 'block';
+            }
+        }
         // Se show for true e houver dados reais, atualizar o valor do gap
         if (show && window.UNIFEDSystem && window.UNIFEDSystem.analysis && window.UNIFEDSystem.analysis.crossings) {
             const gapValue = window.UNIFEDSystem.analysis.crossings.discrepanciaSaftVsDac7 || 0;
