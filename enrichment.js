@@ -908,6 +908,13 @@ window.generateTemporalChartImage = generateTemporalChartImage;
 window._isGraphRendering = false;
 
 window.renderATFChart = function(data) {
+    // Verificar se existem dados reais
+    const sys = window.UNIFEDSystem;
+    const totals = sys?.analysis?.totals;
+    if (!totals || (totals.ganhos === 0 && totals.despesas === 0)) {
+        console.log('[UNIFED-ATF] renderATFChart abortado: dados zero.');
+        return;
+    }
     if (!data || !data.months || data.months.length === 0) {
         console.warn('[UNIFED-ATF] renderATFChart: dados inválidos ou vazios.');
         return;
@@ -1310,9 +1317,16 @@ window.generateBurdenOfProofSection = generateBurdenOfProofSection;
             narrativeContainer.innerHTML = fallbackHTML;
         }
         
-        // Renderizar gráficos apenas se houver dados reais
+        // Renderizar gráficos apenas se houver dados reais (com verificação adicional)
         if (typeof window.renderDiscrepancyCharts === 'function') {
-            window.renderDiscrepancyCharts();
+            const totals = window.UNIFEDSystem?.analysis?.totals;
+            if (totals && (totals.ganhos > 0 || totals.dac7TotalPeriodo > 0)) {
+                window.renderDiscrepancyCharts();
+            } else {
+                console.log('[UNIFED-ENRICHMENT] Dados zero – gráfico SAF-T/DAC7 não renderizado.');
+                const container = document.getElementById('mainDiscrepancyChart')?.closest('.chart-section');
+                if (container) container.style.display = 'none';
+            }
         }
         if (typeof window.renderChart === 'function') {
             window.renderChart();
@@ -1359,8 +1373,13 @@ window.generateBurdenOfProofSection = generateBurdenOfProofSection;
             console.warn('[UNIFED-ENRICHMENT] Dados insuficientes para hidratação cirúrgica.');
         }
         
-        // Renderização de gráficos ATF
-        if (typeof window.renderDiscrepancyCharts === 'function') window.renderDiscrepancyCharts();
+        // Renderização de gráficos ATF com verificação de dados reais
+        if (typeof window.renderDiscrepancyCharts === 'function') {
+            const totals = window.UNIFEDSystem?.analysis?.totals;
+            if (totals && (totals.ganhos > 0 || totals.dac7TotalPeriodo > 0)) {
+                window.renderDiscrepancyCharts();
+            }
+        }
         var _canvas = document.getElementById('atfChartCanvas');
         if (_canvas && typeof Chart !== 'undefined') {
             var _sys = window.UNIFEDSystem || {};
@@ -1394,17 +1413,27 @@ window.generateBurdenOfProofSection = generateBurdenOfProofSection;
     console.log('[UNIFED-ENRICHMENT] ✅ Módulo de Enriquecimento v13.12.2-i18n carregado (POLÍTICA ZERO-OMISSÃO refatorada).');
 })();
 
-// Renderização de gráfico de discrepâncias com fallback corrigido
+// Renderização de gráfico de discrepâncias com fallback corrigido (apenas dados reais)
 window.renderDiscrepancyCharts = function() {
     const ctx = document.getElementById('mainDiscrepancyChart') || document.getElementById('discrepancyChart');
     if (!ctx || typeof Chart === 'undefined') {
         console.warn('[UNIFED-ENRICHMENT] Canvas ou Chart.js não disponível para renderDiscrepancyCharts');
         return;
     }
+    const sys = window.UNIFEDSystem;
+    const totals = sys?.analysis?.totals || {};
+    const gains = totals.ganhos || 0;
+    const dac7 = totals.dac7TotalPeriodo || 0;
+
+    // Só renderiza se houver dados reais (evita gráfico com valores hardcoded)
+    if (gains === 0 && dac7 === 0) {
+        console.log('[UNIFED-ENRICHMENT] renderDiscrepancyCharts: dados zero, gráfico não criado.');
+        const container = ctx.closest('.chart-section');
+        if (container) container.style.display = 'none';
+        return;
+    }
+
     if (window.safTDac7Chart) window.safTDac7Chart.destroy();
-    const data = (window.UNIFEDSystem.analysis && window.UNIFEDSystem.analysis.totals) || {};
-    const gains = data.ganhos || 10157.73;
-    const dac7 = data.dac7TotalPeriodo || 6276.55;
     window.safTDac7Chart = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -1422,6 +1451,9 @@ window.renderDiscrepancyCharts = function() {
             scales: { y: { beginAtZero: true, ticks: { callback: v => window.UNIFEDSystem.utils.formatCurrency(v) } } }
         }
     });
+    // Garante que o container fique visível após renderização
+    const container = ctx.closest('.chart-section');
+    if (container) container.style.display = 'block';
 };
 
 console.log('[UNIFED-ENRICHMENT] \u2705 Output Enrichment Layer v13.12.2-i18n carregado.');

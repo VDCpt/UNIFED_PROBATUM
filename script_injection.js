@@ -1577,12 +1577,22 @@
             'pureZonaCinzentaCard',  // Zona Cinzenta
             'pureMacroCard',         // Macro (Risco Sistémico)
             'pureTriangulationCard', // Triangulação Financeira
-            'card-asfixia'           // Risco de Asfixia Financeira
+            'card-asfixia',          // Risco de Asfixia Financeira
+            'mainChartContainer',    // Gráfico principal (despesas vs receitas)
+            'mainDiscrepancyChartContainer', // Gráfico de discrepâncias
+            'pure-chart-container',  // Container do gráfico de discrepâncias (fallback)
+            'gapConciliacaoC1'       // Gap de reconciliação C1
         ];
         modules.forEach(id => {
             const el = document.getElementById(id);
             if (el) el.style.display = show ? 'block' : 'none';
         });
+        
+        // Controlar o canvas do gráfico ATF individualmente
+        const atfCanvas = document.getElementById('atfChartCanvas');
+        if (atfCanvas) {
+            atfCanvas.style.display = show ? 'block' : 'none';
+        }
         
         // Controlar os containers dos gráficos
         const mainChartContainer = document.getElementById('mainChartContainer');
