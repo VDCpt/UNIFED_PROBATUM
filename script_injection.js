@@ -14,6 +14,11 @@
  * 1. Verificação defensiva em ensureDemoDataLoaded no listener do botão "CASO REAL"
  * 2. Remoção de chamadas prematuras de gráficos e forceRevealSmokingGun em loadAnonymizedRealCase
  * ============================================================================
+ * RETIFICAÇÕES CIRÚRGICAS (2026-04-16 - SCRIPT):
+ * 1. Garantia de exposição global de ensureDemoDataLoaded antes de qualquer listener
+ * 2. Correcção do listener do botão "EXECUTAR PERÍCIA" com fallbacks robustos
+ * 3. Activação forçada de todos os botões da toolbar após dashboard visível
+ * ============================================================================
  */
 
 (function() {
@@ -331,7 +336,7 @@
                 'pure-ganhos-tri': fmt(t.ganhos), 'pure-despesas-tri': fmt(t.despesas),
                 'pure-liquido-tri': fmt(t.ganhosLiquidos), 'pure-fatura-tri': fmt(t.faturaPlataforma),
                 'pure-counter-ctrl': getCounter('control', '0'), 'pure-counter-saft': getCounter('saft', '0'),
-                'pure-counter-fat': getCounter('invoices', '0'), 'pure-counter-ext': getCounter('statements', '0'),
+                'pure-counter-fat': getCounter('invoices', '0'), 'pure-counter-statements': getCounter('statements', '0'),
                 'pure-counter-dac7': getCounter('dac7', '0')
             };
             
@@ -1100,9 +1105,21 @@
         window.UNIFED_INTERNAL.simulateEvidenceUpload = _simulateEvidenceUpload;
         window.UNIFED_INTERNAL.updateEvidenceCountersAndShow = _updateEvidenceCountersAndShow;
         window.UNIFED_INTERNAL.executePendingAnalysis = _executePendingAnalysis;
-        window.ensureDemoDataLoaded = ensureDemoDataLoaded; // Exposição global
+        // Exposição global
+        window.ensureDemoDataLoaded = ensureDemoDataLoaded;
         console.log('[UNIFED] Camada 5: OK.');
     })();
+
+    // =========================================================================
+    // GARANTIA ADICIONAL: EXPOSIÇÃO GLOBAL DE ensureDemoDataLoaded (FORA DA IIFE)
+    // =========================================================================
+    if (typeof window.ensureDemoDataLoaded !== 'function') {
+        console.warn('[UNIFED] Reforçando exposição de ensureDemoDataLoaded');
+        window.ensureDemoDataLoaded = window.UNIFED_INTERNAL?.ensureDemoDataLoaded || function() {
+            console.error('[UNIFED] ensureDemoDataLoaded ainda não disponível');
+            return Promise.resolve(false);
+        };
+    }
 
     // =========================================================================
     // Função de correção de índices romanos
@@ -1283,7 +1300,9 @@
             };
         }
 
-        // Listener para o botão "Executar Perícia" (analyzeBtn)
+        // =========================================================================
+        // Listener para o botão "Executar Perícia" (analyzeBtn) - CORRIGIDO COM FALLBACKS
+        // =========================================================================
         function setupAnalyzeButton() {
             const analyzeBtn = document.getElementById('analyzeBtn');
             if (!analyzeBtn) {
@@ -1295,10 +1314,23 @@
             analyzeBtn.addEventListener('click', async (e) => {
                 e.preventDefault();
                 console.log('[UNIFED] Botão EXECUTAR PERÍCIA clicado — a executar análise pendente.');
-                // Antes de executar, garantir que os dados estão carregados
-                await ensureDemoDataLoaded();
+                
+                // Fallback: se ensureDemoDataLoaded não existir, tenta carregar os dados directamente
+                if (typeof ensureDemoDataLoaded !== 'function' && typeof window.ensureDemoDataLoaded === 'function') {
+                    window.ensureDemoDataLoaded = ensureDemoDataLoaded;
+                }
+                
+                if (typeof window.ensureDemoDataLoaded === 'function') {
+                    await window.ensureDemoDataLoaded();
+                } else {
+                    console.error('[UNIFED] Impossível carregar dados do caso real. A perícia não será executada.');
+                    return;
+                }
+                
                 if (typeof executePendingAnalysis === 'function') {
                     await executePendingAnalysis();
+                } else if (typeof window.UNIFED_INTERNAL?.executePendingAnalysis === 'function') {
+                    await window.UNIFED_INTERNAL.executePendingAnalysis();
                 } else {
                     console.error('[UNIFED] executePendingAnalysis não está disponível');
                 }
@@ -1761,6 +1793,24 @@
             console.warn('[UNIFED] Botão #startSessionBtn não encontrado no DOM. O sistema pode não arrancar corretamente.');
         }
     }
+
+    // =========================================================================
+    // ACTIVAÇÃO FORÇADA DE TODOS OS BOTÕES DA TOOLBAR
+    // =========================================================================
+    function enableAllButtons() {
+        const btns = ['analyzeBtn', 'exportPDFBtn', 'exportJSONBtn', 'resetBtn', 'clearConsoleBtn'];
+        btns.forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) btn.disabled = false;
+        });
+        // Botões da tríade (segunda linha) são criados dinamicamente, mas também devem ser activos
+        setTimeout(() => {
+            document.querySelectorAll('.btn-tool, .btn-tool-pure').forEach(btn => btn.disabled = false);
+        }, 500);
+    }
+
+    // Chamar após o dashboard estar visível
+    window.addEventListener('UNIFED_CORE_READY', enableAllButtons);
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', setupIniciarButton);
