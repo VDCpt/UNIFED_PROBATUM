@@ -314,7 +314,9 @@
                 'pure-ganhos-extrato': fmt(t.ganhos), 'pure-despesas-extrato': fmt(t.despesas),
                 'pure-ganhos-liquidos-extrato': fmt(t.ganhosLiquidos), 'pure-saft-bruto-val': fmt(t.saftBruto),
                 'pure-dac7-val': fmt(t.dac7TotalPeriodo), 'pure-atf-zscore': data.atf.zScore.toString(),
-                'pure-atf-confianca': data.atf.confianca, 'pure-atf-score-val': data.atf.score + '/100',
+                'pure-atf-confianca': data.atf.confianca, 
+                // ========== CORREÇÃO: zero‑knowledge mostra '--%' ==========
+                'pure-atf-score-val': (dadosReaisCarregados || window._unifedDataLoaded) ? (data.atf.score + '/100') : '--%',
                 'pure-iva-devido-val': fmt(asfixiaFinanceira), 'pure-impacto-macro': fmt(data.macro_analysis.estimated_systemic_gap),
                 'pure-ctrl-qty': getCounter('control', data.counts.ctrl.toString()),
                 'pure-saft-qty': getCounter('saft', data.counts.saft.toString()),
@@ -1546,50 +1548,40 @@
     // NOVA FUNÇÃO: Controle de visibilidade dos módulos forenses (CORRIGIDA)
     // =========================================================================
     function updateForensicModulesVisibility(show) {
-        const modules = ['pureATFCard', 'pureZonaCinzentaCard', 'pureMacroCard'];
+        const modules = [
+            'pureATFCard',           // ATF
+            'pureZonaCinzentaCard',  // Zona Cinzenta
+            'pureMacroCard',         // Macro (Risco Sistémico)
+            'pureTriangulationCard', // Triangulação Financeira
+            'card-asfixia'           // Risco de Asfixia Financeira
+        ];
         modules.forEach(id => {
             const el = document.getElementById(id);
-            if (el) {
-                if (!show) {
-                    el.setAttribute('data-oculto', 'true');
-                    el.style.setProperty('display', 'none', 'important');
-                } else {
-                    el.removeAttribute('data-oculto');
-                    el.style.display = 'block';
-                }
-            }
+            if (el) el.style.display = show ? 'block' : 'none';
         });
-        // Mostrar/esconder o gráfico (último .chart-section)
-        const chartSection = document.querySelector('.chart-section:last-of-type');
-        if (chartSection) {
-            if (!show) {
-                chartSection.setAttribute('data-oculto', 'true');
-                chartSection.style.setProperty('display', 'none', 'important');
-            } else {
-                chartSection.removeAttribute('data-oculto');
-                chartSection.style.display = 'block';
-            }
-        }
-        // Mostrar/esconder o gap de conciliação
+        
+        // --- Ocultar/mostrar o gráfico SAF-T vs DAC7 (mainDiscrepancyChart) ---
+        const discChartContainer = document.querySelector('#mainDiscrepancyChart')?.closest('.chart-section');
+        if (discChartContainer) discChartContainer.style.display = show ? 'block' : 'none';
+        
+        // --- Ocultar/mostrar o gráfico de barras principal (mainChart) se existir ---
+        const mainChartContainer = document.querySelector('#mainChart')?.closest('.chart-section');
+        if (mainChartContainer) mainChartContainer.style.display = show ? 'block' : 'none';
+        
+        // --- Gap de conciliação C1 ---
         const gapEl = document.getElementById('gapConciliacaoC1');
-        if (gapEl) {
-            if (!show) {
-                gapEl.setAttribute('data-oculto', 'true');
-                gapEl.style.setProperty('display', 'none', 'important');
-            } else {
-                gapEl.removeAttribute('data-oculto');
-                gapEl.style.display = 'block';
-            }
-        }
-        // Se show for true e houver dados reais, atualizar o valor do gap
+        if (gapEl) gapEl.style.display = show ? 'block' : 'none';
+        
+        // Se for para mostrar e houver dados reais, atualizar o valor do gap
         if (show && window.UNIFEDSystem && window.UNIFEDSystem.analysis && window.UNIFEDSystem.analysis.crossings) {
             const gapValue = window.UNIFEDSystem.analysis.crossings.discrepanciaSaftVsDac7 || 0;
             const gapSpan = document.getElementById('gapC1Value');
             if (gapSpan) {
-                const fmt = window.UNIFED_INTERNAL && window.UNIFED_INTERNAL.fmt ? window.UNIFED_INTERNAL.fmt : (v) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v);
+                const fmt = window.UNIFED_INTERNAL?.fmt || ((v) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v));
                 gapSpan.textContent = fmt(gapValue);
             }
         }
+        
         console.log(`[UNIFED] Visibilidade dos módulos forenses: ${show ? 'mostrar' : 'ocultar'}`);
     }
 
@@ -1641,6 +1633,9 @@
                 mainContainer.style.display = 'block';
                 mainContainer.style.opacity = '1';
             }
+            
+            // ========== CORREÇÃO: Aguardar um ciclo para garantir que o DOM está estável ==========
+            await new Promise(resolve => setTimeout(resolve, 50));
             
             // 4. Ocultar os módulos forenses (zero-knowledge state)
             if (typeof updateForensicModulesVisibility === 'function') {
