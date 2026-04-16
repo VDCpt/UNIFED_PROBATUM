@@ -3211,7 +3211,7 @@ function revealForensicData() {
 }
 
 // ============================================================================
-// RETIFICAÇÃO: resetSystem com limpeza da classe forensic-revealed
+// RETIFICAÇÃO: resetSystem com limpeza da classe forensic-revealed e remoção de chamadas gráficas residuais
 // ============================================================================
 async function resetSystem() {
     if (!confirm(currentLang === 'pt' ? 'Reiniciar o sistema irá apagar todas as evidências e análises. Continuar?' : 'Resetting the system will delete all evidence and analysis. Continue?')) {
@@ -3244,8 +3244,6 @@ async function resetSystem() {
     
     updateModulesUI();
     updateDashboard();
-    renderChart();
-    renderDiscrepancyChart();
     forensicDataSynchronization();
 
     // Remover estado de revelação visual
