@@ -31,8 +31,9 @@
  * 3. Módulos de análise (discrepâncias, gráficos, smoking gun) permanecem ocultos até à perícia.
  * 4. Botões da toolbar ativados automaticamente.
  * ============================================================================
- * RETIFICAÇÃO CIRÚRGICA v2 (2026-04-17):
- * 1. syncMetrics corrigida: enquanto window._unifedAnalysisPending === true, forçar valores de análise a zero.
+ * RETIFICAÇÃO CIRÚRGICA v3 (2026-04-17):
+ * 1. syncMetrics corrigida: dados brutos (SAF-T, Extratos, DAC7) aparecem imediatamente após CASO REAL.
+ * 2. Valores de análise (discrepâncias, IVA, IRC) mantêm-se zero até EXECUTAR PERÍCIA.
  * ============================================================================
  */
 
@@ -222,7 +223,7 @@
     console.log('[UNIFED] Camada 1: OK.');
 
     // =========================================================================
-    // Camada 2 – Sincronização de Métricas (syncMetrics) - CORRIGIDA v2
+    // Camada 2 – Sincronização de Métricas (syncMetrics) - CORRIGIDA v3
     // =========================================================================
     (function() {
         if (!window.UNIFED_INTERNAL) return;
@@ -242,38 +243,58 @@
             // Determina se os dados reais já foram carregados (via caso real)
             const dadosReaisCarregados = (sys && sys.analysis && sys.analysis.totals && sys.analysis.totals.ganhos > 0);
             
-            // ========== CORREÇÃO CRÍTICA: Se a análise ainda não foi executada, forçar valores de análise a zero ==========
+            // ========== CORREÇÃO v3: Separar dados brutos de dados de análise ==========
             const analisePendente = (window._unifedAnalysisPending === true);
+            const dadosBrutosDisponiveis = (window._unifedDataLoaded === true);
             
-            let t;
-            if (dadosReaisCarregados && !analisePendente) {
-                // Caso 1: análise já executada – usar totais reais da análise
-                t = sys.analysis.totals;
-            } else if (window._unifedDataLoaded === true && !analisePendente) {
-                // Caso 2: dados carregados mas análise ainda não executada – NÃO usar totais de demonstração para análise
-                // Forçar valores de análise a zero
-                t = {
-                    ganhos: data.totals.ganhos,           // dados brutos mantêm-se
-                    despesas: data.totals.despesas,       // dados brutos mantêm-se
+            // ========== DADOS BRUTOS (sempre mostram valores reais se disponíveis) ==========
+            // Estes são os valores que aparecem nos módulos SAF-T, Extratos e DAC7
+            let dadosBrutos;
+            if (dadosBrutosDisponiveis || dadosReaisCarregados) {
+                // Usar os totais do caso real (dados brutos)
+                dadosBrutos = {
+                    ganhos: data.totals.ganhos,
+                    despesas: data.totals.despesas,
                     ganhosLiquidos: data.totals.ganhosLiquidos,
                     saftBruto: data.totals.saftBruto,
+                    saftIliquido: data.totals.saftIliquido,
+                    saftIva: data.totals.saftIva,
                     dac7TotalPeriodo: data.totals.dac7TotalPeriodo,
                     faturaPlataforma: data.totals.faturaPlataforma,
-                    // ========== VALORES DE ANÁLISE FORÇADOS A ZERO ==========
-                    iva6Omitido: 0,
-                    iva23Omitido: 0,
-                    asfixiaFinanceira: 0,
-                    cancelamentos: 0
+                    campanhas: data.totals.campanhas,
+                    gorjetas: data.totals.gorjetas,
+                    portagens: data.totals.portagens
                 };
             } else {
-                // Estado zero‑knowledge: todos os valores a zero
-                t = {
+                dadosBrutos = {
                     ganhos: 0,
                     despesas: 0,
                     ganhosLiquidos: 0,
                     saftBruto: 0,
+                    saftIliquido: 0,
+                    saftIva: 0,
                     dac7TotalPeriodo: 0,
                     faturaPlataforma: 0,
+                    campanhas: 0,
+                    gorjetas: 0,
+                    portagens: 0
+                };
+            }
+            
+            // ========== DADOS DE ANÁLISE (zero enquanto análise pendente) ==========
+            // Estes são os valores que só devem aparecer após EXECUTAR PERÍCIA
+            let dadosAnalise;
+            if (dadosReaisCarregados && !analisePendente) {
+                // Análise já executada – usar valores reais
+                dadosAnalise = {
+                    iva6Omitido: sys.analysis.totals.iva6Omitido || data.totals.iva6Omitido,
+                    iva23Omitido: sys.analysis.totals.iva23Omitido || data.totals.iva23Omitido,
+                    asfixiaFinanceira: sys.analysis.totals.asfixiaFinanceira || data.totals.asfixiaFinanceira,
+                    cancelamentos: data.totals.cancelamentos || 0
+                };
+            } else {
+                // Análise pendente – forçar zero
+                dadosAnalise = {
                     iva6Omitido: 0,
                     iva23Omitido: 0,
                     asfixiaFinanceira: 0,
@@ -295,12 +316,12 @@
             } else {
                 // Análise já executada – usar valores reais dos crossings
                 const c = (sys && sys.analysis && sys.analysis.crossings) ? sys.analysis.crossings : {};
-                discrepanciaC2 = c.discrepanciaCritica || (t.despesas - t.faturaPlataforma);
-                percentC2 = c.percentagemOmissao || (t.despesas > 0 ? (discrepanciaC2 / t.despesas) * 100 : 0);
-                discrepanciaC1 = c.discrepanciaSaftVsDac7 || (t.saftBruto - t.dac7TotalPeriodo);
-                percentC1 = c.percentagemSaftVsDac7 || (t.saftBruto > 0 ? (discrepanciaC1 / t.saftBruto) * 100 : 0);
+                discrepanciaC2 = c.discrepanciaCritica || (dadosBrutos.despesas - dadosBrutos.faturaPlataforma);
+                percentC2 = c.percentagemOmissao || (dadosBrutos.despesas > 0 ? (discrepanciaC2 / dadosBrutos.despesas) * 100 : 0);
+                discrepanciaC1 = c.discrepanciaSaftVsDac7 || (dadosBrutos.saftBruto - dadosBrutos.dac7TotalPeriodo);
+                percentC1 = c.percentagemSaftVsDac7 || (dadosBrutos.saftBruto > 0 ? (discrepanciaC1 / dadosBrutos.saftBruto) * 100 : 0);
                 ircEstimadoCorreto = c.ircEstimado || (discrepanciaC2 * 0.21);
-                asfixiaFinanceira = t.asfixiaFinanceira || (t.saftBruto * 0.06);
+                asfixiaFinanceira = dadosAnalise.asfixiaFinanceira || (dadosBrutos.saftBruto * 0.06);
             }
             
             const fi = data.fluxosIsentos;
@@ -312,13 +333,7 @@
                 }
                 return (window._unifedDataLoaded === true) ? fallback : "0";
             };
-            const totalEvidencias = (sys && sys.counts && sys.counts.total) ? sys.counts.total.toString() : 
-                                    (window._unifedDataLoaded === true ? (data.counts.ctrl + data.counts.saft + data.counts.fat + data.counts.ext + data.counts.dac7).toString() : "0");
 
-            const setAnyText = (id, value) => {
-                const el = document.getElementById(id);
-                if (el) el.textContent = value;
-            };
             const setScopedText = (id, value) => {
                 const el = document.querySelector(`#pureDashboard #${id}`);
                 if (el) el.textContent = value;
@@ -331,49 +346,88 @@
                 if (alt) alt.textContent = value;
             };
 
-            // Mapeamento para elementos dentro de #pureDashboard
+            // ========== MAPEAMENTO: Dados brutos (SEMPRE mostram valores reais se disponíveis) ==========
             const mapping = {
-                'pure-ganhos': fmt(t.ganhos), 'pure-despesas': fmt(t.despesas), 'pure-liquido': fmt(t.ganhosLiquidos),
-                'pure-saft': fmt(t.saftBruto), 'pure-dac7': fmt(t.dac7TotalPeriodo), 'pure-fatura': fmt(t.faturaPlataforma),
-                'pure-disc-c2': fmt(discrepanciaC2), 'pure-disc-c2-pct': percentC2.toFixed(2) + '%',
-                'pure-disc-saft-dac7': fmt(discrepanciaC1), 'pure-disc-saft-pct': percentC1.toFixed(2) + '%',
-                'pure-iva-6': fmt(t.iva6Omitido), 'pure-iva-23': fmt(t.iva23Omitido),
+                // Módulo SAF-T
+                'pure-saft': fmt(dadosBrutos.saftBruto),
+                'pure-saft-iliquido': fmt(dadosBrutos.saftIliquido),
+                'pure-saft-iva': fmt(dadosBrutos.saftIva),
+                // Módulo Extratos
+                'pure-ganhos': fmt(dadosBrutos.ganhos),
+                'pure-despesas': fmt(dadosBrutos.despesas),
+                'pure-liquido': fmt(dadosBrutos.ganhosLiquidos),
+                // Módulo DAC7
+                'pure-dac7': fmt(dadosBrutos.dac7TotalPeriodo),
+                'pure-fatura': fmt(dadosBrutos.faturaPlataforma),
+                // Cards DAC7 individuais (4º trimestre com valor real, outros zero)
+                'dac7Q1Value': fmt(0),
+                'dac7Q2Value': fmt(0),
+                'dac7Q3Value': fmt(0),
+                'dac7Q4Value': fmt(dadosBrutos.dac7TotalPeriodo),
+                // Discrepâncias (zero até perícia)
+                'pure-disc-c2': fmt(discrepanciaC2),
+                'pure-disc-c2-pct': percentC2.toFixed(2) + '%',
+                'pure-disc-saft-dac7': fmt(discrepanciaC1),
+                'pure-disc-saft-pct': percentC1.toFixed(2) + '%',
+                // IVA e IRC (zero até perícia)
+                'pure-iva-6': fmt(dadosAnalise.iva6Omitido),
+                'pure-iva-23': fmt(dadosAnalise.iva23Omitido),
                 'pure-irc': fmt(ircEstimadoCorreto),
-                'pure-disc-c2-grid': fmt(discrepanciaC2), 'pure-iva-devido': fmt(asfixiaFinanceira),
-                'pure-nao-sujeitos': fmt(totalNaoSujeitosCalc), 'pure-atf-sp': data.atf.score + '/100',
-                'pure-atf-trend': data.atf.trend, 'pure-atf-outliers': data.atf.outliers + ' outliers > 2σ',
-                'pure-atf-meses': '2.º Semestre 2024 — 4 meses com dados (Set–Dez)',
-                'pure-sg-1-val': fmt(discrepanciaC2), 'pure-sg-1-pct': percentC2.toFixed(2) + '%',
-                'pure-sg-2-val': fmt(discrepanciaC1), 'pure-sg-2-pct': percentC1.toFixed(2) + '%',
+                'pure-disc-c2-grid': fmt(discrepanciaC2),
+                'pure-iva-devido': fmt(asfixiaFinanceira),
+                // Zona Cinzenta (dados brutos)
+                'pure-nao-sujeitos': fmt(totalNaoSujeitosCalc),
                 'pure-nc-campanhas': fmt(window._unifedDataLoaded === true ? fi.campanhas : 0),
                 'pure-nc-gorjetas': fmt(window._unifedDataLoaded === true ? fi.gorjetas : 0),
                 'pure-nc-portagens': fmt(window._unifedDataLoaded === true ? fi.portagens : 0),
                 'pure-nc-total': fmt(totalNaoSujeitosCalc),
-                'pure-verdict': dadosReaisCarregados && !analisePendente ? 'RISCO CRÍTICO · DESVIO PADRÃO > 2σ' : 'AGUARDANDO PERÍCIA',
-                'pure-verdict-pct': dadosReaisCarregados && !analisePendente ? percentC2.toFixed(2) + '%' : '0.00%',
+                // ATF (sempre visível, mas valores de análise condicionais)
+                'pure-atf-sp': data.atf.score + '/100',
+                'pure-atf-trend': data.atf.trend,
+                'pure-atf-outliers': data.atf.outliers + ' outliers > 2σ',
+                'pure-atf-meses': '2.º Semestre 2024 — 4 meses com dados (Set–Dez)',
+                'pure-atf-zscore': data.atf.zScore.toString(),
+                'pure-atf-confianca': data.atf.confianca,
+                'pure-atf-score-val': (!analisePendente && dadosReaisCarregados) ? (data.atf.score + '/100') : '--%',
+                // Smoking Gun (zero até perícia)
+                'pure-sg-1-val': fmt(discrepanciaC2),
+                'pure-sg-1-pct': percentC2.toFixed(2) + '%',
+                'pure-sg-2-val': fmt(discrepanciaC1),
+                'pure-sg-2-pct': percentC1.toFixed(2) + '%',
+                // Verdict
+                'pure-verdict': (!analisePendente && dadosReaisCarregados) ? 'RISCO CRÍTICO · DESVIO PADRÃO > 2σ' : 'AGUARDANDO PERÍCIA',
+                'pure-verdict-pct': (!analisePendente && dadosReaisCarregados) ? percentC2.toFixed(2) + '%' : '0.00%',
+                // Metadados
                 'pure-session-id': (sys && sys.sessionId) ? sys.sessionId : (window._unifedDataLoaded === true ? data.sessionId : '--------'),
                 'pure-hash-prefix': (sys && sys.masterHash) ? sys.masterHash.substring(0, 12).toUpperCase() + '...' : (window._unifedDataLoaded === true ? data.masterHash.substring(0, 12) + '...' : '---'),
                 'pure-hash-prefix-verdict': (sys && sys.masterHash) ? sys.masterHash.substring(0, 16).toUpperCase() + '...' : (window._unifedDataLoaded === true ? data.masterHash.substring(0, 16) + '...' : '---'),
                 'pure-subject-name': (window._unifedDataLoaded === true) ? data.client.name : '---',
                 'pure-subject-nif': (window._unifedDataLoaded === true) ? data.client.nif : '---',
                 'pure-subject-platform': (window._unifedDataLoaded === true) ? data.client.platform : '---',
-                'pure-ganhos-extrato': fmt(t.ganhos), 'pure-despesas-extrato': fmt(t.despesas),
-                'pure-ganhos-liquidos-extrato': fmt(t.ganhosLiquidos), 'pure-saft-bruto-val': fmt(t.saftBruto),
-                'pure-dac7-val': fmt(t.dac7TotalPeriodo), 'pure-atf-zscore': data.atf.zScore.toString(),
-                'pure-atf-confianca': data.atf.confianca, 
-                // ========== CORREÇÃO: zero‑knowledge mostra '--%' ==========
-                'pure-atf-score-val': (dadosReaisCarregados && !analisePendente) ? (data.atf.score + '/100') : '--%',
-                'pure-iva-devido-val': fmt(asfixiaFinanceira), 'pure-impacto-macro': fmt(data.macro_analysis.estimated_systemic_gap),
+                // Extrato detalhado
+                'pure-ganhos-extrato': fmt(dadosBrutos.ganhos),
+                'pure-despesas-extrato': fmt(dadosBrutos.despesas),
+                'pure-ganhos-liquidos-extrato': fmt(dadosBrutos.ganhosLiquidos),
+                'pure-saft-bruto-val': fmt(dadosBrutos.saftBruto),
+                'pure-dac7-val': fmt(dadosBrutos.dac7TotalPeriodo),
+                'pure-iva-devido-val': fmt(asfixiaFinanceira),
+                'pure-impacto-macro': fmt(data.macro_analysis.estimated_systemic_gap),
+                // Contadores
                 'pure-ctrl-qty': getCounter('control', data.counts.ctrl.toString()),
                 'pure-saft-qty': getCounter('saft', data.counts.saft.toString()),
                 'pure-fat-qty': getCounter('invoices', data.counts.fat.toString()),
                 'pure-ext-qty': getCounter('statements', data.counts.ext.toString()),
                 'pure-dac7-qty': getCounter('dac7', data.counts.dac7.toString()),
-                'pure-ganhos-tri': fmt(t.ganhos), 'pure-despesas-tri': fmt(t.despesas),
-                'pure-liquido-tri': fmt(t.ganhosLiquidos), 'pure-fatura-tri': fmt(t.faturaPlataforma),
-                'pure-counter-ctrl': getCounter('control', '0'), 'pure-counter-saft': getCounter('saft', '0'),
-                'pure-counter-fat': getCounter('invoices', '0'), 'pure-counter-statements': getCounter('statements', '0'),
-                'pure-counter-dac7': getCounter('dac7', '0')
+                'pure-counter-ctrl': getCounter('control', '0'),
+                'pure-counter-saft': getCounter('saft', '0'),
+                'pure-counter-fat': getCounter('invoices', '0'),
+                'pure-counter-statements': getCounter('statements', '0'),
+                'pure-counter-dac7': getCounter('dac7', '0'),
+                // Triangulação
+                'pure-ganhos-tri': fmt(dadosBrutos.ganhos),
+                'pure-despesas-tri': fmt(dadosBrutos.despesas),
+                'pure-liquido-tri': fmt(dadosBrutos.ganhosLiquidos),
+                'pure-fatura-tri': fmt(dadosBrutos.faturaPlataforma)
             };
             
             Object.entries(mapping).forEach(([id, value]) => {
@@ -383,32 +437,31 @@
                 if (globalEl && globalEl.textContent !== value) globalEl.textContent = value;
             });
 
-            // Atualização específica para os elementos de "Zona Cinzenta" que aparecem no dashboard
+            // Atualização específica para elementos auxiliares
             setGlobalText('auxBoxCampanhasValue', fmt(window._unifedDataLoaded === true ? fi.campanhas : 0));
             setGlobalText('auxBoxGorjetasValue', fmt(window._unifedDataLoaded === true ? fi.gorjetas : 0));
             setGlobalText('auxBoxPortagensValue', fmt(window._unifedDataLoaded === true ? fi.portagens : 0));
             setGlobalText('auxBoxTotalNSValue', fmt(totalNaoSujeitosCalc));
-            setGlobalText('auxBoxCancelValue', fmt(t.cancelamentos || 0));
+            setGlobalText('auxBoxCancelValue', fmt(dadosAnalise.cancelamentos || 0));
             setGlobalText('auxDac7NoteValue', fmt(totalNaoSujeitosCalc));
             setGlobalText('auxDac7NoteValueQ', fmt(totalNaoSujeitosCalc));
             
-            // Atualização dos cards de gap – apenas se dados reais carregados e análise executada
-            const revenueGapCorrect = t.saftBruto - t.ganhos;
+            // Atualização dos cards de gap – apenas se análise executada
+            const analiseExecutada = dadosReaisCarregados && !analisePendente;
+            const revenueGapCorrect = dadosBrutos.saftBruto - dadosBrutos.ganhos;
             setGlobalText('revenueGapValue', fmt(revenueGapCorrect));
             setGlobalText('expenseGapValue', fmt(discrepanciaC2));
-            const omissaoPct = (t.despesas > 0 && t.ganhos > 0) ? ((t.despesas / t.ganhos) * 100) : 0;
+            const omissaoPct = (dadosBrutos.despesas > 0 && dadosBrutos.ganhos > 0) ? ((dadosBrutos.despesas / dadosBrutos.ganhos) * 100) : 0;
             setGlobalText('omissaoDespesasPctValue', omissaoPct.toFixed(2) + '%');
             
-            // Forçar exibição dos cards (apenas se valores > 0 e dados reais carregados e análise executada)
-            const analiseExecutada = dadosReaisCarregados && !analisePendente;
             const revenueCard = document.getElementById('revenueGapCard');
             if (revenueCard) revenueCard.style.display = (analiseExecutada && Math.abs(revenueGapCorrect) > 0.01) ? 'block' : 'none';
             const expenseCard = document.getElementById('expenseGapCard');
             if (expenseCard) expenseCard.style.display = (analiseExecutada && Math.abs(discrepanciaC2) > 0.01) ? 'block' : 'none';
             const omissaoCard = document.getElementById('omissaoDespesasPctCard');
-            if (omissaoCard) omissaoCard.style.display = (analiseExecutada && t.despesas > 0 && t.ganhos > 0) ? 'block' : 'none';
+            if (omissaoCard) omissaoCard.style.display = (analiseExecutada && dadosBrutos.despesas > 0 && dadosBrutos.ganhos > 0) ? 'block' : 'none';
             
-            // Atualizar textos legais (apenas se dados reais carregados e análise executada)
+            // Atualizar textos legais (apenas se análise executada)
             const sg1Legal = document.querySelector('#pureDashboard #pure-sg1-legal');
             if (sg1Legal) sg1Legal.textContent = analiseExecutada ? 'Art. 23.º CIRC (Indutividade de Custos) · Art. 103.º RGIT (Fraude Fiscal)' : '---';
             const sg2Legal = document.querySelector('#pureDashboard #pure-sg2-legal');
@@ -419,13 +472,8 @@
             if (pureIva23Sub) pureIva23Sub.textContent = analiseExecutada ? 'Art. 2.º n.º 1 al. i) CIVA' : '---';
             const pureIrcSub = document.querySelector('#pureDashboard #pure-irc-sub');
             if (pureIrcSub) pureIrcSub.textContent = analiseExecutada ? 'Art. 17.º CIRC' : '---';
-            
-            // =================================================================
-            // A renderização dos gráficos será feita apenas quando os dados reais estiverem disponíveis
-            // (via ensureDemoDataLoaded ou executePendingAnalysis)
-            // =================================================================
         };
-        console.log('[UNIFED] Camada 2: OK. (syncMetrics corrigida para zero-knowledge)');
+        console.log('[UNIFED] Camada 2: OK. (syncMetrics corrigida v3 - dados brutos visíveis, análise zero até perícia)');
     })();
 
     // =========================================================================
@@ -444,12 +492,20 @@
             const sys = window.UNIFEDSystem;
             
             const dadosReaisCarregados = (sys && sys.analysis && sys.analysis.totals && sys.analysis.totals.ganhos > 0);
+            const analisePendente = (window._unifedAnalysisPending === true);
             
             let t;
-            if (dadosReaisCarregados) {
+            if (dadosReaisCarregados && !analisePendente) {
                 t = sys.analysis.totals;
             } else if (window._unifedDataLoaded === true) {
-                t = data.totals;
+                // Dados brutos do caso real (valores reais)
+                t = {
+                    ganhos: data.totals.ganhos,
+                    despesas: data.totals.despesas,
+                    saftBruto: data.totals.saftBruto,
+                    dac7TotalPeriodo: data.totals.dac7TotalPeriodo,
+                    faturaPlataforma: data.totals.faturaPlataforma
+                };
             } else {
                 t = {
                     ganhos: 0,
@@ -481,7 +537,7 @@
             <div id="triangulationMatrixContainer" class="pure-triangulation-box" style="margin:30px 0; border:1px solid #00E5FF; background:rgba(15,23,42,0.95); padding:20px; border-radius:12px;">
                 <h3 style="color:#00E5FF; margin-top:0; font-size:1rem;">${labels.title}</h3>
                 <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
-                    <thead><tr style="border-bottom:1px solid rgba(255,255,255,0.2);"><th style="text-align:left; padding:10px;">${labels.colSource}</th><th style="text-align:right; padding:10px;">${labels.colValue}</th><th style="text-align:right; padding:10px; color:#EF4444;">${labels.colDisc}</th></tr></thead>
+                    <thead><tr style="border-bottom:1px solid rgba(255,255,255,0.2);"><th style="text-align:left; padding:10px;">${labels.colSource}</th><th style="text-align:right; padding:10px;">${labels.colValue}</th><th style="text-align:right; padding:10px; color:#EF4444;">${labels.colDisc}</th></table></thead>
                     <tbody>
                         <tr><td style="padding:10px;">📄 SAF-T PT (${isEn ? 'Invoicing' : 'Faturação'})</td><td style="padding:10px; text-align:right;">${fmt(t.saftBruto)}</td><td style="padding:10px; text-align:right;">-${fmt(deltaSaft)}</td></tr>
                         <tr style="background:rgba(239,68,68,0.08);"><td style="padding:10px;">🌐 DAC7 (Plataforma A)</td><td style="padding:10px; text-align:right;">${fmt(t.dac7TotalPeriodo)}</td><td style="padding:10px; text-align:right;">-${fmt(deltaDac7)}</td></tr>
@@ -526,9 +582,6 @@
             console.log('[UNIFED] CSS injetado.');
         }
 
-        // =========================================================================
-        // FUNÇÃO CORRIGIDA: _injectMacroCard com controlo de visibilidade inicial
-        // =========================================================================
         function _injectMacroCard() {
             const target = document.getElementById('pureDashboard');
             if (!target || document.getElementById('pureMacroCard')) return;
@@ -668,9 +721,6 @@
             disclaimerDiv.appendChild(disclaimerSpan);
             cardDiv.appendChild(disclaimerDiv);
             
-            // =================================================================
-            // CORREÇÃO: verificar se dados reais estão carregados e ocultar card inicialmente se necessário
-            // =================================================================
             const dadosReaisCarregados = (window.UNIFEDSystem && window.UNIFEDSystem.analysis && 
                                           window.UNIFEDSystem.analysis.totals && window.UNIFEDSystem.analysis.totals.ganhos > 0);
             if (!dadosReaisCarregados && !window._unifedDataLoaded) {
@@ -685,9 +735,10 @@
             
             const sys = window.UNIFEDSystem;
             const dadosReaisCarregados = (sys && sys.analysis && sys.analysis.totals && sys.analysis.totals.ganhos > 0);
+            const analisePendente = (window._unifedAnalysisPending === true);
             
             let t;
-            if (dadosReaisCarregados) {
+            if (dadosReaisCarregados && !analisePendente) {
                 t = sys.analysis.totals;
             } else if (window._unifedDataLoaded === true) {
                 t = data.totals;
@@ -712,21 +763,28 @@
             const auxMapping = [
                 { id: 'pure-ganhos', val: t.ganhos }, { id: 'pure-despesas', val: t.despesas }, { id: 'pure-liquido', val: t.ganhosLiquidos },
                 { id: 'pure-saft', val: t.saftBruto }, { id: 'pure-dac7', val: t.dac7TotalPeriodo }, { id: 'pure-fatura', val: t.faturaPlataforma },
-                { id: 'pure-disc-c2', val: t.despesas - t.faturaPlataforma }, { id: 'pure-disc-saft-dac7', val: t.saftBruto - t.dac7TotalPeriodo },
-                { id: 'pure-iva-6', val: t.iva6Omitido }, { id: 'pure-iva-23', val: t.iva23Omitido }, { id: 'pure-irc', val: (t.despesas - t.faturaPlataforma) * 0.21 },
-                { id: 'pure-disc-c2-grid', val: t.despesas - t.faturaPlataforma }, { id: 'pure-iva-devido', val: t.asfixiaFinanceira },
-                { id: 'pure-nao-sujeitos', val: totalNaoSujeitosCalc }, { id: 'pure-atf-sp', val: data.atf.score + '/100' }, { id: 'pure-atf-trend', val: data.atf.trend },
-                { id: 'pure-atf-outliers', val: data.atf.outliers + ' outliers > 2σ' }, { id: 'pure-atf-meses', val: '2.º Semestre 2024 — 4 meses com dados (Set–Dez)' },
-                { id: 'pure-sg-1-val', val: t.despesas - t.faturaPlataforma },
-                { id: 'pure-sg-1-pct', val: ((t.despesas - t.faturaPlataforma) / (t.despesas || 1) * 100).toFixed(2) + '%' },
-                { id: 'pure-sg-2-val', val: t.saftBruto - t.dac7TotalPeriodo },
-                { id: 'pure-sg-2-pct', val: ((t.saftBruto - t.dac7TotalPeriodo) / (t.saftBruto || 1) * 100).toFixed(2) + '%' },
+                { id: 'pure-disc-c2', val: analisePendente ? 0 : (t.despesas - t.faturaPlataforma) },
+                { id: 'pure-disc-saft-dac7', val: analisePendente ? 0 : (t.saftBruto - t.dac7TotalPeriodo) },
+                { id: 'pure-iva-6', val: analisePendente ? 0 : t.iva6Omitido },
+                { id: 'pure-iva-23', val: analisePendente ? 0 : t.iva23Omitido },
+                { id: 'pure-irc', val: analisePendente ? 0 : ((t.despesas - t.faturaPlataforma) * 0.21) },
+                { id: 'pure-disc-c2-grid', val: analisePendente ? 0 : (t.despesas - t.faturaPlataforma) },
+                { id: 'pure-iva-devido', val: analisePendente ? 0 : t.asfixiaFinanceira },
+                { id: 'pure-nao-sujeitos', val: totalNaoSujeitosCalc },
+                { id: 'pure-atf-sp', val: data.atf.score + '/100' },
+                { id: 'pure-atf-trend', val: data.atf.trend },
+                { id: 'pure-atf-outliers', val: data.atf.outliers + ' outliers > 2σ' },
+                { id: 'pure-atf-meses', val: '2.º Semestre 2024 — 4 meses com dados (Set–Dez)' },
+                { id: 'pure-sg-1-val', val: analisePendente ? 0 : (t.despesas - t.faturaPlataforma) },
+                { id: 'pure-sg-1-pct', val: analisePendente ? '0.00%' : ((t.despesas - t.faturaPlataforma) / (t.despesas || 1) * 100).toFixed(2) + '%' },
+                { id: 'pure-sg-2-val', val: analisePendente ? 0 : (t.saftBruto - t.dac7TotalPeriodo) },
+                { id: 'pure-sg-2-pct', val: analisePendente ? '0.00%' : ((t.saftBruto - t.dac7TotalPeriodo) / (t.saftBruto || 1) * 100).toFixed(2) + '%' },
                 { id: 'pure-nc-campanhas', val: window._unifedDataLoaded === true ? fi2.campanhas : 0 },
                 { id: 'pure-nc-gorjetas', val: window._unifedDataLoaded === true ? fi2.gorjetas : 0 },
                 { id: 'pure-nc-portagens', val: window._unifedDataLoaded === true ? fi2.portagens : 0 },
                 { id: 'pure-nc-total', val: totalNaoSujeitosCalc },
-                { id: 'pure-verdict', val: dadosReaisCarregados ? 'RISCO CRÍTICO · DESVIO PADRÃO > 2σ' : 'AGUARDANDO PERÍCIA' },
-                { id: 'pure-verdict-pct', val: dadosReaisCarregados ? ((t.despesas - t.faturaPlataforma) / (t.despesas || 1) * 100).toFixed(2) + '%' : '0.00%' },
+                { id: 'pure-verdict', val: (!analisePendente && dadosReaisCarregados) ? 'RISCO CRÍTICO · DESVIO PADRÃO > 2σ' : 'AGUARDANDO PERÍCIA' },
+                { id: 'pure-verdict-pct', val: (!analisePendente && dadosReaisCarregados) ? ((t.despesas - t.faturaPlataforma) / (t.despesas || 1) * 100).toFixed(2) + '%' : '0.00%' },
                 { id: 'pure-hash-prefix-verdict', val: (sys && sys.masterHash) ? sys.masterHash.substring(0, 16).toUpperCase() + '...' : (window._unifedDataLoaded === true ? data.masterHash.substring(0, 16) + '...' : '---') },
                 { id: 'pure-session-id', val: (sys && sys.sessionId) ? sys.sessionId : (window._unifedDataLoaded === true ? data.sessionId : '--------') },
                 { id: 'pure-hash-prefix', val: (sys && sys.masterHash) ? sys.masterHash.substring(0, 12).toUpperCase() + '...' : (window._unifedDataLoaded === true ? data.masterHash.substring(0, 12) + '...' : '---') },
@@ -735,8 +793,8 @@
                 { id: 'pure-subject-platform', val: (window._unifedDataLoaded === true) ? data.client.platform : '---' },
                 { id: 'pure-ganhos-extrato', val: t.ganhos }, { id: 'pure-despesas-extrato', val: t.despesas },
                 { id: 'pure-ganhos-liquidos-extrato', val: t.ganhosLiquidos }, { id: 'pure-saft-bruto-val', val: t.saftBruto }, { id: 'pure-dac7-val', val: t.dac7TotalPeriodo },
-                { id: 'pure-atf-zscore', val: data.atf.zScore }, { id: 'pure-atf-confianca', val: data.atf.confianca }, { id: 'pure-atf-score-val', val: data.atf.score + '/100' },
-                { id: 'pure-iva-devido-val', val: t.asfixiaFinanceira }, { id: 'pure-impacto-macro', val: data.macro_analysis.estimated_systemic_gap },
+                { id: 'pure-atf-zscore', val: data.atf.zScore }, { id: 'pure-atf-confianca', val: data.atf.confianca }, { id: 'pure-atf-score-val', val: (!analisePendente && dadosReaisCarregados) ? (data.atf.score + '/100') : '--%' },
+                { id: 'pure-iva-devido-val', val: analisePendente ? 0 : t.asfixiaFinanceira }, { id: 'pure-impacto-macro', val: data.macro_analysis.estimated_systemic_gap },
                 { id: 'pure-ctrl-qty', val: (window._unifedDataLoaded === true) ? data.counts.ctrl : 0 },
                 { id: 'pure-saft-qty', val: (window._unifedDataLoaded === true) ? data.counts.saft : 0 },
                 { id: 'pure-fat-qty', val: (window._unifedDataLoaded === true) ? data.counts.fat : 0 },
@@ -758,7 +816,6 @@
             const setScopedText = (id, val) => {
                 const el = document.querySelector(`#pureDashboard #${id}`);
                 if (el) el.textContent = (typeof val === 'number') ? _f(val) : val;
-                // Fallback global
                 const globalEl = document.getElementById(id);
                 if (globalEl) globalEl.textContent = (typeof val === 'number') ? _f(val) : val;
             };
@@ -800,18 +857,12 @@
             console.log('[UNIFED] Plataforma forçada para "Plataforma A" em modo read‑only.');
         }
 
-        // =========================================================================
-        // FUNÇÃO CORRIGIDA: _removeZeroDac7Kpis – manter cards visíveis com valor zero
-        // =========================================================================
         function _removeZeroDac7Kpis() {
-            // RETIFICAÇÃO: Manter os 4 cards visíveis com valores zero
-            // Não remover nenhum card do DOM
             const allDac7Cards = ['dac7Q1Value', 'dac7Q2Value', 'dac7Q3Value', 'dac7Q4Value'];
             const fmtLocal = window.UNIFED_INTERNAL?.fmt || ((v) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v));
             allDac7Cards.forEach(id => {
                 const el = document.getElementById(id);
                 if (el) {
-                    // Garantir que o card está visível e com valor zero
                     el.textContent = fmtLocal(0);
                     const card = el.closest('.kpi-card');
                     if (card) card.style.display = '';
@@ -919,7 +970,6 @@
                 sys.analysis.totals.iva23Omitido = t.iva23Omitido;
                 sys.analysis.totals.asfixiaFinanceira = t.asfixiaFinanceira;
 
-                // Garantir que os campos cruciais estão definidos também em crossings (para gráficos)
                 if (!sys.analysis.crossings) sys.analysis.crossings = {};
                 const discrepanciaCritica = t.despesas - t.faturaPlataforma;
                 const percentOmissao = t.despesas > 0 ? (discrepanciaCritica / t.despesas) * 100 : 0;
@@ -968,7 +1018,6 @@
 
                 console.log('[UNIFED] Evidências simuladas carregadas. Total: 15 ficheiros. Aguardando execução da perícia.');
 
-                // Marcar que os dados estão prontos, mas a análise ainda não foi executada
                 window._unifedDataLoaded = true;
                 window._unifedAnalysisPending = true;
                 window._unifedRawDataOnly = true;
@@ -1012,7 +1061,6 @@
             console.log('[UNIFED] Contadores de evidências atualizados e secção revelada.');
         }
 
-        // Função para executar a análise pendente (chamada pelo botão "Executar Perícia")
         async function _executePendingAnalysis() {
             if (!window._unifedAnalysisPending) {
                 console.log('[UNIFED] Nenhuma análise pendente ou já executada.');
@@ -1047,7 +1095,6 @@
             sys.analysis.crossings.ircEstimado = ircEstimado;
             sys.analysis.crossings.asfixiaFinanceira = asfixiaFinanceira;
 
-            // Campos adicionais
             sys.analysis.crossings.btor = t.despesas;
             sys.analysis.crossings.btf = t.faturaPlataforma;
             sys.analysis.crossings.c1_delta = discrepanciaSaftVsDac7;
@@ -1055,12 +1102,10 @@
             sys.analysis.crossings.c2_delta = discrepanciaCritica;
             sys.analysis.crossings.c2_pct = percentagemOmissao;
 
-            // Adicionar totais de IVA e IRC ao objeto totals para consistência
             t.iva6Omitido = ivaFalta6;
             t.iva23Omitido = ivaFalta;
             t.asfixiaFinanceira = asfixiaFinanceira;
 
-            // Sincronizar UI – agora com flag raw desligado
             window._unifedRawDataOnly = false;
             window._unifedAnalysisPending = false;
             if (typeof window.UNIFED_INTERNAL.syncMetrics === 'function') {
@@ -1073,12 +1118,10 @@
                 window.UNIFED_INTERNAL.updateAuxiliaryUI();
             }
 
-            // Renderizar gráficos com os dados da análise
             if (typeof window.renderForensicCharts === 'function') {
                 window.renderForensicCharts();
             }
 
-            // Disparar eventos para outros módulos (enrichment, gráficos)
             window.dispatchEvent(new CustomEvent('UNIFED_ANALYSIS_COMPLETE', {
                 detail: {
                     timestamp: Date.now(),
@@ -1096,16 +1139,11 @@
 
             console.log('[UNIFED] Análise forense concluída e UI atualizada.');
 
-            // Mostrar os módulos forenses após a análise
             if (typeof window.updateForensicModulesVisibility === 'function') {
                 window.updateForensicModulesVisibility(true);
             }
         }
 
-        // =========================================================================
-        // NOVA FUNÇÃO: ensureDemoDataLoaded() – Garante que os dados do caso real
-        // estão carregados antes da perícia (FIX TIME-2)
-        // =========================================================================
         async function ensureDemoDataLoaded() {
             if (window._unifedDataLoaded && window.UNIFEDSystem && window.UNIFEDSystem.analysis && 
                 window.UNIFEDSystem.analysis.totals && window.UNIFEDSystem.analysis.totals.ganhos > 0) {
@@ -1123,9 +1161,6 @@
                 window.UNIFED_INTERNAL.updateAuxiliaryUI();
             }
             
-            // NÃO renderizar gráficos nem mostrar módulos de análise – apenas dados brutos
-            // Os módulos de análise permanecem ocultos (zero‑knowledge) até à perícia.
-            
             console.log('[UNIFED] Dados do caso real carregados com sucesso (modo raw).');
             return true;
         }
@@ -1135,9 +1170,8 @@
         window.UNIFED_INTERNAL.simulateEvidenceUpload = _simulateEvidenceUpload;
         window.UNIFED_INTERNAL.updateEvidenceCountersAndShow = _updateEvidenceCountersAndShow;
         window.UNIFED_INTERNAL.executePendingAnalysis = _executePendingAnalysis;
-        window.UNIFED_INTERNAL.ensureDemoDataLoaded = ensureDemoDataLoaded;   // <-- adicionar
+        window.UNIFED_INTERNAL.ensureDemoDataLoaded = ensureDemoDataLoaded;
 
-        // Exposição global directa
         window.ensureDemoDataLoaded = ensureDemoDataLoaded;
         window.executePendingAnalysis = _executePendingAnalysis;
 
@@ -1157,9 +1191,6 @@
         }
     })();
 
-    // =========================================================================
-    // GARANTIA ADICIONAL: EXPOSIÇÃO GLOBAL DE ensureDemoDataLoaded (FORA DA IIFE)
-    // =========================================================================
     if (typeof window.ensureDemoDataLoaded !== 'function') {
         console.warn('[UNIFED] Reforçando exposição de ensureDemoDataLoaded');
         window.ensureDemoDataLoaded = window.UNIFED_INTERNAL?.ensureDemoDataLoaded || function() {
@@ -1168,9 +1199,6 @@
         };
     }
 
-    // =========================================================================
-    // Função de correção de índices romanos
-    // =========================================================================
     function correctRomanIndices() {
         const titles = document.querySelectorAll('#pureDashboard .pure-card-title span, .pure-card-title, .verdict-title');
         titles.forEach(el => {
@@ -1232,7 +1260,6 @@
             });
         }
 
-        // Monkey-patching com flag atómica
         if (typeof window.updateDashboard === 'function' && !window.updateDashboard._nexusHooked) {
             const _origUpdateDashboard = window.updateDashboard;
             window.updateDashboard = function() {
@@ -1279,8 +1306,6 @@
                     if (typeof injectMacroCard === 'function') injectMacroCard();
                     if (typeof injectAuxiliaryBoxesCSS === 'function') injectAuxiliaryBoxesCSS();
                     if (typeof forcePlatformReadOnly === 'function') forcePlatformReadOnly();
-                    // REMOVIDA a chamada a removeZeroDac7Kpis() para manter os cards DAC7 visíveis
-                    // if (typeof removeZeroDac7Kpis === 'function') removeZeroDac7Kpis();  // ← REMOVER ESTA LINHA.
                     if (document.getElementById('pureDashboard')) {
                         if (typeof updateAuxiliaryUI === 'function') updateAuxiliaryUI();
                         document.querySelectorAll('.chart-section').forEach(section => { 
@@ -1325,31 +1350,20 @@
                 }
 
                 showClientIdentificationBlock();
-                // Removidas chamadas prematuras de gráficos e forceRevealSmokingGun
                 console.log('[UNIFED] ✅ Evidências carregadas e secção revelada. Aguardando execução da perícia.');
             } catch (err) {
                 console.error('[UNIFED] Falha ao carregar evidências:', err);
             }
         }
 
-        // =========================================================================
-        // FUNÇÃO CORRIGIDA: loadAnonymizedRealCase sem renderizações antecipadas
-        // =========================================================================
         if (window.UNIFEDSystem) {
             window.UNIFEDSystem.loadAnonymizedRealCase = async function() {
                 await initializeFullWithEvidence();
-                // As três linhas seguintes foram REMOVIDAS para evitar gráficos/módulos antes da perícia:
-                // if (typeof window.renderChart === 'function') window.renderChart();
-                // if (typeof window.renderDiscrepancyChart === 'function') window.renderDiscrepancyChart();
-                // if (typeof window.forceRevealSmokingGun === 'function') window.forceRevealSmokingGun();
                 if (typeof window.correctRomanIndices === 'function') window.correctRomanIndices();
                 console.info('[UNIFED-FIX] Data Hydration concluída (gráficos e módulos aguardam perícia).');
             };
         }
 
-        // =========================================================================
-        // Listener para o botão "Executar Perícia" (analyzeBtn) - CORRIGIDO COM FALLBACKS
-        // =========================================================================
         function setupAnalyzeButton() {
             const analyzeBtn = document.getElementById('analyzeBtn');
             if (!analyzeBtn) {
@@ -1415,7 +1429,6 @@
                             await waitForPureDashboard();
                             initializeCoreDashboard();
                             await new Promise(r => setTimeout(r, 100));
-                            // CORREÇÃO DEFENSIVA: verificar se a função existe
                             if (typeof ensureDemoDataLoaded !== 'function') {
                                 console.error('[UNIFED] ensureDemoDataLoaded não está disponível. Recarregue a página.');
                                 return;
@@ -1444,7 +1457,6 @@
                 if (_initializing) return;
                 logAudit('Iniciando transição para Caso Real Anonimizado...', 'info');
                 
-                // Garantir que a função está disponível
                 let loadFn = window.ensureDemoDataLoaded;
                 if (typeof loadFn !== 'function' && window.UNIFED_INTERNAL && typeof window.UNIFED_INTERNAL.ensureDemoDataLoaded === 'function') {
                     loadFn = window.UNIFED_INTERNAL.ensureDemoDataLoaded;
@@ -1502,15 +1514,11 @@
         }
         window.generateQRCode = generateQRCode;
 
-        // =========================================================================
-        // FUNÇÃO CORRIGIDA: setupEventDrivenHydration – aguarda carregamento do script
-        // =========================================================================
         function setupEventDrivenHydration() {
             if (typeof window.forensicDataSynchronization === 'function') {
                 window.forensicDataSynchronization();
             } else {
                 console.log('[UNIFED] forensicDataSynchronization será carregado posteriormente.');
-                // Aguardar o evento de carregamento do script
                 window.addEventListener('load', function() {
                     if (typeof window.forensicDataSynchronization === 'function') {
                         window.forensicDataSynchronization();
@@ -1616,11 +1624,7 @@
             console.log('[UNIFED] Estado 1 (METADATA): hidratação de metadados concluída.');
         };
 
-        // =========================================================================
-        // SUBSTITUIR a definição de window.uncloakForensicData (PATCH 1)
-        // =========================================================================
         window.uncloakForensicData = function() {
-            // Só revela se a perícia tiver sido executada (análise pendente resolvida)
             if (window._unifedAnalysisPending === true || window._unifedRawDataOnly === true) {
                 console.log('[UNIFED] uncloakForensicData bloqueado – análise ainda não executada.');
                 return;
@@ -1653,17 +1657,12 @@
                 btnCasoReal.setAttribute('data-state-hydration-1', '1');
             }
 
-            // =========================================================================
-            // MODIFICAR o listener do evento UNIFED_ANALYSIS_COMPLETE (PATCH 2)
-            // =========================================================================
             window.addEventListener('UNIFED_ANALYSIS_COMPLETE', function _onAnalysisComplete(evt) {
                 console.log('[UNIFED] UNIFED_ANALYSIS_COMPLETE recebido (fallback).', (evt && evt.detail) || '');
-                // Se o evento vier do forceFinalState (status 'READY'), NÃO revela
                 if (evt.detail && evt.detail.status === 'READY') {
                     console.log('[UNIFED] Evento de inicialização ignorado – aguardando perícia.');
                     return;
                 }
-                // Caso contrário, só revela se a análise já tiver sido executada (pendente false)
                 if (window._unifedAnalysisPending === false) {
                     window.uncloakForensicData();
                 } else {
@@ -1692,9 +1691,6 @@
         console.log('[UNIFED] Camada 7 (State-Driven Hydration + Event-Driven Uncloaking): OK.');
     })();
 
-    // =========================================================================
-    // FUNÇÃO GLOBAL PARA RENDERIZAR GRÁFICOS SOB DEMANDA
-    // =========================================================================
     function renderForensicCharts() {
         if (typeof window.renderChart === 'function') {
             window.renderChart();
@@ -1706,44 +1702,29 @@
     }
     window.renderForensicCharts = renderForensicCharts;
 
-    // =========================================================================
-    // CONTROLE DE VISIBILIDADE DOS MÓDULOS FORENSES (CORRIGIDO)
-    // =========================================================================
     function updateForensicModulesVisibility(show) {
         const modules = [
-            'pureATFCard',           // ATF
-            'pureZonaCinzentaCard',  // Zona Cinzenta
-            'pureMacroCard',         // Macro (Risco Sistémico)
-            'pureTriangulationCard', // Triangulação Financeira
-            'card-asfixia',          // Risco de Asfixia Financeira
-            'mainChartContainer',    // Gráfico principal (despesas vs receitas)
-            'mainDiscrepancyChartContainer', // Gráfico de discrepâncias
-            'pure-chart-container',  // Container do gráfico de discrepâncias (fallback)
-            'gapConciliacaoC1'       // Gap de reconciliação C1
+            'pureATFCard', 'pureZonaCinzentaCard', 'pureMacroCard', 'pureTriangulationCard',
+            'card-asfixia', 'mainChartContainer', 'mainDiscrepancyChartContainer',
+            'pure-chart-container', 'gapConciliacaoC1'
         ];
         modules.forEach(id => {
             const el = document.getElementById(id);
             if (el) el.style.display = show ? 'block' : 'none';
         });
         
-        // Controlar o canvas do gráfico ATF individualmente
         const atfCanvas = document.getElementById('atfChartCanvas');
-        if (atfCanvas) {
-            atfCanvas.style.display = show ? 'block' : 'none';
-        }
+        if (atfCanvas) atfCanvas.style.display = show ? 'block' : 'none';
         
-        // Controlar os containers dos gráficos
         const mainChartContainer = document.getElementById('mainChartContainer');
         if (mainChartContainer) mainChartContainer.style.display = show ? 'block' : 'none';
         
         const discChartContainer = document.getElementById('pure-chart-container');
         if (discChartContainer) discChartContainer.style.display = show ? 'block' : 'none';
         
-        // Gap de conciliação C1
         const gapEl = document.getElementById('gapConciliacaoC1');
         if (gapEl) gapEl.style.display = show ? 'block' : 'none';
         
-        // Se for para mostrar e houver dados reais, atualizar o valor do gap
         if (show && window.UNIFEDSystem && window.UNIFEDSystem.analysis && window.UNIFEDSystem.analysis.crossings) {
             const gapValue = window.UNIFEDSystem.analysis.crossings.discrepanciaSaftVsDac7 || 0;
             const gapSpan = document.getElementById('gapC1Value');
@@ -1757,9 +1738,6 @@
     }
     window.updateForensicModulesVisibility = updateForensicModulesVisibility;
 
-    // =========================================================================
-    // Função para activar todos os botões (adicione antes de forceFinalState)
-    // =========================================================================
     function forceEnableAllButtons() {
         const buttonIds = [
             'analyzeBtn', 'exportPDFBtn', 'exportJSONBtn', 'resetBtn', 'clearConsoleBtn',
@@ -1776,19 +1754,11 @@
         console.log('[UNIFED] Todos os botões foram forçados a ativo.');
     }
 
-    // =========================================================================
-    // FORCE FINAL STATE (sem remoção automática do splash)
-    // Esta função será chamada APENAS quando o utilizador clicar no botão "INICIAR"
-    // =========================================================================
     async function forceFinalState() {
         try {
-            await loadPanelHTML();      // Injeção assíncrona
-            await waitForPanel();       // Garantia de presença no DOM
+            await loadPanelHTML();
+            await waitForPanel();
 
-            // =========================================================================
-            // RETIFICAÇÃO: Garantir que a SESSÃO aparece preenchida
-            // =========================================================================
-            // Garantir que a sessão tem um ID válido
             if (!window.UNIFEDSystem) {
                 window.UNIFEDSystem = {};
             }
@@ -1798,16 +1768,12 @@
             }
             const sessionSpan = document.getElementById('sessionIdDisplay');
             if (sessionSpan) sessionSpan.textContent = window.UNIFEDSystem.sessionId;
-            // Também atualizar outros elementos que possam exibir o sessionId
             const otherSessionSpans = document.querySelectorAll('#pure-session-id');
             otherSessionSpans.forEach(span => { if (span) span.textContent = window.UNIFEDSystem.sessionId; });
             console.log('[UNIFED] Session ID garantido:', window.UNIFEDSystem.sessionId);
-            // =========================================================================
 
-            // 1. Desbloqueio de Visibilidade Global
             document.body.classList.add('forensic-revealed');
 
-            // 2. Remoção da Camada de Oclusão (Splash Screen) - SÓ AQUI
             const splash = document.getElementById('splashScreen');
             if (splash) {
                 splash.style.transition = 'opacity 0.5s ease-out';
@@ -1817,7 +1783,6 @@
                 }, 500);
             }
 
-            // 3. Ativação Atómica do Wrapper e do Main Container
             const wrapper = document.getElementById('pureDashboardWrapper');
             if (wrapper) {
                 wrapper.classList.add('activated');
@@ -1825,7 +1790,7 @@
                 wrapper.style.opacity = '1';
                 wrapper.style.visibility = 'visible';
 
-                forceEnableAllButtons();  // <-- adicionar
+                forceEnableAllButtons();
 
                 const innerDashboard = document.getElementById('pureDashboard') || wrapper.querySelector('.pure-section');
                 if (innerDashboard) {
@@ -1843,15 +1808,12 @@
                 mainContainer.style.opacity = '1';
             }
             
-            // ========== CORREÇÃO: Aguardar um ciclo para garantir que o DOM está estável ==========
             await new Promise(resolve => setTimeout(resolve, 50));
             
-            // 4. Ocultar os módulos forenses (zero-knowledge state)
             if (typeof updateForensicModulesVisibility === 'function') {
                 updateForensicModulesVisibility(false);
             }
             
-            // 5. Despacho de Eventos de Sincronização (apenas eventos, sem dados)
             window.dispatchEvent(new CustomEvent('UNIFED_CORE_READY'));
             window.dispatchEvent(new CustomEvent('UNIFED_ANALYSIS_COMPLETE', { 
                 detail: { status: 'READY', masterHash: window.activeForensicSession?.masterHash || _PDF_CASE.masterHash } 
@@ -1863,12 +1825,8 @@
         }
     }
 
-    // Expor globalmente para que o botão "INICIAR" a possa chamar
     window.forceFinalState = forceFinalState;
 
-    // =========================================================================
-    // CORREÇÃO: Adiciona o listener ao botão "INICIAR METODOLOGIA" (#startSessionBtn)
-    // =========================================================================
     function setupIniciarButton() {
         const startBtn = document.getElementById('startSessionBtn');
         if (startBtn) {
@@ -1890,22 +1848,17 @@
         }
     }
 
-    // =========================================================================
-    // ACTIVAÇÃO FORÇADA DE TODOS OS BOTÕES DA TOOLBAR
-    // =========================================================================
     function enableAllButtons() {
         const btns = ['analyzeBtn', 'exportPDFBtn', 'exportJSONBtn', 'resetBtn', 'clearConsoleBtn'];
         btns.forEach(id => {
             const btn = document.getElementById(id);
             if (btn) btn.disabled = false;
         });
-        // Botões da tríade (segunda linha) são criados dinamicamente, mas também devem ser activos
         setTimeout(() => {
             document.querySelectorAll('.btn-tool, .btn-tool-pure').forEach(btn => btn.disabled = false);
         }, 500);
     }
 
-    // Chamar após o dashboard estar visível
     window.addEventListener('UNIFED_CORE_READY', enableAllButtons);
 
     if (document.readyState === 'loading') {
@@ -1914,13 +1867,10 @@
         setupIniciarButton();
     }
 
-    // =========================================================================
-    // INSTRUÇÃO TÉCNICA 1: Re-ancorar modais para prevenir bloqueio por Z-Index
-    // =========================================================================
     function reAnchorModals() {
         const wrapper = document.getElementById('pureDashboardWrapper');
         const custodyModal = document.getElementById('custodyModal');
-        const hashModal = document.getElementById('hashModal'); // Inclui QR Code
+        const hashModal = document.getElementById('hashModal');
         if (wrapper && custodyModal) wrapper.appendChild(custodyModal);
         if (wrapper && hashModal) wrapper.appendChild(hashModal);
     }
