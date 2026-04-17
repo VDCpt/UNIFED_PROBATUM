@@ -47,6 +47,11 @@
  * 1. Adicionada chamada a window.updateModulesUI() após syncMetrics em initializeFullWithEvidence().
  * 2. Adicionada chamada a window.updateModulesUI() no monkey-patch do updateDashboard.
  * ============================================================================
+ * RETIFICAÇÕES EXECUTADAS (2026-04-20):
+ * 1. Em forceFinalState: definir window._unifedAnalysisPending = false e _unifedRawDataOnly = false.
+ * 2. Em ensureDemoDataLoaded: chamar window._hydrateRawDataValues() se existir.
+ * 3. Em simulateEvidenceUpload: chamar window._hydrateRawDataValues() se existir.
+ * ============================================================================
  */
 
 (function() {
@@ -1026,6 +1031,13 @@
                 window._unifedAnalysisPending = true;
                 window._unifedRawDataOnly = true;
 
+                // =========================================================================
+                // RETIFICAÇÃO: Chamar hidratação dos valores brutos (definida em script.js)
+                // =========================================================================
+                if (typeof window._hydrateRawDataValues === 'function') {
+                    window._hydrateRawDataValues();
+                }
+
                 console.log('[UNIFED] Evidências simuladas carregadas (15 ficheiros). Modo raw ativo. Aguardando perícia.');
                 return true;
             } catch (err) {
@@ -1230,7 +1242,7 @@
                 if (el) { el.textContent = val; el.style.opacity = '1'; }
             });
 
-            // DAC7 trimestrais (elementos dac7Q1Value..dac7Q4Value usados por syncMetrics)
+            // DAC7 trimestrais
             ['dac7Q1Value','dac7Q2Value','dac7Q3Value'].forEach(id => {
                 const el = document.getElementById(id); if (el) el.textContent = fmt(0);
             });
@@ -1251,6 +1263,13 @@
                 const spanNif  = document.getElementById('clientNifDisplayFixed');
                 if (spanName) spanName.textContent = d.client.name;
                 if (spanNif)  spanNif.textContent  = d.client.nif;
+            }
+
+            // =========================================================================
+            // RETIFICAÇÃO: Chamar hidratação dos valores brutos (definida em script.js)
+            // =========================================================================
+            if (typeof window._hydrateRawDataValues === 'function') {
+                window._hydrateRawDataValues();
             }
 
             console.log('[UNIFED] ensureDemoDataLoaded v2: valores corretos injetados.');
@@ -2092,6 +2111,12 @@
             if (typeof updateForensicModulesVisibility === 'function') {
                 updateForensicModulesVisibility(false);
             }
+            
+            // =========================================================================
+            // RETIFICAÇÃO: Forçar flag de análise pendente como false (interface pronta)
+            // =========================================================================
+            window._unifedAnalysisPending = false;
+            window._unifedRawDataOnly = false;
             
             // 5. Despacho de Eventos de Sincronização (apenas eventos, sem dados)
             window.dispatchEvent(new CustomEvent('UNIFED_CORE_READY'));

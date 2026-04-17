@@ -228,6 +228,12 @@ function safeExport() {
             btn.className = 'btn-tool';
             btn.innerHTML = `<i class="fas ${tool.icon}"></i> <span>${tool.label}</span>`;
             btn.onclick = tool.handler;
+            // Garantir que os botões críticos (ATF, Blockchain, DORA) não fiquem desativados
+            if (tool.id === 'atfModalBtn' || tool.id === 'otsSealBtn' || tool.id === 'nivel2SealBtn') {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                btn.style.pointerEvents = 'auto';
+            }
             container.appendChild(btn);
         });
 
@@ -235,24 +241,10 @@ function safeExport() {
         container.setAttribute('data-triada-injected', 'false');
 
         // [FIX TOOLBAR-1] Re-vinculação de Event Listeners após restauro.
-        // O problema: restoreOriginalToolbar() reconstrói o innerHTML, destruindo
-        // os listeners nativos (exportPDFBtn, atfModalBtn, etc.) que setupMainListeners()
-        // em script.js registou no DOMContentLoaded — já não podem ser re-registados
-        // pelo script original porque esse ciclo já correu.
-        //
-        // Solução A (primária): delegar eventos no container pai (#export-tools-container)
-        // — imune a reconstrução de innerHTML porque o container em si não é substituído.
-        // Solução B (secundária): chamar window.rebindToolbarListeners() se exposta por script.js.
-        //
-        // O analyzeBtn (#analyzeBtn) é EXCLUÍDO deliberadamente deste fluxo —
-        // o seu listener (performAudit) nunca é tocado por restoreOriginalToolbar().
-
-        // Remover listener de delegação anterior (evitar duplicação em chamadas repetidas)
         if (container._unifedDelegateHandler) {
             container.removeEventListener('click', container._unifedDelegateHandler, true);
         }
 
-        // Mapa de ID → função (resolvida em tempo de execução para tolerar carregamento assíncrono)
         const _delegateMap = {
             'exportPDFBtn':   () => typeof window.exportPDF       === 'function' && window.exportPDF(),
             'exportDOCXBtn':  () => typeof window.exportDOCX      === 'function' && window.exportDOCX(),
@@ -271,10 +263,8 @@ function safeExport() {
                 handler();
             }
         };
-        // capture:true — garante prioridade sobre listeners de bolha adicionados por outros módulos
         container.addEventListener('click', container._unifedDelegateHandler, true);
 
-        // Solução B — chamar rebindToolbarListeners() se script.js a expôs
         if (typeof window.rebindToolbarListeners === 'function') {
             try {
                 window.rebindToolbarListeners();
@@ -283,6 +273,18 @@ function safeExport() {
                 console.warn('[TRIADA] rebindToolbarListeners() lançou excepção:', _rbErr.message);
             }
         }
+
+        // Forçar visibilidade e ativação dos botões de funcionalidades forenses
+        const forensicBtns = ['atfModalBtn', 'otsSealBtn', 'nivel2SealBtn', 'btnOTSSeal', 'btnNivel2Seal'];
+        forensicBtns.forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) {
+                btn.disabled = false;
+                btn.style.display = 'inline-flex';
+                btn.style.opacity = '1';
+                btn.style.visibility = 'visible';
+            }
+        });
 
         console.log('[TRIADA] Toolbar original restaurada + Event Delegation activa em #export-tools-container.');
         return true;
@@ -317,6 +319,17 @@ function safeExport() {
             btn.onmouseout = () => { btn.style.background = 'rgba(15,23,42,0.9)'; };
             container.appendChild(btn);
         });
+
+        // Garantir que os botões originais de funcionalidades forenses não fiquem ocultos
+        const forensicOriginals = ['atfModalBtn', 'exportPDFBtn', 'exportJSONBtn', 'resetBtn', 'clearConsoleBtn'];
+        forensicOriginals.forEach(id => {
+            const origBtn = document.getElementById(id);
+            if (origBtn) {
+                origBtn.disabled = false;
+                origBtn.style.display = 'inline-flex';
+            }
+        });
+
         container.setAttribute('data-triada-injected', 'true');
         _log(`Interface Tríade Documental ${_VERSION} activada.`);
         return true;

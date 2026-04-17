@@ -3200,8 +3200,11 @@ window.resetUIVisual = function() {
         window.UNIFEDSystem.masterHash = '';
     }
     window.rawForensicData = null;
-    window._unifedAnalysisPending = false;
-    window._unifedRawDataOnly = false;
+    // Se o caso real já estiver carregado, não resetar as flags para zero-knowledge
+    if (!window._unifedDataLoaded) {
+        window._unifedAnalysisPending = false;
+        window._unifedRawDataOnly = false;
+    }
     
     const elementsToHide = document.querySelectorAll('.pure-data-value, .pure-sg-val, .pure-zc-val, .pure-delta-value, .pure-atf-big');
     elementsToHide.forEach(el => { el.classList.remove('forensic-revealed'); el.style.opacity = '0'; el.textContent = '---'; });
@@ -3210,7 +3213,46 @@ window.resetUIVisual = function() {
     const alertModules = ['#bigDataAlert', '#quantumBox', '#revenueGapCard', '#expenseGapCard', '#omissaoDespesasPctCard', '#jurosCard', '#discrepancy5Card', '#agravamentoBrutoCard', '#ircCard', '#iva6Card', '#iva23Card', '#asfixiaFinanceiraCard'];
     alertModules.forEach(sel => { const el = document.querySelector(sel); if (el) el.style.display = 'none'; });
     
+    // Se o caso real estiver carregado, reaplicar os valores absolutos
+    if (window._unifedDataLoaded && typeof window._hydrateRawDataValues === 'function') {
+        window._hydrateRawDataValues();
+    }
+    
     window.logAudit('Sistema em estado Zero-Knowledge. Pronto para reunião.', 'success');
+};
+
+// ============================================================================
+// NOVA FUNÇÃO: HIDRATAÇÃO DOS VALORES BRUTOS (CASO REAL)
+// ============================================================================
+window._hydrateRawDataValues = function() {
+    if (!window._unifedDataLoaded) return;
+    
+    const fmt = window.UNIFED_INTERNAL?.fmt || ((v) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v));
+    
+    // Valores absolutos conforme caderno de encargos
+    const valores = {
+        'pure-ganhos': 10157.73,
+        'pure-despesas': 2447.89,
+        'pure-disc-c2': 2184.95,
+        'pure-iva-devido': 493.68,
+        'pure-nao-sujeitos': 451.15,
+        'pure-iva-6': 131.10,      // IVA 6% omitido (opcional)
+        'pure-iva-23': 502.54,     // IVA 23% omitido (opcional)
+        'pure-saft': 8227.97,      // SAF-T Bruto (opcional)
+        'pure-dac7': 7755.16,      // DAC7 (opcional)
+        'pure-fatura': 262.94,     // Fatura Plataforma (opcional)
+        'pure-liquido': 7709.84    // Ganhos Líquidos (opcional)
+    };
+    
+    Object.entries(valores).forEach(([id, val]) => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.textContent = fmt(val);
+            el.style.opacity = '1';
+        }
+    });
+    
+    console.log('[UNIFED] Valores brutos hidratados (Ganhos: 10.157,73 € | Omissão: 2.184,95 € | IVA Asfixia: 493,68 € | Não Sujeitos: 451,15 €)');
 };
 
 /**
@@ -8419,6 +8461,8 @@ function setupIniciarButton() {
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         if (typeof window.resetUIVisual === 'function') window.resetUIVisual();
+        // Forçar flag analysisPending = false após reset
+        window._unifedAnalysisPending = false;
         setupIniciarButton();
         setupWipeButton();           // ← [PATCH #1] ADICIONADO
         setupClearConsoleButton();   // ← [PATCH #2] ADICIONADO
@@ -8426,6 +8470,7 @@ if (document.readyState === 'loading') {
     });
 } else {
     if (typeof window.resetUIVisual === 'function') window.resetUIVisual();
+    window._unifedAnalysisPending = false;
     setupIniciarButton();
     setupWipeButton();               // ← [PATCH #1] ADICIONADO
     setupClearConsoleButton();       // ← [PATCH #2] ADICIONADO
