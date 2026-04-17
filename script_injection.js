@@ -1,23 +1,11 @@
 /**
- * UNIFED - PROBATUM · CASO REAL ANONIMIZADO v13.12.2-i18n (ASYNC + PERSIST)
+ * UNIFED - PROBATUM · CASO REAL ANONIMIZADO v13.12.3 (FIX DEMO + RAW DATA VISIBILITY)
  * ============================================================================
- * [MERGE CIRÚRGICO 2026-04-15 + RETIFICAÇÃO TIME-2/TIME-3 + ZERO-KNOWLEDGE FIX]
- * - Garantia de que _PDF_CASE.totals é transferido para UNIFEDSystem.documents
- * - Função ensureDemoDataLoaded() para carregamento idempotente
- * - Melhorada sincronização da UI após clique "CASO REAL"
- * - CORREÇÃO: Estado inicial zero-knowledge (tudo a zeros)
- * - ADIÇÃO: Controle de visibilidade dos módulos forenses (updateForensicModulesVisibility)
- * - CORREÇÃO: Injeção do card macro com display:none quando dados reais não carregados
- * - RETIFICAÇÃO: Gráficos apenas renderizados quando dados reais disponíveis
- * ============================================================================
- * CORREÇÕES ADICIONAIS (2026-04-16):
- * 1. Verificação defensiva em ensureDemoDataLoaded no listener do botão "CASO REAL"
- * 2. Remoção de chamadas prematuras de gráficos e forceRevealSmokingGun em loadAnonymizedRealCase
- * ============================================================================
- * RETIFICAÇÕES CIRÚRGICAS (2026-04-16 - SCRIPT):
- * 1. Garantia de exposição global de ensureDemoDataLoaded antes de qualquer listener
- * 2. Correcção do listener do botão "EXECUTAR PERÍCIA" com fallbacks robustos
- * 3. Activação forçada de todos os botões da toolbar após dashboard visível
+ * CORREÇÕES FINAIS (2026-04-17):
+ * 1. Atualização dos valores hardcoded do caso real conforme especificação do utilizador.
+ * 2. Separação rigorosa entre estado "dados brutos" (após CASO REAL) e "análise completa" (após EXECUTAR PERÍCIA).
+ * 3. Módulos de análise (discrepâncias, gráficos, smoking gun) permanecem ocultos até à perícia.
+ * 4. Botões da toolbar ativados automaticamente.
  * ============================================================================
  */
 
@@ -83,7 +71,7 @@
     }
 
     // =========================================================================
-    // 1. DATASET MESTRE (OBJETO IMUTÁVEL) – valores hardcoded do caso real
+    // 1. DATASET MESTRE (OBJETO IMUTÁVEL) – valores hardcoded ATUALIZADOS
     // =========================================================================
     const _PDF_CASE = Object.freeze({
         sessionId:  "UNIFED-MNGFN3C0-X57MO",
@@ -108,28 +96,28 @@
             saftIva:            466.30,
             despesas:          2447.89,
             faturaPlataforma:   262.94,
-            dac7TotalPeriodo:  6276.55,
+            dac7TotalPeriodo:  7755.16,   // 4.º TRI conforme solicitado
             iva6Omitido:        131.10,
             iva23Omitido:       502.54,
             asfixiaFinanceira:  493.68,
-            totalNaoSujeitos:   661.05,
-            gorjetas:           85.00,
-            portagens:         125.80,
-            campanhas:         450.25,
-            cancelamentos:      0.00
+            totalNaoSujeitos:   451.15,    // Campanhas+Portagens+Gorjetas
+            gorjetas:           46.00,
+            portagens:           0.15,
+            campanhas:         405.00,
+            cancelamentos:      58.10
         },
         fluxosIsentos: {
-            campanhas: 450.25,
-            gorjetas:   85.00,
-            portagens: 125.80,
-            total:     661.05
+            campanhas: 405.00,
+            gorjetas:   46.00,
+            portagens:   0.15,
+            total:     451.15
         },
         atf: {
             zScore: 2.45,
             confianca: "99.2%",
             periodo: "Q4 2024",
             anomalias: 4,
-            version: "v13.12.2-i18n",
+            version: "v13.12.3",
             score: 40,
             trend: "DESCENDENTE",
             outliers: 0
@@ -146,24 +134,10 @@
             disclaimer: "Os valores de impacto sistémico constituem contexto macroeconómico e não prova direta de ilícito alheio, nos termos do Art. 128.º do CPP."
         },
         meta: {
-            lastUpdate: "2026-04-14",
+            lastUpdate: "2026-04-17",
             forensicIntegrity: true
         }
     });
-
-    // [MODIFICADA] forceRenderFix - não força exibição dos gráficos principais (para manter zero‑knowledge)
-    function forceRenderFix() {
-        const charts = document.querySelectorAll('.chart-section:not(#mainChartContainer):not(#pure-chart-container)');
-        charts.forEach(c => {
-            if (c.querySelector('canvas') || c.querySelector('.chart-placeholder')) {
-                c.style.display = 'block';
-                c.style.opacity = '1';
-            }
-        });
-        window.dispatchEvent(new Event('resize'));
-    }
-    // Comentada a linha que adicionava o listener automaticamente para evitar renderização precoce
-    // window.addEventListener('load', forceRenderFix);
 
     // 2. ESCUDO SILENCIOSO PARA CORS (TSA / FREETSA FALLBACK)
     (function _installCORSSilentShield() {
@@ -221,7 +195,7 @@
     console.log('[UNIFED] Camada 1: OK.');
 
     // =========================================================================
-    // Camada 2 – Sincronização de Métricas (syncMetrics) - CORRIGIDA (gráficos removidos)
+    // Camada 2 – Sincronização de Métricas (syncMetrics) - CORRIGIDA
     // =========================================================================
     (function() {
         if (!window.UNIFED_INTERNAL) return;
@@ -237,29 +211,20 @@
             console.log('[UNIFED] Iniciando Sincronização Forense...');
             
             const sys = window.UNIFEDSystem;
-            
-            // Determina se os dados reais já foram carregados (via caso real)
             const dadosReaisCarregados = (sys && sys.analysis && sys.analysis.totals && sys.analysis.totals.ganhos > 0);
             
             let t;
             if (dadosReaisCarregados) {
                 t = sys.analysis.totals;
             } else if (window._unifedDataLoaded === true) {
-                // Caso real já foi ativado (mas análise ainda não executada) – usa os totais de demonstração
                 t = data.totals;
             } else {
                 // Estado zero‑knowledge: todos os valores a zero
                 t = {
-                    ganhos: 0,
-                    despesas: 0,
-                    ganhosLiquidos: 0,
-                    saftBruto: 0,
-                    dac7TotalPeriodo: 0,
-                    faturaPlataforma: 0,
-                    iva6Omitido: 0,
-                    iva23Omitido: 0,
-                    asfixiaFinanceira: 0,
-                    cancelamentos: 0
+                    ganhos: 0, despesas: 0, ganhosLiquidos: 0, saftBruto: 0,
+                    dac7TotalPeriodo: 0, faturaPlataforma: 0, iva6Omitido: 0,
+                    iva23Omitido: 0, asfixiaFinanceira: 0, cancelamentos: 0,
+                    saftIliquido: 0, saftIva: 0
                 };
             }
             
@@ -282,18 +247,11 @@
                 }
                 return (window._unifedDataLoaded === true) ? fallback : "0";
             };
-            const totalEvidencias = (sys && sys.counts && sys.counts.total) ? sys.counts.total.toString() : 
-                                    (window._unifedDataLoaded === true ? (data.counts.ctrl + data.counts.saft + data.counts.fat + data.counts.ext + data.counts.dac7).toString() : "0");
-
-            const setAnyText = (id, value) => {
-                const el = document.getElementById(id);
-                if (el) el.textContent = value;
-            };
+            
             const setScopedText = (id, value) => {
                 const el = document.querySelector(`#pureDashboard #${id}`);
                 if (el) el.textContent = value;
             };
-            // Atualização global para elementos que possam estar fora do #pureDashboard
             const setGlobalText = (id, value) => {
                 const el = document.getElementById(id);
                 if (el) el.textContent = value;
@@ -330,8 +288,7 @@
                 'pure-ganhos-extrato': fmt(t.ganhos), 'pure-despesas-extrato': fmt(t.despesas),
                 'pure-ganhos-liquidos-extrato': fmt(t.ganhosLiquidos), 'pure-saft-bruto-val': fmt(t.saftBruto),
                 'pure-dac7-val': fmt(t.dac7TotalPeriodo), 'pure-atf-zscore': data.atf.zScore.toString(),
-                'pure-atf-confianca': data.atf.confianca, 
-                // ========== CORREÇÃO: zero‑knowledge mostra '--%' ==========
+                'pure-atf-confianca': data.atf.confianca,
                 'pure-atf-score-val': (dadosReaisCarregados || window._unifedDataLoaded) ? (data.atf.score + '/100') : '--%',
                 'pure-iva-devido-val': fmt(asfixiaFinanceira), 'pure-impacto-macro': fmt(data.macro_analysis.estimated_systemic_gap),
                 'pure-ctrl-qty': getCounter('control', data.counts.ctrl.toString()),
@@ -348,12 +305,11 @@
             
             Object.entries(mapping).forEach(([id, value]) => {
                 setScopedText(id, value);
-                // Fallback: tentar também como elemento global
                 const globalEl = document.getElementById(id);
                 if (globalEl && globalEl.textContent !== value) globalEl.textContent = value;
             });
 
-            // Atualização específica para os elementos de "Zona Cinzenta" que aparecem no dashboard
+            // Atualização específica para os elementos de "Zona Cinzenta"
             setGlobalText('auxBoxCampanhasValue', fmt(window._unifedDataLoaded === true ? fi.campanhas : 0));
             setGlobalText('auxBoxGorjetasValue', fmt(window._unifedDataLoaded === true ? fi.gorjetas : 0));
             setGlobalText('auxBoxPortagensValue', fmt(window._unifedDataLoaded === true ? fi.portagens : 0));
@@ -362,14 +318,14 @@
             setGlobalText('auxDac7NoteValue', fmt(totalNaoSujeitosCalc));
             setGlobalText('auxDac7NoteValueQ', fmt(totalNaoSujeitosCalc));
             
-            // Atualização dos cards de gap – apenas se dados reais carregados
+            // Atualização dos cards de gap – apenas se análise concluída
             const revenueGapCorrect = t.saftBruto - t.ganhos;
             setGlobalText('revenueGapValue', fmt(revenueGapCorrect));
             setGlobalText('expenseGapValue', fmt(discrepanciaC2));
             const omissaoPct = (t.despesas > 0 && t.ganhos > 0) ? ((t.despesas / t.ganhos) * 100) : 0;
             setGlobalText('omissaoDespesasPctValue', omissaoPct.toFixed(2) + '%');
             
-            // Forçar exibição dos cards (apenas se valores > 0 e dados reais carregados)
+            // Forçar exibição dos cards de gap apenas se análise concluída
             const revenueCard = document.getElementById('revenueGapCard');
             if (revenueCard) revenueCard.style.display = (dadosReaisCarregados && Math.abs(revenueGapCorrect) > 0.01) ? 'block' : 'none';
             const expenseCard = document.getElementById('expenseGapCard');
@@ -377,7 +333,7 @@
             const omissaoCard = document.getElementById('omissaoDespesasPctCard');
             if (omissaoCard) omissaoCard.style.display = (dadosReaisCarregados && t.despesas > 0 && t.ganhos > 0) ? 'block' : 'none';
             
-            // Atualizar textos legais (apenas se dados reais carregados)
+            // Textos legais
             const sg1Legal = document.querySelector('#pureDashboard #pure-sg1-legal');
             if (sg1Legal) sg1Legal.textContent = dadosReaisCarregados ? 'Art. 23.º CIRC (Indutividade de Custos) · Art. 103.º RGIT (Fraude Fiscal)' : '---';
             const sg2Legal = document.querySelector('#pureDashboard #pure-sg2-legal');
@@ -388,17 +344,12 @@
             if (pureIva23Sub) pureIva23Sub.textContent = dadosReaisCarregados ? 'Art. 2.º n.º 1 al. i) CIVA' : '---';
             const pureIrcSub = document.querySelector('#pureDashboard #pure-irc-sub');
             if (pureIrcSub) pureIrcSub.textContent = dadosReaisCarregados ? 'Art. 17.º CIRC' : '---';
-            
-            // =================================================================
-            // A renderização dos gráficos será feita apenas quando os dados reais estiverem disponíveis
-            // (via ensureDemoDataLoaded ou executePendingAnalysis)
-            // =================================================================
         };
         console.log('[UNIFED] Camada 2: OK.');
     })();
 
     // =========================================================================
-    // Camada 3 – Matriz de Triangulação (renderMatrix) - CORRIGIDA
+    // Camada 3 – Matriz de Triangulação (renderMatrix)
     // =========================================================================
     (function() {
         if (!window.UNIFED_INTERNAL) return;
@@ -411,7 +362,6 @@
             if (existingMatrix) existingMatrix.remove();
 
             const sys = window.UNIFEDSystem;
-            
             const dadosReaisCarregados = (sys && sys.analysis && sys.analysis.totals && sys.analysis.totals.ganhos > 0);
             
             let t;
@@ -420,13 +370,7 @@
             } else if (window._unifedDataLoaded === true) {
                 t = data.totals;
             } else {
-                t = {
-                    ganhos: 0,
-                    despesas: 0,
-                    saftBruto: 0,
-                    dac7TotalPeriodo: 0,
-                    faturaPlataforma: 0
-                };
+                t = { ganhos: 0, despesas: 0, saftBruto: 0, dac7TotalPeriodo: 0, faturaPlataforma: 0 };
             }
             
             const deltaSaft = t.ganhos - t.saftBruto;
@@ -450,7 +394,7 @@
             <div id="triangulationMatrixContainer" class="pure-triangulation-box" style="margin:30px 0; border:1px solid #00E5FF; background:rgba(15,23,42,0.95); padding:20px; border-radius:12px;">
                 <h3 style="color:#00E5FF; margin-top:0; font-size:1rem;">${labels.title}</h3>
                 <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
-                    <thead><tr style="border-bottom:1px solid rgba(255,255,255,0.2);"><th style="text-align:left; padding:10px;">${labels.colSource}</th><th style="text-align:right; padding:10px;">${labels.colValue}</th><th style="text-align:right; padding:10px; color:#EF4444;">${labels.colDisc}</th><tr></thead>
+                    <thead><tr style="border-bottom:1px solid rgba(255,255,255,0.2);"><th style="text-align:left; padding:10px;">${labels.colSource}</th><th style="text-align:right; padding:10px;">${labels.colValue}</th><th style="text-align:right; padding:10px; color:#EF4444;">${labels.colDisc}</th></tr></thead>
                     <tbody>
                         <tr><td style="padding:10px;">📄 SAF-T PT (${isEn ? 'Invoicing' : 'Faturação'})</td><td style="padding:10px; text-align:right;">${fmt(t.saftBruto)}</td><td style="padding:10px; text-align:right;">-${fmt(deltaSaft)}</td></tr>
                         <tr style="background:rgba(239,68,68,0.08);"><td style="padding:10px;">🌐 DAC7 (Plataforma A)</td><td style="padding:10px; text-align:right;">${fmt(t.dac7TotalPeriodo)}</td><td style="padding:10px; text-align:right;">-${fmt(deltaDac7)}</td></tr>
@@ -495,9 +439,6 @@
             console.log('[UNIFED] CSS injetado.');
         }
 
-        // =========================================================================
-        // FUNÇÃO CORRIGIDA: _injectMacroCard com controlo de visibilidade inicial
-        // =========================================================================
         function _injectMacroCard() {
             const target = document.getElementById('pureDashboard');
             if (!target || document.getElementById('pureMacroCard')) return;
@@ -637,15 +578,8 @@
             disclaimerDiv.appendChild(disclaimerSpan);
             cardDiv.appendChild(disclaimerDiv);
             
-            // =================================================================
-            // CORREÇÃO: verificar se dados reais estão carregados e ocultar card inicialmente se necessário
-            // =================================================================
-            const dadosReaisCarregados = (window.UNIFEDSystem && window.UNIFEDSystem.analysis && 
-                                          window.UNIFEDSystem.analysis.totals && window.UNIFEDSystem.analysis.totals.ganhos > 0);
-            if (!dadosReaisCarregados && !window._unifedDataLoaded) {
-                cardDiv.style.display = 'none';
-            }
-            
+            // Inicialmente oculto (só aparece após perícia)
+            cardDiv.style.display = 'none';
             target.appendChild(cardDiv);
         }
 
@@ -662,15 +596,9 @@
                 t = data.totals;
             } else {
                 t = {
-                    ganhos: 0,
-                    despesas: 0,
-                    ganhosLiquidos: 0,
-                    saftBruto: 0,
-                    dac7TotalPeriodo: 0,
-                    faturaPlataforma: 0,
-                    iva6Omitido: 0,
-                    iva23Omitido: 0,
-                    asfixiaFinanceira: 0
+                    ganhos: 0, despesas: 0, ganhosLiquidos: 0, saftBruto: 0,
+                    dac7TotalPeriodo: 0, faturaPlataforma: 0, iva6Omitido: 0,
+                    iva23Omitido: 0, asfixiaFinanceira: 0
                 };
             }
             
@@ -715,7 +643,7 @@
                 { id: 'auxBoxPortagensValue', val: window._unifedDataLoaded === true ? fi2.portagens : 0 },
                 { id: 'auxBoxGorjetasValue', val: window._unifedDataLoaded === true ? fi2.gorjetas : 0 },
                 { id: 'auxBoxTotalNSValue', val: totalNaoSujeitosCalc },
-                { id: 'auxBoxCancelValue', val: 0.00 },
+                { id: 'auxBoxCancelValue', val: t.cancelamentos || 0 },
                 { id: 'auxDac7NoteValue', val: totalNaoSujeitosCalc },
                 { id: 'auxDac7NoteValueQ', val: totalNaoSujeitosCalc },
                 { id: 'pure-ganhos-tri', val: t.ganhos },
@@ -727,7 +655,6 @@
             const setScopedText = (id, val) => {
                 const el = document.querySelector(`#pureDashboard #${id}`);
                 if (el) el.textContent = (typeof val === 'number') ? _f(val) : val;
-                // Fallback global
                 const globalEl = document.getElementById(id);
                 if (globalEl) globalEl.textContent = (typeof val === 'number') ? _f(val) : val;
             };
@@ -769,18 +696,12 @@
             console.log('[UNIFED] Plataforma forçada para "Plataforma A" em modo read‑only.');
         }
 
-        // =========================================================================
-        // FUNÇÃO CORRIGIDA: _removeZeroDac7Kpis – manter cards visíveis com valor zero
-        // =========================================================================
         function _removeZeroDac7Kpis() {
-            // RETIFICAÇÃO: Manter os 4 cards visíveis com valores zero
-            // Não remover nenhum card do DOM
             const allDac7Cards = ['dac7Q1Value', 'dac7Q2Value', 'dac7Q3Value', 'dac7Q4Value'];
             const fmtLocal = window.UNIFED_INTERNAL?.fmt || ((v) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v));
             allDac7Cards.forEach(id => {
                 const el = document.getElementById(id);
                 if (el) {
-                    // Garantir que o card está visível e com valor zero
                     el.textContent = fmtLocal(0);
                     const card = el.closest('.kpi-card');
                     if (card) card.style.display = '';
@@ -888,7 +809,7 @@
                 sys.analysis.totals.iva23Omitido = t.iva23Omitido;
                 sys.analysis.totals.asfixiaFinanceira = t.asfixiaFinanceira;
 
-                // Garantir que os campos cruciais estão definidos também em crossings (para gráficos)
+                // Pré‑preenchimento dos crossings (valores brutos, sem análise)
                 if (!sys.analysis.crossings) sys.analysis.crossings = {};
                 const discrepanciaCritica = t.despesas - t.faturaPlataforma;
                 const percentOmissao = t.despesas > 0 ? (discrepanciaCritica / t.despesas) * 100 : 0;
@@ -896,10 +817,6 @@
                 sys.analysis.crossings.percentagemOmissao = percentOmissao;
                 sys.analysis.crossings.btor = t.despesas;
                 sys.analysis.crossings.btf = t.faturaPlataforma;
-                sys.analysis.crossings.ivaFalta = discrepanciaCritica * 0.23;
-                sys.analysis.crossings.ivaFalta6 = discrepanciaCritica * 0.06;
-                sys.analysis.crossings.ircEstimado = discrepanciaCritica * 0.21;
-                sys.analysis.crossings.asfixiaFinanceira = t.saftBruto * 0.06;
                 sys.analysis.crossings.discrepanciaSaftVsDac7 = t.saftBruto - t.dac7TotalPeriodo;
                 sys.analysis.crossings.percentagemSaftVsDac7 = t.saftBruto > 0 ? ((t.saftBruto - t.dac7TotalPeriodo) / t.saftBruto) * 100 : 0;
 
@@ -981,7 +898,6 @@
             console.log('[UNIFED] Contadores de evidências atualizados e secção revelada.');
         }
 
-        // Função para executar a análise pendente (chamada pelo botão "Executar Perícia")
         async function _executePendingAnalysis() {
             if (!window._unifedAnalysisPending) {
                 console.log('[UNIFED] Nenhuma análise pendente ou já executada.');
@@ -1024,7 +940,6 @@
             sys.analysis.crossings.c2_delta = discrepanciaCritica;
             sys.analysis.crossings.c2_pct = percentagemOmissao;
 
-            // Adicionar totais de IVA e IRC ao objeto totals para consistência
             t.iva6Omitido = ivaFalta6;
             t.iva23Omitido = ivaFalta;
             t.asfixiaFinanceira = asfixiaFinanceira;
@@ -1046,20 +961,12 @@
                 window.renderForensicCharts();
             }
 
-            // Disparar eventos para outros módulos (enrichment, gráficos)
+            // Disparar eventos
             window.dispatchEvent(new CustomEvent('UNIFED_ANALYSIS_COMPLETE', {
-                detail: {
-                    timestamp: Date.now(),
-                    source: 'executePendingAnalysis',
-                    sessionId: sys.sessionId || 'N/A',
-                    masterHash: sys.masterHash || 'N/A'
-                }
+                detail: { timestamp: Date.now(), source: 'executePendingAnalysis', sessionId: sys.sessionId || 'N/A', masterHash: sys.masterHash || 'N/A' }
             }));
             window.dispatchEvent(new CustomEvent('UNIFED_EXECUTE_PERITIA', {
-                detail: {
-                    timestamp: new Date().toISOString(),
-                    masterHash: sys.masterHash || 'N/A'
-                }
+                detail: { timestamp: new Date().toISOString(), masterHash: sys.masterHash || 'N/A' }
             }));
 
             window._unifedAnalysisPending = false;
@@ -1071,10 +978,6 @@
             }
         }
 
-        // =========================================================================
-        // NOVA FUNÇÃO: ensureDemoDataLoaded() – Garante que os dados do caso real
-        // estão carregados antes da perícia (FIX TIME-2)
-        // =========================================================================
         async function ensureDemoDataLoaded() {
             if (window._unifedDataLoaded && window.UNIFEDSystem && window.UNIFEDSystem.analysis && 
                 window.UNIFEDSystem.analysis.totals && window.UNIFEDSystem.analysis.totals.ganhos > 0) {
@@ -1092,17 +995,9 @@
                 window.UNIFED_INTERNAL.updateAuxiliaryUI();
             }
             
-            // Agora renderizar os gráficos com os dados de demonstração
-            if (typeof window.renderForensicCharts === 'function') {
-                window.renderForensicCharts();
-            }
-            
-            // Mostrar os módulos forenses após carregar os dados
-            if (typeof window.updateForensicModulesVisibility === 'function') {
-                window.updateForensicModulesVisibility(true);
-            }
-            
-            console.log('[UNIFED] Dados do caso real carregados com sucesso.');
+            // NÃO renderizar gráficos nem mostrar módulos de análise – apenas dados brutos
+            // Os módulos de análise permanecem ocultos (zero‑knowledge) até à perícia.
+            console.log('[UNIFED] Dados do caso real carregados com sucesso (modo raw).');
             return true;
         }
 
@@ -1111,31 +1006,11 @@
         window.UNIFED_INTERNAL.simulateEvidenceUpload = _simulateEvidenceUpload;
         window.UNIFED_INTERNAL.updateEvidenceCountersAndShow = _updateEvidenceCountersAndShow;
         window.UNIFED_INTERNAL.executePendingAnalysis = _executePendingAnalysis;
-        window.UNIFED_INTERNAL.ensureDemoDataLoaded = ensureDemoDataLoaded;   // <-- adicionar
-
-        // Exposição global directa
         window.ensureDemoDataLoaded = ensureDemoDataLoaded;
-        window.executePendingAnalysis = _executePendingAnalysis;
-
         console.log('[UNIFED] Camada 5: OK.');
     })();
 
-    // =========================================================================
-    // GARANTIA DE EXPOSIÇÃO GLOBAL (fallback)
-    // =========================================================================
-    (function ensureGlobals() {
-        if (typeof window.ensureDemoDataLoaded !== 'function') {
-            console.warn('[UNIFED] ensureDemoDataLoaded ainda não definida. Tentando obter de UNIFED_INTERNAL...');
-            if (window.UNIFED_INTERNAL && typeof window.UNIFED_INTERNAL.ensureDemoDataLoaded === 'function') {
-                window.ensureDemoDataLoaded = window.UNIFED_INTERNAL.ensureDemoDataLoaded;
-                window.executePendingAnalysis = window.UNIFED_INTERNAL.executePendingAnalysis;
-            }
-        }
-    })();
-
-    // =========================================================================
-    // GARANTIA ADICIONAL: EXPOSIÇÃO GLOBAL DE ensureDemoDataLoaded (FORA DA IIFE)
-    // =========================================================================
+    // Garantia adicional de exposição global
     if (typeof window.ensureDemoDataLoaded !== 'function') {
         console.warn('[UNIFED] Reforçando exposição de ensureDemoDataLoaded');
         window.ensureDemoDataLoaded = window.UNIFED_INTERNAL?.ensureDemoDataLoaded || function() {
@@ -1145,8 +1020,55 @@
     }
 
     // =========================================================================
-    // Função de correção de índices romanos
+    // Funções de controlo de visibilidade dos módulos (raw vs análise)
     // =========================================================================
+    function updateForensicModulesVisibility(showAnalysis) {
+        // Módulos que só devem aparecer após a análise (cruzamento, gráficos, gaps)
+        const analysisModules = [
+            'pureATFCard', 'pureZonaCinzentaCard', 'pureMacroCard', 'pureTriangulationCard',
+            'card-asfixia', 'mainChartContainer', 'mainDiscrepancyChartContainer',
+            'pure-chart-container', 'gapConciliacaoC1', 'revenueGapCard', 'expenseGapCard',
+            'omissaoDespesasPctCard', 'pure-sg1-legal', 'pure-sg2-legal', 'pure-verdict-basis',
+            'pure-iva23-sub', 'pure-irc-sub'
+        ];
+        analysisModules.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = showAnalysis ? 'block' : 'none';
+        });
+        
+        // Módulos de dados brutos (sempre visíveis se dados carregados)
+        const rawModules = [
+            'pureEvidenceSection', 'pureSaftModule', 'pureExtratosModule', 'pureDac7Module',
+            'pureFluxosNaoSujeitosModule'
+        ];
+        const showRaw = (window._unifedDataLoaded === true);
+        rawModules.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.style.display = showRaw ? 'block' : 'none';
+        });
+        
+        // Controlo específico do gráfico ATF
+        const atfCanvas = document.getElementById('atfChartCanvas');
+        if (atfCanvas) atfCanvas.style.display = showAnalysis ? 'block' : 'none';
+        
+        console.log(`[UNIFED] Visibilidade: análise=${showAnalysis}, dados brutos=${showRaw}`);
+    }
+    window.updateForensicModulesVisibility = updateForensicModulesVisibility;
+
+    // =========================================================================
+    // Funções auxiliares (forceRenderFix, correctRomanIndices, renderForensicCharts, etc.)
+    // =========================================================================
+    function forceRenderFix() {
+        const charts = document.querySelectorAll('.chart-section:not(#mainChartContainer):not(#pure-chart-container)');
+        charts.forEach(c => {
+            if (c.querySelector('canvas') || c.querySelector('.chart-placeholder')) {
+                c.style.display = 'block';
+                c.style.opacity = '1';
+            }
+        });
+        window.dispatchEvent(new Event('resize'));
+    }
+
     function correctRomanIndices() {
         const titles = document.querySelectorAll('#pureDashboard .pure-card-title span, .pure-card-title, .verdict-title');
         titles.forEach(el => {
@@ -1164,51 +1086,155 @@
     }
     window.correctRomanIndices = correctRomanIndices;
 
-    // =========================================================================
-    // Inicialização Principal com Re-init Hook e Listener de Eventos
-    // =========================================================================
-    (function() {
-        if (!window.UNIFED_INTERNAL) return;
-        const { data, fmt, set, syncMetrics, renderMatrix } = window.UNIFED_INTERNAL;
-        const { injectAuxiliaryBoxesCSS, injectMacroCard, updateAuxiliaryUI, forcePlatformReadOnly, removeZeroDac7Kpis, simulateEvidenceUpload, updateEvidenceCountersAndShow, executePendingAnalysis, ensureDemoDataLoaded } = window.UNIFED_INTERNAL;
+    function renderForensicCharts() {
+        if (typeof window.renderChart === 'function') window.renderChart();
+        if (typeof window.renderDiscrepancyChart === 'function') window.renderDiscrepancyChart();
+        console.log('[UNIFED] Gráficos renderizados com dados reais.');
+    }
+    window.renderForensicCharts = renderForensicCharts;
 
-        let _initializing = false;
-        let _dataLoaded = false;
+    // =========================================================================
+    // Geração de QR Code e funções de UI
+    // =========================================================================
+    function generateQRCode() {
+        const container = document.getElementById('qrcodeContainer');
+        if (!container) return;
+        container.innerHTML = '';
+        const hashFull = window.UNIFEDSystem?.masterHash || _PDF_CASE.masterHash;
+        const sessionShort = window.UNIFEDSystem?.sessionId ? window.UNIFEDSystem.sessionId.substring(0, 16) : 'N/A';
+        const qrData = `UNIFED|${sessionShort}|${hashFull}`;
+        if (typeof QRCode !== 'undefined') {
+            new QRCode(container, { text: qrData, width: 75, height: 75, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.L });
+        }
+        container.setAttribute('data-tooltip', 'Clique para verificar a cadeia de custódia completa');
+        container.onclick = () => {
+            if (typeof window.openCustodyChainModal === 'function') {
+                window.openCustodyChainModal();
+            } else {
+                console.warn('[UNIFED] openCustodyChainModal não disponível');
+            }
+        };
+    }
+    window.generateQRCode = generateQRCode;
 
-        function showClientIdentificationBlock() {
-            let block = document.getElementById('clientIdentificationBlock');
-            if (!block) {
-                const sidebarHeader = document.querySelector('.sidebar-header-fixed');
-                if (sidebarHeader) {
-                    sidebarHeader.id = 'clientIdentificationBlock';
-                    block = sidebarHeader;
-                } else {
-                    console.warn('[UNIFED] Elemento .sidebar-header-fixed não encontrado. O bloco de identificação não será exibido.');
-                    return;
+    function showClientIdentificationBlock() {
+        let block = document.getElementById('clientIdentificationBlock');
+        if (!block) {
+            const sidebarHeader = document.querySelector('.sidebar-header-fixed');
+            if (sidebarHeader) {
+                sidebarHeader.id = 'clientIdentificationBlock';
+                block = sidebarHeader;
+            } else {
+                console.warn('[UNIFED] Elemento .sidebar-header-fixed não encontrado.');
+                return;
+            }
+        }
+        const subjectHeader = document.getElementById('pure-subject-header');
+        if (subjectHeader) subjectHeader.style.display = 'block';
+    }
+
+    function syncSessionAndHash() {
+        const sys = window.UNIFEDSystem;
+        if (!sys) return;
+        const sessionEl = document.querySelector('#pure-session-id');
+        if (sessionEl && sys.sessionId) sessionEl.textContent = sys.sessionId;
+        const hashFullEl = document.getElementById('masterHashFull');
+        if (hashFullEl && sys.masterHash) hashFullEl.textContent = sys.masterHash;
+        const hashPrefixEl = document.querySelector('#pure-hash-prefix-verdict');
+        if (hashPrefixEl && sys.masterHash) hashPrefixEl.textContent = sys.masterHash.substring(0, 16).toUpperCase() + '...';
+        const sessionIdDisplay = document.getElementById('sessionIdDisplay');
+        if (sessionIdDisplay && sys.sessionId) sessionIdDisplay.textContent = sys.sessionId;
+    }
+
+    function forceDataPtVisibility() {
+        const style = document.createElement('style');
+        style.id = 'unifed-force-data-pt';
+        style.textContent = `
+            [data-pt], [data-en] { opacity: 1 !important; transition: opacity 0.1s ease; }
+            .pure-data-value, .pure-mono, .pure-atf-big, .pure-zc-val, .pure-sg-val, .pure-delta-value { opacity: 1 !important; }
+        `;
+        document.head.appendChild(style);
+        console.log('[UNIFED] CSS injection para visibilidade de data-pt/data-en aplicado.');
+    }
+
+    // =========================================================================
+    // Listeners dos botões principais (CASO REAL e EXECUTAR PERÍCIA)
+    // =========================================================================
+    function setupRealCaseButton() {
+        let targetButton = document.getElementById('demoModeBtn');
+        if (!targetButton) {
+            const buttons = document.querySelectorAll('button, .btn, [role="button"]');
+            for (let btn of buttons) {
+                if (btn.textContent.trim() === 'CASO REAL ANONIMIZADO') {
+                    targetButton = btn;
+                    break;
                 }
             }
-            const subjectHeader = document.getElementById('pure-subject-header');
-            if (subjectHeader) subjectHeader.style.display = 'block';
         }
-
-        function waitForPureDashboard() {
-            return new Promise((resolve) => {
-                if (document.getElementById('pureDashboard')) {
-                    resolve();
-                    return;
-                }
-                const observer = new MutationObserver((mutations, obs) => {
-                    if (document.getElementById('pureDashboard')) {
-                        obs.disconnect();
-                        resolve();
+        if (!targetButton) {
+            console.warn('[UNIFED] Botão "CASO REAL ANONIMIZADO" não encontrado. Listener genérico activado.');
+            document.body.addEventListener('click', async function(e) {
+                const el = e.target.closest('button, .btn, [role="button"]');
+                if (el && el.textContent.includes('CASO REAL ANONIMIZADO')) {
+                    e.preventDefault();
+                    if (window._unifedDataLoaded) return;
+                    try {
+                        if (typeof window._activatePurePanel === 'function') await window._activatePurePanel();
+                        await waitForPanel();
+                        if (typeof window.ensureDemoDataLoaded === 'function') await window.ensureDemoDataLoaded();
+                        if (window.UNIFEDSystem.loadAnonymizedRealCase) await window.UNIFEDSystem.loadAnonymizedRealCase();
+                        if (typeof window.correctRomanIndices === 'function') window.correctRomanIndices();
+                    } catch (err) {
+                        console.error('[UNIFED] Erro na ativação do caso real:', err);
                     }
-                });
-                observer.observe(document.body, { childList: true, subtree: true });
-                setTimeout(() => { observer.disconnect(); resolve(); }, 5000);
+                }
             });
+            return;
         }
+        if (targetButton.getAttribute('data-unifed-active') === 'true') return;
+        targetButton.addEventListener('click', async function(e) {
+            e.preventDefault();
+            if (window._unifedDataLoaded) return;
+            logAudit('Iniciando transição para Caso Real Anonimizado...', 'info');
+            try {
+                if (typeof window._activatePurePanel === 'function') await window._activatePurePanel();
+                await waitForPanel();
+                if (typeof window.ensureDemoDataLoaded === 'function') await window.ensureDemoDataLoaded();
+                if (window.UNIFEDSystem.loadAnonymizedRealCase) await window.UNIFEDSystem.loadAnonymizedRealCase();
+                if (typeof window.correctRomanIndices === 'function') window.correctRomanIndices();
+                logAudit('Interface harmonizada (Índices Romanos V-VII).', 'success');
+            } catch (err) {
+                console.error('[UNIFED] Erro na ativação do caso real:', err);
+            }
+        }, { capture: true });
+        targetButton.setAttribute('data-unifed-active', 'true');
+        console.log('[UNIFED] Listener associado ao botão "CASO REAL ANONIMIZADO".');
+    }
 
-        // Monkey-patching com flag atómica
+    function setupAnalyzeButton() {
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        if (!analyzeBtn) {
+            console.warn('[UNIFED] Botão #analyzeBtn não encontrado.');
+            return;
+        }
+        if (analyzeBtn.getAttribute('data-analyze-listener') === 'true') return;
+        analyzeBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            console.log('[UNIFED] Botão EXECUTAR PERÍCIA clicado — a executar análise pendente.');
+            if (typeof window.executePendingAnalysis === 'function') {
+                await window.executePendingAnalysis();
+            } else {
+                console.error('[UNIFED] executePendingAnalysis não está disponível');
+            }
+        });
+        analyzeBtn.setAttribute('data-analyze-listener', 'true');
+        console.log('[UNIFED] Listener associado ao botão "EXECUTAR PERÍCIA".');
+    }
+
+    // =========================================================================
+    // Monkey-patching de funções globais (updateDashboard, forceRevealSmokingGun)
+    // =========================================================================
+    (function patchGlobals() {
         if (typeof window.updateDashboard === 'function' && !window.updateDashboard._nexusHooked) {
             const _origUpdateDashboard = window.updateDashboard;
             window.updateDashboard = function() {
@@ -1219,14 +1245,13 @@
                 } finally {
                     window._isHydrating = false;
                 }
-                if (typeof syncMetrics === 'function') syncMetrics();
-                if (typeof renderMatrix === 'function') renderMatrix();
-                if (typeof updateAuxiliaryUI === 'function') updateAuxiliaryUI();
+                if (typeof window.UNIFED_INTERNAL?.syncMetrics === 'function') window.UNIFED_INTERNAL.syncMetrics();
+                if (typeof window.UNIFED_INTERNAL?.renderMatrix === 'function') window.UNIFED_INTERNAL.renderMatrix();
+                if (typeof window.UNIFED_INTERNAL?.updateAuxiliaryUI === 'function') window.UNIFED_INTERNAL.updateAuxiliaryUI();
                 console.log('[UNIFED] Re-hidratação do DOM concluída via Hook (updateDashboard).');
             };
             window.updateDashboard._nexusHooked = true;
         }
-
         if (typeof window.forceRevealSmokingGun === 'function' && !window.forceRevealSmokingGun._nexusHooked) {
             const _origForceReveal = window.forceRevealSmokingGun;
             window.forceRevealSmokingGun = function() {
@@ -1240,548 +1265,209 @@
             };
             window.forceRevealSmokingGun._nexusHooked = true;
         }
-
-        function initializeCoreDashboard() {
-            if (_initializing) {
-                console.warn('[UNIFED] Inicialização já em curso, ignorando chamada duplicada.');
-                return;
-            }
-            _initializing = true;
-            waitForPureDashboard().then(() => {
-                setTimeout(() => {
-                    if (typeof window.injectAuxiliaryHelperBoxes === 'function') window.injectAuxiliaryHelperBoxes();
-                    if (typeof syncMetrics === 'function') syncMetrics();
-                    if (typeof renderMatrix === 'function') renderMatrix();
-                    if (typeof injectMacroCard === 'function') injectMacroCard();
-                    if (typeof injectAuxiliaryBoxesCSS === 'function') injectAuxiliaryBoxesCSS();
-                    if (typeof forcePlatformReadOnly === 'function') forcePlatformReadOnly();
-                    // REMOVIDA a chamada a removeZeroDac7Kpis() para manter os cards DAC7 visíveis
-                    // if (typeof removeZeroDac7Kpis === 'function') removeZeroDac7Kpis();  // ← REMOVER ESTA LINHA.
-                    if (document.getElementById('pureDashboard')) {
-                        if (typeof updateAuxiliaryUI === 'function') updateAuxiliaryUI();
-                        document.querySelectorAll('.chart-section').forEach(section => { 
-                            section.style.display = 'block'; 
-                            section.style.height = 'auto';
-                        });
-                        if (typeof Chart === 'undefined') {
-                            document.querySelectorAll('.chart-section').forEach(section => section.style.display = 'none');
-                            console.warn('[UNIFED] Chart.js não disponível – secções de gráfico ocultadas.');
-                        }
-                    }
-                    console.log('[UNIFED] Core dashboard inicializado com sucesso após injeção do painel.');
-                    _initializing = false;
-                }, 100);
-            }).catch(err => {
-                console.warn('[UNIFED] Erro ao aguardar #pureDashboard', err);
-                _initializing = false;
-            });
-        }
-
-        async function initializeFullWithEvidence() {
-            if (_dataLoaded) {
-                console.log('[UNIFED] Dados já carregados, a saltar nova simulação.');
-                return;
-            }
-            console.log('[UNIFED] A carregar evidências do caso real...');
-            await waitForPureDashboard();
-            try {
-                await simulateEvidenceUpload();
-                _dataLoaded = true;
-                updateEvidenceCountersAndShow();
-                if (typeof window.injectAuxiliaryHelperBoxes === 'function') window.injectAuxiliaryHelperBoxes();
-                if (typeof updateAuxiliaryUI === 'function') updateAuxiliaryUI();
-                
-                if (typeof window.UNIFED_INTERNAL.syncMetrics === 'function') {
-                    window.UNIFED_INTERNAL.syncMetrics();
-                }
-                if (window.UNIFEDSystem && window.UNIFEDSystem.masterHash) {
-                    const hashEl = document.getElementById('masterHashValue');
-                    if (hashEl) hashEl.textContent = window.UNIFEDSystem.masterHash;
-                    if (typeof generateQRCode === 'function') generateQRCode();
-                }
-
-                showClientIdentificationBlock();
-                // Removidas chamadas prematuras de gráficos e forceRevealSmokingGun
-                console.log('[UNIFED] ✅ Evidências carregadas e secção revelada. Aguardando execução da perícia.');
-            } catch (err) {
-                console.error('[UNIFED] Falha ao carregar evidências:', err);
-            }
-        }
-
-        // =========================================================================
-        // FUNÇÃO CORRIGIDA: loadAnonymizedRealCase sem renderizações antecipadas
-        // =========================================================================
-        if (window.UNIFEDSystem) {
-            window.UNIFEDSystem.loadAnonymizedRealCase = async function() {
-                await initializeFullWithEvidence();
-                // As três linhas seguintes foram REMOVIDAS para evitar gráficos/módulos antes da perícia:
-                // if (typeof window.renderChart === 'function') window.renderChart();
-                // if (typeof window.renderDiscrepancyChart === 'function') window.renderDiscrepancyChart();
-                // if (typeof window.forceRevealSmokingGun === 'function') window.forceRevealSmokingGun();
-                if (typeof window.correctRomanIndices === 'function') window.correctRomanIndices();
-                console.info('[UNIFED-FIX] Data Hydration concluída (gráficos e módulos aguardam perícia).');
-            };
-        }
-
-        // =========================================================================
-        // Listener para o botão "Executar Perícia" (analyzeBtn) - CORRIGIDO COM FALLBACKS
-        // =========================================================================
-        function setupAnalyzeButton() {
-            const analyzeBtn = document.getElementById('analyzeBtn');
-            if (!analyzeBtn) {
-                console.warn('[UNIFED] Botão #analyzeBtn não encontrado.');
-                return;
-            }
-            if (analyzeBtn.getAttribute('data-analyze-listener') === 'true') return;
-            
-            analyzeBtn.addEventListener('click', async (e) => {
-                e.preventDefault();
-                console.log('[UNIFED] Botão EXECUTAR PERÍCIA clicado — a executar análise pendente.');
-                
-                let loadFn = window.ensureDemoDataLoaded;
-                if (typeof loadFn !== 'function' && window.UNIFED_INTERNAL && typeof window.UNIFED_INTERNAL.ensureDemoDataLoaded === 'function') {
-                    loadFn = window.UNIFED_INTERNAL.ensureDemoDataLoaded;
-                    window.ensureDemoDataLoaded = loadFn;
-                }
-                let execFn = window.executePendingAnalysis;
-                if (typeof execFn !== 'function' && window.UNIFED_INTERNAL && typeof window.UNIFED_INTERNAL.executePendingAnalysis === 'function') {
-                    execFn = window.UNIFED_INTERNAL.executePendingAnalysis;
-                    window.executePendingAnalysis = execFn;
-                }
-                
-                if (typeof loadFn === 'function') {
-                    await loadFn();
-                } else {
-                    console.error('[UNIFED] Impossível carregar dados do caso real. A perícia não será executada.');
-                    return;
-                }
-                
-                if (typeof execFn === 'function') {
-                    await execFn();
-                } else {
-                    console.error('[UNIFED] executePendingAnalysis não está disponível');
-                }
-            });
-            analyzeBtn.setAttribute('data-analyze-listener', 'true');
-            console.log('[UNIFED] Listener associado ao botão "EXECUTAR PERÍCIA" (#analyzeBtn).');
-        }
-
-        function setupRealCaseButton() {
-            let targetButton = document.getElementById('demoModeBtn');
-            if (!targetButton) {
-                const buttons = document.querySelectorAll('button, .btn, [role="button"]');
-                for (let btn of buttons) {
-                    if (btn.textContent.trim() === 'CASO REAL ANONIMIZADO') {
-                        targetButton = btn;
-                        break;
-                    }
-                }
-            }
-            if (!targetButton) {
-                console.warn('[UNIFED] Botão "CASO REAL ANONIMIZADO" não encontrado. Listener genérico activado.');
-                document.body.addEventListener('click', async function(e) {
-                    const el = e.target.closest('button, .btn, [role="button"]');
-                    if (el && el.textContent.includes('CASO REAL ANONIMIZADO')) {
-                        e.preventDefault();
-                        if (_initializing) return;
-                        try {
-                            if (typeof window._activatePurePanel === 'function') {
-                                await window._activatePurePanel();
-                            }
-                            await waitForPureDashboard();
-                            initializeCoreDashboard();
-                            await new Promise(r => setTimeout(r, 100));
-                            // CORREÇÃO DEFENSIVA: verificar se a função existe
-                            if (typeof ensureDemoDataLoaded !== 'function') {
-                                console.error('[UNIFED] ensureDemoDataLoaded não está disponível. Recarregue a página.');
-                                return;
-                            }
-                            await ensureDemoDataLoaded();
-                            if (window.UNIFEDSystem.loadAnonymizedRealCase) {
-                                await window.UNIFEDSystem.loadAnonymizedRealCase();
-                            } else {
-                                await initializeFullWithEvidence();
-                            }
-                            if (typeof window.correctRomanIndices === 'function') {
-                                window.correctRomanIndices();
-                            }
-                        } catch (err) {
-                            console.error('[UNIFED] Erro na ativação do caso real:', err);
-                        }
-                    }
-                });
-                return;
-            }
-
-            if (targetButton.getAttribute('data-unifed-active') === 'true') return;
-
-            targetButton.addEventListener('click', async function(e) {
-                e.preventDefault();
-                if (_initializing) return;
-                logAudit('Iniciando transição para Caso Real Anonimizado...', 'info');
-                
-                // Garantir que a função está disponível
-                let loadFn = window.ensureDemoDataLoaded;
-                if (typeof loadFn !== 'function' && window.UNIFED_INTERNAL && typeof window.UNIFED_INTERNAL.ensureDemoDataLoaded === 'function') {
-                    loadFn = window.UNIFED_INTERNAL.ensureDemoDataLoaded;
-                    window.ensureDemoDataLoaded = loadFn;
-                }
-                if (typeof loadFn !== 'function') {
-                    console.error('[UNIFED] ensureDemoDataLoaded não disponível mesmo após tentativa. Abortando.');
-                    return;
-                }
-                
-                try {
-                    if (typeof window._activatePurePanel === 'function') {
-                        await window._activatePurePanel();
-                    }
-                    await waitForPureDashboard();
-                    initializeCoreDashboard();
-                    await new Promise(r => setTimeout(r, 100));
-                    await loadFn();
-                    if (window.UNIFEDSystem.loadAnonymizedRealCase) {
-                        await window.UNIFEDSystem.loadAnonymizedRealCase();
-                    } else {
-                        await initializeFullWithEvidence();
-                    }
-                    if (typeof window.correctRomanIndices === 'function') {
-                        window.correctRomanIndices();
-                    }
-                    logAudit('Interface harmonizada (Índices Romanos V-VII).', 'success');
-                } catch (err) {
-                    console.error('[UNIFED] Erro na ativação do caso real:', err);
-                }
-            }, { capture: true });
-
-            targetButton.setAttribute('data-unifed-active', 'true');
-            console.log('[UNIFED] Listener associado ao botão "CASO REAL ANONIMIZADO" com espera assíncrona e verificação defensiva.');
-        }
-
-        function generateQRCode() {
-            const container = document.getElementById('qrcodeContainer');
-            if (!container) return;
-            container.innerHTML = '';
-            const hashFull = window.UNIFEDSystem?.masterHash || 'HASH_INDISPONIVEL';
-            const sessionShort = window.UNIFEDSystem?.sessionId ? window.UNIFEDSystem.sessionId.substring(0, 16) : 'N/A';
-            const qrData = `UNIFED|${sessionShort}|${hashFull}`;
-            if (typeof QRCode !== 'undefined') {
-                new QRCode(container, { text: qrData, width: 75, height: 75, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.L });
-            }
-            container.setAttribute('data-tooltip', 'Clique para verificar a cadeia de custódia completa');
-            container.onclick = () => {
-                if (typeof window.openCustodyChainModal === 'function') {
-                    window.openCustodyChainModal();
-                } else {
-                    console.warn('[UNIFED] openCustodyChainModal não disponível');
-                }
-            };
-        }
-        window.generateQRCode = generateQRCode;
-
-        // =========================================================================
-        // FUNÇÃO CORRIGIDA: setupEventDrivenHydration – aguarda carregamento do script
-        // =========================================================================
-        function setupEventDrivenHydration() {
-            if (typeof window.forensicDataSynchronization === 'function') {
-                window.forensicDataSynchronization();
-            } else {
-                console.log('[UNIFED] forensicDataSynchronization será carregado posteriormente.');
-                // Aguardar o evento de carregamento do script
-                window.addEventListener('load', function() {
-                    if (typeof window.forensicDataSynchronization === 'function') {
-                        window.forensicDataSynchronization();
-                    }
-                });
-            }
-            window.addEventListener('UNIFED_ANALYSIS_COMPLETE', function(event) {
-                console.log('[UNIFED] Evento UNIFED_ANALYSIS_COMPLETE recebido (fallback).', event.detail);
-                if (typeof window.forensicDataSynchronization === 'function') {
-                    window.forensicDataSynchronization();
-                }
-                if (typeof syncMetrics === 'function') syncMetrics();
-                if (typeof renderMatrix === 'function') renderMatrix();
-                if (typeof updateAuxiliaryUI === 'function') updateAuxiliaryUI();
-                if (typeof window.forceRevealSmokingGun === 'function') window.forceRevealSmokingGun();
-            });
-            console.log('[UNIFED] Listener para UNIFED_ANALYSIS_COMPLETE registado como fallback.');
-        }
-
-        function forceDataPtVisibility() {
-            const style = document.createElement('style');
-            style.id = 'unifed-force-data-pt';
-            style.textContent = `
-                [data-pt], [data-en] {
-                    opacity: 1 !important;
-                    transition: opacity 0.1s ease;
-                }
-                .pure-data-value, .pure-mono, .pure-atf-big, .pure-zc-val, .pure-sg-val, .pure-delta-value {
-                    opacity: 1 !important;
-                }
-            `;
-            document.head.appendChild(style);
-            console.log('[UNIFED] CSS injection para visibilidade de data-pt/data-en aplicado.');
-        }
-
-        function syncSessionAndHash() {
-            const sys = window.UNIFEDSystem;
-            if (!sys) return;
-            const sessionEl = document.querySelector('#pure-session-id');
-            if (sessionEl && sys.sessionId) sessionEl.textContent = sys.sessionId;
-            const hashFullEl = document.getElementById('masterHashFull');
-            if (hashFullEl && sys.masterHash) hashFullEl.textContent = sys.masterHash;
-            const hashPrefixEl = document.querySelector('#pure-hash-prefix-verdict');
-            if (hashPrefixEl && sys.masterHash) hashPrefixEl.textContent = sys.masterHash.substring(0, 16).toUpperCase() + '...';
-            const sessionIdDisplay = document.getElementById('sessionIdDisplay');
-            if (sessionIdDisplay && sys.sessionId) sessionIdDisplay.textContent = sys.sessionId;
-        }
-
-        if (window.UNIFED_INTERNAL && window.UNIFED_INTERNAL.syncMetrics) {
-            const origSync = window.UNIFED_INTERNAL.syncMetrics;
-            window.UNIFED_INTERNAL.syncMetrics = function() {
-                origSync.apply(this, arguments);
-                syncSessionAndHash();
-            };
-        } else {
-            window.addEventListener('UNIFED_CORE_READY', syncSessionAndHash);
-        }
-
-        setupEventDrivenHydration();
-        setupRealCaseButton();
-        setupAnalyzeButton();
-        
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => {
-                initializeCoreDashboard();
-                forceDataPtVisibility();
-                if (typeof populateAnoFiscal === 'function') populateAnoFiscal();
-                if (typeof populateYears === 'function') populateYears();
-            });
-        } else {
-            initializeCoreDashboard();
-            forceDataPtVisibility();
-            if (typeof populateAnoFiscal === 'function') populateAnoFiscal();
-            if (typeof populateYears === 'function') populateYears();
-        }
     })();
 
     // =========================================================================
-    // Camada 7 – State-Driven Hydration + Event-Driven Uncloaking
+    // Inicialização do Core Dashboard e carregamento de evidências
     // =========================================================================
-    (function _installStateHydration() {
-        window.revealMetadata = function() {
-            const sys = window.UNIFEDSystem;
-            const _sessionId = (sys && sys.sessionId)
-                ? sys.sessionId
-                : (window.UNIFED_INTERNAL && window.UNIFED_INTERNAL.data)
-                    ? window.UNIFED_INTERNAL.data.sessionId
-                    : 'UNIFED-SESSION';
-            const _hash = (sys && sys.masterHash)
-                ? sys.masterHash
-                : '2A38423FED220D681D86E959F2C34F993BA71FCE9B92791199453B41E23A63E5';
-
-            document.querySelectorAll('#pure-session-id').forEach(el => { el.textContent = _sessionId; });
-            document.querySelectorAll('#pure-hash-prefix').forEach(el => { el.textContent = _hash.substring(0, 12).toUpperCase() + '...'; });
-
-            const tsaEl = document.getElementById('pure-tsa-anchor');
-            if (tsaEl) {
-                tsaEl.innerHTML = 'Selo de Tempo RFC 3161: <span style="color:#00e5ff;font-weight:bold;">VALIDADO VIA FREETSA.ORG</span>';
+    function waitForPureDashboard() {
+        return new Promise((resolve) => {
+            if (document.getElementById('pureDashboard')) {
+                resolve();
+                return;
             }
-            document.querySelectorAll('.pure-subject-header, #pure-tsa-anchor').forEach(el => {
-                el.classList.add('forensic-revealed');
-            });
-            console.log('[UNIFED] Estado 1 (METADATA): hidratação de metadados concluída.');
-        };
-
-        window.uncloakForensicData = function() {
-            if (typeof window.UNIFED_INTERNAL !== 'undefined') {
-                if (typeof window.UNIFED_INTERNAL.syncMetrics === 'function')   window.UNIFED_INTERNAL.syncMetrics();
-                if (typeof window.UNIFED_INTERNAL.renderMatrix === 'function')  window.UNIFED_INTERNAL.renderMatrix();
-                if (typeof window.UNIFED_INTERNAL.updateAuxiliaryUI === 'function') window.UNIFED_INTERNAL.updateAuxiliaryUI();
-            }
-            document.querySelectorAll(
-                '.pure-data-value, .pure-delta-value, .pure-atf-big, ' +
-                '.smoking-gun-module, .pure-sg-val, [data-pt], [data-en]'
-            ).forEach(el => { el.classList.add('forensic-revealed'); });
-
-            window.dispatchEvent(new CustomEvent('UNIFED_EXECUTE_PERITIA', {
-                detail: {
-                    timestamp:  new Date().toISOString(),
-                    masterHash: '2A38423FED220D681D86E959F2C34F993BA71FCE9B92791199453B41E23A63E5'
+            const observer = new MutationObserver((mutations, obs) => {
+                if (document.getElementById('pureDashboard')) {
+                    obs.disconnect();
+                    resolve();
                 }
-            }));
-            console.log('[UNIFED] Estado 2 (PERITIA): uncloaking atómico concluído — UNIFED_EXECUTE_PERITIA disparado.');
-        };
-
-        function _setupTriggers() {
-            const btnCasoReal = document.getElementById('demoModeBtn')
-                || document.querySelector('[data-action="load-caso-real"]')
-                || document.getElementById('btnCasoReal');
-            if (btnCasoReal && !btnCasoReal.getAttribute('data-state-hydration-1')) {
-                btnCasoReal.addEventListener('click', window.revealMetadata);
-                btnCasoReal.setAttribute('data-state-hydration-1', '1');
-            }
-
-            window.addEventListener('UNIFED_ANALYSIS_COMPLETE', function _onAnalysisComplete(evt) {
-                console.log('[UNIFED] UNIFED_ANALYSIS_COMPLETE recebido. A iniciar uncloaking atómico...', (evt && evt.detail) || '');
-                window.uncloakForensicData();
             });
-
-            const btnAnalyze = document.getElementById('analyzeBtn')
-                || document.querySelector('[data-action="executar-pericia"]')
-                || document.getElementById('btnExecutarPericia');
-            if (btnAnalyze && !btnAnalyze.getAttribute('data-state-hydration-2')) {
-                btnAnalyze.addEventListener('click', function _analyzeClickFallback() {
-                    Promise.resolve().then(function() {
-                        if (!window._unifedUncloakDone) window.uncloakForensicData();
-                    });
-                });
-                btnAnalyze.setAttribute('data-state-hydration-2', '1');
-            }
-        }
-
-        if (document.readyState === 'complete' || document.readyState === 'interactive') {
-            _setupTriggers();
-        } else {
-            window.addEventListener('load', _setupTriggers);
-        }
-        console.log('[UNIFED] Camada 7 (State-Driven Hydration + Event-Driven Uncloaking): OK.');
-    })();
-
-    // =========================================================================
-    // FUNÇÃO GLOBAL PARA RENDERIZAR GRÁFICOS SOB DEMANDA
-    // =========================================================================
-    function renderForensicCharts() {
-        if (typeof window.renderChart === 'function') {
-            window.renderChart();
-        }
-        if (typeof window.renderDiscrepancyChart === 'function') {
-            window.renderDiscrepancyChart();
-        }
-        console.log('[UNIFED] Gráficos renderizados com dados reais.');
-    }
-    window.renderForensicCharts = renderForensicCharts;
-
-    // =========================================================================
-    // CONTROLE DE VISIBILIDADE DOS MÓDULOS FORENSES (CORRIGIDO)
-    // =========================================================================
-    function updateForensicModulesVisibility(show) {
-        const modules = [
-            'pureATFCard',           // ATF
-            'pureZonaCinzentaCard',  // Zona Cinzenta
-            'pureMacroCard',         // Macro (Risco Sistémico)
-            'pureTriangulationCard', // Triangulação Financeira
-            'card-asfixia',          // Risco de Asfixia Financeira
-            'mainChartContainer',    // Gráfico principal (despesas vs receitas)
-            'mainDiscrepancyChartContainer', // Gráfico de discrepâncias
-            'pure-chart-container',  // Container do gráfico de discrepâncias (fallback)
-            'gapConciliacaoC1'       // Gap de reconciliação C1
-        ];
-        modules.forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.style.display = show ? 'block' : 'none';
+            observer.observe(document.body, { childList: true, subtree: true });
+            setTimeout(() => { observer.disconnect(); resolve(); }, 5000);
         });
-        
-        // Controlar o canvas do gráfico ATF individualmente
-        const atfCanvas = document.getElementById('atfChartCanvas');
-        if (atfCanvas) {
-            atfCanvas.style.display = show ? 'block' : 'none';
-        }
-        
-        // Controlar os containers dos gráficos
-        const mainChartContainer = document.getElementById('mainChartContainer');
-        if (mainChartContainer) mainChartContainer.style.display = show ? 'block' : 'none';
-        
-        const discChartContainer = document.getElementById('pure-chart-container');
-        if (discChartContainer) discChartContainer.style.display = show ? 'block' : 'none';
-        
-        // Gap de conciliação C1
-        const gapEl = document.getElementById('gapConciliacaoC1');
-        if (gapEl) gapEl.style.display = show ? 'block' : 'none';
-        
-        // Se for para mostrar e houver dados reais, atualizar o valor do gap
-        if (show && window.UNIFEDSystem && window.UNIFEDSystem.analysis && window.UNIFEDSystem.analysis.crossings) {
-            const gapValue = window.UNIFEDSystem.analysis.crossings.discrepanciaSaftVsDac7 || 0;
-            const gapSpan = document.getElementById('gapC1Value');
-            if (gapSpan) {
-                const fmt = window.UNIFED_INTERNAL?.fmt || ((v) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v));
-                gapSpan.textContent = fmt(gapValue);
-            }
-        }
-        
-        console.log(`[UNIFED] Visibilidade dos módulos forenses: ${show ? 'mostrar' : 'ocultar'}`);
     }
-    window.updateForensicModulesVisibility = updateForensicModulesVisibility;
+
+    let _initializing = false;
+    let _dataLoaded = false;
+
+    function initializeCoreDashboard() {
+        if (_initializing) {
+            console.warn('[UNIFED] Inicialização já em curso, ignorando chamada duplicada.');
+            return;
+        }
+        _initializing = true;
+        waitForPureDashboard().then(() => {
+            setTimeout(() => {
+                if (typeof window.injectAuxiliaryHelperBoxes === 'function') window.injectAuxiliaryHelperBoxes();
+                if (typeof window.UNIFED_INTERNAL.syncMetrics === 'function') window.UNIFED_INTERNAL.syncMetrics();
+                if (typeof window.UNIFED_INTERNAL.renderMatrix === 'function') window.UNIFED_INTERNAL.renderMatrix();
+                if (typeof window.UNIFED_INTERNAL.injectMacroCard === 'function') window.UNIFED_INTERNAL.injectMacroCard();
+                if (typeof window.UNIFED_INTERNAL.injectAuxiliaryBoxesCSS === 'function') window.UNIFED_INTERNAL.injectAuxiliaryBoxesCSS();
+                if (typeof window.UNIFED_INTERNAL.forcePlatformReadOnly === 'function') window.UNIFED_INTERNAL.forcePlatformReadOnly();
+                if (document.getElementById('pureDashboard')) {
+                    if (typeof window.UNIFED_INTERNAL.updateAuxiliaryUI === 'function') window.UNIFED_INTERNAL.updateAuxiliaryUI();
+                    document.querySelectorAll('.chart-section').forEach(section => { 
+                        section.style.display = 'block'; 
+                        section.style.height = 'auto';
+                    });
+                    if (typeof Chart === 'undefined') {
+                        document.querySelectorAll('.chart-section').forEach(section => section.style.display = 'none');
+                        console.warn('[UNIFED] Chart.js não disponível – secções de gráfico ocultadas.');
+                    }
+                }
+                console.log('[UNIFED] Core dashboard inicializado com sucesso após injeção do painel.');
+                _initializing = false;
+            }, 100);
+        }).catch(err => {
+            console.warn('[UNIFED] Erro ao aguardar #pureDashboard', err);
+            _initializing = false;
+        });
+    }
+
+    async function initializeFullWithEvidence() {
+        if (_dataLoaded) {
+            console.log('[UNIFED] Dados já carregados, a saltar nova simulação.');
+            return;
+        }
+        console.log('[UNIFED] A carregar evidências do caso real...');
+        await waitForPureDashboard();
+        try {
+            await window.UNIFED_INTERNAL.simulateEvidenceUpload();
+            _dataLoaded = true;
+            window.UNIFED_INTERNAL.updateEvidenceCountersAndShow();
+            if (typeof window.injectAuxiliaryHelperBoxes === 'function') window.injectAuxiliaryHelperBoxes();
+            if (typeof window.UNIFED_INTERNAL.updateAuxiliaryUI === 'function') window.UNIFED_INTERNAL.updateAuxiliaryUI();
+            if (typeof window.UNIFED_INTERNAL.syncMetrics === 'function') window.UNIFED_INTERNAL.syncMetrics();
+            if (window.UNIFEDSystem && window.UNIFEDSystem.masterHash) {
+                const hashEl = document.getElementById('masterHashValue');
+                if (hashEl) hashEl.textContent = window.UNIFEDSystem.masterHash;
+                if (typeof generateQRCode === 'function') generateQRCode();
+            }
+            showClientIdentificationBlock();
+            console.log('[UNIFED] ✅ Evidências carregadas e secção revelada. Aguardando execução da perícia.');
+        } catch (err) {
+            console.error('[UNIFED] Falha ao carregar evidências:', err);
+        }
+    }
+
+    if (window.UNIFEDSystem) {
+        window.UNIFEDSystem.loadAnonymizedRealCase = async function() {
+            await initializeFullWithEvidence();
+            if (typeof window.correctRomanIndices === 'function') window.correctRomanIndices();
+            console.info('[UNIFED-FIX] Data Hydration concluída (gráficos e módulos aguardam perícia).');
+        };
+    }
 
     // =========================================================================
-    // Função para activar todos os botões (adicione antes de forceFinalState)
+    // Event-driven hydration e state uncloaking
+    // =========================================================================
+    function setupEventDrivenHydration() {
+        if (typeof window.forensicDataSynchronization === 'function') {
+            window.forensicDataSynchronization();
+        } else {
+            console.log('[UNIFED] forensicDataSynchronization será carregado posteriormente.');
+            window.addEventListener('load', function() {
+                if (typeof window.forensicDataSynchronization === 'function') window.forensicDataSynchronization();
+            });
+        }
+        window.addEventListener('UNIFED_ANALYSIS_COMPLETE', function(event) {
+            console.log('[UNIFED] Evento UNIFED_ANALYSIS_COMPLETE recebido (fallback).', event.detail);
+            if (typeof window.forensicDataSynchronization === 'function') window.forensicDataSynchronization();
+            if (typeof window.UNIFED_INTERNAL.syncMetrics === 'function') window.UNIFED_INTERNAL.syncMetrics();
+            if (typeof window.UNIFED_INTERNAL.renderMatrix === 'function') window.UNIFED_INTERNAL.renderMatrix();
+            if (typeof window.UNIFED_INTERNAL.updateAuxiliaryUI === 'function') window.UNIFED_INTERNAL.updateAuxiliaryUI();
+            if (typeof window.forceRevealSmokingGun === 'function') window.forceRevealSmokingGun();
+        });
+        console.log('[UNIFED] Listener para UNIFED_ANALYSIS_COMPLETE registado como fallback.');
+    }
+
+    window.revealMetadata = function() {
+        const sys = window.UNIFEDSystem;
+        const _sessionId = (sys && sys.sessionId) ? sys.sessionId : _PDF_CASE.sessionId;
+        const _hash = (sys && sys.masterHash) ? sys.masterHash : _PDF_CASE.masterHash;
+        document.querySelectorAll('#pure-session-id').forEach(el => { el.textContent = _sessionId; });
+        document.querySelectorAll('#pure-hash-prefix').forEach(el => { el.textContent = _hash.substring(0, 12).toUpperCase() + '...'; });
+        const tsaEl = document.getElementById('pure-tsa-anchor');
+        if (tsaEl) {
+            tsaEl.innerHTML = 'Selo de Tempo RFC 3161: <span style="color:#00e5ff;font-weight:bold;">VALIDADO VIA FREETSA.ORG</span>';
+        }
+        document.querySelectorAll('.pure-subject-header, #pure-tsa-anchor').forEach(el => { el.classList.add('forensic-revealed'); });
+        console.log('[UNIFED] Estado 1 (METADATA): hidratação de metadados concluída.');
+    };
+
+    window.uncloakForensicData = function() {
+        if (typeof window.UNIFED_INTERNAL !== 'undefined') {
+            if (typeof window.UNIFED_INTERNAL.syncMetrics === 'function') window.UNIFED_INTERNAL.syncMetrics();
+            if (typeof window.UNIFED_INTERNAL.renderMatrix === 'function') window.UNIFED_INTERNAL.renderMatrix();
+            if (typeof window.UNIFED_INTERNAL.updateAuxiliaryUI === 'function') window.UNIFED_INTERNAL.updateAuxiliaryUI();
+        }
+        document.querySelectorAll('.pure-data-value, .pure-delta-value, .pure-atf-big, .smoking-gun-module, .pure-sg-val, [data-pt], [data-en]').forEach(el => { el.classList.add('forensic-revealed'); });
+        window.dispatchEvent(new CustomEvent('UNIFED_EXECUTE_PERITIA', { detail: { timestamp: new Date().toISOString(), masterHash: _PDF_CASE.masterHash } }));
+        console.log('[UNIFED] Estado 2 (PERITIA): uncloaking atómico concluído — UNIFED_EXECUTE_PERITIA disparado.');
+    };
+
+    function _setupTriggers() {
+        const btnCasoReal = document.getElementById('demoModeBtn') || document.querySelector('[data-action="load-caso-real"]');
+        if (btnCasoReal && !btnCasoReal.getAttribute('data-state-hydration-1')) {
+            btnCasoReal.addEventListener('click', window.revealMetadata);
+            btnCasoReal.setAttribute('data-state-hydration-1', '1');
+        }
+        window.addEventListener('UNIFED_ANALYSIS_COMPLETE', function _onAnalysisComplete(evt) {
+            console.log('[UNIFED] UNIFED_ANALYSIS_COMPLETE recebido. A iniciar uncloaking atómico...', (evt && evt.detail) || '');
+            window.uncloakForensicData();
+        });
+        const btnAnalyze = document.getElementById('analyzeBtn') || document.querySelector('[data-action="executar-pericia"]');
+        if (btnAnalyze && !btnAnalyze.getAttribute('data-state-hydration-2')) {
+            btnAnalyze.addEventListener('click', function _analyzeClickFallback() {
+                Promise.resolve().then(function() { if (!window._unifedUncloakDone) window.uncloakForensicData(); });
+            });
+            btnAnalyze.setAttribute('data-state-hydration-2', '1');
+        }
+    }
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        _setupTriggers();
+    } else {
+        window.addEventListener('load', _setupTriggers);
+    }
+
+    // =========================================================================
+    // Activação final (forçar botões, remover splash, etc.)
     // =========================================================================
     function forceEnableAllButtons() {
-        const buttonIds = [
-            'analyzeBtn', 'exportPDFBtn', 'exportJSONBtn', 'resetBtn', 'clearConsoleBtn',
-            'exportDOCXBtn', 'atfModalBtn', 'demoModeBtn', 'registerClientBtnFixed',
-            'openEvidenceModalBtn', 'forensicWipeBtn', 'custodyChainTriggerBtn'
-        ];
-        buttonIds.forEach(id => {
-            const btn = document.getElementById(id);
-            if (btn) btn.disabled = false;
-        });
-        document.querySelectorAll('.btn-tool, .btn-tool-pure, .btn-forensic, .evidence-management-btn-solid').forEach(btn => {
-            btn.disabled = false;
-        });
+        const buttonIds = ['analyzeBtn', 'exportPDFBtn', 'exportJSONBtn', 'resetBtn', 'clearConsoleBtn', 'exportDOCXBtn', 'atfModalBtn', 'demoModeBtn', 'registerClientBtnFixed', 'openEvidenceModalBtn', 'forensicWipeBtn', 'custodyChainTriggerBtn'];
+        buttonIds.forEach(id => { const btn = document.getElementById(id); if (btn) btn.disabled = false; });
+        document.querySelectorAll('.btn-tool, .btn-tool-pure, .btn-forensic, .evidence-management-btn-solid').forEach(btn => { btn.disabled = false; });
         console.log('[UNIFED] Todos os botões foram forçados a ativo.');
     }
 
-    // =========================================================================
-    // FORCE FINAL STATE (sem remoção automática do splash)
-    // Esta função será chamada APENAS quando o utilizador clicar no botão "INICIAR"
-    // =========================================================================
     async function forceFinalState() {
         try {
-            await loadPanelHTML();      // Injeção assíncrona
-            await waitForPanel();       // Garantia de presença no DOM
+            await loadPanelHTML();
+            await waitForPanel();
 
-            // =========================================================================
-            // RETIFICAÇÃO: Garantir que a SESSÃO aparece preenchida
-            // =========================================================================
-            // Garantir que a sessão tem um ID válido
-            if (!window.UNIFEDSystem) {
-                window.UNIFEDSystem = {};
-            }
+            if (!window.UNIFEDSystem) window.UNIFEDSystem = {};
             if (!window.UNIFEDSystem.sessionId) {
-                window.UNIFEDSystem.sessionId = 'UNIFED-' + Date.now().toString(36).toUpperCase() + '-' +
-                                                Math.random().toString(36).substring(2, 7).toUpperCase();
+                window.UNIFEDSystem.sessionId = 'UNIFED-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).substring(2, 7).toUpperCase();
             }
             const sessionSpan = document.getElementById('sessionIdDisplay');
             if (sessionSpan) sessionSpan.textContent = window.UNIFEDSystem.sessionId;
-            // Também atualizar outros elementos que possam exibir o sessionId
-            const otherSessionSpans = document.querySelectorAll('#pure-session-id');
-            otherSessionSpans.forEach(span => { if (span) span.textContent = window.UNIFEDSystem.sessionId; });
-            console.log('[UNIFED] Session ID garantido:', window.UNIFEDSystem.sessionId);
-            // =========================================================================
+            document.querySelectorAll('#pure-session-id').forEach(span => { if (span) span.textContent = window.UNIFEDSystem.sessionId; });
 
-            // 1. Desbloqueio de Visibilidade Global
             document.body.classList.add('forensic-revealed');
-
-            // 2. Remoção da Camada de Oclusão (Splash Screen) - SÓ AQUI
             const splash = document.getElementById('splashScreen');
             if (splash) {
                 splash.style.transition = 'opacity 0.5s ease-out';
                 splash.style.opacity = '0';
-                setTimeout(() => {
-                    splash.style.display = 'none';
-                }, 500);
+                setTimeout(() => { splash.style.display = 'none'; }, 500);
             }
 
-            // 3. Ativação Atómica do Wrapper e do Main Container
             const wrapper = document.getElementById('pureDashboardWrapper');
             if (wrapper) {
                 wrapper.classList.add('activated');
                 wrapper.style.display = 'block';
                 wrapper.style.opacity = '1';
                 wrapper.style.visibility = 'visible';
-
-                forceEnableAllButtons();  // <-- adicionar
-
+                forceEnableAllButtons();
                 const innerDashboard = document.getElementById('pureDashboard') || wrapper.querySelector('.pure-section');
                 if (innerDashboard) {
                     innerDashboard.classList.add('active');
@@ -1797,89 +1483,66 @@
                 mainContainer.style.display = 'block';
                 mainContainer.style.opacity = '1';
             }
-            
-            // ========== CORREÇÃO: Aguardar um ciclo para garantir que o DOM está estável ==========
+
             await new Promise(resolve => setTimeout(resolve, 50));
-            
-            // 4. Ocultar os módulos forenses (zero-knowledge state)
-            if (typeof updateForensicModulesVisibility === 'function') {
-                updateForensicModulesVisibility(false);
-            }
-            
-            // 5. Despacho de Eventos de Sincronização (apenas eventos, sem dados)
+            if (typeof updateForensicModulesVisibility === 'function') updateForensicModulesVisibility(false);
+
             window.dispatchEvent(new CustomEvent('UNIFED_CORE_READY'));
-            window.dispatchEvent(new CustomEvent('UNIFED_ANALYSIS_COMPLETE', { 
-                detail: { status: 'READY', masterHash: window.activeForensicSession?.masterHash || _PDF_CASE.masterHash } 
-            }));
+            window.dispatchEvent(new CustomEvent('UNIFED_ANALYSIS_COMPLETE', { detail: { status: 'READY', masterHash: window.activeForensicSession?.masterHash || _PDF_CASE.masterHash } }));
 
             console.log('[PERÍCIA] Sistema desbloqueado: Splash removido, Dashboard ativado (zero‑knowledge).');
         } catch (err) {
             console.error('[ERRO FORENSE] Falha na transição de estado:', err);
         }
     }
-
-    // Expor globalmente para que o botão "INICIAR" a possa chamar
     window.forceFinalState = forceFinalState;
 
-    // =========================================================================
-    // CORREÇÃO: Adiciona o listener ao botão "INICIAR METODOLOGIA" (#startSessionBtn)
-    // =========================================================================
     function setupIniciarButton() {
         const startBtn = document.getElementById('startSessionBtn');
-        if (startBtn) {
-            if (startBtn.getAttribute('data-iniciar-listener') === 'true') return;
-            
+        if (startBtn && !startBtn.getAttribute('data-iniciar-listener')) {
             startBtn.addEventListener('click', async (e) => {
                 e.preventDefault();
-                console.log('[UNIFED] Botão INICIAR clicado — a iniciar forceFinalState()');
-                if (typeof window.forceFinalState === 'function') {
-                    await window.forceFinalState();
-                } else {
-                    console.error('[UNIFED] forceFinalState não está disponível');
-                }
+                if (typeof window.forceFinalState === 'function') await window.forceFinalState();
+                else console.error('[UNIFED] forceFinalState não disponível');
             });
             startBtn.setAttribute('data-iniciar-listener', 'true');
-            console.log('[UNIFED] Listener associado ao botão "INICIAR METODOLOGIA" (#startSessionBtn).');
+            console.log('[UNIFED] Listener associado ao botão "INICIAR METODOLOGIA".');
         } else {
-            console.warn('[UNIFED] Botão #startSessionBtn não encontrado no DOM. O sistema pode não arrancar corretamente.');
+            console.warn('[UNIFED] Botão #startSessionBtn não encontrado.');
         }
     }
 
-    // =========================================================================
-    // ACTIVAÇÃO FORÇADA DE TODOS OS BOTÕES DA TOOLBAR
-    // =========================================================================
-    function enableAllButtons() {
-        const btns = ['analyzeBtn', 'exportPDFBtn', 'exportJSONBtn', 'resetBtn', 'clearConsoleBtn'];
-        btns.forEach(id => {
-            const btn = document.getElementById(id);
-            if (btn) btn.disabled = false;
-        });
-        // Botões da tríade (segunda linha) são criados dinamicamente, mas também devem ser activos
-        setTimeout(() => {
-            document.querySelectorAll('.btn-tool, .btn-tool-pure').forEach(btn => btn.disabled = false);
-        }, 500);
-    }
-
-    // Chamar após o dashboard estar visível
-    window.addEventListener('UNIFED_CORE_READY', enableAllButtons);
-
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', setupIniciarButton);
-    } else {
-        setupIniciarButton();
-    }
-
-    // =========================================================================
-    // INSTRUÇÃO TÉCNICA 1: Re-ancorar modais para prevenir bloqueio por Z-Index
-    // =========================================================================
     function reAnchorModals() {
         const wrapper = document.getElementById('pureDashboardWrapper');
         const custodyModal = document.getElementById('custodyModal');
-        const hashModal = document.getElementById('hashModal'); // Inclui QR Code
+        const hashModal = document.getElementById('hashModal');
         if (wrapper && custodyModal) wrapper.appendChild(custodyModal);
         if (wrapper && hashModal) wrapper.appendChild(hashModal);
     }
     document.addEventListener('UNIFED_CORE_READY', reAnchorModals);
 
-    console.log('[UNIFED] script_injection.js carregado. Aguardando clique em "INICIAR".');
+    // =========================================================================
+    // Arranque final
+    // =========================================================================
+    setupEventDrivenHydration();
+    setupRealCaseButton();
+    setupAnalyzeButton();
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeCoreDashboard();
+            forceDataPtVisibility();
+            setupIniciarButton();
+            if (typeof populateAnoFiscal === 'function') populateAnoFiscal();
+            if (typeof populateYears === 'function') populateYears();
+        });
+    } else {
+        initializeCoreDashboard();
+        forceDataPtVisibility();
+        setupIniciarButton();
+        if (typeof populateAnoFiscal === 'function') populateAnoFiscal();
+        if (typeof populateYears === 'function') populateYears();
+    }
+
+    console.log('[UNIFED] script_injection.js carregado (v13.12.3). Aguardando clique em "INICIAR".');
 })();
