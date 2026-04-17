@@ -490,7 +490,7 @@
             <div id="triangulationMatrixContainer" class="pure-triangulation-box" style="margin:30px 0; border:1px solid #00E5FF; background:rgba(15,23,42,0.95); padding:20px; border-radius:12px;">
                 <h3 style="color:#00E5FF; margin-top:0; font-size:1rem;">${labels.title}</h3>
                 <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
-                    <thead><tr style="border-bottom:1px solid rgba(255,255,255,0.2);"><th style="text-align:left; padding:10px;">${labels.colSource}</th><th style="text-align:right; padding:10px;">${labels.colValue}</th><th style="text-align:right; padding:10px; color:#EF4444;">${labels.colDisc}</th><tr></thead>
+                    <thead><tr style="border-bottom:1px solid rgba(255,255,255,0.2);"><th style="text-align:left; padding:10px;">${labels.colSource}</th><th style="text-align:right; padding:10px;">${labels.colValue}</th><th style="text-align:right; padding:10px; color:#EF4444;">${labels.colDisc}</th></tr></thead>
                     <tbody>
                         <tr><td style="padding:10px;">📄 SAF-T PT (${isEn ? 'Invoicing' : 'Faturação'})</td><td style="padding:10px; text-align:right;">${fmt(t.saftBruto)}</td><td style="padding:10px; text-align:right;">-${fmt(deltaSaft)}</td></tr>
                         <tr style="background:rgba(239,68,68,0.08);"><td style="padding:10px;">🌐 DAC7 (Plataforma A)</td><td style="padding:10px; text-align:right;">${fmt(t.dac7TotalPeriodo)}</td><td style="padding:10px; text-align:right;">-${fmt(deltaDac7)}</td></tr>
@@ -1518,6 +1518,9 @@
             console.log('[UNIFED] Listener associado ao botão "EXECUTAR PERÍCIA" (#analyzeBtn).');
         }
 
+        // =========================================================================
+        // FUNÇÃO CORRIGIDA: setupRealCaseButton com espera por DOM e injeção após carregamento completo
+        // =========================================================================
         function setupRealCaseButton() {
             let targetButton = document.getElementById('demoModeBtn');
             if (!targetButton) {
@@ -1572,9 +1575,9 @@
                 if (_initializing) return;
                 logAudit('Iniciando transição para Caso Real Anonimizado...', 'info');
                 
-                // Garantir que a função está disponível
                 let loadFn = window.ensureDemoDataLoaded;
-                if (typeof loadFn !== 'function' && window.UNIFED_INTERNAL && typeof window.UNIFED_INTERNAL.ensureDemoDataLoaded === 'function') {
+                if (typeof loadFn !== 'function' && window.UNIFED_INTERNAL && 
+                    typeof window.UNIFED_INTERNAL.ensureDemoDataLoaded === 'function') {
                     loadFn = window.UNIFED_INTERNAL.ensureDemoDataLoaded;
                     window.ensureDemoDataLoaded = loadFn;
                 }
@@ -1587,22 +1590,58 @@
                     if (typeof window._activatePurePanel === 'function') {
                         await window._activatePurePanel();
                     }
+                    
                     await waitForPureDashboard();
                     initializeCoreDashboard();
-                    await new Promise(r => setTimeout(r, 100));
-                    await loadFn();
                     
-                    // =========================================================================
-                    // CIRURGIA 3: Adicionar chamadas explícitas a simulateEvidenceUpload, updateEvidenceCountersAndShow, syncMetrics e registerClient
-                    // =========================================================================
+                    // [PATCH #4] NOVO: Aguardar que panel.html esteja completamente no DOM
+                    // Verifica se elementos críticos existem antes de injectar dados
+                    const wrapper = document.getElementById('pureDashboardWrapper');
+                    if (wrapper) {
+                        await new Promise((resolve) => {
+                            const checkInterval = setInterval(() => {
+                                // Se elementos do painel existem, panel.html foi carregado
+                                if (document.getElementById('pure-saft') && 
+                                    document.getElementById('pure-ganhos') && 
+                                    document.getElementById('pure-subject-name')) {
+                                    clearInterval(checkInterval);
+                                    resolve();
+                                }
+                            }, 50);
+                            // Timeout de segurança: máximo 3 segundos de espera
+                            setTimeout(() => {
+                                clearInterval(checkInterval);
+                                resolve();
+                            }, 3000);
+                        });
+                    }
+                    
+                    await new Promise(r => setTimeout(r, 100));
+                    
+                    // [PATCH #4] NOVO: Injectar dados APÓS confirmação de DOM
+                    if (typeof loadFn === 'function') {
+                        await loadFn();
+                    }
+                    
+                    // [PATCH #4] NOVO: Sincronizar métricas IMEDIATAMENTE APÓS injeção
+                    await new Promise(r => setTimeout(r, 50));
+                    if (typeof window.UNIFED_INTERNAL?.syncMetrics === 'function') {
+                        window.UNIFED_INTERNAL.syncMetrics();
+                    }
+                    
+                    // [PATCH #4] NOVO: Forçar visibilidade do wrapper APÓS sincronização
+                    if (wrapper) {
+                        wrapper.style.opacity = '1';
+                        wrapper.style.visibility = 'visible';
+                        wrapper.style.display = 'block';
+                    }
+                    
+                    // Resto da sequência conforme esperado
                     if (typeof window.UNIFED_INTERNAL?.simulateEvidenceUpload === 'function') {
                         await window.UNIFED_INTERNAL.simulateEvidenceUpload();
                     }
                     if (typeof window.UNIFED_INTERNAL?.updateEvidenceCountersAndShow === 'function') {
                         window.UNIFED_INTERNAL.updateEvidenceCountersAndShow();
-                    }
-                    if (typeof window.UNIFED_INTERNAL?.syncMetrics === 'function') {
-                        window.UNIFED_INTERNAL.syncMetrics();
                     }
                     if (typeof registerClient === 'function') registerClient();
                     

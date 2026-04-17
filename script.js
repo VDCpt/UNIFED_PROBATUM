@@ -84,6 +84,55 @@ window.updateAnalysisButton = function() {
 console.log('UNIFED - PROBATUM SCRIPT v13.12.2-i18n · DORA COMPLIANT · ATIVADO');
 
 // ============================================================================
+// [PATCH #7] Validação de Integridade do DOM
+// Verifica presença de elementos críticos e reporta deficiências
+// ============================================================================
+(function _validateDOMElements() {
+    'use strict';
+    
+    const criticalElements = [
+        { id: 'analyzeBtn', name: 'Botão EXECUTAR PERÍCIA', severity: 'CRÍTICA' },
+        { id: 'demoModeBtn', name: 'Botão CASO REAL (ANONIMIZADO)', severity: 'CRÍTICA' },
+        { id: 'forensicWipeBtn', name: 'Botão PURGA TOTAL DE DADOS', severity: 'CRÍTICA' },
+        { id: 'export-tools-container', name: 'Container de Ferramentas de Exportação', severity: 'ALTA' },
+        { id: 'pureDashboardWrapper', name: 'Wrapper do Dashboard Puro', severity: 'ALTA' },
+        { id: 'consoleOutput', name: 'Área de Console/Logs', severity: 'MÉDIA' },
+        { id: 'logsModal', name: 'Modal de Registos de Atividades', severity: 'MÉDIA' },
+        { id: 'custodyChainTriggerBtn', name: 'Botão Cadeia de Custódia', severity: 'ALTA' }
+    ];
+    
+    function validateDOMIntegrity() {
+        console.log('[UNIFED-DOM-VALIDATOR] Iniciando validação de integridade do DOM...');
+        let missingElements = [];
+        criticalElements.forEach(elem => {
+            const el = document.getElementById(elem.id);
+            if (!el) {
+                missingElements.push(elem);
+                console.warn(`[UNIFED-DOM-VALIDATOR] ⚠ [${elem.severity}] Elemento ausente: ${elem.name} (#${elem.id})`);
+            } else {
+                console.log(`[UNIFED-DOM-VALIDATOR] ✓ Elemento presente: ${elem.name}`);
+            }
+        });
+        if (missingElements.length === 0) {
+            console.log('[UNIFED-DOM-VALIDATOR] ✅ Todos os elementos críticos presentes');
+            return true;
+        } else {
+            console.error(`[UNIFED-DOM-VALIDATOR] ❌ ${missingElements.length} elemento(s) crítico(s) ausente(s)`);
+            missingElements.forEach(elem => {
+                console.error(`   → [${elem.severity}] ${elem.name} (#${elem.id})`);
+            });
+            return false;
+        }
+    }
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', validateDOMIntegrity, { once: true });
+    } else {
+        validateDOMIntegrity();
+    }
+})();
+
+// ============================================================================
 // 0. HANDSHAKE DE INFRAESTRUTURA — Verificação da Biblioteca OpenTimestamps
 // ============================================================================
 (function initOTSHandshake() {
@@ -8296,6 +8345,74 @@ function setupIniciarButton() {
 })();
 
 // ============================================================================
+// [PATCH #6] Bloco Unificado de Inicialização
+// ============================================================================
+(function _initializeUnifiedSetupBlock() {
+    'use strict';
+    
+    function executeAllSetups() {
+        console.log('[UNIFED-INIT] 🚀 Iniciando bloco unificado de setup...');
+        
+        try {
+            // 1. Setup do UI visual
+            if (typeof window.resetUIVisual === 'function') {
+                window.resetUIVisual();
+                console.log('[UNIFED-INIT] ✓ resetUIVisual() completado');
+            }
+            
+            // 2. Setup botão de iniciar (splash screen)
+            if (typeof setupIniciarButton === 'function') {
+                setupIniciarButton();
+                console.log('[UNIFED-INIT] ✓ setupIniciarButton() completado');
+            }
+            
+            // 3. Setup botão de PURGA (ACH-001 FIX)
+            if (typeof setupWipeButton === 'function') {
+                setupWipeButton();
+                console.log('[UNIFED-INIT] ✓ setupWipeButton() completado');
+            } else {
+                console.warn('[UNIFED-INIT] ⚠ setupWipeButton() não encontrada');
+            }
+            
+            // 4. Setup botão de LIMPAR CONSOLE (ACH-002 FIX)
+            if (typeof setupClearConsoleButton === 'function') {
+                setupClearConsoleButton();
+                console.log('[UNIFED-INIT] ✓ setupClearConsoleButton() completado');
+            } else {
+                console.warn('[UNIFED-INIT] ⚠ setupClearConsoleButton() não encontrada');
+            }
+            
+            // 5. Setup modal de REGISTOS (ACH-003 FIX)
+            if (typeof setupLogsModal === 'function') {
+                setupLogsModal();
+                console.log('[UNIFED-INIT] ✓ setupLogsModal() completado');
+            } else {
+                console.warn('[UNIFED-INIT] ⚠ setupLogsModal() não encontrada');
+            }
+            
+            // 6. Setup detecção de dual-screen
+            if (typeof setupDualScreenDetection === 'function') {
+                setupDualScreenDetection();
+                console.log('[UNIFED-INIT] ✓ setupDualScreenDetection() completado');
+            }
+            
+            console.log('[UNIFED-INIT] ✅ Bloco unificado de setup completado com sucesso');
+            
+        } catch (err) {
+            console.error('[UNIFED-INIT] ❌ Erro durante bloco de setup:', err);
+        }
+    }
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', executeAllSetups, { once: true });
+    } else {
+        executeAllSetups();
+    }
+    
+    window._execAllSetups = executeAllSetups;
+})();
+
+// ============================================================================
 // INICIALIZAÇÃO (garantir resetUIVisual no arranque e listener do botão)
 // ============================================================================
 
@@ -8303,10 +8420,16 @@ if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         if (typeof window.resetUIVisual === 'function') window.resetUIVisual();
         setupIniciarButton();
+        setupWipeButton();           // ← [PATCH #1] ADICIONADO
+        setupClearConsoleButton();   // ← [PATCH #2] ADICIONADO
+        setupLogsModal();            // ← [PATCH #3] ADICIONADO
     });
 } else {
     if (typeof window.resetUIVisual === 'function') window.resetUIVisual();
     setupIniciarButton();
+    setupWipeButton();               // ← [PATCH #1] ADICIONADO
+    setupClearConsoleButton();       // ← [PATCH #2] ADICIONADO
+    setupLogsModal();                // ← [PATCH #3] ADICIONADO
 }
 
 // ============================================================================
