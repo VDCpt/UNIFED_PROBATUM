@@ -4042,39 +4042,24 @@ function updateCounters() {
     UNIFEDSystem.counts.total = total;
 }
 
+// ============================================================================
+// activateDemoMode - Delegação total para o módulo script_injection.js
+// ============================================================================
 function activateDemoMode() {
-    if (UNIFEDSystem.processing) return;
-    UNIFEDSystem.processing = true;
-
-    ForensicLogger.addEntry('DEMO_MODE_ACTIVATED');
-
-    if (typeof window._activatePurePanel !== 'function') {
-        console.error('[UNIFED] _activatePurePanel não registado. Verifique a ordem de carregamento de scripts.');
-        UNIFEDSystem.processing = false;
+    // Delegação total para o módulo script_injection.js
+    // que tem o fluxo correto com _PDF_CASE e ensureDemoDataLoaded
+    const btn = document.getElementById('demoModeBtn');
+    if (btn && btn.getAttribute('data-unifed-active') === 'true') {
+        // O listener de script_injection.js já trata disto; evitar double-fire
         return;
     }
-
-    window._activatePurePanel();
-
-    setTimeout(() => {
-        const client = UNIFEDSystem.client;
-        if (client) {
-            const nameInput = document.getElementById('clientNameFixed');
-            const nifInput  = document.getElementById('clientNIFFixed');
-            if (nameInput) nameInput.value = client.name;
-            if (nifInput)  nifInput.value  = client.nif;
-            registerClient();
-        }
-
-        UNIFEDSystem.processing = false;
-        const demoBtn = document.getElementById('demoModeBtn');
-        if (demoBtn) {
-            demoBtn.disabled = false;
-            demoBtn.innerHTML = `<i class="fas fa-flask"></i> ${translations[currentLang].navDemo}`;
-        }
-        forensicDataSynchronization();
-        logAudit('✅ Caso Real (Anonimizado) carregado com sucesso.', 'success');
-    }, 500);
+    // Se script_injection.js ainda não instalou o listener, executar fluxo básico
+    if (typeof window.ensureDemoDataLoaded === 'function') {
+        if (typeof window._activatePurePanel === 'function') window._activatePurePanel();
+        window.ensureDemoDataLoaded();
+        if (typeof forensicDataSynchronization === 'function') forensicDataSynchronization();
+        UNIFEDSystem.casoRealAnonimizado = true;
+    }
 }
 
 function simulateUpload(type, count) {

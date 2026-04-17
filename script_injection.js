@@ -38,6 +38,11 @@
  * 1. Substituição da função ensureDemoDataLoaded por versão que injeta valores hardcoded diretamente no DOM.
  * 2. Adição de forceBindAnalyze para garantir que o botão "EXECUTAR PERÍCIA" funciona incondicionalmente.
  * ============================================================================
+ * RETIFICAÇÕES CIRÚRGICAS (2026-04-18):
+ * 1. ensureDemoDataLoaded agora usa valores corretos do _PDF_CASE e mapping de IDs real.
+ * 2. simulateEvidenceUpload exposto como alias local na Camada 5.
+ * 3. setupRealCaseButton agora chama simulateEvidenceUpload, updateEvidenceCountersAndShow, syncMetrics e registerClient.
+ * ============================================================================
  */
 
 (function() {
@@ -485,7 +490,7 @@
             <div id="triangulationMatrixContainer" class="pure-triangulation-box" style="margin:30px 0; border:1px solid #00E5FF; background:rgba(15,23,42,0.95); padding:20px; border-radius:12px;">
                 <h3 style="color:#00E5FF; margin-top:0; font-size:1rem;">${labels.title}</h3>
                 <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
-                    <thead><tr style="border-bottom:1px solid rgba(255,255,255,0.2);"><th style="text-align:left; padding:10px;">${labels.colSource}</th><th style="text-align:right; padding:10px;">${labels.colValue}</th><th style="text-align:right; padding:10px; color:#EF4444;">${labels.colDisc}</th></tr></thead>
+                    <thead><tr style="border-bottom:1px solid rgba(255,255,255,0.2);"><th style="text-align:left; padding:10px;">${labels.colSource}</th><th style="text-align:right; padding:10px;">${labels.colValue}</th><th style="text-align:right; padding:10px; color:#EF4444;">${labels.colDisc}</th><tr></thead>
                     <tbody>
                         <tr><td style="padding:10px;">📄 SAF-T PT (${isEn ? 'Invoicing' : 'Faturação'})</td><td style="padding:10px; text-align:right;">${fmt(t.saftBruto)}</td><td style="padding:10px; text-align:right;">-${fmt(deltaSaft)}</td></tr>
                         <tr style="background:rgba(239,68,68,0.08);"><td style="padding:10px;">🌐 DAC7 (Plataforma A)</td><td style="padding:10px; text-align:right;">${fmt(t.dac7TotalPeriodo)}</td><td style="padding:10px; text-align:right;">-${fmt(deltaDac7)}</td></tr>
@@ -1159,71 +1164,92 @@
         }
 
         // =========================================================================
-        // NOVA FUNÇÃO: ensureDemoDataLoaded() – Garante que os dados do caso real
-        // estão carregados antes da perícia (FIX TIME-2)
-        // =========================================================================
-        // =========================================================================
-        // [SUBSTITUIÇÃO CIRÚRGICA] ensureDemoDataLoaded com valores hardcoded e bypass de purga
+        // [SUBSTITUIÇÃO CIRÚRGICA] ensureDemoDataLoaded com valores corretos do _PDF_CASE
         // =========================================================================
         function ensureDemoDataLoaded() {
-            console.log('[UNIFED] Forçando Hidratação de Dados Materializados...');
-            
-            // Dados Críticos do Caso Real (Valores Totais) – conforme especificação
-            const realData = {
-                saft: { total_bruto: 2213.12, total_iva: 428.14, total_liquido: 1784.98 },
-                extratos: { ganhos: 7755.16, despesas: 3576.84, liquido: 4178.32 },
-                dac7: { tri1: 1873.00, tri2: 2241.00, tri3: 1655.00, tri4: 1986.16, total: 7755.16 }
-            };
-        
-            // Injetar diretamente no Core para evitar purga
+            console.log('[UNIFED] Forçando Hidratação de Dados Materializados (v2 — valores corretos)...');
+            const d = window.UNIFED_INTERNAL.data; // referência ao _PDF_CASE
+            const t = d.totals;
+            const fi = d.fluxosIsentos;
+
             if (!window.UNIFEDSystem) window.UNIFEDSystem = {};
             window.UNIFEDSystem.analysis = window.UNIFEDSystem.analysis || {};
-            // Estrutura plana esperada pelo restante do sistema
             window.UNIFEDSystem.analysis.totals = {
-                saftBruto: realData.saft.total_bruto,
-                saftIva: realData.saft.total_iva,
-                saftIliquido: realData.saft.total_liquido,
-                ganhos: realData.extratos.ganhos,
-                despesas: realData.extratos.despesas,
-                ganhosLiquidos: realData.extratos.liquido,
-                dac7TotalPeriodo: realData.dac7.total,
-                dac7Q1: realData.dac7.tri1,
-                dac7Q2: realData.dac7.tri2,
-                dac7Q3: realData.dac7.tri3,
-                dac7Q4: realData.dac7.tri4,
-                faturaPlataforma: 0,   // será preenchido pela análise posterior
-                iva6Omitido: 0,
-                iva23Omitido: 0,
-                asfixiaFinanceira: 0
+                saftBruto:        t.saftBruto,        // 8227.97
+                saftIva:          t.saftIva,          // 466.30
+                saftIliquido:     t.saftIliquido,     // 7761.67
+                ganhos:           t.ganhos,           // 10157.73
+                despesas:         t.despesas,         // 2447.89
+                ganhosLiquidos:   t.ganhosLiquidos,   // 7709.84
+                dac7TotalPeriodo: t.dac7TotalPeriodo, // 7755.16
+                dac7Q1: 0, dac7Q2: 0, dac7Q3: 0,
+                dac7Q4:           t.dac7TotalPeriodo, // 7755.16
+                faturaPlataforma: t.faturaPlataforma, // 262.94
+                iva6Omitido: 0, iva23Omitido: 0, asfixiaFinanceira: 0
             };
+
+            // Cliente
+            window.UNIFEDSystem.client = { name: d.client.name, nif: d.client.nif, platform: d.client.platform };
+            window.UNIFEDSystem.sessionId  = d.sessionId;
+            window.UNIFEDSystem.masterHash = d.masterHash;
+            window.UNIFEDSystem.selectedYear    = 2024;
+            window.UNIFEDSystem.selectedPeriodo = '2s';
+            window.UNIFEDSystem.casoRealAnonimizado = true;
             window.UNIFEDSystem.isDemoLoaded = true;
-            window._unifedDataLoaded = true;
-            window._unifedAnalysisPending = true; // Mantém módulos ocultos até clique em Perícia
-        
-            // Mapeamento direto para a UI (Ignorando filtros de proteção)
+            window._unifedDataLoaded       = true;
+            window._unifedAnalysisPending  = true;
+            window._unifedRawDataOnly      = true;
+
+            // Popula campos de identificação
+            const nameEl = document.getElementById('pure-subject-name');
+            const nifEl  = document.getElementById('pure-subject-nif');
+            if (nameEl) nameEl.textContent = d.client.name;
+            if (nifEl)  nifEl.textContent  = d.client.nif;
+
+            // Ano fiscal e período
+            const anoEl = document.getElementById('anoFiscal');
+            if (anoEl) { anoEl.value = '2024'; anoEl.dispatchEvent(new Event('change', { bubbles: true })); }
+            const periodoEl = document.getElementById('periodoAnalise');
+            if (periodoEl) { periodoEl.value = '2s'; periodoEl.dispatchEvent(new Event('change', { bubbles: true })); }
+
+            // Mapping corrigido com os IDs reais do panel.html
+            const fmt = window.UNIFED_INTERNAL.fmt;
             const mapping = {
-                'pure-saft': '1.784,98 €',
-                'pure-saft-iva': '428,14 €',
-                'pure-saft-bruto': '2.213,12 €',
-                'pure-ganhos': '7.755,16 €',
-                'pure-despesas': '3.576,84 €',
-                'pure-liquido': '4.178,32 €',
-                'pure-dac7-t1': '1.873,00 €',
-                'pure-dac7-t2': '2.241,00 €',
-                'pure-dac7-t3': '1.655,00 €',
-                'pure-dac7-t4': '1.986,16 €',
-                'pure-dac7': '7.755,16 €'
+                'pure-saft':    fmt(t.saftIliquido),   // 7.761,67 €  — Ilíquido
+                'pure-ganhos':  fmt(t.ganhos),          // 10.157,73 €
+                'pure-despesas':fmt(t.despesas),        // 2.447,89 €
+                'pure-liquido': fmt(t.ganhosLiquidos),  // 7.709,84 €
+                'pure-dac7':    fmt(t.dac7TotalPeriodo) // 7.755,16 €
             };
-        
             Object.entries(mapping).forEach(([id, val]) => {
                 const el = document.getElementById(id);
-                if (el) {
-                    el.innerText = val;
-                    el.style.opacity = "1"; // Forçar visibilidade
-                }
+                if (el) { el.textContent = val; el.style.opacity = '1'; }
             });
-            
-            console.log('[UNIFED] ensureDemoDataLoaded: dados hardcoded injetados com sucesso.');
+
+            // DAC7 trimestrais (elementos dac7Q1Value..dac7Q4Value usados por syncMetrics)
+            ['dac7Q1Value','dac7Q2Value','dac7Q3Value'].forEach(id => {
+                const el = document.getElementById(id); if (el) el.textContent = fmt(0);
+            });
+            const q4El = document.getElementById('dac7Q4Value');
+            if (q4El) q4El.textContent = fmt(t.dac7TotalPeriodo);
+
+            // Campos de cliente nos inputs do topo
+            const nameInput = document.getElementById('clientNameFixed');
+            const nifInput  = document.getElementById('clientNIFFixed');
+            if (nameInput) nameInput.value = d.client.name;
+            if (nifInput)  nifInput.value  = d.client.nif;
+
+            // Forçar clientStatus visível
+            const clientStatus = document.getElementById('clientStatusFixed');
+            if (clientStatus) {
+                clientStatus.style.display = 'flex';
+                const spanName = document.getElementById('clientNameDisplayFixed');
+                const spanNif  = document.getElementById('clientNifDisplayFixed');
+                if (spanName) spanName.textContent = d.client.name;
+                if (spanNif)  spanNif.textContent  = d.client.nif;
+            }
+
+            console.log('[UNIFED] ensureDemoDataLoaded v2: valores corretos injetados.');
             return true;
         }
 
@@ -1233,6 +1259,11 @@
         window.UNIFED_INTERNAL.updateEvidenceCountersAndShow = _updateEvidenceCountersAndShow;
         window.UNIFED_INTERNAL.executePendingAnalysis = _executePendingAnalysis;
         window.UNIFED_INTERNAL.ensureDemoDataLoaded = ensureDemoDataLoaded;   // <-- substituído
+
+        // =========================================================================
+        // CIRURGIA 2: Expor simulateEvidenceUpload como alias local para initializeFullWithEvidence()
+        // =========================================================================
+        const simulateEvidenceUpload = _simulateEvidenceUpload; // alias local
 
         // Exposição global directa
         window.ensureDemoDataLoaded = ensureDemoDataLoaded;
@@ -1560,6 +1591,21 @@
                     initializeCoreDashboard();
                     await new Promise(r => setTimeout(r, 100));
                     await loadFn();
+                    
+                    // =========================================================================
+                    // CIRURGIA 3: Adicionar chamadas explícitas a simulateEvidenceUpload, updateEvidenceCountersAndShow, syncMetrics e registerClient
+                    // =========================================================================
+                    if (typeof window.UNIFED_INTERNAL?.simulateEvidenceUpload === 'function') {
+                        await window.UNIFED_INTERNAL.simulateEvidenceUpload();
+                    }
+                    if (typeof window.UNIFED_INTERNAL?.updateEvidenceCountersAndShow === 'function') {
+                        window.UNIFED_INTERNAL.updateEvidenceCountersAndShow();
+                    }
+                    if (typeof window.UNIFED_INTERNAL?.syncMetrics === 'function') {
+                        window.UNIFED_INTERNAL.syncMetrics();
+                    }
+                    if (typeof registerClient === 'function') registerClient();
+                    
                     if (window.UNIFEDSystem.loadAnonymizedRealCase) {
                         await window.UNIFEDSystem.loadAnonymizedRealCase();
                     } else {
