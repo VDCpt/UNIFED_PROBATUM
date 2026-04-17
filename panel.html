@@ -259,6 +259,14 @@
             cursor: pointer;
         }
 
+        /* ===== NOVA REGRA: FORÇAR HORIZONTALIDADE DOS BLOCOS DE EVIDÊNCIA ===== */
+        .pure-evidence-grid {
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: wrap !important;
+            gap: 1rem !important;
+        }
+
         @media (max-width: 720px) {
             body { padding: 1rem; }
             .pure-card-grid { grid-template-columns: 1fr; }

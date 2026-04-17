@@ -3416,6 +3416,32 @@ body.dual-screen .stat-card p {
 
 
 /* ============================================================================
+   CORRECÇÃO LAYOUT: FORÇAR HORIZONTALIDADE DOS BLOCOS DE EVIDÊNCIA
+   ============================================================================ */
+.pure-evidence-grid,
+.pure-card-grid .pure-card,
+.module-values .grid-3,
+.module-values .grid-4 {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    gap: 1rem !important;
+}
+
+/* Anular qualquer possível flex-direction: column em contextos específicos */
+.pure-card-grid,
+.module-row .module-card {
+    flex-direction: column !important; /* Mantém estrutura vertical da página */
+}
+
+.pure-evidence-grid > *,
+.pure-card-grid .pure-card > .pure-data-grid {
+    flex: 1 1 auto;
+    min-width: 180px;
+}
+
+
+/* ============================================================================
    REALCE FORENSE — CAMPO ADAPTADO 2025 (PORTAGENS → REEMBOLSOS DE DESPESAS)
    Protocolo UNIFED-GOLD v13.12.2-i18n · Art. 125.º CPP · Identificação Visual Pericial
    Permite que o advogado e o juiz identifiquem a adaptação técnica ao novo
