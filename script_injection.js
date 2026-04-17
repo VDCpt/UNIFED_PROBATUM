@@ -7,30 +7,6 @@
  * 3. Módulos de análise (discrepâncias, gráficos, smoking gun) permanecem ocultos até à perícia.
  * 4. Botões da toolbar ativados automaticamente.
  * ============================================================================
- * [MERGE CIRÚRGICO 2026-04-15 + RETIFICAÇÃO TIME-2/TIME-3 + ZERO-KNOWLEDGE FIX]
- * - Garantia de que _PDF_CASE.totals é transferido para UNIFEDSystem.documents
- * - Função ensureDemoDataLoaded() para carregamento idempotente
- * - Melhorada sincronização da UI após clique "CASO REAL"
- * - CORREÇÃO: Estado inicial zero-knowledge (tudo a zeros)
- * - ADIÇÃO: Controle de visibilidade dos módulos forenses (updateForensicModulesVisibility)
- * - CORREÇÃO: Injeção do card macro com display:none quando dados reais não carregados
- * - RETIFICAÇÃO: Gráficos apenas renderizados quando dados reais disponíveis
- * ============================================================================
- * CORREÇÕES ADICIONAIS (2026-04-16):
- * 1. Verificação defensiva em ensureDemoDataLoaded no listener do botão "CASO REAL"
- * 2. Remoção de chamadas prematuras de gráficos e forceRevealSmokingGun em loadAnonymizedRealCase
- * ============================================================================
- * RETIFICAÇÕES CIRÚRGICAS (2026-04-16 - SCRIPT):
- * 1. Garantia de exposição global de ensureDemoDataLoaded antes de qualquer listener
- * 2. Correcção do listener do botão "EXECUTAR PERÍCIA" com fallbacks robustos
- * 3. Activação forçada de todos os botões da toolbar após dashboard visível
- * ============================================================================
- * RETIFICAÇÕES FINAIS (2026-04-17):
- * 1. Atualização dos valores hardcoded do caso real (dac7TotalPeriodo, totalNaoSujeitos, etc.)
- * 2. Separação rigorosa entre estado "dados brutos" (após CASO REAL) e "análise completa" (após EXECUTAR PERÍCIA).
- * 3. Módulos de análise (discrepâncias, gráficos, smoking gun) permanecem ocultos até à perícia.
- * 4. Botões da toolbar ativados automaticamente.
- * ============================================================================
  * RETIFICAÇÃO CIRÚRGICA v3 (2026-04-17):
  * 1. syncMetrics corrigida: dados brutos (SAF-T, Extratos, DAC7) aparecem imediatamente após CASO REAL.
  * 2. Valores de análise (discrepâncias, IVA, IRC) mantêm-se zero até EXECUTAR PERÍCIA.
@@ -124,11 +100,11 @@
             saftIva:            466.30,
             despesas:          2447.89,
             faturaPlataforma:   262.94,
-            dac7TotalPeriodo:  7755.16,   // 4.º TRI conforme solicitado
+            dac7TotalPeriodo:  7755.16,
             iva6Omitido:        131.10,
             iva23Omitido:       502.54,
             asfixiaFinanceira:  493.68,
-            totalNaoSujeitos:   451.15,    // Campanhas+Portagens+Gorjetas
+            totalNaoSujeitos:   451.15,
             gorjetas:           46.00,
             portagens:           0.15,
             campanhas:         405.00,
@@ -240,18 +216,13 @@
             
             const sys = window.UNIFEDSystem;
             
-            // Determina se os dados reais já foram carregados (via caso real)
             const dadosReaisCarregados = (sys && sys.analysis && sys.analysis.totals && sys.analysis.totals.ganhos > 0);
-            
-            // ========== CORREÇÃO v3: Separar dados brutos de dados de análise ==========
             const analisePendente = (window._unifedAnalysisPending === true);
             const dadosBrutosDisponiveis = (window._unifedDataLoaded === true);
             
-            // ========== DADOS BRUTOS (sempre mostram valores reais se disponíveis) ==========
-            // Estes são os valores que aparecem nos módulos SAF-T, Extratos e DAC7
+            // DADOS BRUTOS (sempre mostram valores reais se disponíveis)
             let dadosBrutos;
             if (dadosBrutosDisponiveis || dadosReaisCarregados) {
-                // Usar os totais do caso real (dados brutos)
                 dadosBrutos = {
                     ganhos: data.totals.ganhos,
                     despesas: data.totals.despesas,
@@ -267,25 +238,15 @@
                 };
             } else {
                 dadosBrutos = {
-                    ganhos: 0,
-                    despesas: 0,
-                    ganhosLiquidos: 0,
-                    saftBruto: 0,
-                    saftIliquido: 0,
-                    saftIva: 0,
-                    dac7TotalPeriodo: 0,
-                    faturaPlataforma: 0,
-                    campanhas: 0,
-                    gorjetas: 0,
-                    portagens: 0
+                    ganhos: 0, despesas: 0, ganhosLiquidos: 0, saftBruto: 0,
+                    saftIliquido: 0, saftIva: 0, dac7TotalPeriodo: 0, faturaPlataforma: 0,
+                    campanhas: 0, gorjetas: 0, portagens: 0
                 };
             }
             
-            // ========== DADOS DE ANÁLISE (zero enquanto análise pendente) ==========
-            // Estes são os valores que só devem aparecer após EXECUTAR PERÍCIA
+            // DADOS DE ANÁLISE (zero enquanto análise pendente)
             let dadosAnalise;
             if (dadosReaisCarregados && !analisePendente) {
-                // Análise já executada – usar valores reais
                 dadosAnalise = {
                     iva6Omitido: sys.analysis.totals.iva6Omitido || data.totals.iva6Omitido,
                     iva23Omitido: sys.analysis.totals.iva23Omitido || data.totals.iva23Omitido,
@@ -293,28 +254,15 @@
                     cancelamentos: data.totals.cancelamentos || 0
                 };
             } else {
-                // Análise pendente – forçar zero
-                dadosAnalise = {
-                    iva6Omitido: 0,
-                    iva23Omitido: 0,
-                    asfixiaFinanceira: 0,
-                    cancelamentos: 0
-                };
+                dadosAnalise = { iva6Omitido: 0, iva23Omitido: 0, asfixiaFinanceira: 0, cancelamentos: 0 };
             }
             
-            // ========== VALORES DE DISCREPÂNCIA: ZERO ENQUANTO ANÁLISE PENDENTE ==========
             let discrepanciaC2, percentC2, discrepanciaC1, percentC1, ircEstimadoCorreto, asfixiaFinanceira;
             
             if (analisePendente) {
-                // Análise ainda não executada – forçar zero
-                discrepanciaC2 = 0;
-                percentC2 = 0;
-                discrepanciaC1 = 0;
-                percentC1 = 0;
-                ircEstimadoCorreto = 0;
-                asfixiaFinanceira = 0;
+                discrepanciaC2 = 0; percentC2 = 0; discrepanciaC1 = 0; percentC1 = 0;
+                ircEstimadoCorreto = 0; asfixiaFinanceira = 0;
             } else {
-                // Análise já executada – usar valores reais dos crossings
                 const c = (sys && sys.analysis && sys.analysis.crossings) ? sys.analysis.crossings : {};
                 discrepanciaC2 = c.discrepanciaCritica || (dadosBrutos.despesas - dadosBrutos.faturaPlataforma);
                 percentC2 = c.percentagemOmissao || (dadosBrutos.despesas > 0 ? (discrepanciaC2 / dadosBrutos.despesas) * 100 : 0);
@@ -338,7 +286,6 @@
                 const el = document.querySelector(`#pureDashboard #${id}`);
                 if (el) el.textContent = value;
             };
-            // Atualização global para elementos que possam estar fora do #pureDashboard
             const setGlobalText = (id, value) => {
                 const el = document.getElementById(id);
                 if (el) el.textContent = value;
@@ -346,42 +293,33 @@
                 if (alt) alt.textContent = value;
             };
 
-            // ========== MAPEAMENTO: Dados brutos (SEMPRE mostram valores reais se disponíveis) ==========
             const mapping = {
-                // Módulo SAF-T
                 'pure-saft': fmt(dadosBrutos.saftBruto),
                 'pure-saft-iliquido': fmt(dadosBrutos.saftIliquido),
                 'pure-saft-iva': fmt(dadosBrutos.saftIva),
-                // Módulo Extratos
                 'pure-ganhos': fmt(dadosBrutos.ganhos),
                 'pure-despesas': fmt(dadosBrutos.despesas),
                 'pure-liquido': fmt(dadosBrutos.ganhosLiquidos),
-                // Módulo DAC7
                 'pure-dac7': fmt(dadosBrutos.dac7TotalPeriodo),
                 'pure-fatura': fmt(dadosBrutos.faturaPlataforma),
-                // Cards DAC7 individuais (4º trimestre com valor real, outros zero)
                 'dac7Q1Value': fmt(0),
                 'dac7Q2Value': fmt(0),
                 'dac7Q3Value': fmt(0),
                 'dac7Q4Value': fmt(dadosBrutos.dac7TotalPeriodo),
-                // Discrepâncias (zero até perícia)
                 'pure-disc-c2': fmt(discrepanciaC2),
                 'pure-disc-c2-pct': percentC2.toFixed(2) + '%',
                 'pure-disc-saft-dac7': fmt(discrepanciaC1),
                 'pure-disc-saft-pct': percentC1.toFixed(2) + '%',
-                // IVA e IRC (zero até perícia)
                 'pure-iva-6': fmt(dadosAnalise.iva6Omitido),
                 'pure-iva-23': fmt(dadosAnalise.iva23Omitido),
                 'pure-irc': fmt(ircEstimadoCorreto),
                 'pure-disc-c2-grid': fmt(discrepanciaC2),
                 'pure-iva-devido': fmt(asfixiaFinanceira),
-                // Zona Cinzenta (dados brutos)
                 'pure-nao-sujeitos': fmt(totalNaoSujeitosCalc),
                 'pure-nc-campanhas': fmt(window._unifedDataLoaded === true ? fi.campanhas : 0),
                 'pure-nc-gorjetas': fmt(window._unifedDataLoaded === true ? fi.gorjetas : 0),
                 'pure-nc-portagens': fmt(window._unifedDataLoaded === true ? fi.portagens : 0),
                 'pure-nc-total': fmt(totalNaoSujeitosCalc),
-                // ATF (sempre visível, mas valores de análise condicionais)
                 'pure-atf-sp': data.atf.score + '/100',
                 'pure-atf-trend': data.atf.trend,
                 'pure-atf-outliers': data.atf.outliers + ' outliers > 2σ',
@@ -389,22 +327,18 @@
                 'pure-atf-zscore': data.atf.zScore.toString(),
                 'pure-atf-confianca': data.atf.confianca,
                 'pure-atf-score-val': (!analisePendente && dadosReaisCarregados) ? (data.atf.score + '/100') : '--%',
-                // Smoking Gun (zero até perícia)
                 'pure-sg-1-val': fmt(discrepanciaC2),
                 'pure-sg-1-pct': percentC2.toFixed(2) + '%',
                 'pure-sg-2-val': fmt(discrepanciaC1),
                 'pure-sg-2-pct': percentC1.toFixed(2) + '%',
-                // Verdict
                 'pure-verdict': (!analisePendente && dadosReaisCarregados) ? 'RISCO CRÍTICO · DESVIO PADRÃO > 2σ' : 'AGUARDANDO PERÍCIA',
                 'pure-verdict-pct': (!analisePendente && dadosReaisCarregados) ? percentC2.toFixed(2) + '%' : '0.00%',
-                // Metadados
                 'pure-session-id': (sys && sys.sessionId) ? sys.sessionId : (window._unifedDataLoaded === true ? data.sessionId : '--------'),
                 'pure-hash-prefix': (sys && sys.masterHash) ? sys.masterHash.substring(0, 12).toUpperCase() + '...' : (window._unifedDataLoaded === true ? data.masterHash.substring(0, 12) + '...' : '---'),
                 'pure-hash-prefix-verdict': (sys && sys.masterHash) ? sys.masterHash.substring(0, 16).toUpperCase() + '...' : (window._unifedDataLoaded === true ? data.masterHash.substring(0, 16) + '...' : '---'),
                 'pure-subject-name': (window._unifedDataLoaded === true) ? data.client.name : '---',
                 'pure-subject-nif': (window._unifedDataLoaded === true) ? data.client.nif : '---',
                 'pure-subject-platform': (window._unifedDataLoaded === true) ? data.client.platform : '---',
-                // Extrato detalhado
                 'pure-ganhos-extrato': fmt(dadosBrutos.ganhos),
                 'pure-despesas-extrato': fmt(dadosBrutos.despesas),
                 'pure-ganhos-liquidos-extrato': fmt(dadosBrutos.ganhosLiquidos),
@@ -412,7 +346,6 @@
                 'pure-dac7-val': fmt(dadosBrutos.dac7TotalPeriodo),
                 'pure-iva-devido-val': fmt(asfixiaFinanceira),
                 'pure-impacto-macro': fmt(data.macro_analysis.estimated_systemic_gap),
-                // Contadores
                 'pure-ctrl-qty': getCounter('control', data.counts.ctrl.toString()),
                 'pure-saft-qty': getCounter('saft', data.counts.saft.toString()),
                 'pure-fat-qty': getCounter('invoices', data.counts.fat.toString()),
@@ -423,7 +356,6 @@
                 'pure-counter-fat': getCounter('invoices', '0'),
                 'pure-counter-statements': getCounter('statements', '0'),
                 'pure-counter-dac7': getCounter('dac7', '0'),
-                // Triangulação
                 'pure-ganhos-tri': fmt(dadosBrutos.ganhos),
                 'pure-despesas-tri': fmt(dadosBrutos.despesas),
                 'pure-liquido-tri': fmt(dadosBrutos.ganhosLiquidos),
@@ -432,12 +364,10 @@
             
             Object.entries(mapping).forEach(([id, value]) => {
                 setScopedText(id, value);
-                // Fallback: tentar também como elemento global
                 const globalEl = document.getElementById(id);
                 if (globalEl && globalEl.textContent !== value) globalEl.textContent = value;
             });
 
-            // Atualização específica para elementos auxiliares
             setGlobalText('auxBoxCampanhasValue', fmt(window._unifedDataLoaded === true ? fi.campanhas : 0));
             setGlobalText('auxBoxGorjetasValue', fmt(window._unifedDataLoaded === true ? fi.gorjetas : 0));
             setGlobalText('auxBoxPortagensValue', fmt(window._unifedDataLoaded === true ? fi.portagens : 0));
@@ -446,7 +376,6 @@
             setGlobalText('auxDac7NoteValue', fmt(totalNaoSujeitosCalc));
             setGlobalText('auxDac7NoteValueQ', fmt(totalNaoSujeitosCalc));
             
-            // Atualização dos cards de gap – apenas se análise executada
             const analiseExecutada = dadosReaisCarregados && !analisePendente;
             const revenueGapCorrect = dadosBrutos.saftBruto - dadosBrutos.ganhos;
             setGlobalText('revenueGapValue', fmt(revenueGapCorrect));
@@ -461,7 +390,6 @@
             const omissaoCard = document.getElementById('omissaoDespesasPctCard');
             if (omissaoCard) omissaoCard.style.display = (analiseExecutada && dadosBrutos.despesas > 0 && dadosBrutos.ganhos > 0) ? 'block' : 'none';
             
-            // Atualizar textos legais (apenas se análise executada)
             const sg1Legal = document.querySelector('#pureDashboard #pure-sg1-legal');
             if (sg1Legal) sg1Legal.textContent = analiseExecutada ? 'Art. 23.º CIRC (Indutividade de Custos) · Art. 103.º RGIT (Fraude Fiscal)' : '---';
             const sg2Legal = document.querySelector('#pureDashboard #pure-sg2-legal');
@@ -477,7 +405,7 @@
     })();
 
     // =========================================================================
-    // Camada 3 – Matriz de Triangulação (renderMatrix) - CORRIGIDA
+    // Camada 3 – Matriz de Triangulação (renderMatrix)
     // =========================================================================
     (function() {
         if (!window.UNIFED_INTERNAL) return;
@@ -490,7 +418,6 @@
             if (existingMatrix) existingMatrix.remove();
 
             const sys = window.UNIFEDSystem;
-            
             const dadosReaisCarregados = (sys && sys.analysis && sys.analysis.totals && sys.analysis.totals.ganhos > 0);
             const analisePendente = (window._unifedAnalysisPending === true);
             
@@ -498,7 +425,6 @@
             if (dadosReaisCarregados && !analisePendente) {
                 t = sys.analysis.totals;
             } else if (window._unifedDataLoaded === true) {
-                // Dados brutos do caso real (valores reais)
                 t = {
                     ganhos: data.totals.ganhos,
                     despesas: data.totals.despesas,
@@ -507,13 +433,7 @@
                     faturaPlataforma: data.totals.faturaPlataforma
                 };
             } else {
-                t = {
-                    ganhos: 0,
-                    despesas: 0,
-                    saftBruto: 0,
-                    dac7TotalPeriodo: 0,
-                    faturaPlataforma: 0
-                };
+                t = { ganhos: 0, despesas: 0, saftBruto: 0, dac7TotalPeriodo: 0, faturaPlataforma: 0 };
             }
             
             const deltaSaft = t.ganhos - t.saftBruto;
@@ -537,7 +457,7 @@
             <div id="triangulationMatrixContainer" class="pure-triangulation-box" style="margin:30px 0; border:1px solid #00E5FF; background:rgba(15,23,42,0.95); padding:20px; border-radius:12px;">
                 <h3 style="color:#00E5FF; margin-top:0; font-size:1rem;">${labels.title}</h3>
                 <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
-                    <thead><tr style="border-bottom:1px solid rgba(255,255,255,0.2);"><th style="text-align:left; padding:10px;">${labels.colSource}</th><th style="text-align:right; padding:10px;">${labels.colValue}</th><th style="text-align:right; padding:10px; color:#EF4444;">${labels.colDisc}</th></table></thead>
+                    <thead><tr style="border-bottom:1px solid rgba(255,255,255,0.2);"><th style="text-align:left; padding:10px;">${labels.colSource}</th><th style="text-align:right; padding:10px;">${labels.colValue}</th><th style="text-align:right; padding:10px; color:#EF4444;">${labels.colDisc}</th></tr></thead>
                     <tbody>
                         <tr><td style="padding:10px;">📄 SAF-T PT (${isEn ? 'Invoicing' : 'Faturação'})</td><td style="padding:10px; text-align:right;">${fmt(t.saftBruto)}</td><td style="padding:10px; text-align:right;">-${fmt(deltaSaft)}</td></tr>
                         <tr style="background:rgba(239,68,68,0.08);"><td style="padding:10px;">🌐 DAC7 (Plataforma A)</td><td style="padding:10px; text-align:right;">${fmt(t.dac7TotalPeriodo)}</td><td style="padding:10px; text-align:right;">-${fmt(deltaDac7)}</td></tr>
@@ -744,15 +664,9 @@
                 t = data.totals;
             } else {
                 t = {
-                    ganhos: 0,
-                    despesas: 0,
-                    ganhosLiquidos: 0,
-                    saftBruto: 0,
-                    dac7TotalPeriodo: 0,
-                    faturaPlataforma: 0,
-                    iva6Omitido: 0,
-                    iva23Omitido: 0,
-                    asfixiaFinanceira: 0
+                    ganhos: 0, despesas: 0, ganhosLiquidos: 0, saftBruto: 0,
+                    dac7TotalPeriodo: 0, faturaPlataforma: 0, iva6Omitido: 0,
+                    iva23Omitido: 0, asfixiaFinanceira: 0
                 };
             }
             
