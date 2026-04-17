@@ -43,6 +43,10 @@
  * 2. simulateEvidenceUpload exposto como alias local na Camada 5.
  * 3. setupRealCaseButton agora chama simulateEvidenceUpload, updateEvidenceCountersAndShow, syncMetrics e registerClient.
  * ============================================================================
+ * RETIFICAÇÕES CIRÚRGICAS (2026-04-19):
+ * 1. Adicionada chamada a window.updateModulesUI() após syncMetrics em initializeFullWithEvidence().
+ * 2. Adicionada chamada a window.updateModulesUI() no monkey-patch do updateDashboard.
+ * ============================================================================
  */
 
 (function() {
@@ -1374,6 +1378,8 @@
                 if (typeof syncMetrics === 'function') syncMetrics();
                 if (typeof renderMatrix === 'function') renderMatrix();
                 if (typeof updateAuxiliaryUI === 'function') updateAuxiliaryUI();
+                // ADICIONAR: chamada a updateModulesUI para cobertura total
+                if (typeof window.updateModulesUI === 'function') window.updateModulesUI();
                 console.log('[UNIFED] Re-hidratação do DOM concluída via Hook (updateDashboard).');
             };
             window.updateDashboard._nexusHooked = true;
@@ -1446,6 +1452,14 @@
                 if (typeof window.UNIFED_INTERNAL.syncMetrics === 'function') {
                     window.UNIFED_INTERNAL.syncMetrics();
                 }
+                
+                // =========================================================================
+                // CORREÇÃO CIRÚRGICA 2026-04-19: Adicionar chamada a updateModulesUI após syncMetrics
+                // =========================================================================
+                if (typeof window.updateModulesUI === 'function') {
+                    window.updateModulesUI();
+                }
+                
                 if (window.UNIFEDSystem && window.UNIFEDSystem.masterHash) {
                     const hashEl = document.getElementById('masterHashValue');
                     if (hashEl) hashEl.textContent = window.UNIFEDSystem.masterHash;
