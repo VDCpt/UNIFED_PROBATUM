@@ -31,6 +31,9 @@
  * 3. Módulos de análise (discrepâncias, gráficos, smoking gun) permanecem ocultos até à perícia.
  * 4. Botões da toolbar ativados automaticamente.
  * ============================================================================
+ * RETIFICAÇÃO CIRÚRGICA v2 (2026-04-17):
+ * 1. syncMetrics corrigida: enquanto window._unifedAnalysisPending === true, forçar valores de análise a zero.
+ * ============================================================================
  */
 
 (function() {
@@ -219,7 +222,7 @@
     console.log('[UNIFED] Camada 1: OK.');
 
     // =========================================================================
-    // Camada 2 – Sincronização de Métricas (syncMetrics) - CORRIGIDA (gráficos removidos)
+    // Camada 2 – Sincronização de Métricas (syncMetrics) - CORRIGIDA v2
     // =========================================================================
     (function() {
         if (!window.UNIFED_INTERNAL) return;
@@ -239,12 +242,29 @@
             // Determina se os dados reais já foram carregados (via caso real)
             const dadosReaisCarregados = (sys && sys.analysis && sys.analysis.totals && sys.analysis.totals.ganhos > 0);
             
+            // ========== CORREÇÃO CRÍTICA: Se a análise ainda não foi executada, forçar valores de análise a zero ==========
+            const analisePendente = (window._unifedAnalysisPending === true);
+            
             let t;
-            if (dadosReaisCarregados) {
+            if (dadosReaisCarregados && !analisePendente) {
+                // Caso 1: análise já executada – usar totais reais da análise
                 t = sys.analysis.totals;
-            } else if (window._unifedDataLoaded === true) {
-                // Caso real já foi ativado (mas análise ainda não executada) – usa os totais de demonstração
-                t = data.totals;
+            } else if (window._unifedDataLoaded === true && !analisePendente) {
+                // Caso 2: dados carregados mas análise ainda não executada – NÃO usar totais de demonstração para análise
+                // Forçar valores de análise a zero
+                t = {
+                    ganhos: data.totals.ganhos,           // dados brutos mantêm-se
+                    despesas: data.totals.despesas,       // dados brutos mantêm-se
+                    ganhosLiquidos: data.totals.ganhosLiquidos,
+                    saftBruto: data.totals.saftBruto,
+                    dac7TotalPeriodo: data.totals.dac7TotalPeriodo,
+                    faturaPlataforma: data.totals.faturaPlataforma,
+                    // ========== VALORES DE ANÁLISE FORÇADOS A ZERO ==========
+                    iva6Omitido: 0,
+                    iva23Omitido: 0,
+                    asfixiaFinanceira: 0,
+                    cancelamentos: 0
+                };
             } else {
                 // Estado zero‑knowledge: todos os valores a zero
                 t = {
@@ -261,15 +281,27 @@
                 };
             }
             
-            const c = (sys && sys.analysis && sys.analysis.crossings) ? sys.analysis.crossings : {};
+            // ========== VALORES DE DISCREPÂNCIA: ZERO ENQUANTO ANÁLISE PENDENTE ==========
+            let discrepanciaC2, percentC2, discrepanciaC1, percentC1, ircEstimadoCorreto, asfixiaFinanceira;
             
-            const discrepanciaC2 = c.discrepanciaCritica || (t.despesas - t.faturaPlataforma);
-            const percentC2 = c.percentagemOmissao || (t.despesas > 0 ? (discrepanciaC2 / t.despesas) * 100 : 0);
-            const discrepanciaC1 = c.discrepanciaSaftVsDac7 || (t.saftBruto - t.dac7TotalPeriodo);
-            const percentC1 = c.percentagemSaftVsDac7 || (t.saftBruto > 0 ? (discrepanciaC1 / t.saftBruto) * 100 : 0);
-            
-            const ircEstimadoCorreto = c.ircEstimado || (discrepanciaC2 * 0.21);
-            const asfixiaFinanceira = t.asfixiaFinanceira || (t.saftBruto * 0.06);
+            if (analisePendente) {
+                // Análise ainda não executada – forçar zero
+                discrepanciaC2 = 0;
+                percentC2 = 0;
+                discrepanciaC1 = 0;
+                percentC1 = 0;
+                ircEstimadoCorreto = 0;
+                asfixiaFinanceira = 0;
+            } else {
+                // Análise já executada – usar valores reais dos crossings
+                const c = (sys && sys.analysis && sys.analysis.crossings) ? sys.analysis.crossings : {};
+                discrepanciaC2 = c.discrepanciaCritica || (t.despesas - t.faturaPlataforma);
+                percentC2 = c.percentagemOmissao || (t.despesas > 0 ? (discrepanciaC2 / t.despesas) * 100 : 0);
+                discrepanciaC1 = c.discrepanciaSaftVsDac7 || (t.saftBruto - t.dac7TotalPeriodo);
+                percentC1 = c.percentagemSaftVsDac7 || (t.saftBruto > 0 ? (discrepanciaC1 / t.saftBruto) * 100 : 0);
+                ircEstimadoCorreto = c.ircEstimado || (discrepanciaC2 * 0.21);
+                asfixiaFinanceira = t.asfixiaFinanceira || (t.saftBruto * 0.06);
+            }
             
             const fi = data.fluxosIsentos;
             const totalNaoSujeitosCalc = (window._unifedDataLoaded === true) ? fi.total : 0;
@@ -317,8 +349,8 @@
                 'pure-nc-gorjetas': fmt(window._unifedDataLoaded === true ? fi.gorjetas : 0),
                 'pure-nc-portagens': fmt(window._unifedDataLoaded === true ? fi.portagens : 0),
                 'pure-nc-total': fmt(totalNaoSujeitosCalc),
-                'pure-verdict': dadosReaisCarregados ? 'RISCO CRÍTICO · DESVIO PADRÃO > 2σ' : 'AGUARDANDO PERÍCIA',
-                'pure-verdict-pct': dadosReaisCarregados ? percentC2.toFixed(2) + '%' : '0.00%',
+                'pure-verdict': dadosReaisCarregados && !analisePendente ? 'RISCO CRÍTICO · DESVIO PADRÃO > 2σ' : 'AGUARDANDO PERÍCIA',
+                'pure-verdict-pct': dadosReaisCarregados && !analisePendente ? percentC2.toFixed(2) + '%' : '0.00%',
                 'pure-session-id': (sys && sys.sessionId) ? sys.sessionId : (window._unifedDataLoaded === true ? data.sessionId : '--------'),
                 'pure-hash-prefix': (sys && sys.masterHash) ? sys.masterHash.substring(0, 12).toUpperCase() + '...' : (window._unifedDataLoaded === true ? data.masterHash.substring(0, 12) + '...' : '---'),
                 'pure-hash-prefix-verdict': (sys && sys.masterHash) ? sys.masterHash.substring(0, 16).toUpperCase() + '...' : (window._unifedDataLoaded === true ? data.masterHash.substring(0, 16) + '...' : '---'),
@@ -330,7 +362,7 @@
                 'pure-dac7-val': fmt(t.dac7TotalPeriodo), 'pure-atf-zscore': data.atf.zScore.toString(),
                 'pure-atf-confianca': data.atf.confianca, 
                 // ========== CORREÇÃO: zero‑knowledge mostra '--%' ==========
-                'pure-atf-score-val': (dadosReaisCarregados || window._unifedDataLoaded) ? (data.atf.score + '/100') : '--%',
+                'pure-atf-score-val': (dadosReaisCarregados && !analisePendente) ? (data.atf.score + '/100') : '--%',
                 'pure-iva-devido-val': fmt(asfixiaFinanceira), 'pure-impacto-macro': fmt(data.macro_analysis.estimated_systemic_gap),
                 'pure-ctrl-qty': getCounter('control', data.counts.ctrl.toString()),
                 'pure-saft-qty': getCounter('saft', data.counts.saft.toString()),
@@ -360,39 +392,40 @@
             setGlobalText('auxDac7NoteValue', fmt(totalNaoSujeitosCalc));
             setGlobalText('auxDac7NoteValueQ', fmt(totalNaoSujeitosCalc));
             
-            // Atualização dos cards de gap – apenas se dados reais carregados
+            // Atualização dos cards de gap – apenas se dados reais carregados e análise executada
             const revenueGapCorrect = t.saftBruto - t.ganhos;
             setGlobalText('revenueGapValue', fmt(revenueGapCorrect));
             setGlobalText('expenseGapValue', fmt(discrepanciaC2));
             const omissaoPct = (t.despesas > 0 && t.ganhos > 0) ? ((t.despesas / t.ganhos) * 100) : 0;
             setGlobalText('omissaoDespesasPctValue', omissaoPct.toFixed(2) + '%');
             
-            // Forçar exibição dos cards (apenas se valores > 0 e dados reais carregados)
+            // Forçar exibição dos cards (apenas se valores > 0 e dados reais carregados e análise executada)
+            const analiseExecutada = dadosReaisCarregados && !analisePendente;
             const revenueCard = document.getElementById('revenueGapCard');
-            if (revenueCard) revenueCard.style.display = (dadosReaisCarregados && Math.abs(revenueGapCorrect) > 0.01) ? 'block' : 'none';
+            if (revenueCard) revenueCard.style.display = (analiseExecutada && Math.abs(revenueGapCorrect) > 0.01) ? 'block' : 'none';
             const expenseCard = document.getElementById('expenseGapCard');
-            if (expenseCard) expenseCard.style.display = (dadosReaisCarregados && Math.abs(discrepanciaC2) > 0.01) ? 'block' : 'none';
+            if (expenseCard) expenseCard.style.display = (analiseExecutada && Math.abs(discrepanciaC2) > 0.01) ? 'block' : 'none';
             const omissaoCard = document.getElementById('omissaoDespesasPctCard');
-            if (omissaoCard) omissaoCard.style.display = (dadosReaisCarregados && t.despesas > 0 && t.ganhos > 0) ? 'block' : 'none';
+            if (omissaoCard) omissaoCard.style.display = (analiseExecutada && t.despesas > 0 && t.ganhos > 0) ? 'block' : 'none';
             
-            // Atualizar textos legais (apenas se dados reais carregados)
+            // Atualizar textos legais (apenas se dados reais carregados e análise executada)
             const sg1Legal = document.querySelector('#pureDashboard #pure-sg1-legal');
-            if (sg1Legal) sg1Legal.textContent = dadosReaisCarregados ? 'Art. 23.º CIRC (Indutividade de Custos) · Art. 103.º RGIT (Fraude Fiscal)' : '---';
+            if (sg1Legal) sg1Legal.textContent = analiseExecutada ? 'Art. 23.º CIRC (Indutividade de Custos) · Art. 103.º RGIT (Fraude Fiscal)' : '---';
             const sg2Legal = document.querySelector('#pureDashboard #pure-sg2-legal');
-            if (sg2Legal) sg2Legal.textContent = dadosReaisCarregados ? 'Diretiva DAC7 (UE) 2021/514 · Art. 103.º RGIT (Fraude Fiscal) · DL n.º 41/2023' : '---';
+            if (sg2Legal) sg2Legal.textContent = analiseExecutada ? 'Diretiva DAC7 (UE) 2021/514 · Art. 103.º RGIT (Fraude Fiscal) · DL n.º 41/2023' : '---';
             const verdictBasis = document.querySelector('#pureDashboard #pure-verdict-basis');
-            if (verdictBasis) verdictBasis.textContent = dadosReaisCarregados ? 'Art. 119.º RGIT · Art. 125.º CPP' : '---';
+            if (verdictBasis) verdictBasis.textContent = analiseExecutada ? 'Art. 119.º RGIT · Art. 125.º CPP' : '---';
             const pureIva23Sub = document.querySelector('#pureDashboard #pure-iva23-sub');
-            if (pureIva23Sub) pureIva23Sub.textContent = dadosReaisCarregados ? 'Art. 2.º n.º 1 al. i) CIVA' : '---';
+            if (pureIva23Sub) pureIva23Sub.textContent = analiseExecutada ? 'Art. 2.º n.º 1 al. i) CIVA' : '---';
             const pureIrcSub = document.querySelector('#pureDashboard #pure-irc-sub');
-            if (pureIrcSub) pureIrcSub.textContent = dadosReaisCarregados ? 'Art. 17.º CIRC' : '---';
+            if (pureIrcSub) pureIrcSub.textContent = analiseExecutada ? 'Art. 17.º CIRC' : '---';
             
             // =================================================================
             // A renderização dos gráficos será feita apenas quando os dados reais estiverem disponíveis
             // (via ensureDemoDataLoaded ou executePendingAnalysis)
             // =================================================================
         };
-        console.log('[UNIFED] Camada 2: OK.');
+        console.log('[UNIFED] Camada 2: OK. (syncMetrics corrigida para zero-knowledge)');
     })();
 
     // =========================================================================
@@ -1029,6 +1062,7 @@
 
             // Sincronizar UI – agora com flag raw desligado
             window._unifedRawDataOnly = false;
+            window._unifedAnalysisPending = false;
             if (typeof window.UNIFED_INTERNAL.syncMetrics === 'function') {
                 window.UNIFED_INTERNAL.syncMetrics();
             }
@@ -1060,7 +1094,6 @@
                 }
             }));
 
-            window._unifedAnalysisPending = false;
             console.log('[UNIFED] Análise forense concluída e UI atualizada.');
 
             // Mostrar os módulos forenses após a análise
