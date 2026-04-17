@@ -3611,6 +3611,9 @@ async function processBatchFiles(files) {
     }
 }
 
+// ============================================================================
+// RETIFICAÇÃO: processQueue - APENAS atualiza UI básica, NÃO executa análise
+// ============================================================================
 async function processQueue() {
     isProcessingQueue = true;
     const statusEl = document.getElementById('globalProcessingStatus');
@@ -3646,106 +3649,36 @@ async function processQueue() {
 
     logAudit(`✅ Processamento em lote concluído. Total: ${total} ficheiro(s)`, 'success');
     ForensicLogger.addEntry('BATCH_PROCESSING_COMPLETE', { total });
-    updateEvidenceSummary();
-    updateCounters();
-    await UNIFEDSystem.generateMasterHash();
-    forensicDataSynchronization();
-    showToast(`${total} ficheiro(s) processados em lote`, 'success');
-}
 
-async function detectFileType(file) {
-    const name = file.name.toLowerCase();
+    // =================================================================
+    // DIRETRIZ 2: APENAS atualizar UI básica, NÃO executar análise
+    // =================================================================
+    updateEvidenceSummary();        // contadores
+    updateCounters();               // contadores compactos
+    forensicDataSynchronization();  // sincroniza contadores com UI
+    updateModulesUI();              // preenche os 3 módulos base (SAF-T, Extratos, DAC7)
+    filterDAC7ByPeriod();           // ajusta DAC7 conforme período selecionado
 
-    if (name.includes('fatura') ||
-        name.includes('invoice') ||
-        name.match(/pt\d{4}-\d{5}/i) ||
-        name.match(/pt\d{4,5}-\d{3,5}/i) ||
-        (file.type === 'application/pdf' && name.match(/\d{4}-\d{5}/))) {
-        return 'invoice';
+    // Garantir que os módulos avançados ficam ocultos
+    if (typeof window.updateForensicModulesVisibility === 'function') {
+        window.updateForensicModulesVisibility(false);
     }
 
-    if (name.match(/131509.*\.csv$/) || name.includes('saf-t') || name.includes('saft')) {
-        return 'saft';
-    }
+    // Manter flag de análise pendente (perícia ainda não executada)
+    window._unifedAnalysisPending = true;
+    window._unifedRawDataOnly = true;
 
-    if (name.includes('extrato') || name.includes('statement') ||
-        name.includes('ganhos') || name.includes('earnings')) {
-        return 'statement';
-    }
-
-    if (name.includes('dac7') || name.includes('dac-7')) {
-        return 'dac7';
-    }
-
-    if (name.includes('controlo') || name.includes('control')) {
-        return 'control';
-    }
-
-    if (file.type === 'application/pdf' || name.endsWith('.pdf')) {
-        try {
-            const arrayBuffer = await file.slice(0, 1024 * 100).arrayBuffer();
-            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-            const page = await pdf.getPage(1);
-            const content = await page.getTextContent();
-            const text = content.items.map(item => item.str).join(' ').toLowerCase();
-
-            if (text.includes('dac7') ||
-                (text.includes('ganhos') && text.includes('trimestre')) ||
-                (text.includes('earnings') && text.includes('quarter'))) {
-                return 'dac7';
-            }
-
-            if (text.includes('fatura') || text.includes('invoice') || text.includes('comissão')) {
-                return 'invoice';
-            }
-
-            if (text.includes('extrato') || text.includes('statement') || text.includes('ganhos')) {
-                return 'statement';
-            }
-        } catch (e) {
-            console.warn('Erro ao analisar conteúdo PDF para deteção de tipo:', e);
-        }
-    }
-
-    return 'unknown';
-}
-
-function setupUploadListeners() {
-    const types = ['control', 'saft', 'invoice', 'statement', 'dac7'];
-    types.forEach(type => {
-        const btn = document.getElementById(`${type}UploadBtnModal`);
-        const input = document.getElementById(`${type}FileModal`);
-        if (btn && input) {
-            btn.addEventListener('click', () => input.click());
-            input.addEventListener('change', (e) => {
-                const files = Array.from(e.target.files);
-                processBatchFiles(files);
-                e.target.value = '';
-            });
-        }
-    });
-}
-
-function registerClient() {
-    const name = document.getElementById('clientNameFixed').value.trim();
-    const nif = document.getElementById('clientNIFFixed').value.trim();
-
-    if (!name || name.length < 3) return showToast('Nome inválido', 'error');
-    if (!validateNIF(nif)) return showToast('NIF inválido (checksum falhou)', 'error');
-
-    UNIFEDSystem.client = { name, nif, platform: UNIFEDSystem.selectedPlatform };
-    localStorage.setItem('ifde_client_data_v12_8', JSON.stringify(UNIFEDSystem.client));
-
-    document.getElementById('clientStatusFixed').style.display = 'flex';
-    setElementText('clientNameDisplayFixed', name);
-    setElementText('clientNifDisplayFixed', nif);
-
-    logAudit(`Sujeito passivo registado: ${name} (NIF ${nif})`, 'success');
-    ForensicLogger.addEntry('CLIENT_REGISTERED', { name, nif });
-    showToast('Identidade validada com sucesso', 'success');
+    // Habilitar o botão "Executar Perícia" (se houver cliente)
     updateAnalysisButton();
+
+    // Disparar evento de dados carregados (sem análise)
+    window.dispatchEvent(new CustomEvent('UNIFED_DATA_LOADED', { detail: { totalFiles: total } }));
+    showToast(`${total} ficheiro(s) processados. Clique em "Executar Perícia" para obter análise completa.`, 'success');
 }
 
+// ============================================================================
+// processFile (sem chamadas de análise no final)
+// ============================================================================
 async function processFile(file, type) {
     const fileKey = `${file.name}_${file.size}_${file.lastModified}`;
     if (UNIFEDSystem.processedFiles.has(fileKey)) {
