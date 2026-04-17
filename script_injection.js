@@ -1583,7 +1583,15 @@
             console.log('[UNIFED] Estado 1 (METADATA): hidratação de metadados concluída.');
         };
 
+        // =========================================================================
+        // SUBSTITUIR a definição de window.uncloakForensicData (PATCH 1)
+        // =========================================================================
         window.uncloakForensicData = function() {
+            // Só revela se a perícia tiver sido executada (análise pendente resolvida)
+            if (window._unifedAnalysisPending === true || window._unifedRawDataOnly === true) {
+                console.log('[UNIFED] uncloakForensicData bloqueado – análise ainda não executada.');
+                return;
+            }
             if (typeof window.UNIFED_INTERNAL !== 'undefined') {
                 if (typeof window.UNIFED_INTERNAL.syncMetrics === 'function')   window.UNIFED_INTERNAL.syncMetrics();
                 if (typeof window.UNIFED_INTERNAL.renderMatrix === 'function')  window.UNIFED_INTERNAL.renderMatrix();
@@ -1612,9 +1620,22 @@
                 btnCasoReal.setAttribute('data-state-hydration-1', '1');
             }
 
+            // =========================================================================
+            // MODIFICAR o listener do evento UNIFED_ANALYSIS_COMPLETE (PATCH 2)
+            // =========================================================================
             window.addEventListener('UNIFED_ANALYSIS_COMPLETE', function _onAnalysisComplete(evt) {
-                console.log('[UNIFED] UNIFED_ANALYSIS_COMPLETE recebido. A iniciar uncloaking atómico...', (evt && evt.detail) || '');
-                window.uncloakForensicData();
+                console.log('[UNIFED] UNIFED_ANALYSIS_COMPLETE recebido (fallback).', (evt && evt.detail) || '');
+                // Se o evento vier do forceFinalState (status 'READY'), NÃO revela
+                if (evt.detail && evt.detail.status === 'READY') {
+                    console.log('[UNIFED] Evento de inicialização ignorado – aguardando perícia.');
+                    return;
+                }
+                // Caso contrário, só revela se a análise já tiver sido executada (pendente false)
+                if (window._unifedAnalysisPending === false) {
+                    window.uncloakForensicData();
+                } else {
+                    console.log('[UNIFED] Análise ainda pendente – revelação adiada.');
+                }
             });
 
             const btnAnalyze = document.getElementById('analyzeBtn')

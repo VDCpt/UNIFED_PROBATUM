@@ -16,6 +16,11 @@
  * · Removidas duplicações e garantida a visibilidade original do dashboard
  * · EXPOSIÇÃO GLOBAL: window.generateLegalNarrative adicionada para compatibilidade
  * ============================================================================
+ * PATCH 2 (2026-04-17):
+ * · No listener UNIFED_ANALYSIS_COMPLETE: renderização de gráficos apenas quando
+ *   window._unifedAnalysisPending === false (perícia executada)
+ * · No listener UNIFED_EXECUTE_PERITIA: renderização condicionada a hasRealData
+ * ============================================================================
  */
 
 'use strict';
@@ -1267,10 +1272,10 @@ function generateBurdenOfProofSection(discrepancyValue) {
 window.generateBurdenOfProofSection = generateBurdenOfProofSection;
 
 // ============================================================================
-// 9. ADIÇÕES v13.12.2-i18n · POLÍTICA ZERO-OMISSÃO (REFATORADA)
+// 9. ADIÇÕES v13.12.2-i18n · POLÍTICA ZERO-OMISSÃO (REFATORADA) + PATCH 2
 // ============================================================================
 (function _enrichmentZeroOmissionRefactored() {
-    // ── Listener UNIFED_ANALYSIS_COMPLETE modificado (correção do bloco RAG) ──
+    // ── Listener UNIFED_ANALYSIS_COMPLETE modificado (correção do bloco RAG + PATCH 2) ──
     window.addEventListener('UNIFED_ANALYSIS_COMPLETE', function _onAnalysisComplete(evt) {
         console.log('[UNIFED-ENRICHMENT] UNIFED_ANALYSIS_COMPLETE recebido. Sincronizando UI...', (evt && evt.detail) || '');
         var _sys = window.UNIFEDSystem || {};
@@ -1317,30 +1322,43 @@ window.generateBurdenOfProofSection = generateBurdenOfProofSection;
             narrativeContainer.innerHTML = fallbackHTML;
         }
         
-        // Renderizar gráficos apenas se houver dados reais (com verificação adicional)
-        if (typeof window.renderDiscrepancyCharts === 'function') {
-            const totals = window.UNIFEDSystem?.analysis?.totals;
-            if (totals && (totals.ganhos > 0 || totals.dac7TotalPeriodo > 0)) {
-                window.renderDiscrepancyCharts();
-            } else {
-                console.log('[UNIFED-ENRICHMENT] Dados zero – gráfico SAF-T/DAC7 não renderizado.');
-                const container = document.getElementById('mainDiscrepancyChart')?.closest('.chart-section');
-                if (container) container.style.display = 'none';
+        // ========== PATCH 2: renderização de gráficos apenas quando a perícia tiver sido executada ==========
+        if (window._unifedAnalysisPending === false) {
+            if (typeof window.renderDiscrepancyCharts === 'function') {
+                const totals = window.UNIFEDSystem?.analysis?.totals;
+                if (totals && (totals.ganhos > 0 || totals.dac7TotalPeriodo > 0)) {
+                    window.renderDiscrepancyCharts();
+                } else {
+                    console.log('[UNIFED-ENRICHMENT] Dados zero – gráfico SAF-T/DAC7 não renderizado.');
+                    const container = document.getElementById('mainDiscrepancyChart')?.closest('.chart-section');
+                    if (container) container.style.display = 'none';
+                }
             }
-        }
-        if (typeof window.renderChart === 'function') {
-            window.renderChart();
+            if (typeof window.renderChart === 'function') {
+                window.renderChart();
+            }
+        } else {
+            console.log('[UNIFED-ENRICHMENT] Análise ainda pendente – gráficos não renderizados.');
         }
         
-        console.log('[UNIFED-ENRICHMENT] Uncloaking, RAG e gráficos concluídos (dados reais presentes).');
+        console.log('[UNIFED-ENRICHMENT] Uncloaking, RAG e gráficos condicionados concluídos (dados reais presentes).');
     });
 
-    // ── Event-Based Lazy Rendering: UNIFED_EXECUTE_PERITIA com hidratação cirúrgica ──
+    // ── Event-Based Lazy Rendering: UNIFED_EXECUTE_PERITIA com hidratação cirúrgica (PATCH 2) ──
     window.addEventListener('UNIFED_EXECUTE_PERITIA', function _onPeritiaExecute(evt) {
         console.log('[UNIFED-ENRICHMENT] UNIFED_EXECUTE_PERITIA recebido. Motor gráfico ATF e hidratação a inicializar...', (evt.detail || {}).masterHash || '');
         
-        // ========== HIDRATAÇÃO CIRÚRGICA (Instrução Técnica 3) ==========
+        // Verificar se existem dados reais antes de renderizar
         const sys = window.UNIFEDSystem;
+        const hasRealData = (sys && sys.analysis && sys.analysis.totals && sys.analysis.totals.ganhos > 0) ||
+                            (window._unifedDataLoaded === true);
+        
+        if (!hasRealData) {
+            console.log('[UNIFED-ENRICHMENT] UNIFED_EXECUTE_PERITIA: sem dados reais, renderização ignorada.');
+            return;
+        }
+        
+        // ========== HIDRATAÇÃO CIRÚRGICA (Instrução Técnica 3) ==========
         const analysis = sys && sys.analysis;
         const totals = analysis && analysis.totals;
         const crossings = analysis && analysis.crossings;
@@ -1410,7 +1428,7 @@ window.generateBurdenOfProofSection = generateBurdenOfProofSection;
         if (!window.formatCurrency) window.formatCurrency = window.UNIFEDSystem.utils.formatCurrency;
     }
     
-    console.log('[UNIFED-ENRICHMENT] ✅ Módulo de Enriquecimento v13.12.2-i18n carregado (POLÍTICA ZERO-OMISSÃO refatorada).');
+    console.log('[UNIFED-ENRICHMENT] ✅ Módulo de Enriquecimento v13.12.2-i18n carregado (POLÍTICA ZERO-OMISSÃO refatorada + PATCH 2).');
 })();
 
 // Renderização de gráfico de discrepâncias com fallback corrigido (apenas dados reais)
