@@ -1,30 +1,27 @@
 /**
  * ============================================================================
- * UNIFED - PROBATUM · CONTROLO DE ACESSO SOBERANO — HALT EXECUTION PROTOCOL
+ * UNIFED - PROBATUM · CONTROLO DE ACESSO SOBERANO
  * unifed_access_control.js
  * ============================================================================
- * Versão      : v2.0.0-HALT-EXEC
+ * Versão      : v3.0.0-CYBER-FORGE
  * Data        : 2026-04-18
- * Perito      : Consultor Estratégico Independente
- * Finalidade  : Controlo de acesso com bloqueio real de execução de módulos.
- *               Os scripts subsequentes NÃO existem no DOM até autenticação
- *               criptográfica (SHA-256) ser validada com sucesso.
+ * Finalidade  : Halt Execution Protocol + Glassmorphism UI + Forensic
+ *               Hydration Visualizer + Post-Auth Panel Unlock garantido
  *
- * ARQUITECTURA — HALT EXECUTION PROTOCOL:
- *   - O index.html carrega APENAS este ficheiro via <script src="...">
- *   - Todos os restantes módulos são injectados DINAMICAMENTE após login
- *   - Zero-State real: nenhum módulo de dados ou UI carrega antes da auth
- *   - Sequência de carregamento canónica definida em MODULES_SEQUENCE abaixo
- *
- * ALTERAR A PASSWORD:
- *   1. Terminal: echo -n "NovaPassword" | sha256sum
- *   2. Substitua STORED_HASH pelo hash de 64 caracteres obtido.
+ * NOVIDADES v3.0:
+ *   · Design Glassmorphism "Cyber-Security Command Center"
+ *   · Tipografia: Syne (títulos) + JetBrains Mono (hashes / métricas)
+ *   · Shimmer effect (brilho animado) na caixa de login
+ *   · Forensic Module Hydration UI com Data Stream + terminal log
+ *   · _onAuthSuccess() com desbloqueio garantido de #pureDashboardWrapper
+ *   · Remoção real do overlay do DOM (sem display:none residual)
+ *   · Chamada explícita a window._activatePurePanel() com fallback manual
+ *   · Preview parcial do SHA-256 no rodapé enquanto o utilizador digita
  *
  * PASSWORD PADRÃO : Beatriz2026###@@@
  * HASH PADRÃO     : 2cc9039cff521fa20ce9748ea10ebb59b83de0e922899071a81f1494a0728b54
  *
  * CONFORMIDADE: Art. 125.º CPP · ISO/IEC 27037:2012 · RGPD Art. 32.º
- * MODELO       : Uso Exclusivo e Perpétuo — Soberania do Perito
  * ============================================================================
  */
 
@@ -32,38 +29,32 @@
 
 (function _installAccessControl() {
 
+    if (window._UNIFED_AC_INSTALLED === true) {
+        console.info('[UNIFED-AC] Já instalado. Re-execução ignorada.');
+        return;
+    }
+    window._UNIFED_AC_INSTALLED = true;
+
     // =========================================================================
-    // CONFIGURAÇÃO — ÚNICO CAMPO A EDITAR PARA MUDAR A PASSWORD
+    // CONFIGURAÇÃO
     // =========================================================================
 
-    /**
-     * STORED_HASH — SHA-256 da password de acesso.
-     * Para alterar: echo -n "NovaPwd" | sha256sum → substituir os 64 chars abaixo.
-     * @type {string}
-     */
-    const STORED_HASH = '2cc9039cff521fa20ce9748ea10ebb59b83de0e922899071a81f1494a0728b54';
-
+    const STORED_HASH  = '2cc9039cff521fa20ce9748ea10ebb59b83de0e922899071a81f1494a0728b54';
     const MAX_ATTEMPTS = 3;
     const LOCKOUT_MS   = 30000;
 
-    // =========================================================================
-    // SEQUÊNCIA CANÓNICA DE MÓDULOS (injectados apenas após autenticação)
-    // =========================================================================
-
     /**
-     * MODULES_SEQUENCE — Lista ordenada de scripts a carregar dinamicamente.
-     * A ordem é estritamente sequencial: cada script aguarda o load do anterior.
-     * Corresponde à ordem canónica definida no index.html original,
-     * com a excepção de que unifed_access_control.js já está no DOM (Passo 0).
+     * MODULES_SEQUENCE — Sequência canónica de carregamento dinâmico.
+     * Editável sem recompilar o sistema.
      */
     const MODULES_SEQUENCE = [
-        'unifed_panel_activator.js',       // Passo 1
-        'unifed_core_harmonizer.js',       // Passo 2 — substitui 6 módulos Fase II
-        'script.js',                       // Passo 3
-        'script_injection.js',             // Passo 4
-        'enrichment.js',                   // Passo 5
-        'nexus.js',                        // Passo 6
-        'proxy_worker.js'                  // Passo 7 (worker Cloudflare — referência)
+        'unifed_panel_activator.js',
+        'unifed_core_harmonizer.js',
+        'script.js',
+        'script_injection.js',
+        'enrichment.js',
+        'nexus.js',
+        'unifed_triada_export.js'
     ];
 
     // =========================================================================
@@ -79,369 +70,663 @@
     let _btnEl       = null;
     let _lockTimerEl = null;
 
-    // Flag global — permanece false até autenticação bem-sucedida
     window._UNIFED_ACCESS_GRANTED = false;
 
     // =========================================================================
-    // FUNÇÃO SHA-256 VIA WEBCRYPTO (nativa — sem dependências externas)
+    // SHA-256 VIA WEBCRYPTO (nativa — sem dependências externas)
     // =========================================================================
 
-    /**
-     * computeSHA256() — SHA-256 de uma string via SubtleCrypto.
-     * @param {string} message
-     * @returns {Promise<string>} — 64 caracteres hexadecimais lowercase
-     */
     async function computeSHA256(message) {
-        const encoder    = new TextEncoder();
-        const data       = encoder.encode(message);
-        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-        const hashArray  = Array.from(new Uint8Array(hashBuffer));
-        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        const enc    = new TextEncoder();
+        const buf    = await crypto.subtle.digest('SHA-256', enc.encode(message));
+        return Array.from(new Uint8Array(buf))
+                    .map(b => b.toString(16).padStart(2, '0')).join('');
     }
 
     // =========================================================================
-    // CARREGAMENTO DINÂMICO SEQUENCIAL DE MÓDULOS (Halt Execution Protocol)
+    // CSS CONSOLIDADO — GLASSMORPHISM + FORENSIC HYDRATION UI
+    // Tipografia: Syne (display/títulos) + JetBrains Mono (métricas/hashes)
     // =========================================================================
 
-    /**
-     * _loadScriptDynamic() — Carrega um script dinamicamente via createElement.
-     * Resolve quando o script dispara o evento 'load'.
-     * Rejeita se o script disparar o evento 'error' (ficheiro não encontrado).
-     *
-     * @param {string} src — Caminho relativo do script
-     * @returns {Promise<void>}
-     */
-    function _loadScriptDynamic(src) {
-        return new Promise(function(resolve, reject) {
-            const el    = document.createElement('script');
-            el.src      = src;
-            el.async    = false; // Manter ordem de execução garantida
-            el.defer    = false;
+    const OVERLAY_CSS = `
+        /* ── Fontes ──────────────────────────────────────────────────────── */
+        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;800&family=JetBrains+Mono:wght@400;600&display=swap');
 
-            el.addEventListener('load', function() {
-                console.log('[UNIFED-ACCESS] ✓ Módulo carregado: ' + src);
-                resolve();
-            });
+        #unifed-ac-overlay * { box-sizing: border-box; margin: 0; padding: 0; }
 
-            el.addEventListener('error', function() {
-                const err = new Error('[UNIFED-ACCESS] ❌ Falha ao carregar: ' + src);
-                console.error(err.message);
-                reject(err);
-            });
-
-            document.body.appendChild(el);
-        });
-    }
-
-    /**
-     * _loadModulesSequentially() — Itera MODULES_SEQUENCE em série.
-     * Um módulo só é injectado no DOM após o módulo anterior ter carregado.
-     * Falhas são registadas na consola mas não interrompem a sequência
-     * (comportamento fail-soft para módulos opcionais como proxy_worker.js).
-     *
-     * @returns {Promise<void>}
-     */
-    async function _loadModulesSequentially() {
-        console.log('[UNIFED-ACCESS] ▶ Iniciando carregamento sequencial de ' + MODULES_SEQUENCE.length + ' módulos...');
-        let loaded  = 0;
-        let failed  = 0;
-
-        for (let i = 0; i < MODULES_SEQUENCE.length; i++) {
-            const src = MODULES_SEQUENCE[i];
-            try {
-                await _loadScriptDynamic(src);
-                loaded++;
-            } catch (err) {
-                failed++;
-                console.warn('[UNIFED-ACCESS] ⚠ Módulo ignorado (fail-soft): ' + src);
-            }
+        /* ── Backdrop com grelha de circuito e gradientes ambientais ─────── */
+        #unifed-ac-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 99999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'JetBrains Mono', 'Courier New', monospace;
+            background:
+                radial-gradient(ellipse 80% 55% at 50% -5%,
+                    rgba(0, 229, 255, 0.13) 0%, transparent 70%),
+                radial-gradient(ellipse 55% 50% at 85% 105%,
+                    rgba(99, 0, 255, 0.09) 0%, transparent 70%),
+                #060d1a;
+            overflow: hidden;
         }
 
-        console.log('[UNIFED-ACCESS] ✅ Sequência concluída. Carregados: ' + loaded + ' | Falhas: ' + failed);
+        /* Grelha tipo PCB */
+        #unifed-ac-overlay::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(0, 229, 255, 0.045) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 229, 255, 0.045) 1px, transparent 1px);
+            background-size: 44px 44px;
+            mask-image: radial-gradient(ellipse 88% 88% at 50% 50%,
+                black 35%, transparent 100%);
+            pointer-events: none;
+        }
 
-        // Disparar evento UNIFED_CORE_READY para sincronização (unifed_triada_export.js aguarda este evento)
-        window.dispatchEvent(new CustomEvent('UNIFED_CORE_READY', {
-            detail: { loaded: loaded, failed: failed, timestamp: new Date().toISOString() }
-        }));
+        /* Scan lines em movimento */
+        #unifed-ac-overlay::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent 0px, transparent 3px,
+                rgba(0, 229, 255, 0.016) 3px, rgba(0, 229, 255, 0.016) 4px
+            );
+            pointer-events: none;
+            animation: _scanMove 10s linear infinite;
+        }
 
-        // Disparar evento de acesso concedido (listeners em index.html)
-        document.dispatchEvent(new CustomEvent('unifed:access:granted', {
-            detail: { timestamp: new Date().toISOString() }
-        }));
-    }
+        @keyframes _scanMove {
+            0%   { background-position: 0 0; }
+            100% { background-position: 0 200px; }
+        }
+
+        /* ── Caixa principal: Glassmorphism ──────────────────────────────── */
+        #unifed-ac-box {
+            position: relative;
+            width: 468px;
+            max-width: 96vw;
+            background: rgba(15, 23, 42, 0.82);
+            backdrop-filter: blur(15px) saturate(180%);
+            -webkit-backdrop-filter: blur(15px) saturate(180%);
+            border: 1px solid rgba(0, 229, 255, 0.28);
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow:
+                0 0 0 1px rgba(0, 229, 255, 0.07),
+                0 36px 90px rgba(0, 0, 0, 0.65),
+                0 0 70px rgba(0, 229, 255, 0.06),
+                inset 0 1px 0 rgba(255, 255, 255, 0.06);
+            animation: _boxEntrance 0.52s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes _boxEntrance {
+            from { opacity: 0; transform: translateY(22px) scale(0.97); }
+            to   { opacity: 1; transform: translateY(0)    scale(1); }
+        }
+
+        /* Shimmer effect — brilho que percorre a caixa */
+        #unifed-ac-box::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -110%;
+            width: 55%; height: 100%;
+            background: linear-gradient(
+                108deg,
+                transparent 38%,
+                rgba(0, 229, 255, 0.065) 50%,
+                transparent 62%
+            );
+            animation: _shimmer 4.5s ease-in-out infinite;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        @keyframes _shimmer {
+            0%   { left: -110%; }
+            42%  { left: 165%; }
+            100% { left: 165%; }
+        }
+
+        /* Linha de acento RGB superior */
+        #unifed-ac-box::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(
+                90deg,
+                transparent 0%,
+                rgba(0, 229, 255, 0.7) 25%,
+                rgba(139, 92, 246, 0.7) 60%,
+                rgba(0, 229, 255, 0.3) 85%,
+                transparent 100%
+            );
+        }
+
+        /* ── Cabeçalho ───────────────────────────────────────────────────── */
+        #unifed-ac-header {
+            padding: 30px 34px 22px;
+            border-bottom: 1px solid rgba(0, 229, 255, 0.1);
+            position: relative;
+            z-index: 2;
+        }
+
+        #unifed-ac-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 8.5px;
+            letter-spacing: 2.5px;
+            color: rgba(0, 229, 255, 0.55);
+            border: 1px solid rgba(0, 229, 255, 0.18);
+            padding: 4px 12px;
+            border-radius: 4px;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            background: rgba(0, 229, 255, 0.04);
+        }
+
+        #unifed-ac-badge::before {
+            content: '';
+            width: 5px; height: 5px;
+            border-radius: 50%;
+            background: #00e5ff;
+            box-shadow: 0 0 7px #00e5ff;
+            flex-shrink: 0;
+            animation: _pulseDot 1.8s ease-in-out infinite;
+        }
+
+        @keyframes _pulseDot {
+            0%, 100% { opacity: 1; box-shadow: 0 0 7px #00e5ff; }
+            50%       { opacity: 0.35; box-shadow: 0 0 2px #00e5ff; }
+        }
+
+        #unifed-ac-title {
+            font-family: 'Syne', 'Segoe UI', system-ui, sans-serif;
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: -0.8px;
+            color: #f0f9ff;
+            line-height: 1.1;
+            margin-bottom: 8px;
+        }
+
+        #unifed-ac-title .ac-accent {
+            background: linear-gradient(135deg, #00e5ff 0%, #8b5cf6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        #unifed-ac-subtitle {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            color: rgba(148, 163, 184, 0.55);
+            letter-spacing: 0.2px;
+        }
+
+        /* ── Corpo ───────────────────────────────────────────────────────── */
+        #unifed-ac-body {
+            padding: 26px 34px 22px;
+            position: relative;
+            z-index: 2;
+        }
+
+        #unifed-ac-label {
+            display: block;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 8.5px;
+            letter-spacing: 2px;
+            color: rgba(0, 229, 255, 0.45);
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        #unifed-ac-input-wrap {
+            position: relative;
+            margin-bottom: 14px;
+        }
+
+        #unifed-ac-input-wrap.focused::after {
+            content: '';
+            position: absolute;
+            inset: -1px;
+            border-radius: 10px;
+            border: 1px solid rgba(0, 229, 255, 0.5);
+            box-shadow: 0 0 0 3px rgba(0, 229, 255, 0.08),
+                        0 0 24px rgba(0, 229, 255, 0.08);
+            pointer-events: none;
+        }
+
+        #unifed-pwd-input {
+            width: 100%;
+            background: rgba(2, 8, 23, 0.72);
+            border: 1px solid rgba(0, 229, 255, 0.18);
+            border-radius: 9px;
+            color: #00e5ff;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 15px;
+            letter-spacing: 4px;
+            padding: 13px 46px 13px 16px;
+            outline: none;
+            transition: border-color 0.25s;
+            caret-color: #00e5ff;
+        }
+
+        #unifed-pwd-input[type="text"] {
+            letter-spacing: 1.5px;
+        }
+
+        #unifed-pwd-input::placeholder {
+            color: rgba(0, 229, 255, 0.15);
+            letter-spacing: 4px;
+        }
+
+        #unifed-pwd-input.error {
+            border-color: rgba(239, 68, 68, 0.55);
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.07);
+            animation: _shake 0.38s ease;
+        }
+
+        @keyframes _shake {
+            0%, 100% { transform: translateX(0); }
+            20%       { transform: translateX(-7px); }
+            40%       { transform: translateX(7px); }
+            60%       { transform: translateX(-4px); }
+            80%       { transform: translateX(4px); }
+        }
+
+        #unifed-pwd-toggle {
+            position: absolute;
+            right: 14px; top: 50%;
+            transform: translateY(-50%);
+            background: none; border: none;
+            cursor: pointer;
+            color: rgba(0, 229, 255, 0.3);
+            font-size: 13px;
+            padding: 4px;
+            line-height: 1;
+            transition: color 0.2s;
+        }
+        #unifed-pwd-toggle:hover { color: #00e5ff; }
+
+        /* Botão de autenticação */
+        #unifed-ac-btn {
+            width: 100%;
+            position: relative;
+            background: linear-gradient(135deg,
+                rgba(0, 229, 255, 0.1) 0%,
+                rgba(139, 92, 246, 0.1) 100%);
+            border: 1px solid rgba(0, 229, 255, 0.32);
+            border-radius: 9px;
+            color: #e0f7ff;
+            font-family: 'Syne', sans-serif;
+            font-size: 11.5px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            padding: 14px;
+            cursor: pointer;
+            transition: all 0.28s ease;
+            margin-bottom: 16px;
+            overflow: hidden;
+        }
+
+        #unifed-ac-btn::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg,
+                rgba(0,229,255,0) 0%,
+                rgba(0,229,255,0.14) 50%,
+                rgba(0,229,255,0) 100%);
+            transform: translateX(-100%);
+            transition: transform 0.42s ease;
+        }
+
+        #unifed-ac-btn:hover:not(:disabled)::before { transform: translateX(100%); }
+
+        #unifed-ac-btn:hover:not(:disabled) {
+            background: linear-gradient(135deg,
+                rgba(0, 229, 255, 0.18) 0%,
+                rgba(139, 92, 246, 0.18) 100%);
+            border-color: rgba(0, 229, 255, 0.65);
+            box-shadow: 0 0 32px rgba(0, 229, 255, 0.14),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            transform: translateY(-1px);
+        }
+
+        #unifed-ac-btn:disabled {
+            opacity: 0.28; cursor: not-allowed;
+            border-color: rgba(0, 229, 255, 0.1);
+            transform: none; box-shadow: none;
+        }
+
+        /* Status e lockout */
+        #unifed-ac-status {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            letter-spacing: 0.4px;
+            min-height: 16px;
+            text-align: center;
+            transition: color 0.2s;
+        }
+        #unifed-ac-status.ok   { color: #34d399; }
+        #unifed-ac-status.err  { color: #f87171; }
+        #unifed-ac-status.warn { color: #fbbf24; }
+        #unifed-ac-status.info { color: rgba(0, 229, 255, 0.45); }
+
+        #unifed-ac-lock-timer {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            text-align: center;
+            color: #f87171;
+            margin-top: 8px;
+            min-height: 14px;
+            letter-spacing: 0.5px;
+        }
+
+        /* ── FORENSIC MODULE HYDRATION UI ────────────────────────────────── */
+        #unifed-hydration-panel {
+            display: none;
+            flex-direction: column;
+            gap: 0;
+            margin-top: 18px;
+            border: 1px solid rgba(0, 229, 255, 0.14);
+            border-radius: 10px;
+            overflow: hidden;
+            background: rgba(2, 8, 23, 0.65);
+        }
+        #unifed-hydration-panel.active { display: flex; }
+
+        /* Barra de título tipo terminal */
+        #unifed-hydration-header {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            padding: 8px 14px;
+            background: rgba(0, 229, 255, 0.04);
+            border-bottom: 1px solid rgba(0, 229, 255, 0.08);
+        }
+        #unifed-hydration-header .hy-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 8px;
+            letter-spacing: 2px;
+            color: rgba(0, 229, 255, 0.35);
+            text-transform: uppercase;
+            margin-left: 4px;
+        }
+        .hy-dot { width: 6px; height: 6px; border-radius: 50%; }
+        .hy-dot-r { background: #f87171; }
+        .hy-dot-y { background: #fbbf24; }
+        .hy-dot-g { background: #34d399; animation: _pulseDot 1.4s ease-in-out infinite; }
+
+        /* Área de log do terminal */
+        #unifed-hydration-log {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            padding: 10px 14px;
+            min-height: 64px;
+            max-height: 94px;
+            overflow-y: auto;
+            scrollbar-width: none;
+            line-height: 1.75;
+        }
+        #unifed-hydration-log::-webkit-scrollbar { display: none; }
+
+        .hy-log-line {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            animation: _logSlide 0.18s ease forwards;
+            opacity: 0;
+        }
+
+        @keyframes _logSlide {
+            from { opacity: 0; transform: translateX(-6px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+
+        .hy-ts   { color: rgba(0, 229, 255, 0.25); font-size: 9px; flex-shrink: 0; }
+        .hy-load { color: #6366f1; }
+        .hy-ok   { color: #34d399; }
+        .hy-warn { color: #fbbf24; }
+        .hy-sys  { color: #34d399; }
+        .hy-file { color: #e2e8f0; }
+        .hy-cursor {
+            display: inline-block;
+            width: 5px; height: 10px;
+            background: #00e5ff;
+            animation: _blink 0.75s step-end infinite;
+            vertical-align: middle;
+            margin-left: 2px;
+            border-radius: 1px;
+        }
+        @keyframes _blink { 50% { opacity: 0; } }
+
+        /* ── Data Stream Progress Bar ────────────────────────────────────── */
+        #unifed-progress-track {
+            position: relative;
+            height: 30px;
+            border-top: 1px solid rgba(0, 229, 255, 0.08);
+            background: rgba(0, 0, 0, 0.35);
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        /* Stream de dados em hex — fundo animado */
+        #unifed-progress-track::before {
+            content: '4E55 4C4C 2042 5954 4553 202F 4157 4149 5449 4E47 2048 5944 5241 5449 4F4E 202F 5359 5354 454D 204C 4F41 4420 4143 5449 5645 202F 4441 5441 2053 5452 4541 4D20 2F20 464F 5245 4E53 4943 202F';
+            position: absolute;
+            top: 50%; left: 0;
+            transform: translateY(-50%);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 7px;
+            letter-spacing: 1.5px;
+            color: rgba(0, 229, 255, 0.07);
+            white-space: nowrap;
+            animation: _hexStream 7s linear infinite;
+        }
+
+        @keyframes _hexStream {
+            0%   { transform: translateY(-50%) translateX(0); }
+            100% { transform: translateY(-50%) translateX(-50%); }
+        }
+
+        /* Fill da barra — efeito 3D com gradiente e segmentos */
+        #unifed-progress-fill {
+            position: absolute;
+            top: 0; left: 0; bottom: 0;
+            width: 0%;
+            background: linear-gradient(
+                90deg,
+                rgba(0, 229, 255, 0.12) 0%,
+                rgba(0, 229, 255, 0.32) 55%,
+                rgba(0, 229, 255, 0.62) 82%,
+                rgba(255, 255, 255, 0.85) 100%
+            );
+            transition: width 0.38s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 4px 0 22px rgba(0, 229, 255, 0.45);
+        }
+
+        /* Highlight superior (efeito de profundidade 3D) */
+        #unifed-progress-fill::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 38%;
+            background: linear-gradient(180deg,
+                rgba(255, 255, 255, 0.14) 0%, transparent 100%);
+        }
+
+        /* Segmentos (ticks verticais) */
+        #unifed-progress-fill::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: repeating-linear-gradient(
+                90deg,
+                transparent 0px, transparent 20px,
+                rgba(0, 229, 255, 0.28) 20px, rgba(0, 229, 255, 0.28) 21px
+            );
+        }
+
+        /* Percentagem sobreposta */
+        #unifed-progress-pct {
+            position: absolute;
+            right: 12px; top: 50%;
+            transform: translateY(-50%);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9px;
+            color: rgba(0, 229, 255, 0.65);
+            letter-spacing: 1px;
+            z-index: 2;
+        }
+
+        /* ── Rodapé ──────────────────────────────────────────────────────── */
+        #unifed-ac-footer {
+            padding: 14px 34px;
+            border-top: 1px solid rgba(0, 229, 255, 0.06);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .ac-footer-item {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 7.5px;
+            color: rgba(0, 229, 255, 0.18);
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+        }
+        .ac-footer-item:nth-child(even) { text-align: right; }
+
+        /* Preview do hash SHA-256 em tempo real */
+        #unifed-ac-hash-display {
+            grid-column: 1 / -1;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 7.5px;
+            color: rgba(0, 229, 255, 0.14);
+            letter-spacing: 0.5px;
+            margin-top: 8px;
+            border-top: 1px solid rgba(0, 229, 255, 0.06);
+            padding-top: 8px;
+            word-break: break-all;
+            line-height: 1.6;
+        }
+        #unifed-ac-hash-display .hd-label { color: rgba(0, 229, 255, 0.25); }
+        #unifed-ac-hash-preview { color: rgba(0, 229, 255, 0.38); }
+    `;
 
     // =========================================================================
-    // INJECÇÃO DO OVERLAY DE LOGIN NO DOM
+    // INJECÇÃO DO OVERLAY
     // =========================================================================
 
     function _injectOverlay() {
-        const OVERLAY_CSS = `
-            #unifed-access-overlay {
-                position: fixed;
-                inset: 0;
-                z-index: 99999;
-                background: #000000;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-family: 'Courier New', 'Lucida Console', monospace;
-            }
-            #unifed-access-overlay * { box-sizing: border-box; }
-            #unifed-access-box {
-                width: 420px;
-                max-width: 95vw;
-                background: #0a0a0a;
-                border: 1px solid #1a3a1a;
-                border-radius: 4px;
-                padding: 0;
-                overflow: hidden;
-                box-shadow: 0 0 60px rgba(0,255,80,0.06), 0 0 0 1px #0f2a0f;
-                animation: _fadeInScale 0.4s cubic-bezier(0.16,1,0.3,1) forwards;
-            }
-            #unifed-access-header {
-                background: #0d1f0d;
-                border-bottom: 1px solid #1a3a1a;
-                padding: 20px 28px 16px;
-            }
-            #unifed-access-header .badge {
-                display: inline-block;
-                font-size: 9px;
-                letter-spacing: 2px;
-                color: #2a6a2a;
-                border: 1px solid #1a3a1a;
-                padding: 2px 8px;
-                border-radius: 2px;
-                margin-bottom: 10px;
-                text-transform: uppercase;
-            }
-            #unifed-access-header h1 {
-                margin: 0;
-                font-size: 15px;
-                font-weight: 700;
-                letter-spacing: 1.5px;
-                color: #00c850;
-                text-transform: uppercase;
-            }
-            #unifed-access-header p {
-                margin: 6px 0 0;
-                font-size: 10px;
-                color: #3a5a3a;
-                letter-spacing: 0.5px;
-            }
-            #unifed-access-body { padding: 28px 28px 24px; }
-            #unifed-access-body label {
-                display: block;
-                font-size: 9px;
-                letter-spacing: 2px;
-                color: #2a5a2a;
-                text-transform: uppercase;
-                margin-bottom: 8px;
-            }
-            #unifed-access-input-wrap {
-                position: relative;
-                margin-bottom: 16px;
-            }
-            #unifed-pwd-input {
-                width: 100%;
-                background: #060f06;
-                border: 1px solid #1a3a1a;
-                border-radius: 2px;
-                color: #00c850;
-                font-family: 'Courier New', monospace;
-                font-size: 14px;
-                padding: 12px 44px 12px 14px;
-                outline: none;
-                transition: border-color 0.2s;
-                caret-color: #00c850;
-            }
-            #unifed-pwd-input:focus {
-                border-color: #00c850;
-                box-shadow: 0 0 0 2px rgba(0,200,80,0.08);
-            }
-            #unifed-pwd-input.error {
-                border-color: #c80000;
-                box-shadow: 0 0 0 2px rgba(200,0,0,0.08);
-                animation: _shake 0.35s ease;
-            }
-            #unifed-pwd-toggle {
-                position: absolute;
-                right: 12px;
-                top: 50%;
-                transform: translateY(-50%);
-                background: none;
-                border: none;
-                cursor: pointer;
-                color: #2a5a2a;
-                font-size: 12px;
-                padding: 4px;
-                transition: color 0.2s;
-            }
-            #unifed-pwd-toggle:hover { color: #00c850; }
-            #unifed-access-btn {
-                width: 100%;
-                background: #0d2a0d;
-                border: 1px solid #00c850;
-                border-radius: 2px;
-                color: #00c850;
-                font-family: 'Courier New', monospace;
-                font-size: 11px;
-                font-weight: 700;
-                letter-spacing: 2px;
-                text-transform: uppercase;
-                padding: 13px;
-                cursor: pointer;
-                transition: background 0.2s, color 0.2s, box-shadow 0.2s;
-                margin-bottom: 14px;
-            }
-            #unifed-access-btn:hover:not(:disabled) {
-                background: #00c850;
-                color: #000;
-                box-shadow: 0 0 20px rgba(0,200,80,0.25);
-            }
-            #unifed-access-btn:disabled {
-                opacity: 0.35;
-                cursor: not-allowed;
-                border-color: #1a3a1a;
-                color: #2a4a2a;
-            }
-            #unifed-status-msg {
-                font-size: 10px;
-                letter-spacing: 0.5px;
-                min-height: 16px;
-                text-align: center;
-                transition: color 0.2s;
-            }
-            #unifed-status-msg.ok   { color: #00c850; }
-            #unifed-status-msg.err  { color: #c83030; }
-            #unifed-status-msg.warn { color: #c8a000; }
-            #unifed-status-msg.info { color: #2a6a2a; }
-            #unifed-lock-timer {
-                font-size: 10px;
-                text-align: center;
-                color: #c83030;
-                margin-top: 8px;
-                min-height: 14px;
-                letter-spacing: 0.5px;
-            }
-            #unifed-access-footer {
-                border-top: 1px solid #0f1f0f;
-                padding: 12px 28px;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-            }
-            #unifed-access-footer span {
-                font-size: 8px;
-                color: #1a3a1a;
-                letter-spacing: 1px;
-                text-transform: uppercase;
-            }
-            /* Barra de progresso de carregamento de módulos */
-            #unifed-load-progress {
-                display: none;
-                flex-direction: column;
-                gap: 6px;
-                margin-top: 12px;
-            }
-            #unifed-load-progress.active { display: flex; }
-            #unifed-load-bar-track {
-                width: 100%;
-                height: 3px;
-                background: #0f2a0f;
-                border-radius: 2px;
-                overflow: hidden;
-            }
-            #unifed-load-bar-fill {
-                height: 100%;
-                width: 0%;
-                background: #00c850;
-                transition: width 0.3s ease;
-                border-radius: 2px;
-            }
-            #unifed-load-label {
-                font-size: 8px;
-                color: #2a6a2a;
-                letter-spacing: 1px;
-                text-align: center;
-            }
-            @keyframes _fadeInScale {
-                from { opacity: 0; transform: scale(0.96) translateY(8px); }
-                to   { opacity: 1; transform: scale(1) translateY(0); }
-            }
-            @keyframes _shake {
-                0%,100% { transform: translateX(0); }
-                20%      { transform: translateX(-6px); }
-                40%      { transform: translateX(6px); }
-                60%      { transform: translateX(-4px); }
-                80%      { transform: translateX(4px); }
-            }
-            #unifed-access-overlay::before {
-                content: '';
-                position: fixed;
-                inset: 0;
-                background: repeating-linear-gradient(
-                    0deg, transparent, transparent 2px,
-                    rgba(0,255,80,0.015) 2px, rgba(0,255,80,0.015) 4px
-                );
-                pointer-events: none;
-                z-index: 100000;
-            }
-        `;
+        // Fonte via <link> (fallback se @import CORS bloquear)
+        const fontLink   = document.createElement('link');
+        fontLink.rel     = 'preconnect';
+        fontLink.href    = 'https://fonts.googleapis.com';
+        document.head.appendChild(fontLink);
+
+        const fontLink2  = document.createElement('link');
+        fontLink2.rel    = 'stylesheet';
+        fontLink2.href   = 'https://fonts.googleapis.com/css2?family=Syne:wght@600;800&family=JetBrains+Mono:wght@400;600&display=swap';
+        document.head.appendChild(fontLink2);
 
         const styleEl       = document.createElement('style');
-        styleEl.id          = 'unifed-access-control-css';
+        styleEl.id          = 'unifed-ac-css';
         styleEl.textContent = OVERLAY_CSS;
         (document.head || document.documentElement).appendChild(styleEl);
 
         const overlay    = document.createElement('div');
-        overlay.id       = 'unifed-access-overlay';
+        overlay.id       = 'unifed-ac-overlay';
         overlay.setAttribute('role',       'dialog');
         overlay.setAttribute('aria-modal', 'true');
-        overlay.setAttribute('aria-label', 'Autenticação UNIFED-PROBATUM');
+        overlay.setAttribute('aria-label', 'UNIFED-PROBATUM — Autenticação Forense');
+
         overlay.innerHTML = `
-            <div id="unifed-access-box">
-                <div id="unifed-access-header">
-                    <div class="badge">ACESSO RESTRITO · USO EXCLUSIVO · ZERO-STATE</div>
-                    <h1>🔐 UNIFED-PROBATUM</h1>
-                    <p>v13.12.2-i18n · Sistema de Peritagem Forense Digital · Soberania do Perito</p>
+            <div id="unifed-ac-box">
+
+                <div id="unifed-ac-header">
+                    <div id="unifed-ac-badge">
+                        ACESSO RESTRITO &nbsp;·&nbsp; HALT EXECUTION PROTOCOL
+                    </div>
+                    <div id="unifed-ac-title">
+                        UNIFED&nbsp;<span class="ac-accent">PROBATUM</span>
+                    </div>
+                    <div id="unifed-ac-subtitle">
+                        v13.12.2&#8209;i18n &nbsp;·&nbsp; Sistema de Peritagem Forense Digital &nbsp;·&nbsp; Soberania do Perito
+                    </div>
                 </div>
-                <div id="unifed-access-body">
-                    <label for="unifed-pwd-input">Credencial de Acesso</label>
-                    <div id="unifed-access-input-wrap">
+
+                <div id="unifed-ac-body">
+                    <label id="unifed-ac-label" for="unifed-pwd-input">
+                        &#9655; CREDENCIAL DE ACESSO (SHA&#8209;256)
+                    </label>
+                    <div id="unifed-ac-input-wrap">
                         <input
                             type="password"
                             id="unifed-pwd-input"
                             autocomplete="current-password"
                             spellcheck="false"
                             autofocus
-                            placeholder="••••••••••••••••••"
+                            placeholder="&#xB7; &#xB7; &#xB7; &#xB7; &#xB7; &#xB7; &#xB7; &#xB7; &#xB7; &#xB7; &#xB7; &#xB7;"
                             maxlength="128"
                         />
                         <button
                             id="unifed-pwd-toggle"
                             type="button"
-                            title="Mostrar / Ocultar"
+                            title="Alternar visibilidade"
                             aria-label="Alternar visibilidade da password"
-                        >👁</button>
+                        >&#128065;</button>
                     </div>
-                    <button id="unifed-access-btn" type="button">
-                        ▶ AUTENTICAR
+
+                    <button id="unifed-ac-btn" type="button">
+                        &#9654;&ensp;AUTENTICAR SESS&#195;O
                     </button>
-                    <div id="unifed-status-msg" class="info" role="status" aria-live="polite">
+
+                    <div id="unifed-ac-status" class="info"
+                         role="status" aria-live="polite">
                         Introduza a credencial de acesso para continuar.
                     </div>
-                    <div id="unifed-lock-timer" aria-live="assertive"></div>
-                    <div id="unifed-load-progress" role="progressbar" aria-label="Carregamento de módulos">
-                        <div id="unifed-load-bar-track">
-                            <div id="unifed-load-bar-fill"></div>
+                    <div id="unifed-ac-lock-timer" aria-live="assertive"></div>
+
+                    <div id="unifed-hydration-panel"
+                         role="progressbar"
+                         aria-label="Hidratação de módulos forenses">
+                        <div id="unifed-hydration-header">
+                            <div class="hy-dot hy-dot-r"></div>
+                            <div class="hy-dot hy-dot-y"></div>
+                            <div class="hy-dot hy-dot-g"></div>
+                            <span class="hy-label">FORENSIC MODULE HYDRATION &mdash; DATA STREAM</span>
                         </div>
-                        <div id="unifed-load-label">A carregar módulos forenses...</div>
+                        <div id="unifed-hydration-log"></div>
+                        <div id="unifed-progress-track">
+                            <div id="unifed-progress-fill"></div>
+                            <div id="unifed-progress-pct">0%</div>
+                        </div>
                     </div>
                 </div>
-                <div id="unifed-access-footer">
-                    <span>SHA-256 · WebCrypto · Sem transmissão de dados</span>
-                    <span>Halt Execution Protocol · v2.0.0</span>
+
+                <div id="unifed-ac-footer">
+                    <div class="ac-footer-item">SHA&#8209;256 &middot; WebCrypto API</div>
+                    <div class="ac-footer-item">Uso Perp&#233;tuo &middot; Sem Expira&#231;&#227;o</div>
+                    <div class="ac-footer-item">ISO/IEC 27037:2012 &middot; Art. 125.&#186; CPP</div>
+                    <div class="ac-footer-item">DORA (UE) 2022/2554</div>
+                    <div id="unifed-ac-hash-display">
+                        <span class="hd-label">SHA&#8209;256(input) &#8594; </span><span id="unifed-ac-hash-preview">&#183;&#183;&#183;&#183;&#183;&#183;&#183;&#183;</span>
+                    </div>
                 </div>
+
             </div>
         `;
 
@@ -450,12 +735,12 @@
 
         _overlayEl   = overlay;
         _inputEl     = document.getElementById('unifed-pwd-input');
-        _statusEl    = document.getElementById('unifed-status-msg');
-        _btnEl       = document.getElementById('unifed-access-btn');
-        _lockTimerEl = document.getElementById('unifed-lock-timer');
+        _statusEl    = document.getElementById('unifed-ac-status');
+        _btnEl       = document.getElementById('unifed-ac-btn');
+        _lockTimerEl = document.getElementById('unifed-ac-lock-timer');
 
         _bindEvents();
-        console.log('[UNIFED-ACCESS] Overlay montado. Sistema em Zero-State real.');
+        console.log('[UNIFED-AC] Overlay v3.0-CYBER-FORGE montado.');
     }
 
     // =========================================================================
@@ -468,20 +753,256 @@
         });
         _btnEl.addEventListener('click', _attemptLogin);
 
+        // Glow no wrapper do input
+        const wrap = document.getElementById('unifed-ac-input-wrap');
+        _inputEl.addEventListener('focus', function() { if (wrap) wrap.classList.add('focused');    });
+        _inputEl.addEventListener('blur',  function() { if (wrap) wrap.classList.remove('focused'); });
+
+        // Preview do SHA-256 enquanto o utilizador digita
+        const hashPreview = document.getElementById('unifed-ac-hash-preview');
+        _inputEl.addEventListener('input', async function() {
+            if (!hashPreview) return;
+            const val = _inputEl.value;
+            if (!val) { hashPreview.textContent = '\xB7\xB7\xB7\xB7\xB7\xB7\xB7\xB7'; return; }
+            try {
+                const h = await computeSHA256(val);
+                hashPreview.textContent = h.slice(0, 16) + '\u00B7\u00B7\u00B7' + h.slice(-8);
+            } catch (_) { hashPreview.textContent = '????????'; }
+        });
+
+        // Toggle visibilidade
         const toggleBtn = document.getElementById('unifed-pwd-toggle');
         if (toggleBtn) {
             toggleBtn.addEventListener('click', function() {
                 _inputEl.type = (_inputEl.type === 'password') ? 'text' : 'password';
-                toggleBtn.textContent = (_inputEl.type === 'text') ? '🙈' : '👁';
+                toggleBtn.textContent = (_inputEl.type === 'text') ? '\uD83D\uDE48' : '\uD83D\uDC41';
                 _inputEl.focus();
             });
         }
 
-        document.addEventListener('keydown', function _trapFocus(e) {
+        // Focus trap
+        document.addEventListener('keydown', function _trap(e) {
             if (e.key === 'Tab' && _overlayEl && document.contains(_overlayEl)) {
-                e.preventDefault();
-                _inputEl.focus();
+                e.preventDefault(); _inputEl.focus();
             }
+        });
+    }
+
+    // =========================================================================
+    // FORENSIC HYDRATION UI — _updateProgressBarVisual()
+    // =========================================================================
+
+    /**
+     * _updateProgressBarVisual() — Actualiza o Forensic Module Hydration UI.
+     *
+     * Emite uma linha de log no terminal forense com timestamp ISO, tag
+     * colorida e nome do ficheiro. Anima a barra de progresso (Data Stream)
+     * via requestAnimationFrame para garantir que cada frame é processado
+     * antes do módulo seguinte iniciar. Actualiza a percentagem em tempo real.
+     *
+     * @param {string}               moduleName — nome do ficheiro (ex: "nexus.js")
+     * @param {number}               index      — índice actual (0-based)
+     * @param {number}               total      — total de módulos na sequência
+     * @param {'load'|'ok'|'warn'|'sys'} status — estado da linha de log
+     */
+    function _updateProgressBarVisual(moduleName, index, total, status) {
+        status = status || 'load';
+        const logEl  = document.getElementById('unifed-hydration-log');
+        const fill   = document.getElementById('unifed-progress-fill');
+        const pctEl  = document.getElementById('unifed-progress-pct');
+        const panel  = document.getElementById('unifed-hydration-panel');
+
+        if (panel && !panel.classList.contains('active')) {
+            panel.classList.add('active');
+        }
+
+        // ── Linha de log ──────────────────────────────────────────────────
+        if (logEl) {
+            // Remover cursor anterior (blinking cursor do módulo em loading)
+            const prevCursor = logEl.querySelector('.hy-cursor');
+            if (prevCursor) prevCursor.remove();
+
+            const ts = new Date().toISOString().slice(11, 23); // HH:MM:SS.mmm
+
+            const tagMap = {
+                load : '<span class="hy-load">[LOAD]</span>',
+                ok   : '<span class="hy-ok">[ OK ]</span>',
+                warn : '<span class="hy-warn">[WARN]</span>',
+                sys  : '<span class="hy-sys">[ SYS ]</span>'
+            };
+            const tag = tagMap[status] || tagMap.load;
+
+            const line        = document.createElement('div');
+            line.className    = 'hy-log-line';
+            line.style.animationDelay = '0.02s';
+            line.innerHTML    =
+                '<span class="hy-ts">' + ts + '</span>' +
+                tag +
+                '<span class="hy-file">' + moduleName + '</span>' +
+                (status === 'load' ? '<span class="hy-cursor"></span>' : '');
+
+            logEl.appendChild(line);
+
+            // Auto-scroll — rAF garante que o nó já está no DOM
+            requestAnimationFrame(function() {
+                logEl.scrollTop = logEl.scrollHeight;
+            });
+        }
+
+        // ── Barra de progresso Data Stream ────────────────────────────────
+        if (fill && pctEl) {
+            // +1 porque index é 0-based e queremos mostrar progresso após cada módulo
+            const completed = (status === 'load') ? index : index + 1;
+            const pct = Math.min(100, Math.round((completed / total) * 100));
+            requestAnimationFrame(function() {
+                fill.style.width   = pct + '%';
+                pctEl.textContent  = pct + '%';
+            });
+        }
+    }
+
+    // =========================================================================
+    // POST-AUTH FLOW — _onAuthSuccess()
+    // Garante desbloqueio total da UI após autenticação bem-sucedida.
+    // =========================================================================
+
+    /**
+     * _onAuthSuccess() — Sequência atómica de desbloqueio pós-autenticação.
+     *
+     * Ordem de operações garantida:
+     *   1. Carregar todos os módulos em série com feedback Hydration UI
+     *   2. Linha final "SYS · SISTEMA OPERACIONAL" no terminal
+     *   3. Fade-out do overlay (CSS transition 450ms)
+     *   4. _overlayEl.remove() — remoção real do DOM (z-index limpo)
+     *   5. Remoção do <style> do overlay (cleanup de memória)
+     *   6. Forçar #pureDashboardWrapper: opacity=1, display=block, z-index=''
+     *   7. Adicionar classe 'activated' ao wrapper
+     *   8. Chamar window._activatePurePanel() (com fallback manual)
+     *   9. Disparar UNIFED_CORE_READY + unifed:access:granted
+     *
+     * @returns {Promise<void>}
+     */
+    async function _onAuthSuccess() {
+        window._UNIFED_ACCESS_GRANTED = true;
+        _setStatus('\u2713 Credencial v\u00E1lida. A iniciar hidrata\u00E7\u00E3o forense...', 'ok');
+        console.log('[UNIFED-AC] Autentica\u00E7\u00E3o bem-sucedida. Halt Execution Protocol activo.');
+
+        // ── 1. Carregar módulos com Hydration UI ─────────────────────────
+        let loaded = 0;
+        const total = MODULES_SEQUENCE.length;
+
+        for (let i = 0; i < total; i++) {
+            const src = MODULES_SEQUENCE[i];
+
+            _updateProgressBarVisual(src, i, total, 'load');
+            // Frame de respiro para a animação ser perceptível
+            await new Promise(function(r) { requestAnimationFrame(r); });
+
+            try {
+                await _loadScriptDynamic(src);
+                loaded++;
+                _updateProgressBarVisual(src, i, total, 'ok');
+            } catch (e) {
+                _updateProgressBarVisual(src, i, total, 'warn');
+                console.warn('[UNIFED-AC] \u26A0 Fail-soft: ' + src);
+            }
+
+            // Micro-pausa para o efeito de scanning ser visível (120ms por módulo)
+            await new Promise(function(r) { setTimeout(r, 120); });
+        }
+
+        // ── 2. Linha final de sistema ─────────────────────────────────────
+        const logEl = document.getElementById('unifed-hydration-log');
+        if (logEl) {
+            const done        = document.createElement('div');
+            done.className    = 'hy-log-line';
+            done.style.animationDelay = '0.05s';
+            done.innerHTML    =
+                '<span class="hy-ts">' + new Date().toISOString().slice(11,23) + '</span>' +
+                '<span class="hy-sys">[ SYS ]</span>' +
+                '<span class="hy-file" style="color:#34d399;">' +
+                    loaded + '/' + total + ' m\u00F3dulos hidratados \u00B7 SISTEMA OPERACIONAL' +
+                '</span>';
+            logEl.appendChild(done);
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        // Pausa para leitura do estado final antes do fade
+        await new Promise(function(r) { setTimeout(r, 850); });
+
+        // ── 3+4. Fade-out e remoção real do DOM ──────────────────────────
+        _overlayEl.style.transition = 'opacity 0.45s ease';
+        _overlayEl.style.opacity    = '0';
+        await new Promise(function(r) { setTimeout(r, 465); });
+
+        // Remoção real — elimina o nó completamente, sem display:none residual.
+        // Isto garante que nenhum z-index, pointer-events ou foco residual
+        // bloqueia a interacção com os elementos do dashboard.
+        _overlayEl.remove();
+        _overlayEl = null;
+
+        // ── 5. Cleanup de CSS do overlay ─────────────────────────────────
+        const cssEl = document.getElementById('unifed-ac-css');
+        if (cssEl) cssEl.remove();
+
+        // ── 6+7. Desbloqueio explícito de #pureDashboardWrapper ──────────
+        const wrapper = document.getElementById('pureDashboardWrapper');
+        if (wrapper) {
+            wrapper.style.opacity       = '1';
+            wrapper.style.display       = 'block';
+            wrapper.style.visibility    = 'visible';
+            wrapper.style.pointerEvents = 'auto';
+            wrapper.style.zIndex        = '';   // Limpar z-index residual
+            wrapper.style.position      = '';   // Limpar posicionamento residual
+            wrapper.classList.add('activated');
+            console.log('[UNIFED-AC] \u2705 #pureDashboardWrapper desbloqueado (opacity:1 \u00B7 z-index limpo).');
+        } else {
+            console.warn('[UNIFED-AC] \u26A0 #pureDashboardWrapper n\u00E3o encontrado. Verifi\u00E7 o DOM.');
+        }
+
+        // ── 8. Activar painel via função registada ────────────────────────
+        // rAF garante que os scripts carregados acima já registaram _activatePurePanel
+        await new Promise(function(r) { requestAnimationFrame(function() { requestAnimationFrame(r); }); });
+
+        if (typeof window._activatePurePanel === 'function') {
+            try {
+                await window._activatePurePanel(false);
+                console.log('[UNIFED-AC] \u2705 _activatePurePanel() executada com sucesso.');
+            } catch (activateErr) {
+                console.warn('[UNIFED-AC] \u26A0 _activatePurePanel() lan\u00E7ou erro:', activateErr.message);
+                // Fallback: desbloqueio manual de emergência
+                if (wrapper) { wrapper.style.opacity = '1'; wrapper.style.display = 'block'; }
+            }
+        } else {
+            console.warn('[UNIFED-AC] \u26A0 _activatePurePanel n\u00E3o dispon\u00EDvel. Desbloqueio manual aplicado.');
+            if (wrapper) { wrapper.style.opacity = '1'; wrapper.style.display = 'block'; }
+        }
+
+        // ── 9. Eventos de sistema ─────────────────────────────────────────
+        window.dispatchEvent(new CustomEvent('UNIFED_CORE_READY', {
+            detail: { loaded: loaded, total: total, timestamp: new Date().toISOString() }
+        }));
+        document.dispatchEvent(new CustomEvent('unifed:access:granted', {
+            detail: { timestamp: new Date().toISOString() }
+        }));
+
+        console.log('[UNIFED-AC] \u2705 Post-Auth Flow conclu\u00EDdo. ' + loaded + '/' + total + ' m\u00F3dulos activos.');
+    }
+
+    // =========================================================================
+    // CARREGAMENTO DINÂMICO SEQUENCIAL
+    // =========================================================================
+
+    function _loadScriptDynamic(src) {
+        return new Promise(function(resolve, reject) {
+            const el = document.createElement('script');
+            el.src   = src;
+            el.async = false; // Ordem de execução garantida
+            el.addEventListener('load',  function() { resolve(); });
+            el.addEventListener('error', function() {
+                reject(new Error('Falha ao carregar: ' + src));
+            });
+            document.body.appendChild(el);
         });
     }
 
@@ -495,82 +1016,28 @@
             if (remaining > 0) {
                 _setStatus('Sistema bloqueado. Aguarde ' + remaining + 's.', 'err');
                 return;
-            } else {
-                _locked = false; _attempts = 0;
-                _lockTimerEl.textContent = '';
-                _btnEl.disabled = false; _inputEl.disabled = false;
             }
+            _locked = false; _attempts = 0;
+            _lockTimerEl.textContent = '';
+            _btnEl.disabled = false; _inputEl.disabled = false;
         }
 
         const pwd = _inputEl.value;
-        if (!pwd || pwd.length === 0) {
-            _setStatus('Campo vazio. Introduza a credencial.', 'warn');
-            _shakeInput();
-            return;
+        if (!pwd || !pwd.length) {
+            _setStatus('Campo vazio. Introduza a credencial de acesso.', 'warn');
+            _shakeInput(); return;
         }
 
         _btnEl.disabled   = true;
         _inputEl.disabled = true;
-        _setStatus('A verificar credencial via SubtleCrypto...', 'info');
+        _setStatus('A computar SHA-256 via SubtleCrypto\u2026', 'info');
 
         try {
             const inputHash = await computeSHA256(pwd);
 
             if (inputHash === STORED_HASH) {
-                // ── ACESSO CONCEDIDO: activar Halt Execution Protocol ──────────
-                window._UNIFED_ACCESS_GRANTED = true;
-                _setStatus('✓ Credencial válida. A carregar módulos forenses...', 'ok');
-                console.log('[UNIFED-ACCESS] Autenticação bem-sucedida. Iniciando carregamento dinâmico.');
-
-                // Mostrar barra de progresso
-                const progressEl = document.getElementById('unifed-load-progress');
-                const barFill    = document.getElementById('unifed-load-bar-fill');
-                const barLabel   = document.getElementById('unifed-load-label');
-                if (progressEl) progressEl.classList.add('active');
-
-                // Carregar módulos sequencialmente com feedback visual
-                let loaded = 0;
-                const total = MODULES_SEQUENCE.length;
-
-                for (let i = 0; i < total; i++) {
-                    const src = MODULES_SEQUENCE[i];
-                    if (barLabel) barLabel.textContent = 'A carregar: ' + src + ' (' + (i + 1) + '/' + total + ')';
-                    if (barFill)  barFill.style.width  = Math.round(((i + 1) / total) * 100) + '%';
-
-                    try {
-                        await _loadScriptDynamic(src);
-                        loaded++;
-                    } catch (e) {
-                        console.warn('[UNIFED-ACCESS] ⚠ Falha ao carregar (fail-soft): ' + src);
-                    }
-                }
-
-                if (barLabel) barLabel.textContent = '✓ ' + loaded + '/' + total + ' módulos carregados';
-                if (barFill)  barFill.style.width  = '100%';
-
-                await new Promise(function(r) { setTimeout(r, 600); });
-
-                // Fade-out e remoção do overlay
-                _overlayEl.style.transition = 'opacity 0.4s ease';
-                _overlayEl.style.opacity    = '0';
-                await new Promise(function(r) { setTimeout(r, 420); });
-                _overlayEl.remove();
-
-                const cssEl = document.getElementById('unifed-access-control-css');
-                if (cssEl) cssEl.remove();
-
-                // Disparar eventos de sistema
-                window.dispatchEvent(new CustomEvent('UNIFED_CORE_READY', {
-                    detail: { loaded: loaded, timestamp: new Date().toISOString() }
-                }));
-                document.dispatchEvent(new CustomEvent('unifed:access:granted', {
-                    detail: { timestamp: new Date().toISOString() }
-                }));
-
-                console.log('[UNIFED-ACCESS] ✅ Overlay removido. ' + loaded + ' módulos activos.');
-
+                await _onAuthSuccess();
             } else {
-                // ── CREDENCIAL INVÁLIDA ──────────────────────────────────────
                 _attempts++;
                 _shakeInput();
                 _inputEl.value = '';
@@ -581,12 +1048,14 @@
                     _lockoutEnd = Date.now() + LOCKOUT_MS;
                     _btnEl.disabled   = true;
                     _inputEl.disabled = true;
-                    _setStatus('Credencial inválida. Bloqueado por ' + (LOCKOUT_MS / 1000) + 's.', 'err');
-                    console.warn('[UNIFED-ACCESS] Bloqueio activado após ' + MAX_ATTEMPTS + ' tentativas.');
+                    _setStatus('Credencial inv\u00E1lida. Bloqueado por ' + (LOCKOUT_MS / 1000) + 's.', 'err');
+                    console.warn('[UNIFED-AC] Lockout ap\u00F3s ' + MAX_ATTEMPTS + ' tentativas.');
                     _startLockTimer();
                 } else {
                     _setStatus(
-                        'Credencial inválida. ' + remaining + ' tentativa' + (remaining !== 1 ? 's' : '') + ' restante' + (remaining !== 1 ? 's' : '') + '.',
+                        'Credencial inv\u00E1lida. ' + remaining +
+                        ' tentativa' + (remaining !== 1 ? 's' : '') +
+                        ' restante' + (remaining !== 1 ? 's' : '') + '.',
                         'err'
                     );
                     _inputEl.disabled = false;
@@ -594,17 +1063,16 @@
                     _inputEl.focus();
                 }
             }
-
         } catch (cryptoErr) {
-            console.error('[UNIFED-ACCESS] Erro SubtleCrypto:', cryptoErr);
-            _setStatus('Erro interno de verificação. Recarregue a página.', 'err');
+            console.error('[UNIFED-AC] Erro SubtleCrypto:', cryptoErr);
+            _setStatus('Erro interno de verifica\u00E7\u00E3o. Recarregue a p\u00E1gina.', 'err');
             _inputEl.disabled = false;
             _btnEl.disabled   = false;
         }
     }
 
     // =========================================================================
-    // TEMPORIZADOR DE BLOQUEIO
+    // TEMPORIZADOR DE LOCKOUT
     // =========================================================================
 
     function _startLockTimer() {
@@ -618,13 +1086,13 @@
                 _setStatus('Desbloqueado. Pode tentar novamente.', 'info');
                 _inputEl.focus();
             } else {
-                _lockTimerEl.textContent = 'Desbloqueio em ' + remaining + 's';
+                _lockTimerEl.textContent = '\u27F3 Desbloqueio em ' + remaining + 's';
             }
         }, 1000);
     }
 
     // =========================================================================
-    // UTILITÁRIOS DE UI
+    // UTILITÁRIOS
     // =========================================================================
 
     function _setStatus(msg, type) {
@@ -636,9 +1104,9 @@
     function _shakeInput() {
         if (!_inputEl) return;
         _inputEl.classList.remove('error');
-        void _inputEl.offsetWidth; // Reflow para reiniciar animação
+        void _inputEl.offsetWidth; // Reflow para reiniciar animation
         _inputEl.classList.add('error');
-        setTimeout(function() { if (_inputEl) _inputEl.classList.remove('error'); }, 400);
+        setTimeout(function() { if (_inputEl) _inputEl.classList.remove('error'); }, 420);
     }
 
     // =========================================================================
@@ -656,13 +1124,14 @@
     // =========================================================================
 
     window._UNIFED_ACCESS_CONTROL = {
-        version  : 'v2.0.0-HALT-EXEC',
-        model    : 'Uso Exclusivo e Perpétuo — Halt Execution Protocol — Sem SaaS',
-        granted  : function() { return window._UNIFED_ACCESS_GRANTED; },
-        attempts : function() { return _attempts; },
-        isLocked : function() { return _locked; },
-        _debugInfo: function() {
-            console.log('[UNIFED-ACCESS] Estado:', {
+        version    : 'v3.0.0-CYBER-FORGE',
+        model      : 'Halt Execution · Glassmorphism · Forensic Hydration UI',
+        granted    : function() { return window._UNIFED_ACCESS_GRANTED; },
+        attempts   : function() { return _attempts; },
+        isLocked   : function() { return _locked; },
+        modules    : MODULES_SEQUENCE,
+        _debugInfo : function() {
+            console.log('[UNIFED-AC] Estado:', {
                 granted  : window._UNIFED_ACCESS_GRANTED,
                 attempts : _attempts,
                 locked   : _locked,
@@ -671,7 +1140,6 @@
         }
     };
 
-    console.log('[UNIFED-ACCESS] ✅ unifed_access_control.js v2.0.0-HALT-EXEC carregado.');
-    console.log('[UNIFED-ACCESS] Zero-State activo. Aguardando autenticação SHA-256.');
+    console.log('[UNIFED-AC] \u2705 v3.0.0-CYBER-FORGE — Zero-State activo. Aguardando credencial SHA-256.');
 
 })();
