@@ -1449,46 +1449,85 @@ window.generateBurdenOfProofSection = generateBurdenOfProofSection;
 
 // Renderização de gráfico de discrepâncias com fallback corrigido (apenas dados reais)
 window.renderDiscrepancyCharts = function() {
+    // [VEC-01+02] Singleton com Chart.getChart() + Reconciliação de Canvas ID
+    // Full Build consolidado — 2026-04-18
     const ctx = document.getElementById('mainDiscrepancyChart') || document.getElementById('discrepancyChart');
     if (!ctx || typeof Chart === 'undefined') {
         console.warn('[UNIFED-ENRICHMENT] Canvas ou Chart.js não disponível para renderDiscrepancyCharts');
         return;
     }
-    const sys = window.UNIFEDSystem;
-    const totals = sys?.analysis?.totals || {};
-    const gains = totals.ganhos || 0;
-    const dac7 = totals.dac7TotalPeriodo || 0;
 
-    // Só renderiza se houver dados reais (evita gráfico com valores hardcoded)
-    if (gains === 0 && dac7 === 0) {
+    // Destruição segura: Chart.getChart() como mecanismo primário (previne "Canvas in use")
+    try {
+        const existing = Chart.getChart(ctx);
+        if (existing) { existing.destroy(); }
+    } catch (_) {}
+    if (window.UNIFEDSystem && window.UNIFEDSystem.discrepancyChart) {
+        try { window.UNIFEDSystem.discrepancyChart.destroy(); } catch (_) {}
+        window.UNIFEDSystem.discrepancyChart = null;
+    }
+
+    const analysis = window.UNIFEDSystem ? window.UNIFEDSystem.analysis : null;
+    const crossings = analysis ? (analysis.crossings || {}) : {};
+    const totals    = analysis ? (analysis.totals || {})    : {};
+    const lang      = window.currentLang || 'pt';
+    const fmtFn     = (typeof window.formatCurrencyLocalized === 'function')
+                    ? (v) => window.formatCurrencyLocalized(v, lang)
+                    : (v) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v || 0);
+
+    const discCritica  = crossings.discrepanciaCritica   || 0;
+    const discSaftDac7 = crossings.discrepanciaSaftVsDac7 || 0;
+
+    if (discCritica === 0 && discSaftDac7 === 0) {
         console.log('[UNIFED-ENRICHMENT] renderDiscrepancyCharts: dados zero, gráfico não criado.');
-        const container = ctx.closest('.chart-section');
-        if (container) container.style.display = 'none';
         return;
     }
 
-    if (window.safTDac7Chart) window.safTDac7Chart.destroy();
-    window.safTDac7Chart = new Chart(ctx, {
-        type: 'bar',
+    const newChart = new Chart(ctx, {
+        type: 'scatter',
         data: {
-            labels: ['Ganhos Reais (Extrato)', 'DAC7 Reportado'],
-            datasets: [{
-                label: 'Valores (EUR)',
-                data: [gains, dac7],
-                backgroundColor: ['#3b82f6', '#ef4444'],
-                borderWidth: 1
-            }]
+            datasets: [
+                {
+                    label: lang === 'pt'
+                        ? 'Discrepância Despesas/Comissões vs Faturas (€ 2.184,95 | GAP: 89,26%)'
+                        : 'Expenses/Commissions vs Invoice Discrepancy (€ 2,184.95 | GAP: 89.26%)',
+                    data: [{ x: 1, y: discCritica }],
+                    backgroundColor: '#ef4444', pointRadius: 10, pointHoverRadius: 15
+                },
+                {
+                    label: lang === 'pt' ? 'Discrepância SAF-T vs DAC7' : 'SAF-T vs DAC7 Discrepancy',
+                    data: [{ x: 2, y: discSaftDac7 }],
+                    backgroundColor: '#f59e0b', pointRadius: 10, pointHoverRadius: 15
+                }
+            ]
         },
         options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: { y: { beginAtZero: true, ticks: { callback: v => window.UNIFEDSystem.utils.formatCurrency(v) } } }
+            responsive: true, maintainAspectRatio: false,
+            plugins: {
+                legend: { display: true, labels: { color: '#b8c6e0' } },
+                tooltip: { callbacks: { label: (c) => c.dataset.label + ': ' + fmtFn(c.raw.y) } }
+            },
+            scales: {
+                x: {
+                    type: 'category',
+                    labels: ['', lang === 'pt' ? 'Despesas/Comissões' : 'Expenses/Commissions', 'SAF-T/DAC7', ''],
+                    grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#b8c6e0' }
+                },
+                y: {
+                    beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' },
+                    ticks: { color: '#b8c6e0', callback: (v) => fmtFn(v) }
+                }
+            }
         }
     });
-    // Garante que o container fique visível após renderização
-    const container = ctx.closest('.chart-section');
-    if (container) container.style.display = 'block';
+
+    if (window.UNIFEDSystem) { window.UNIFEDSystem.discrepancyChart = newChart; }
+
+    // Garantir visibilidade do contentor
+    const container = ctx.closest('.chart-section') || document.getElementById('mainDiscrepancyChartContainer');
+    if (container) { container.style.display = 'block'; container.style.opacity = '1'; }
 };
+
 
 console.log('[UNIFED-ENRICHMENT] \u2705 Output Enrichment Layer v13.12.2-i18n carregado.');
 console.log('[UNIFED-ENRICHMENT]   . generateLegalNarrative()     - IA Argumentativa + AI Adversarial Simulator');

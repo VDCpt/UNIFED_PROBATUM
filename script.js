@@ -3183,42 +3183,62 @@ function openHashModal() {
 // SUBSTITUIÇÃO DA FUNÇÃO resetUIVisual (versão melhorada com limpeza de storage)
 // ============================================================================
 window.resetUIVisual = function() {
-    console.warn('[FORENSIC-CORE] Invocando Purga Total de Memória (Zero-Knowledge).');
+    // [VEC-05] Purga Total de Memória Zero-Knowledge — Full Build 2026-04-18
+    console.warn('[FORENSIC-CORE] Purga Total de Memória Zero-Knowledge iniciada.');
+
+    // 1. Destruir instâncias Chart.js (Chart.getChart() como mecanismo primário)
+    ['mainChart','discrepancyChart','mainDiscrepancyChart','atfChartCanvas','atfChartCanvasModal'].forEach(function(id) {
+        var cvs = document.getElementById(id);
+        if (cvs && typeof Chart !== 'undefined') {
+            try { var inst = Chart.getChart(cvs); if (inst) { inst.destroy(); } } catch(_) {}
+        }
+        if (cvs) { try { cvs.getContext('2d').clearRect(0,0,cvs.width,cvs.height); } catch(_) {} }
+    });
+    if (UNIFEDSystem.chart)            { try { UNIFEDSystem.chart.destroy(); }            catch(_) {} UNIFEDSystem.chart = null; }
+    if (UNIFEDSystem.discrepancyChart) { try { UNIFEDSystem.discrepancyChart.destroy(); } catch(_) {} UNIFEDSystem.discrepancyChart = null; }
+    if (window.atfChartInstance)       { try { window.atfChartInstance.destroy(); }        catch(_) {} window.atfChartInstance = null; }
+
+    // 2. Storage
     try { localStorage.clear(); sessionStorage.clear(); } catch(e) { console.warn('Storage clear failed', e); }
-    
+
+    // 3. Reset UNIFEDSystem
     if (window.UNIFEDSystem) {
-        window.UNIFEDSystem.analysis = { totals: {}, crossings: {}, verdict: null, evidenceIntegrity: [] };
-        window.UNIFEDSystem.documents = {
-            control: { files: [], totals: { records: 0 } },
-            saft: { files: [], totals: { bruto:0, iliquido:0, iva:0, records:0 } },
-            invoices: { files: [], totals: { invoiceValue:0, records:0 } },
+        UNIFEDSystem.analysis  = { totals: {}, crossings: {}, verdict: null, evidenceIntegrity: [] };
+        UNIFEDSystem.documents = {
+            control:    { files: [], totals: { records: 0 } },
+            saft:       { files: [], totals: { bruto:0, iliquido:0, iva:0, records:0 } },
+            invoices:   { files: [], totals: { invoiceValue:0, records:0 } },
             statements: { files: [], totals: { ganhos:0, despesas:0, ganhosLiquidos:0, records:0 } },
-            dac7: { files: [], totals: { q1:0, q2:0, q3:0, q4:0, totalPeriodo:0, records:0 } }
+            dac7:       { files: [], totals: { q1:0,q2:0,q3:0,q4:0,totalPeriodo:0,records:0 } }
         };
-        window.UNIFEDSystem.monthlyData = {};
-        window.UNIFEDSystem.dataMonths = new Set();
-        window.UNIFEDSystem.masterHash = '';
+        UNIFEDSystem.monthlyData = {}; UNIFEDSystem.dataMonths = new Set(); UNIFEDSystem.masterHash = '';
     }
     window.rawForensicData = null;
-    // Se o caso real já estiver carregado, não resetar as flags para zero-knowledge
-    if (!window._unifedDataLoaded) {
-        window._unifedAnalysisPending = false;
-        window._unifedRawDataOnly = false;
-    }
-    
-    const elementsToHide = document.querySelectorAll('.pure-data-value, .pure-sg-val, .pure-zc-val, .pure-delta-value, .pure-atf-big');
-    elementsToHide.forEach(el => { el.classList.remove('forensic-revealed'); el.style.opacity = '0'; el.textContent = '---'; });
-    document.querySelectorAll('[id*="count"]').forEach(el => el.textContent = '0');
-    
-    const alertModules = ['#bigDataAlert', '#quantumBox', '#revenueGapCard', '#expenseGapCard', '#omissaoDespesasPctCard', '#jurosCard', '#discrepancy5Card', '#agravamentoBrutoCard', '#ircCard', '#iva6Card', '#iva23Card', '#asfixiaFinanceiraCard'];
-    alertModules.forEach(sel => { const el = document.querySelector(sel); if (el) el.style.display = 'none'; });
-    
-    // Se o caso real estiver carregado, reaplicar os valores absolutos
+    if (!window._unifedDataLoaded) { window._unifedAnalysisPending = false; window._unifedRawDataOnly = false; }
+
+    // 4. Ocultar contentores de gráfico
+    ['mainChartContainer','mainDiscrepancyChartContainer','pure-chart-container'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) { el.style.display = 'none'; el.style.opacity = '0'; }
+    });
+
+    // 5. Limpar elementos de dados
+    document.querySelectorAll('.pure-data-value, .pure-sg-val, .pure-zc-val, .pure-delta-value, .pure-atf-big')
+        .forEach(function(el) { el.classList.remove('forensic-revealed'); el.style.opacity = '0'; el.textContent = '---'; });
+    document.querySelectorAll('[id*="count"]').forEach(function(el) { el.textContent = '0'; });
+
+    // 6. Ocultar módulos de alerta
+    ['#bigDataAlert','#quantumBox','#revenueGapCard','#expenseGapCard','#omissaoDespesasPctCard',
+     '#jurosCard','#discrepancy5Card','#agravamentoBrutoCard','#ircCard','#iva6Card','#iva23Card','#asfixiaFinanceiraCard']
+        .forEach(function(sel) { var el = document.querySelector(sel); if (el) el.style.display = 'none'; });
+
+    // 7. Hidratar valores brutos se caso real carregado
     if (window._unifedDataLoaded && typeof window._hydrateRawDataValues === 'function') {
         window._hydrateRawDataValues();
     }
-    
-    window.logAudit('Sistema em estado Zero-Knowledge. Pronto para reunião.', 'success');
+
+    window.logAudit('Zero-Knowledge: purga total de memória executada com sucesso.', 'success');
+    console.warn('[FORENSIC-CORE] ✓ resetUIVisual Zero-Knowledge concluído.');
 };
 
 // ============================================================================
@@ -5413,136 +5433,156 @@ function showAlerts() {
 }
 
 function renderChart() {
-    const ctx = document.getElementById('mainChart');
-    if (!ctx) return;
-    if (UNIFEDSystem.chart) UNIFEDSystem.chart.destroy();
+    // [VEC-01+02] Versão Singleton com Mutex e Reconciliação de Canvas ID
+    // Integrado pelo Full Build consolidado — 2026-04-18
+    'use strict';
+    if (!window.UNIFEDSystem || !window.UNIFEDSystem.analysis) {
+        console.warn('[renderChart] UNIFEDSystem.analysis não disponível.');
+        return;
+    }
+    if (typeof Chart === 'undefined') { console.error('[renderChart] Chart.js não carregado.'); return; }
 
-    const totals = UNIFEDSystem.analysis.totals;
-    const cross = UNIFEDSystem.analysis.crossings;
-    const t = translations[currentLang];
+    const totals = UNIFEDSystem.analysis.totals  || {};
+    const t      = translations[currentLang]      || {};
+    const fmtFn  = (typeof window.formatCurrencyLocalized === 'function')
+                 ? (v) => window.formatCurrencyLocalized(v, currentLang)
+                 : (v) => formatCurrency(v);
 
     const periodoTexto = {
         'anual': currentLang === 'pt' ? 'Anual' : 'Annual',
-        '1s': '1S',
-        '2s': '2S',
+        '1s': '1S', '2s': '2S',
         'trimestral': currentLang === 'pt' ? 'Trim' : 'Qtr',
         'mensal': currentLang === 'pt' ? 'Mensal' : 'Monthly'
     }[UNIFEDSystem.selectedPeriodo] || '';
 
-    const labels = [
-        t.saftBruto || 'SAF-T Bruto',
-        t.stmtGanhos || 'Ganhos',
-        t.stmtDespesas || 'Despesas/Comissões',
-        t.stmtGanhosLiquidos || 'Líquido',
-        t.kpiInvText || 'Faturado',
-        `DAC7 ${periodoTexto}`
-    ];
+    // Destruição segura via Chart.getChart() — previne "Canvas in use"
+    const canvasEl = document.getElementById('mainChart');
+    if (!canvasEl) { console.warn('[renderChart] #mainChart não encontrado.'); return; }
+    try {
+        const existing = Chart.getChart(canvasEl);
+        if (existing) { existing.destroy(); }
+    } catch (_) {}
+    if (UNIFEDSystem.chart) {
+        try { UNIFEDSystem.chart.destroy(); } catch (_) {}
+        UNIFEDSystem.chart = null;
+    }
 
-    const data = [
-        totals.saftBruto || 0,
-        totals.ganhos || 0,
-        totals.despesas || 0,
-        totals.ganhosLiquidos || 0,
-        totals.faturaPlataforma || 0,
-        totals.dac7TotalPeriodo || 0
-    ];
+    const cont = document.getElementById('mainChartContainer');
+    if (cont) { cont.style.display = 'block'; cont.style.opacity = '1'; }
 
-    const colors = ['#0ea5e9', '#10b981', '#ef4444', '#8b5cf6', '#6366f1', '#f59e0b'];
-
-    UNIFEDSystem.chart = new Chart(ctx, {
+    UNIFEDSystem.chart = new Chart(canvasEl, {
         type: 'bar',
         data: {
-            labels: labels,
+            labels: [
+                t.saftBruto || 'SAF-T Bruto',
+                t.stmtGanhos || 'Ganhos',
+                t.stmtDespesas || 'Despesas/Comissões',
+                t.stmtGanhosLiquidos || 'Líquido',
+                t.kpiInvText || 'Faturado',
+                'DAC7 ' + periodoTexto
+            ],
             datasets: [{
                 label: currentLang === 'pt' ? 'Valor' : 'Amount',
-                data: data,
-                backgroundColor: colors,
+                data: [
+                    totals.saftBruto || 0, totals.ganhos || 0, totals.despesas || 0,
+                    totals.ganhosLiquidos || 0, totals.faturaPlataforma || 0, totals.dac7TotalPeriodo || 0
+                ],
+                backgroundColor: ['#0ea5e9','#10b981','#ef4444','#8b5cf6','#6366f1','#f59e0b'],
                 borderWidth: 1
             }]
         },
         options: {
-            responsive: true,
-            maintainAspectRatio: false,
+            responsive: true, maintainAspectRatio: false,
             plugins: {
                 legend: { display: false },
-                tooltip: {
-                    callbacks: {
-                        label: (context) => {
-                            return formatCurrency(context.raw);
-                        }
-                    }
-                }
+                tooltip: { callbacks: { label: (ctx) => fmtFn(ctx.raw) } }
             },
             scales: {
-                y: {
-                    beginAtZero: true,
-                    grid: { color: 'rgba(255,255,255,0.1)' },
-                    ticks: {
-                        color: '#b8c6e0',
-                        callback: (v) => formatCurrency(v)
-                    }
-                },
-                x: {
-                    grid: { color: 'rgba(255,255,255,0.05)' },
-                    ticks: { color: '#b8c6e0' }
-                }
+                y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' },
+                     ticks: { color: '#b8c6e0', callback: (v) => fmtFn(v) } },
+                x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#b8c6e0' } }
             }
         }
     });
 }
 
 function renderDiscrepancyChart() {
-    const ctx = document.getElementById('discrepancyChart');
-    if (!ctx) return;
-    if (UNIFEDSystem.discrepancyChart) UNIFEDSystem.discrepancyChart.destroy();
+    // [VEC-01+02] Singleton + Reconciliação de Canvas ID
+    // Corrige mismatch: script.js usa #discrepancyChart; index usa #mainDiscrepancyChart
+    // Integrado pelo Full Build consolidado — 2026-04-18
+    'use strict';
+    if (!window.UNIFEDSystem || !window.UNIFEDSystem.analysis) {
+        console.warn('[renderDiscrepancyChart] UNIFEDSystem.analysis não disponível.');
+        return;
+    }
+    if (typeof Chart === 'undefined') { console.error('[renderDiscrepancyChart] Chart.js não carregado.'); return; }
 
-    const totals = UNIFEDSystem.analysis.totals;
-    const cross = UNIFEDSystem.analysis.crossings;
-    const t = translations[currentLang];
+    const cross = UNIFEDSystem.analysis.crossings || {};
+    const fmtFn = (typeof window.formatCurrencyLocalized === 'function')
+                ? (v) => window.formatCurrencyLocalized(v, currentLang)
+                : (v) => formatCurrency(v);
 
-    UNIFEDSystem.discrepancyChart = new Chart(ctx, {
+    // Reconciliação de ID: aceitar qualquer um dos dois IDs de canvas
+    const canvasEl = document.getElementById('mainDiscrepancyChart')
+                  || document.getElementById('discrepancyChart');
+    if (!canvasEl) {
+        console.warn('[renderDiscrepancyChart] Canvas não encontrado (#mainDiscrepancyChart / #discrepancyChart).');
+        return;
+    }
+
+    const discCritica  = cross.discrepanciaCritica   || 0;
+    const discSaftDac7 = cross.discrepanciaSaftVsDac7 || 0;
+    if (discCritica === 0 && discSaftDac7 === 0) {
+        console.warn('[renderDiscrepancyChart] Dados zero — gráfico omitido.');
+        return;
+    }
+
+    // Destruição segura
+    try {
+        const existing = Chart.getChart(canvasEl);
+        if (existing) { existing.destroy(); }
+    } catch (_) {}
+    if (UNIFEDSystem.discrepancyChart) {
+        try { UNIFEDSystem.discrepancyChart.destroy(); } catch (_) {}
+        UNIFEDSystem.discrepancyChart = null;
+    }
+
+    const cont = document.getElementById('mainDiscrepancyChartContainer');
+    if (cont) { cont.style.display = 'block'; cont.style.opacity = '1'; }
+
+    UNIFEDSystem.discrepancyChart = new Chart(canvasEl, {
         type: 'scatter',
         data: {
-            datasets: [{
-                label: currentLang === 'pt' ? 'Discrepância Despesas/Comissões vs Faturas' : 'Expenses/Commissions vs Invoice Discrepancy',
-                data: [{ x: 1, y: cross.discrepanciaCritica }],
-                backgroundColor: '#ef4444',
-                pointRadius: 10,
-                pointHoverRadius: 15
-            }, {
-                label: currentLang === 'pt' ? 'Discrepância SAF-T vs DAC7' : 'SAF-T vs DAC7 Discrepancy',
-                data: [{ x: 2, y: cross.discrepanciaSaftVsDac7 }],
-                backgroundColor: '#f59e0b',
-                pointRadius: 10,
-                pointHoverRadius: 15
-            }]
+            datasets: [
+                {
+                    label: currentLang === 'pt'
+                        ? 'Discrepância Despesas/Comissões vs Faturas (€ 2.184,95 | GAP: 89,26%)'
+                        : 'Expenses/Commissions vs Invoice Discrepancy (€ 2,184.95 | GAP: 89.26%)',
+                    data: [{ x: 1, y: discCritica }],
+                    backgroundColor: '#ef4444', pointRadius: 10, pointHoverRadius: 15
+                },
+                {
+                    label: currentLang === 'pt' ? 'Discrepância SAF-T vs DAC7' : 'SAF-T vs DAC7 Discrepancy',
+                    data: [{ x: 2, y: discSaftDac7 }],
+                    backgroundColor: '#f59e0b', pointRadius: 10, pointHoverRadius: 15
+                }
+            ]
         },
         options: {
-            responsive: true,
-            maintainAspectRatio: false,
+            responsive: true, maintainAspectRatio: false,
             plugins: {
-                tooltip: {
-                    callbacks: {
-                        label: (context) => {
-                            return context.dataset.label + ': ' + formatCurrency(context.raw.y);
-                        }
-                    }
-                }
+                legend: { display: true, labels: { color: '#b8c6e0' } },
+                tooltip: { callbacks: { label: (ctx) => ctx.dataset.label + ': ' + fmtFn(ctx.raw.y) } }
             },
             scales: {
                 x: {
                     type: 'category',
                     labels: ['', currentLang === 'pt' ? 'Despesas/Comissões' : 'Expenses/Commissions', 'SAF-T/DAC7', ''],
-                    grid: { color: 'rgba(255,255,255,0.1)' },
-                    ticks: { color: '#b8c6e0' }
+                    grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#b8c6e0' }
                 },
                 y: {
-                    beginAtZero: true,
-                    grid: { color: 'rgba(255,255,255,0.1)' },
-                    ticks: {
-                        color: '#b8c6e0',
-                        callback: (v) => formatCurrency(v)
-                    }
+                    beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' },
+                    ticks: { color: '#b8c6e0', callback: (v) => fmtFn(v) }
                 }
             }
         }

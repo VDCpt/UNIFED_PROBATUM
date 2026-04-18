@@ -1940,14 +1940,39 @@
     // FUNÇÃO GLOBAL PARA RENDERIZAR GRÁFICOS SOB DEMANDA
     // =========================================================================
     function renderForensicCharts() {
-        if (typeof window.renderChart === 'function') {
-            window.renderChart();
+        // [VEC-04] Sincronização _fillAnalysisStatCards → renderChart → renderDiscrepancyChart
+        // Full Build consolidado — 2026-04-18
+
+        // Passo 1: Verificar disponibilidade de dados
+        var sys = window.UNIFEDSystem;
+        if (!sys || !sys.analysis || !sys.analysis.totals) {
+            console.warn('[UNIFED] renderForensicCharts: análise não disponível. Aguardando 200ms...');
+            setTimeout(renderForensicCharts, 200);
+            return;
         }
-        if (typeof window.renderDiscrepancyChart === 'function') {
-            window.renderDiscrepancyChart();
+
+        // Passo 2: Hidratar stat-cards ANTES dos gráficos (ValueSource.RAW precede gráficos)
+        if (typeof window._fillAnalysisStatCards === 'function') {
+            try {
+                window._fillAnalysisStatCards();
+                console.log('[UNIFED] renderForensicCharts: _fillAnalysisStatCards() executado.');
+            } catch (err) {
+                console.warn('[UNIFED] _fillAnalysisStatCards() falhou:', err.message);
+            }
         }
-        console.log('[UNIFED] Gráficos renderizados com dados reais.');
+
+        // Passo 3: Flush DOM via requestAnimationFrame antes de renderizar gráficos
+        requestAnimationFrame(function() {
+            if (typeof window.renderChart === 'function') {
+                window.renderChart();
+            }
+            if (typeof window.renderDiscrepancyChart === 'function') {
+                window.renderDiscrepancyChart();
+            }
+            console.log('[UNIFED] Gráficos renderizados com dados reais (sequência sincronizada).');
+        });
     }
+
     window.renderForensicCharts = renderForensicCharts;
 
     // =========================================================================
