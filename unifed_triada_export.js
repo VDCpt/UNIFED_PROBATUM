@@ -202,26 +202,9 @@ function safeExport() {
     function restoreOriginalToolbar() {
         const container = document.getElementById('export-tools-container');
         if (!container) return false;
-
-        // FIX-TRIADA: Se o contentor usa a nova toolbar-unified (classe aplicada), não destruir
-        // Apenas reativar os botões nativos e ocultar os da tríade
-        if (container.classList.contains('toolbar-unified') || 
-            container.querySelector('.btn-toolbar-item')) {
-            // Nova toolbar — apenas reativar botões e ocultar tríade
-            container.querySelectorAll('.btn-toolbar-item').forEach(btn => {
-                btn.disabled = false;
-                btn.style.display = 'flex';
-            });
-            container.querySelectorAll('[data-triada-btn="true"]').forEach(btn => {
-                btn.style.display = 'none';
-            });
-            _log('FIX-TRIADA: toolbar-unified preservada. Botões reativados.');
-            return true;
-        }
-
         if (container.getAttribute('data-original-restored') === 'true') return true;
 
-        // Fallback legado: purga e reconstrução (apenas para toolbars antigas)
+        // [CORREÇÃO] Purga atómica para evitar duplicação
         container.innerHTML = '';
 
         // Remove botões da tríade
