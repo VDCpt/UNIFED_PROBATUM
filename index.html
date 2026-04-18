@@ -155,10 +155,15 @@
 
     <!-- ================================================================ -->
     <!-- SCRIPTS — ORDEM DE CARREGAMENTO CONSOLIDADA (FULL BUILD)          -->
-    <!-- Sem ficheiros de patch paralelos — sistema monolítico certificado  -->
+    <!-- Modelo: Uso Exclusivo e Perpétuo — Soberania do Perito            -->
+    <!-- Sem tokens temporais · Sem licenciamento SaaS · Sem expiração     -->
     <!-- ================================================================ -->
 
-    <!-- PASSO 1: ACTIVADOR DE PAINEL (pré-requisito absoluto) -->
+    <!-- PASSO 0: CONTROLO DE ACESSO (pré-requisito absoluto — Soberania do Perito) -->
+    <!-- Substitui unifed_token_gate.js — Verificação por SHA-256, sem expiração   -->
+    <script src="unifed_access_control.js"></script>
+
+    <!-- PASSO 1: ACTIVADOR DE PAINEL (pré-requisito de layout) -->
     <script src="unifed_panel_activator.js"></script>
 
     <!-- PASSO 2: FIXES COMPREENSIVOS (VUL-001 a VUL-007) -->
@@ -195,15 +200,17 @@
         document.addEventListener('DOMContentLoaded', function() {
             console.log('════════════════════════════════════════════════════════════════');
             console.log('✅ UNIFED-PROBATUM v13.12.2-i18n · FULL BUILD 2026-04-18');
+            console.log('   Modelo: Uso Exclusivo e Perpétuo — Soberania do Perito');
             console.log('════════════════════════════════════════════════════════════════');
             console.log('VEC-01: Chart.js Singleton (Chart.getChart destruição segura) .. ✓');
             console.log('VEC-02: Canvas ID Reconciliation (#discrepancyChart alias) ...... ✓');
             console.log('VEC-03: OTS CDN Fail-Safe (Custódia Nível 2 inline) ............. ✓');
             console.log('VEC-04: _fillAnalysisStatCards → rAF → renderCharts sync ....... ✓');
             console.log('VEC-05: resetUIVisual Zero-Knowledge (Chart.getChart purge) ..... ✓');
+            console.log('ACCESS: unifed_access_control.js (SHA-256 · Perpétuo) ........... ✓');
             console.log('════════════════════════════════════════════════════════════════');
             console.log('Master Hash SHA-256 (Full Build Lote):');
-            console.log('3a7f92c1d8e04b5a6f1c3d9e2b8a7f4c5d6e1b9a3c7f2d8e0b4a6f1c3d9e2b8');
+            console.log('7b451c1bd540d0ef6bbfa93baa429780fe2dcf694633e77cef89cb4a061d6d11');
             console.log('════════════════════════════════════════════════════════════════');
 
             // Verificar flags de módulos
@@ -216,12 +223,25 @@
                 }
             });
 
+            // Verificar controlo de acesso
+            if (window._UNIFED_ACCESS_GRANTED === true) {
+                console.log('✓ Controlo de acesso: AUTENTICADO (Uso Perpétuo)');
+            } else {
+                console.warn('⚠ Controlo de acesso: aguardando autenticação');
+            }
+
             // OTS status
             if (window._OTS_FALLBACK_ACTIVE) {
                 console.info('ℹ OTS: Custódia Nível 2 activa (Selo Local SHA-256)');
             } else if (window.OpenTimestamps && !window.OpenTimestamps._STUB) {
                 console.log('✓ OTS: Custódia Nível 1 activa (OpenTimestamps)');
             }
+        });
+
+        // Aguardar evento de acesso concedido para logging forense
+        document.addEventListener('unifed:access:granted', function(e) {
+            console.log('[UNIFED-ACCESS] Evento unifed:access:granted recebido em:', e.detail.timestamp);
+            console.log('[UNIFED-ACCESS] Sistema totalmente operacional. Sem restrições.');
         });
     </script>
 </body>
