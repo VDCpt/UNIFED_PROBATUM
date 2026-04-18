@@ -90,7 +90,7 @@
 
         .pure-card-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr));
             gap: 1.25rem;
             margin: 1rem 0 0.5rem;
         }
@@ -274,73 +274,111 @@
 
         /* ===== RET-PH: Horizontalidade forçada de todos os blocos de dados ===== */
 
-        /* RECONSTITUIÇÃO DA VERDADE MATERIAL — grid 3 colunas horizontal */
+        /* Todos os cards ocupam largura máxima dentro do grid */
+        .pure-card-grid .pure-card {
+            width: 100% !important;
+            min-width: 0 !important;
+        }
+
+        /* Card I — RECONSTITUIÇÃO: forçar 3 colunas horizontais */
+        #pureFinancialCard {
+            grid-column: 1 / -1 !important;
+        }
         #pureFinancialCard .pure-data-grid.pure-3col {
             display: grid !important;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) !important;
-        }
-
-        /* ATF — grid horizontal */
-        .pure-atf-grid {
-            display: grid !important;
-            grid-template-columns: repeat(auto-fit, minmax(155px, 1fr)) !important;
-            gap: 1rem !important;
-        }
-
-        /* ZONA CINZENTA — grid horizontal */
-        .pure-zc-grid {
-            display: grid !important;
-            grid-template-columns: repeat(auto-fit, minmax(185px, 1fr)) !important;
+            grid-template-columns: repeat(3, 1fr) !important;
             gap: 10px !important;
         }
 
-        /* VEREDICTO — linha horizontal */
+        /* Card II — DISCREPÂNCIAS: fiscal-row e smoking guns horizontais */
+        #pureDiscCard {
+            grid-column: 1 / -1 !important;
+        }
+        .pure-smoking-guns {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            gap: 1rem !important;
+        }
+        .pure-fiscal-row {
+            display: flex !important;
+            flex-wrap: nowrap !important;
+            gap: 8px !important;
+        }
+        .pure-fiscal-item { flex: 1 !important; min-width: 0 !important; }
+
+        /* Metric cards dentro de DISCREPÂNCIAS */
+        #pureDiscCard > .pure-card-grid.pure-3col {
+            display: grid !important;
+            grid-template-columns: repeat(3, 1fr) !important;
+            gap: 10px !important;
+            margin-top: 14px !important;
+        }
+
+        /* Card III — ATF horizontal */
+        #pureATFCard {
+            grid-column: 1 / -1 !important;
+        }
+        .pure-atf-grid {
+            display: grid !important;
+            grid-template-columns: repeat(4, 1fr) !important;
+            gap: 1rem !important;
+        }
+
+        /* Card IV — ZONA CINZENTA horizontal */
+        #pureZonaCinzentaCard {
+            grid-column: 1 / -1 !important;
+        }
+        .pure-zc-grid {
+            display: grid !important;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)) !important;
+            gap: 10px !important;
+        }
+
+        /* Card V — VEREDICTO horizontal */
+        #pureVerdictCard {
+            grid-column: 1 / -1 !important;
+        }
         .pure-verdict-row {
             display: flex !important;
             flex-direction: row !important;
             flex-wrap: wrap !important;
-            gap: 1.5rem !important;
+            gap: 2rem !important;
             align-items: center !important;
         }
+        .pure-verdict-block, .pure-integrity-block {
+            flex: 1 !important;
+            min-width: 200px !important;
+        }
 
-        /* TRIANGULAÇÃO — 4 colunas */
+        /* TRIANGULAÇÃO — 4 colunas forçadas */
         .pure-4col {
             display: grid !important;
             grid-template-columns: repeat(4, 1fr) !important;
             gap: 12px !important;
         }
 
-        /* SMOKING GUNS — horizontal em ecrãs largos */
-        @media (min-width: 900px) {
-            .pure-smoking-guns {
-                display: grid !important;
-                grid-template-columns: 1fr 1fr !important;
-                gap: 1rem !important;
-            }
-        }
-
-        /* Metric cards dentro de DISCREPÂNCIAS — horizontal */
-        #pureDiscCard > .pure-card-grid {
-            display: grid !important;
-            grid-template-columns: repeat(3, 1fr) !important;
-            gap: 12px !important;
-            margin-top: 14px !important;
-        }
-
-        /* RISCO DE ASFIXIA FINANCEIRA — horizontal */
+        /* RISCO DE ASFIXIA FINANCEIRA — horizontal com valor em destaque */
         #card-asfixia {
             display: flex !important;
             flex-direction: row !important;
             align-items: center !important;
+            justify-content: space-between !important;
             gap: 1.5rem !important;
             flex-wrap: wrap !important;
+            grid-column: 1 / -1 !important;
         }
 
         /* Responsive */
-        @media (max-width: 700px) {
-            .pure-card-grid { grid-template-columns: 1fr !important; }
-            .pure-4col { grid-template-columns: repeat(2, 1fr) !important; }
+        @media (max-width: 900px) {
+            .pure-smoking-guns { grid-template-columns: 1fr !important; }
+            #pureFinancialCard .pure-data-grid.pure-3col { grid-template-columns: repeat(2, 1fr) !important; }
             .pure-atf-grid { grid-template-columns: repeat(2, 1fr) !important; }
+            .pure-4col { grid-template-columns: repeat(2, 1fr) !important; }
+        }
+        @media (max-width: 600px) {
+            .pure-card-grid { grid-template-columns: 1fr !important; }
+            #pureFinancialCard .pure-data-grid.pure-3col { grid-template-columns: 1fr !important; }
+            .pure-fiscal-row { flex-wrap: wrap !important; }
             #card-asfixia { flex-direction: column !important; }
         }
     </style>

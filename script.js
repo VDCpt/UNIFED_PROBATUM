@@ -687,15 +687,33 @@ function showBlockchainExplain(hash) {
 
 function openCustodyChainModal() {
     const modal = document.getElementById('custodyModal');
-    if (!modal) return;
-    const sessionEl = document.getElementById('custodySessionId');
-    if (sessionEl && typeof UNIFEDSystem !== 'undefined' && UNIFEDSystem.sessionId) {
-        sessionEl.textContent = UNIFEDSystem.sessionId;
+    if (!modal) {
+        console.warn('[UNIFED] #custodyModal não encontrado no DOM.');
+        return;
     }
-    renderCustodyLog(ForensicLogger.getLogs());
+    const sys = (typeof UNIFEDSystem !== 'undefined') ? UNIFEDSystem : window.UNIFEDSystem;
+    const sessionEl = document.getElementById('custodySessionId');
+    if (sessionEl && sys && sys.sessionId) sessionEl.textContent = sys.sessionId;
+
+    const hashEl = document.getElementById('custodyHashDisplay');
+    if (hashEl && sys && sys.masterHash) {
+        hashEl.textContent = sys.masterHash.substring(0, 20).toUpperCase() + '...';
+    }
+
+    // Também atualizar masterHashFull no modal de hash (compatibilidade)
+    const masterHashFull = document.getElementById('masterHashFull');
+    if (masterHashFull && sys && sys.masterHash) {
+        masterHashFull.textContent = sys.masterHash;
+    }
+
+    if (typeof renderCustodyLog === 'function') {
+        renderCustodyLog(ForensicLogger.getLogs ? ForensicLogger.getLogs() : []);
+    }
     modal.classList.add('active');
     document.body.style.overflow = 'hidden';
 }
+
+window.openCustodyChainModal = openCustodyChainModal;
 
 function closeCustodyChainModal() {
     const modal = document.getElementById('custodyModal');
@@ -2134,9 +2152,11 @@ function switchLanguage() {
 
     const langBtn = document.getElementById('langToggleBtn');
     if (langBtn) {
-        const span = langBtn.querySelector('span');
-        if (span) span.textContent = t.langBtn;
+        const span = langBtn.querySelector('span') || langBtn.querySelector('#currentLangLabel');
+        if (span) span.textContent = currentLang === 'en' ? 'PT' : 'EN';
     }
+    const currentLangLabel = document.getElementById('currentLangLabel');
+    if (currentLangLabel) currentLangLabel.textContent = currentLang === 'en' ? 'PT' : 'EN';
 
     const startBtn = document.getElementById('startSessionBtn');
     if (startBtn) {
@@ -3388,35 +3408,35 @@ async function resetSystem() {
     resetUIVisual();
 
     setTimeout(() => {
-        if (typeof window._restoreOriginalToolbar === 'function') {
-            window._restoreOriginalToolbar();
-            logAudit("Toolbar original restaurada após reset.", "success");
-        } else {
-            const container = document.getElementById('export-tools-container');
-            if (container) {
-                container.innerHTML = '';
-                const translations = window.translations?.[currentLang] || {};
-                const tools = [
-                    { id: 'exportPDFBtn', icon: 'fa-file-pdf', label: translations.btnPDF || 'PARECER TÉCNICO', handler: () => window.exportPDF && window.exportPDF() },
-                    { id: 'exportDOCXBtn', icon: 'fa-file-word', label: translations.btnDOCX || 'MINUTA WORD', handler: () => window.exportDOCX && window.exportDOCX() },
-                    { id: 'atfModalBtn', icon: 'fa-chart-line', label: translations.btnATF || '⏳ TENDÊNCIA ATF', handler: () => window.openATFModal && window.openATFModal() },
-                    { id: 'exportJSONBtn', icon: 'fa-file-code', label: translations.btnJSON || 'EXPORTAR JSON', handler: () => window.exportDataJSON && window.exportDataJSON() },
-                    { id: 'resetBtn', icon: 'fa-redo-alt', label: translations.btnReset || 'REINICIAR', handler: () => window.resetSystem && window.resetSystem() },
-                    { id: 'clearConsoleBtn', icon: 'fa-trash-alt', label: translations.clearConsoleBtnText || 'LIMPAR CONSOLE', handler: () => window.clearConsole && window.clearConsole() }
-                ];
-                tools.forEach(t => {
-                    const btn = document.createElement('button');
-                    btn.id = t.id;
-                    btn.className = 'btn-tool';
-                    btn.innerHTML = `<i class="fas ${t.icon}"></i> <span>${t.label}</span>`;
-                    btn.onclick = t.handler;
-                    container.appendChild(btn);
-                });
+        // FIX-RESET: Não destruir a toolbar HTML — apenas reativar os botões e os seus handlers
+        // A toolbar agora usa onclick direto no HTML (toolbar-unified), portanto não precisa de reconstrução
+        const _btnMap = {
+            'exportPDFBtn':      () => typeof exportPDF === 'function' && exportPDF(),
+            'exportJSONBtn':     () => typeof exportDataJSON === 'function' && exportDataJSON(),
+            'resetBtn':          () => typeof resetSystem === 'function' && resetSystem(),
+            'clearConsoleBtn':   () => { const el = document.getElementById('consoleOutput'); if (el) el.innerHTML = '<div class="log-entry log-system">[SISTEMA] Consola limpa.</div>'; },
+            'exportRelatorioBtn':() => typeof exportPDF === 'function' && exportPDF(),
+            'exportMinutaBtn':   () => typeof window.exportDOCX === 'function' && window.exportDOCX(),
+            'exportProvaBtn':    () => typeof window.openCustodyChainModal === 'function' && window.openCustodyChainModal(),
+            'atfModalBtn':       () => typeof window.openATFModal === 'function' && window.openATFModal(),
+        };
+        Object.entries(_btnMap).forEach(([id, handler]) => {
+            const btn = document.getElementById(id);
+            if (btn) {
+                btn.disabled = false;
+                btn.style.pointerEvents = 'auto';
+                btn.style.opacity = '1';
+                if (!btn.onclick) btn.onclick = handler;
             }
-        }
+        });
+        // Ocultar botões da tríade (voltam ao estado inicial)
+        document.querySelectorAll('[data-triada-btn="true"]').forEach(btn => {
+            btn.style.display = 'none';
+        });
         if (typeof window._activatePurePanel === 'function') {
             window._activatePurePanel(true);
         }
+        logAudit('Toolbar reativada após reset.', 'success');
     }, 150);
 
     window.dispatchEvent(new CustomEvent('UNIFED_CORE_READY', { detail: { reset: true } }));

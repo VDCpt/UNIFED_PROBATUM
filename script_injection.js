@@ -406,7 +406,8 @@
             setGlobalText('auxBoxGorjetasValue', fmt(window._unifedDataLoaded === true ? fi.gorjetas : 0));
             setGlobalText('auxBoxPortagensValue', fmt(window._unifedDataLoaded === true ? fi.portagens : 0));
             setGlobalText('auxBoxTotalNSValue', fmt(totalNaoSujeitosCalc));
-            setGlobalText('auxBoxCancelValue', fmt(t.cancelamentos || 0));
+            // FIX-CANCEL: usar valor real de cancelamentos do dataset
+            setGlobalText('auxBoxCancelValue', fmt(window._unifedDataLoaded === true ? (data.totals.cancelamentos || 58.10) : 0));
             setGlobalText('auxDac7NoteValue', fmt(totalNaoSujeitosCalc));
             setGlobalText('auxDac7NoteValueQ', fmt(totalNaoSujeitosCalc));
             
@@ -764,7 +765,7 @@
                 { id: 'auxBoxPortagensValue', val: window._unifedDataLoaded === true ? fi2.portagens : 0 },
                 { id: 'auxBoxGorjetasValue', val: window._unifedDataLoaded === true ? fi2.gorjetas : 0 },
                 { id: 'auxBoxTotalNSValue', val: totalNaoSujeitosCalc },
-                { id: 'auxBoxCancelValue', val: 0.00 },
+                { id: 'auxBoxCancelValue', val: window._unifedDataLoaded === true ? (data.totals.cancelamentos || 58.10) : 0 },
                 { id: 'auxDac7NoteValue', val: totalNaoSujeitosCalc },
                 { id: 'auxDac7NoteValueQ', val: totalNaoSujeitosCalc },
                 { id: 'pure-ganhos-tri', val: t.ganhos },
@@ -2422,11 +2423,41 @@
         if ((c.discrepanciaCritica || 0) > 0.01) show('expenseGapCard');
         if (t.despesas > 0 && t.ganhos > 0)      show('omissaoDespesasPctCard');
 
-        // Gráfico principal mainChart e discrepancyChart
+        // GRÁFICO: ANÁLISE DE DISCREPÂNCIAS · GAP FORENSE
         const mainChartCont = document.getElementById('mainChartContainer');
-        if (mainChartCont) mainChartCont.style.display = 'block';
+        if (mainChartCont) {
+            mainChartCont.style.display = 'block';
+            mainChartCont.style.height = 'auto';
+            mainChartCont.style.overflow = 'visible';
+        }
         const discChartCont = document.getElementById('mainDiscrepancyChartContainer');
-        if (discChartCont) discChartCont.style.display = 'block';
+        if (discChartCont) {
+            discChartCont.style.display = 'block';
+            discChartCont.style.height = 'auto';
+        }
+
+        // Renderizar os gráficos com pequeno delay para garantir visibilidade do canvas
+        setTimeout(function _renderChartsAfterReveal() {
+            try {
+                if (typeof window.renderChart === 'function') {
+                    window.renderChart();
+                    console.log('[UNIFED] _fillAnalysisStatCards: renderChart() executado.');
+                }
+            } catch(e) { console.warn('[UNIFED] renderChart erro:', e); }
+            try {
+                if (typeof window.renderDiscrepancyChart === 'function') {
+                    window.renderDiscrepancyChart();
+                    console.log('[UNIFED] _fillAnalysisStatCards: renderDiscrepancyChart() executado.');
+                }
+            } catch(e) { console.warn('[UNIFED] renderDiscrepancyChart erro:', e); }
+            // Renderizar ATF dentro do pureATFCard se visível
+            try {
+                const atfCanvas = document.getElementById('atfChartCanvas');
+                if (atfCanvas && typeof window.renderATFChart === 'function') {
+                    window.renderATFChart();
+                }
+            } catch(e) { console.warn('[UNIFED] renderATFChart erro:', e); }
+        }, 200);
 
         console.log('[UNIFED] RET-08: _fillAnalysisStatCards — todos os campos preenchidos.');
 

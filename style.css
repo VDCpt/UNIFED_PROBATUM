@@ -3892,3 +3892,219 @@ body.dual-screen .stat-card p {
         flex-direction: column !important;
     }
 }
+
+/* ============================================================================
+   TOOLBAR UNIFICADA — 7 botões · largura total · tamanho igual
+   ============================================================================ */
+.toolbar-unified {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(0, 229, 255, 0.15);
+    margin-bottom: 1.25rem;
+}
+
+.btn-toolbar-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    padding: 0.75rem 0.5rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(0, 229, 255, 0.18);
+    border-left: 3px solid var(--accent-primary);
+    border-radius: var(--border-radius-sm, 6px);
+    color: var(--text-primary, #e2e8f0);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+    line-height: 1.3;
+    min-height: 72px;
+    word-break: break-word;
+    hyphens: auto;
+}
+
+.btn-toolbar-item i {
+    font-size: 1.1rem;
+    color: var(--accent-primary, #00e5ff);
+    flex-shrink: 0;
+}
+
+.btn-toolbar-item:hover {
+    background: rgba(0, 229, 255, 0.08);
+    border-color: var(--accent-primary, #00e5ff);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(0, 229, 255, 0.15);
+    color: #fff;
+}
+
+.btn-toolbar-item:active {
+    transform: translateY(0);
+}
+
+.btn-toolbar-item:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Cores específicas por função */
+#exportPDFBtn     { border-left-color: #ef4444; }
+#exportPDFBtn i   { color: #ef4444; }
+#exportJSONBtn    { border-left-color: #10b981; }
+#exportJSONBtn i  { color: #10b981; }
+#resetBtn         { border-left-color: #f59e0b; }
+#resetBtn i       { color: #f59e0b; }
+#clearConsoleBtn  { border-left-color: #6366f1; }
+#clearConsoleBtn i{ color: #6366f1; }
+#exportRelatorioBtn   { border-left-color: #0ea5e9; }
+#exportRelatorioBtn i { color: #0ea5e9; }
+#exportMinutaBtn  { border-left-color: #8b5cf6; }
+#exportMinutaBtn i{ color: #8b5cf6; }
+#exportProvaBtn   { border-left-color: #00e5ff; }
+#exportProvaBtn i { color: #00e5ff; }
+
+/* Responsividade */
+@media (max-width: 1100px) {
+    .toolbar-unified { grid-template-columns: repeat(4, 1fr); }
+}
+@media (max-width: 700px) {
+    .toolbar-unified { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ============================================================================
+   CUSTÓDIA MODAL — estilos faltantes
+   ============================================================================ */
+#custodyModal {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    background: rgba(8, 18, 36, 0.92);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+#custodyModal.active {
+    display: flex;
+}
+.custody-modal-box {
+    background: #0f172a;
+    border: 1px solid rgba(0, 229, 255, 0.3);
+    border-radius: 1rem;
+    width: 100%;
+    max-width: 820px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+.custody-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid rgba(0, 229, 255, 0.15);
+    background: rgba(0, 229, 255, 0.04);
+}
+.custody-modal-title {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #00e5ff;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-family: 'JetBrains Mono', monospace;
+}
+.custody-close-btn {
+    background: none;
+    border: 1px solid rgba(255,255,255,0.15);
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 0.35rem 0.65rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+}
+.custody-close-btn:hover { color: #fff; border-color: #ef4444; background: rgba(239,68,68,0.1); }
+.custody-modal-meta {
+    display: flex;
+    gap: 2rem;
+    padding: 0.75rem 1.5rem;
+    font-size: 0.75rem;
+    color: #64748b;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    flex-wrap: wrap;
+}
+.custody-log-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+.custody-log-entry {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+}
+.custody-log-entry:hover { background: rgba(0,229,255,0.04); }
+.custody-entry-ts {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    color: #475569;
+    white-space: nowrap;
+    min-width: 140px;
+}
+.custody-entry-body { color: #cbd5e1; font-size: 0.8rem; }
+.custody-entry-body .entry-action { color: #00e5ff; font-weight: 700; }
+.custody-entry-body .entry-file { color: #e2b87a; }
+.custody-entry-body .entry-hash {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    color: #10b981;
+    word-break: break-all;
+}
+.custody-entry-body .entry-tsa { color: #8b5cf6; font-size: 0.72rem; }
+.custody-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    color: #334155;
+    padding: 3rem;
+    font-size: 0.85rem;
+}
+.custody-empty-state i { font-size: 2.5rem; }
+
+/* ============================================================================
+   RECONSTITUIÇÃO DA VERDADE MATERIAL — cards FULL WIDTH horizontal
+   ============================================================================ */
+#pureFinancialCard .pure-data-grid.pure-3col {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 10px !important;
+}
+#pureFinancialCard .pure-data-block {
+    min-width: 0 !important;
+}
+/* Em ecrãs grandes, card occupa 100% da largura horizontal */
+#pureFinancialCard {
+    grid-column: 1 / -1 !important;
+}

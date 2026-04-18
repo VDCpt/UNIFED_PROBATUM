@@ -271,24 +271,41 @@
             <main class="analysis-area">
                 
                 <div class="toolbar-section">
-                    <div class="toolbar-grid" id="export-tools-container">
-                        <!-- Primeira linha: botões nativos -->
-                        <div class="toolbar-row toolbar-row-primary" id="primary-toolbar">
-                            <button id="exportPDFBtn" class="btn-tool">
-                                <i class="fas fa-file-pdf"></i> <span id="btnPDF">PARECER TÉCNICO</span>
-                            </button>
-                            <button id="exportJSONBtn" class="btn-tool">
-                                <i class="fas fa-file-code"></i> <span id="btnJSON">EXPORTAR JSON</span>
-                            </button>
-                            <button id="resetBtn" class="btn-tool">
-                                <i class="fas fa-redo-alt"></i> <span id="btnReset">REINICIAR</span>
-                            </button>
-                            <button id="clearConsoleBtn" class="btn-tool">
-                                <i class="fas fa-trash-alt"></i> <span id="clearConsoleBtnText">LIMPAR CONSOLE</span>
-                            </button>
-                        </div>
-                        <!-- Segunda linha: botões da Tríade (serão injetados dinamicamente) -->
-                        <div class="toolbar-row toolbar-row-secondary" id="secondary-toolbar"></div>
+                    <!-- TOOLBAR UNIFICADA: 7 botões · largura total · tamanho igual -->
+                    <div id="export-tools-container" class="toolbar-unified">
+                        <button id="exportPDFBtn" class="btn-toolbar-item" onclick="if(typeof exportPDF==='function') exportPDF();">
+                            <i class="fas fa-file-pdf"></i>
+                            <span id="btnPDF">PARECER TÉCNICO</span>
+                        </button>
+                        <button id="exportJSONBtn" class="btn-toolbar-item" onclick="if(typeof exportDataJSON==='function') exportDataJSON();">
+                            <i class="fas fa-file-code"></i>
+                            <span id="btnJSON">EXPORTAR JSON</span>
+                        </button>
+                        <button id="resetBtn" class="btn-toolbar-item" onclick="if(typeof resetSystem==='function') resetSystem();">
+                            <i class="fas fa-redo-alt"></i>
+                            <span id="btnReset">REINICIAR</span>
+                        </button>
+                        <button id="clearConsoleBtn" class="btn-toolbar-item" onclick="(function(){var el=document.getElementById('consoleOutput');if(el)el.innerHTML='<div class=\'log-entry log-system\'>[SISTEMA] Consola limpa.</div>';})();">
+                            <i class="fas fa-trash-alt"></i>
+                            <span id="clearConsoleBtnText">LIMPAR CONSOLE</span>
+                        </button>
+                        <button id="exportRelatorioBtn" class="btn-toolbar-item" onclick="if(typeof exportPDF==='function') exportPDF(); else if(window.Swal) Swal.fire({title:'Em desenvolvimento',icon:'info'});">
+                            <i class="fas fa-file-contract"></i>
+                            <span>RELATÓRIO PERICIAL FORENSE</span>
+                            <small style="display:block;font-size:0.58rem;opacity:0.7;margin-top:2px;">MOD. 03-B</small>
+                        </button>
+                        <button id="exportMinutaBtn" class="btn-toolbar-item" onclick="if(typeof window.exportDOCX==='function') window.exportDOCX(); else if(window.Swal) Swal.fire({title:'Módulo DOCX não disponível',icon:'warning'});">
+                            <i class="fas fa-file-word"></i>
+                            <span id="btnDOCX">MINUTA DE PETIÇÃO INICIAL</span>
+                        </button>
+                        <button id="exportProvaBtn" class="btn-toolbar-item" onclick="if(typeof gerarAnexoCustodia==='function') gerarAnexoCustodia(); else if(typeof window.openCustodyChainModal==='function') window.openCustodyChainModal();">
+                            <i class="fas fa-shield-alt"></i>
+                            <span>PROVA MATERIAL DIGITAL</span>
+                        </button>
+                        <!-- Botões ocultos da tríade (revelados após perícia via RET-11) -->
+                        <div id="secondary-toolbar" style="display:none;"></div>
+                        <!-- Linha legada para compatibilidade -->
+                        <div id="primary-toolbar" style="display:none;"></div>
                     </div>
                 </div>
 
@@ -497,7 +514,7 @@
                 <div id="mainDiscrepancyChartContainer" class="chart-section" style="display: none;">
                     <h3 id="chartTitle2"><i class="fas fa-chart-bar"></i> DISCREPÂNCIA SAF-T vs DAC7</h3>
                     <div class="chart-container">
-                        <canvas id="mainDiscrepancyChart"></canvas>
+                        <canvas id="discrepancyChart"></canvas>
                     </div>
                 </div>
 
@@ -599,6 +616,38 @@
     </div>
 
     <div id="toastContainer"></div>
+
+    <!-- MODAL: CADEIA DE CUSTÓDIA FORENSE -->
+    <div id="custodyModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="custodyModalTitle">
+        <div class="custody-modal-box">
+            <div class="custody-modal-header">
+                <div class="custody-modal-title">
+                    <i class="fas fa-link"></i>
+                    <span id="custodyModalTitle">CADEIA DE CUSTÓDIA FORENSE · ISO/IEC 27037:2012</span>
+                    <span class="pure-badge-version" style="margin-left:0.5rem;">v13.12.2-i18n</span>
+                </div>
+                <button class="custody-close-btn" onclick="if(typeof closeCustodyChainModal==='function') closeCustodyChainModal();" aria-label="Fechar">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="custody-modal-meta">
+                <span>Sessão: <strong id="custodySessionId">---</strong></span>
+                <span>Entradas: <strong id="custodyEntryCount">0</strong></span>
+                <span>Hash: <strong id="custodyHashDisplay" style="font-family:monospace;font-size:0.8em;">---</strong></span>
+            </div>
+            <div id="custodyLogContainer" class="custody-log-list">
+                <div class="custody-empty-state">
+                    <i class="fas fa-inbox"></i>
+                    Sem eventos registados. Carregue evidências para iniciar a cadeia de custódia.
+                </div>
+            </div>
+            <div class="modal-footer" style="padding:1rem 1.5rem;border-top:1px solid rgba(255,255,255,0.08);display:flex;gap:0.75rem;justify-content:flex-end;">
+                <button class="btn-primary" onclick="if(typeof closeCustodyChainModal==='function') closeCustodyChainModal();">
+                    <i class="fas fa-check-circle"></i> FECHAR
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- Ordem corrigida: script.js antes de script_injection.js e unifed_triada_export.js -->
     <script src="unifed_panel_activator.js"></script>
