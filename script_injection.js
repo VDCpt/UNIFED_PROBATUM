@@ -1273,6 +1273,35 @@
             }
 
             console.log('[UNIFED] ensureDemoDataLoaded v2: valores corretos injetados.');
+
+            // RET-09: Atualizar contador de evidências — 15 documentos (4+4+2+4+1)
+            (function _updateDemoEvidenceCount() {
+                const _c = d.counts;
+                const _total = _c.ctrl + _c.saft + _c.fat + _c.ext + _c.dac7; // = 15
+                const _evEl = document.getElementById('evidenceCountTotal');
+                if (_evEl) _evEl.textContent = _total;
+                [['controlCountCompact', _c.ctrl],
+                 ['saftCountCompact',    _c.saft],
+                 ['invoiceCountCompact', _c.fat],
+                 ['statementCountCompact', _c.ext],
+                 ['dac7CountCompact',    _c.dac7]].forEach(([id, v]) => {
+                    const el = document.getElementById(id);
+                    if (el) el.textContent = v;
+                });
+                // Também atualizar o painel interno (pureDashboard)
+                [['pure-ctrl-qty',  _c.ctrl],
+                 ['pure-saft-qty',  _c.saft],
+                 ['pure-fat-qty',   _c.fat],
+                 ['pure-ext-qty',   _c.ext],
+                 ['pure-dac7-qty',  _c.dac7]].forEach(([id, v]) => {
+                    const el = document.getElementById(id);
+                    if (el) el.textContent = v;
+                });
+                const pureEvidSec = document.getElementById('pureEvidenceSection');
+                if (pureEvidSec) pureEvidSec.style.display = 'block';
+                console.log('[UNIFED] RET-09: Contador de evidências atualizado — ' + _total + ' documentos.');
+            })();
+
             return true;
         }
 
@@ -2113,10 +2142,17 @@
             }
             
             // =========================================================================
-            // RETIFICAÇÃO: Forçar flag de análise pendente como false (interface pronta)
+            // RET-10: Apenas repor flags se não houver dados carregados.
+            // Se o utilizador já carregou o caso real, preservar o estado correto.
+            // forceFinalState é exclusivamente para transição de UI (splash → dashboard).
             // =========================================================================
-            window._unifedAnalysisPending = false;
-            window._unifedRawDataOnly = false;
+            if (!window._unifedDataLoaded) {
+                window._unifedAnalysisPending = false;
+                window._unifedRawDataOnly = false;
+            }
+            // Nota: se _unifedDataLoaded=true e _unifedAnalysisPending=true,
+            // os flags mantêm-se para que syncMetrics() saiba que há dados brutos
+            // mas a análise ainda não foi executada (aguarda clique em "EXECUTAR PERÍCIA").
             
             // 5. Despacho de Eventos de Sincronização (apenas eventos, sem dados)
             window.dispatchEvent(new CustomEvent('UNIFED_CORE_READY'));
@@ -2196,34 +2232,211 @@
     // =========================================================================
     // FORCE BIND PARA BOTÕES MORTOS (bypass nexus.js)
     // =========================================================================
+    // =========================================================================
+    // RET-08 CRÍTICO: forceBindAnalyze CORRIGIDA
+    // Problema original: btn.onclick = ... substituía todos os addEventListener,
+    // cortando o pipeline completo de executePendingAnalysis() que calcula
+    // IVA 6%, IVA 23%, IRC, Asfixia, Discrepâncias, etc.
+    // Solução: apenas ativar o botão e garantir listener completo sem override.
+    // =========================================================================
     function forceBindAnalyze() {
         const btn = document.getElementById('analyzeBtn');
-        if (btn) {
-            // Substitui qualquer listener anterior por um onclick direto
-            btn.onclick = function(e) {
-                e.preventDefault();
-                console.log('[UNIFED] Execução de Perícia Forçada (Bypass Zero-Knowledge)');
-                
-                // 1. Desbloquear Interface
-                window._unifedAnalysisPending = false;
+        if (!btn) {
+            console.warn('[UNIFED] forceBindAnalyze: #analyzeBtn não encontrado');
+            return;
+        }
+
+        // Ativar o botão (nunca desativar após dados carregados)
+        btn.disabled = false;
+        btn.style.pointerEvents = 'auto';
+        btn.style.opacity = '1';
+
+        // Só adicionar listener se não existir já um completo
+        if (btn.getAttribute('data-ret08-listener') === 'true') {
+            console.log('[UNIFED] forceBindAnalyze RET-08: listener já registado, apenas ativando botão.');
+            return;
+        }
+
+        // REMOVER qualquer onclick direto anterior que possa ter sido injetado
+        btn.onclick = null;
+
+        btn.addEventListener('click', async function _ret08Handler(e) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            console.log('[UNIFED] RET-08: EXECUTAR PERÍCIA — pipeline forense completo');
+
+            const _origHTML = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> A EXECUTAR PERÍCIA...';
+
+            try {
+                // 1. Garantir dados do caso real carregados
+                let loadFn = window.ensureDemoDataLoaded
+                    || window.UNIFED_INTERNAL?.ensureDemoDataLoaded;
+                if (typeof loadFn === 'function') {
+                    await loadFn();
+                } else {
+                    console.warn('[UNIFED] RET-08: ensureDemoDataLoaded indisponível.');
+                }
+
+                // 2. Executar análise completa (calcula cruzamentos, IVA, IRC, Asfixia)
+                let execFn = window.UNIFED_INTERNAL?.executePendingAnalysis
+                    || window.executePendingAnalysis;
+                if (typeof execFn === 'function') {
+                    await execFn();
+                } else {
+                    // Fallback direto: calcular crossings localmente
+                    console.warn('[UNIFED] RET-08: executePendingAnalysis indisponível, fallback local.');
+                    const sys = window.UNIFEDSystem;
+                    if (sys && sys.analysis && sys.analysis.totals) {
+                        const t = sys.analysis.totals;
+                        const discC2 = t.despesas - t.faturaPlataforma;
+                        const discC1 = t.saftBruto - t.dac7TotalPeriodo;
+                        sys.analysis.crossings = {
+                            discrepanciaCritica:      discC2,
+                            percentagemOmissao:       t.despesas > 0 ? (discC2 / t.despesas) * 100 : 0,
+                            discrepanciaSaftVsDac7:   discC1,
+                            percentagemSaftVsDac7:    t.saftBruto > 0 ? (discC1 / t.saftBruto) * 100 : 0,
+                            ivaFalta:    discC2 * 0.23,
+                            ivaFalta6:   discC2 * 0.06,
+                            ircEstimado: discC2 * 0.21,
+                            asfixiaFinanceira: t.saftBruto * 0.06,
+                            btor: t.despesas, btf: t.faturaPlataforma
+                        };
+                        t.iva6Omitido      = discC2 * 0.06;
+                        t.iva23Omitido     = discC2 * 0.23;
+                        t.asfixiaFinanceira = t.saftBruto * 0.06;
+                    }
+                    window._unifedAnalysisPending = false;
+                    window._unifedRawDataOnly = false;
+                }
+
+                // 3. Sincronizar todos os campos do dashboard
+                if (typeof window.UNIFED_INTERNAL?.syncMetrics === 'function') {
+                    window.UNIFED_INTERNAL.syncMetrics();
+                }
+                if (typeof window.UNIFED_INTERNAL?.updateAuxiliaryUI === 'function') {
+                    window.UNIFED_INTERNAL.updateAuxiliaryUI();
+                }
+                // 4. Hidratar campos do index.html (módulos SAF-T, Extratos, DAC7, stat-cards)
+                if (typeof window._hydrateRawDataValues === 'function') {
+                    window._hydrateRawDataValues();
+                }
+                // 5. Preencher stat-cards de análise (IVA, IRC, Asfixia)
+                _fillAnalysisStatCards();
+
+                // 6. Revelar módulos forenses e gráficos
                 if (typeof updateForensicModulesVisibility === 'function') {
                     updateForensicModulesVisibility(true);
                 }
-                
-                // 2. Disparar Sincronização Final
-                window.dispatchEvent(new CustomEvent('UNIFED_EXECUTE_PERITIA'));
-                
-                // 3. Forçar revelação de Smoking Gun (DORA Compliant)
-                if (window.forceRevealSmokingGun) window.forceRevealSmokingGun();
-                
-                this.innerHTML = "✅ PERÍCIA CONCLUÍDA";
-                this.classList.add('btn-success');
-            };
-            console.log('[UNIFED] forceBindAnalyze: onclick atribuído ao #analyzeBtn');
-        } else {
-            console.warn('[UNIFED] forceBindAnalyze: #analyzeBtn não encontrado');
-        }
+                if (typeof window.forceRevealSmokingGun === 'function') {
+                    window.forceRevealSmokingGun();
+                }
+                if (typeof window.renderForensicCharts === 'function') {
+                    window.renderForensicCharts();
+                }
+                // 7. Renderizar gráficos principais (mainChart, discrepancyChart)
+                if (typeof window.renderChart === 'function') window.renderChart();
+                if (typeof window.renderDiscrepancyChart === 'function') window.renderDiscrepancyChart();
+
+                // 8. Disparar eventos globais
+                window.dispatchEvent(new CustomEvent('UNIFED_EXECUTE_PERITIA', {
+                    detail: { timestamp: new Date().toISOString() }
+                }));
+                window.dispatchEvent(new CustomEvent('UNIFED_ANALYSIS_COMPLETE', {
+                    detail: { source: 'RET-08', timestamp: Date.now() }
+                }));
+
+                btn.innerHTML = '✅ PERÍCIA CONCLUÍDA';
+                btn.classList.add('btn-success');
+                btn.disabled = false;
+                console.log('[UNIFED] RET-08: Perícia concluída — todos os campos preenchidos.');
+
+            } catch (_err) {
+                console.error('[UNIFED] RET-08: Erro durante perícia:', _err);
+                btn.innerHTML = _origHTML;
+                btn.disabled = false;
+            }
+        }, true); // capture:true para ter prioridade sobre outros listeners
+
+        btn.setAttribute('data-ret08-listener', 'true');
+        console.log('[UNIFED] forceBindAnalyze RET-08: listener completo registado (sem override de pipeline).');
     }
+
+    // Auxiliar: preencher os stat-cards de análise após cálculo dos crossings
+    function _fillAnalysisStatCards() {
+        const sys = window.UNIFEDSystem;
+        if (!sys || !sys.analysis) return;
+        const t = sys.analysis.totals || {};
+        const c = sys.analysis.crossings || {};
+        const fmt = window.UNIFED_INTERNAL?.fmt
+            || ((v) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v || 0));
+        const show = (id) => { const el = document.getElementById(id); if (el) el.style.display = ''; };
+        const setT = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+
+        // CÁLCULO TRIBUTÁRIO PERICIAL · PROVA RAINHA (quantumBox)
+        const qBox = document.getElementById('quantumBox');
+        if (qBox) {
+            qBox.style.display = 'block';
+            setT('quantumValue', fmt(c.discrepanciaCritica || 0));
+            setT('quantumNote', `IVA em falta (23%): ${fmt(c.ivaFalta || 0)} | IVA (6%): ${fmt(c.ivaFalta6 || 0)}`);
+        }
+
+        // SMOKING GUN · DIVERGÊNCIA CRÍTICA (bigDataAlert)
+        const bigAlert = document.getElementById('bigDataAlert');
+        if (bigAlert) {
+            bigAlert.style.display = 'flex';
+            setT('alertDeltaValue', fmt(c.discrepanciaCritica || 0));
+        }
+
+        // Stat-cards com display:none → revelar e preencher
+        const cardMap = [
+            ['statNet',               fmt(t.ganhosLiquidos || 0),              null],
+            ['statComm',              fmt(t.despesas || 0),                     null],
+            ['statJuros',             fmt(c.discrepanciaCritica || 0),          'jurosCard'],
+            ['discrepancy5Value',     fmt(c.discrepanciaSaftVsDac7 || 0),       'discrepancy5Card'],
+            ['agravamentoBrutoValue', fmt(c.discrepanciaCritica || 0),          'agravamentoBrutoCard'],
+            ['ircValue',              fmt(c.ircEstimado || 0),                  'ircCard'],
+            ['iva6Value',             fmt(t.iva6Omitido || 0),                  'iva6Card'],
+            ['iva23Value',            fmt(t.iva23Omitido || 0),                 'iva23Card'],
+            ['asfixiaFinanceiraValue',fmt(t.asfixiaFinanceira || 0),            'asfixiaFinanceiraCard'],
+        ];
+        cardMap.forEach(([valId, val, cardId]) => {
+            setT(valId, val);
+            if (cardId) show(cardId);
+        });
+
+        // Triangulação (kpiSection)
+        setT('kpiGrossValue', fmt(t.ganhos || 0));
+        setT('kpiCommValue',  fmt(t.despesas || 0));
+        setT('kpiNetValue',   fmt(t.ganhosLiquidos || 0));
+        setT('kpiInvValue',   fmt(t.faturaPlataforma || 0));
+
+        // Gap cards (twoAxisAlerts)
+        const revGap = (t.saftBruto || 0) - (t.ganhos || 0);
+        setT('revenueGapValue', fmt(revGap));
+        setT('expenseGapValue', fmt(c.discrepanciaCritica || 0));
+        const pct = t.despesas > 0 && t.ganhos > 0 ? ((t.despesas / t.ganhos) * 100).toFixed(2) + '%' : '0,00%';
+        setT('omissaoDespesasPctValue', pct);
+        if (Math.abs(revGap) > 0.01)            show('revenueGapCard');
+        if ((c.discrepanciaCritica || 0) > 0.01) show('expenseGapCard');
+        if (t.despesas > 0 && t.ganhos > 0)      show('omissaoDespesasPctCard');
+
+        // Gráfico principal mainChart e discrepancyChart
+        const mainChartCont = document.getElementById('mainChartContainer');
+        if (mainChartCont) mainChartCont.style.display = 'block';
+        const discChartCont = document.getElementById('mainDiscrepancyChartContainer');
+        if (discChartCont) discChartCont.style.display = 'block';
+
+        console.log('[UNIFED] RET-08: _fillAnalysisStatCards — todos os campos preenchidos.');
+
+        // RET-11: Revelar botões ocultos da tríade após perícia executada
+        document.querySelectorAll('[data-triada-btn="true"]').forEach(btn => {
+            btn.style.display = 'inline-flex';
+            btn.disabled = false;
+        });
+    }
+    window._fillAnalysisStatCards = _fillAnalysisStatCards;
 
     // Chamar após o core estar pronto
     window.addEventListener('UNIFED_CORE_READY', forceBindAnalyze);

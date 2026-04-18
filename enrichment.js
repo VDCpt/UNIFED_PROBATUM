@@ -1130,6 +1130,23 @@ function openATFModal() {
         '</div>' +
         '</div>';
     document.body.appendChild(modal);
+    
+    // RET-07: Criar canvas DENTRO do modal para o gráfico ATF
+    var _modalInner = modal.querySelector('[style*="max-width:1100px"]') || modal.firstElementChild;
+    if (_modalInner) {
+        var _chartWrapper = document.createElement('div');
+        _chartWrapper.id = 'atfModalChartWrapper';
+        _chartWrapper.style.cssText = 'width:100%;background:rgba(255,255,255,0.03);border:1px solid rgba(0,229,255,0.2);border-radius:12px;padding:20px;margin:20px 0;';
+        _chartWrapper.innerHTML = '<div style="font-size:0.7rem;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">📈 EVOLUÇÃO TEMPORAL — DISCREPÂNCIA MENSAL (Q4 2024)</div>' +
+            '<canvas id="atfChartCanvasModal" style="width:100%;height:300px;display:block;"></canvas>';
+        // Inserir após o bloco do Score de Persistência (segundo filho)
+        var _secondBlock = _modalInner.children[1];
+        if (_secondBlock) {
+            _modalInner.insertBefore(_chartWrapper, _secondBlock.nextSibling);
+        } else {
+            _modalInner.appendChild(_chartWrapper);
+        }
+    }
     var _atfLangHook = function(lang) {
         if (typeof window._enrichmentRefreshLang === 'function') {
             window._enrichmentRefreshLang(lang);
@@ -1164,15 +1181,15 @@ function openATFModal() {
         }
     });
     if (months.length > 0 && typeof Chart !== 'undefined') {
-        if (typeof window.renderATFChart === 'function') {
-            window.renderATFChart(atf);
-        } else {
+        // RET-07: usar canvas do modal (#atfChartCanvasModal) em primeiro lugar
+        setTimeout(function() {
             try {
-                var cvs = document.getElementById('atfChartCanvas');
-                if (cvs) {
-                    var _existingChart = Chart.getChart(cvs);
-                    if (_existingChart) _existingChart.destroy();
-                    var mean2s = atf.mean + 2 * atf.stdDev;
+                var cvs = document.getElementById('atfChartCanvasModal') ||
+                          document.getElementById('atfChartCanvas');
+                if (!cvs) { console.warn('[UNIFED-ATF] Canvas ATF não encontrado no modal.'); return; }
+                var _existingChart = Chart.getChart(cvs);
+                if (_existingChart) _existingChart.destroy();
+                var mean2s = atf.mean + 2 * atf.stdDev;
                     new Chart(cvs, {
                         type: 'line',
                         data: {
@@ -1212,13 +1229,12 @@ function openATFModal() {
                         }
                     });
                     if (window.UNIFEDSystem && window.UNIFEDSystem.utils && window.UNIFEDSystem.utils.sealCanvas) {
-                        window.UNIFEDSystem.utils.sealCanvas('atfChartCanvas');
+                        window.UNIFEDSystem.utils.sealCanvas(cvs.id);
                     }
-                }
             } catch (cErr) {
-                console.warn('[UNIFED-ATF] \u26a0 Chart.js indisponivel:', cErr.message);
+                console.warn('[UNIFED-ATF] ⚠ Chart.js indisponivel:', cErr.message);
             }
-        }
+        }, 200); // aguardar DOM do modal estar estável
     }
 }
 window.openATFModal = openATFModal;

@@ -3236,12 +3236,12 @@ window._hydrateRawDataValues = function() {
         'pure-disc-c2': 2184.95,
         'pure-iva-devido': 493.68,
         'pure-nao-sujeitos': 451.15,
-        'pure-iva-6': 131.10,      // IVA 6% omitido (opcional)
-        'pure-iva-23': 502.54,     // IVA 23% omitido (opcional)
-        'pure-saft': 8227.97,      // SAF-T Bruto (opcional)
-        'pure-dac7': 7755.16,      // DAC7 (opcional)
-        'pure-fatura': 262.94,     // Fatura Plataforma (opcional)
-        'pure-liquido': 7709.84    // Ganhos Líquidos (opcional)
+        'pure-iva-6': 131.10,
+        'pure-iva-23': 502.54,
+        'pure-saft': 8227.97,
+        'pure-dac7': 7755.16,
+        'pure-fatura': 262.94,
+        'pure-liquido': 7709.84
     };
     
     Object.entries(valores).forEach(([id, val]) => {
@@ -3251,8 +3251,46 @@ window._hydrateRawDataValues = function() {
             el.style.opacity = '1';
         }
     });
+
+    // RET-12: Hidratar módulos do index.html (SAF-T, Extratos, DAC7)
+    const _t = window.UNIFED_INTERNAL?.data?.totals;
+    if (_t) {
+        // Módulo SAF-T (EXTRAÇÃO)
+        [['saftIliquidoValue', _t.saftIliquido],
+         ['saftIvaValue',      _t.saftIva],
+         ['saftBrutoValue',    _t.saftBruto]].forEach(([id, v]) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = fmt(v);
+        });
+        // Módulo EXTRATOS (MAPEAMENTO)
+        [['stmtGanhosValue',         _t.ganhos],
+         ['stmtDespesasValue',       _t.despesas],
+         ['stmtGanhosLiquidosValue', _t.ganhosLiquidos]].forEach(([id, v]) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = fmt(v);
+        });
+        // Módulo DAC7 (DECOMPOSIÇÃO) — Q4 = total período
+        [['dac7Q1Value', 0],
+         ['dac7Q2Value', 0],
+         ['dac7Q3Value', 0],
+         ['dac7Q4Value', _t.dac7TotalPeriodo]].forEach(([id, v]) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = fmt(v);
+        });
+        // Stat-cards visíveis: GANHOS LÍQUIDOS e DESPESAS
+        const statNet  = document.getElementById('statNet');
+        const statComm = document.getElementById('statComm');
+        if (statNet)  statNet.textContent  = fmt(_t.ganhosLiquidos);
+        if (statComm) statComm.textContent = fmt(_t.despesas);
+        // KPI Triangulação
+        ['kpiGrossValue', 'kpiCommValue', 'kpiNetValue', 'kpiInvValue'].forEach((id, i) => {
+            const vals = [_t.ganhos, _t.despesas, _t.ganhosLiquidos, _t.faturaPlataforma];
+            const el = document.getElementById(id);
+            if (el) el.textContent = fmt(vals[i]);
+        });
+    }
     
-    console.log('[UNIFED] Valores brutos hidratados (Ganhos: 10.157,73 € | Omissão: 2.184,95 € | IVA Asfixia: 493,68 € | Não Sujeitos: 451,15 €)');
+    console.log('[UNIFED] RET-12: Valores brutos hidratados em index.html + panel.html');
 };
 
 /**
@@ -8437,6 +8475,37 @@ function setupIniciarButton() {
                 setupDualScreenDetection();
                 console.log('[UNIFED-INIT] ✓ setupDualScreenDetection() completado');
             }
+            
+            // RET-05: Binding programático do botão PT/EN (langToggleBtn)
+            (function _bindLangToggle() {
+                var _langBtn = document.getElementById('langToggleBtn');
+                if (_langBtn && !_langBtn.getAttribute('data-lang-listener')) {
+                    _langBtn.addEventListener('click', function() {
+                        if (typeof switchLanguage === 'function') switchLanguage();
+                    });
+                    _langBtn.setAttribute('data-lang-listener', 'true');
+                    console.log('[UNIFED-INIT] ✓ langToggleBtn listener registado (RET-05)');
+                }
+            })();
+            
+            // RET-06: Ativar botões da toolbar após carregamento completo
+            setTimeout(function _enableToolbarButtons() {
+                var _toolbarIds = ['exportPDFBtn', 'exportJSONBtn', 'resetBtn', 'clearConsoleBtn',
+                                   'exportDOCXBtn', 'atfModalBtn'];
+                _toolbarIds.forEach(function(id) {
+                    var btn = document.getElementById(id);
+                    if (btn) {
+                        btn.disabled = false;
+                        btn.style.pointerEvents = 'auto';
+                        btn.style.opacity = '1';
+                    }
+                });
+                document.querySelectorAll('.btn-tool, .btn-tool-pure').forEach(function(btn) {
+                    btn.disabled = false;
+                    btn.style.pointerEvents = 'auto';
+                });
+                console.log('[UNIFED-INIT] ✓ Botões da toolbar ativados (RET-06)');
+            }, 900);
             
             console.log('[UNIFED-INIT] ✅ Bloco unificado de setup completado com sucesso');
             

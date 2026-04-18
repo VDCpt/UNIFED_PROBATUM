@@ -1141,12 +1141,20 @@ body {
 }
 
 .dashboard-fixed {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
     gap: 1rem;
     margin-bottom: 1.5rem;
     position: relative;
     z-index: 10;
+    align-items: stretch;
+}
+
+.dashboard-fixed .stat-card {
+    flex: 1 1 240px;
+    min-width: 210px;
+    max-width: 340px;
 }
 
 .stat-card {
@@ -1245,9 +1253,15 @@ body {
 }
 
 .kpi-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
     gap: 1rem;
+}
+
+.kpi-grid .kpi-card {
+    flex: 1 1 180px;
+    min-width: 155px;
 }
 
 .kpi-card {
@@ -3742,5 +3756,139 @@ body.dual-screen .stat-card p {
     .toolbar-row-primary .btn-tool,
     .toolbar-row-secondary .btn-tool-pure {
         flex-basis: 100%;
+    }
+}
+/* ============================================================================
+   RETIFICAÇÕES CIRÚRGICAS v13.12.2 — RET-ST-02, RET-ST-03
+   Horizontalidade de todos os grupos de cards
+   ============================================================================ */
+
+/* RET-ST-02: module-row — altura uniforme entre SAF-T e Extratos */
+.module-row {
+    display: flex;
+    align-items: stretch;
+}
+.module-row .module-card {
+    min-height: 155px;
+}
+.module-values.grid-3,
+.module-values.grid-4 {
+    align-content: start;
+}
+
+/* RET-ST-03: pure-card-grid — horizontal em ecrãs largos */
+.pure-card-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr)) !important;
+    gap: 1.25rem !important;
+}
+
+/* Forçar horizontalidade dentro dos cards do painel forense */
+#pureFinancialCard .pure-data-grid.pure-3col,
+#pureDiscCard .pure-fiscal-row,
+#pureATFCard .pure-atf-grid,
+#pureZonaCinzentaCard .pure-zc-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) !important;
+}
+
+/* VEREDICTO PERICIAL — linha horizontal */
+#pureVerdictCard .pure-verdict-row {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 1.5rem !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+}
+
+/* RISCO DE ASFIXIA FINANCEIRA — card horizontal */
+#card-asfixia {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 1.5rem !important;
+    flex-wrap: wrap !important;
+}
+#card-asfixia .pure-card-value {
+    font-size: 2.8rem !important;
+    font-weight: 900 !important;
+    color: #F59E0B !important;
+    white-space: nowrap !important;
+}
+
+/* TRIANGULAÇÃO — grid de 4 colunas horizontal */
+#pureTriangulationCard .pure-4col {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 12px !important;
+}
+
+/* ANÁLISE TEMPORAL (ATF) — grid horizontal */
+.pure-atf-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)) !important;
+    gap: 1rem !important;
+}
+
+/* ZONA CINZENTA — grid horizontal */
+.pure-zc-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)) !important;
+    gap: 10px !important;
+}
+
+/* DISCREPÂNCIAS APURADAS — fiscal row horizontal */
+.pure-fiscal-row {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 12px !important;
+}
+.pure-fiscal-item {
+    flex: 1 1 150px !important;
+    min-width: 130px !important;
+}
+
+/* Botões da toolbar — linha consistente */
+.toolbar-row {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    gap: 0.5rem !important;
+    align-items: center !important;
+}
+.toolbar-row .btn-tool,
+.toolbar-row .btn-tool-pure {
+    flex: 0 0 auto !important;
+}
+
+/* Botões ocultos da tríade — estilo consistente quando revelados */
+[data-triada-btn="true"] {
+    display: none;
+    border-left-width: 3px !important;
+    border-left-style: solid !important;
+    background: rgba(15, 23, 42, 0.9) !important;
+    font-family: 'JetBrains Mono', monospace !important;
+    font-size: 0.75rem !important;
+}
+[data-triada-btn="true"]:hover {
+    background: rgba(30, 41, 59, 1) !important;
+}
+
+/* Responsive: em mobile empilhar os stat-cards */
+@media (max-width: 700px) {
+    .dashboard-fixed {
+        flex-direction: column !important;
+    }
+    .dashboard-fixed .stat-card {
+        max-width: 100% !important;
+    }
+    .pure-card-grid {
+        grid-template-columns: 1fr !important;
+    }
+    #pureTriangulationCard .pure-4col {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+    #card-asfixia {
+        flex-direction: column !important;
     }
 }

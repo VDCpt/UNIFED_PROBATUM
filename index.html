@@ -124,7 +124,7 @@
                         <i class="fas fa-flask"></i>
                         <span id="demoBtnText">CASO REAL (ANONIMIZADO)</span>
                     </button>
-                    <button id="langToggleBtn" class="btn-lang-toggle">
+                    <button id="langToggleBtn" class="btn-lang-toggle" onclick="if(typeof switchLanguage==='function') switchLanguage();" title="Alternar idioma PT/EN">
                         <i class="fas fa-globe"></i>
                         <span id="currentLangLabel">EN</span>
                     </button>
@@ -318,23 +318,21 @@
                 <div class="module-row">
                     <div class="module-card full-width">
                         <h4 id="moduleStatementTitle"><i class="fas fa-file-contract"></i> MÓDULO EXTRATOS (MAPEAMENTO)</h4>
-                        <div class="module-values">
-                            <div class="grid-3" style="margin-bottom: 0.75rem;">
-                                <div class="kpi-card highlight">
-                                    <h4 id="stmtGanhosLabel">Ganhos</h4>
-                                    <p id="stmtGanhosValue">0,00 €</p>
-                                    <span class="file-source-badge" id="stmtGanhosSource" data-original-file=""></span>
-                                </div>
-                                <div class="kpi-card">
-                                    <h4 id="stmtDespesasLabel">Despesas/Comissões</h4>
-                                    <p id="stmtDespesasValue">0,00 €</p>
-                                    <span class="file-source-badge" id="stmtDespesasSource" data-original-file=""></span>
-                                </div>
-                                <div class="kpi-card">
-                                    <h4 id="stmtGanhosLiquidosLabel">Ganhos Líquidos</h4>
-                                    <p id="stmtGanhosLiquidosValue">0,00 €</p>
-                                    <span class="file-source-badge" id="stmtGanhosLiquidosSource" data-original-file=""></span>
-                                </div>
+                        <div class="module-values grid-3">
+                            <div class="kpi-card highlight">
+                                <h4 id="stmtGanhosLabel">Ganhos</h4>
+                                <p id="stmtGanhosValue">0,00 €</p>
+                                <span class="file-source-badge" id="stmtGanhosSource" data-original-file=""></span>
+                            </div>
+                            <div class="kpi-card">
+                                <h4 id="stmtDespesasLabel">Despesas/Comissões</h4>
+                                <p id="stmtDespesasValue">0,00 €</p>
+                                <span class="file-source-badge" id="stmtDespesasSource" data-original-file=""></span>
+                            </div>
+                            <div class="kpi-card">
+                                <h4 id="stmtGanhosLiquidosLabel">Ganhos Líquidos</h4>
+                                <p id="stmtGanhosLiquidosValue">0,00 €</p>
+                                <span class="file-source-badge" id="stmtGanhosLiquidosSource" data-original-file=""></span>
                             </div>
                         </div>
                     </div>
@@ -368,7 +366,7 @@
                     </div>
                 </div>
 
-                <div class="dashboard-fixed" id="twoAxisAlerts">
+                <div class="dashboard-fixed" id="twoAxisAlerts" style="display:flex;flex-wrap:wrap;gap:1rem;">
                     <div class="stat-card warning" id="revenueGapCard" style="display: none;">
                         <h4><i class="fas fa-chart-line"></i> <span id="revenueGapTitle">OMISSÃO DE FATURAMENTO</span></h4>
                         <p id="revenueGapValue">0,00 €</p>
@@ -412,7 +410,7 @@
                     </div>
                 </div>
 
-                <div class="dashboard-fixed" id="dashboardAlerts">
+                <div class="dashboard-fixed" id="dashboardAlerts" style="display:flex;flex-wrap:wrap;gap:1rem;align-items:stretch;">
                     <div class="stat-card">
                         <h4 id="cardNet"><i class="fas fa-coins"></i> <span data-pt="GANHOS LÍQUIDOS RECONSTRUÍDOS" data-en="RECONSTRUCTED NET VALUE">GANHOS LÍQUIDOS RECONSTRUÍDOS</span></h4>
                         <p id="statNet">0,00 €</p>

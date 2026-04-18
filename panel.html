@@ -90,7 +90,7 @@
 
         .pure-card-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr));
             gap: 1.25rem;
             margin: 1rem 0 0.5rem;
         }
@@ -271,6 +271,78 @@
             body { padding: 1rem; }
             .pure-card-grid { grid-template-columns: 1fr; }
         }
+
+        /* ===== RET-PH: Horizontalidade forçada de todos os blocos de dados ===== */
+
+        /* RECONSTITUIÇÃO DA VERDADE MATERIAL — grid 3 colunas horizontal */
+        #pureFinancialCard .pure-data-grid.pure-3col {
+            display: grid !important;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) !important;
+        }
+
+        /* ATF — grid horizontal */
+        .pure-atf-grid {
+            display: grid !important;
+            grid-template-columns: repeat(auto-fit, minmax(155px, 1fr)) !important;
+            gap: 1rem !important;
+        }
+
+        /* ZONA CINZENTA — grid horizontal */
+        .pure-zc-grid {
+            display: grid !important;
+            grid-template-columns: repeat(auto-fit, minmax(185px, 1fr)) !important;
+            gap: 10px !important;
+        }
+
+        /* VEREDICTO — linha horizontal */
+        .pure-verdict-row {
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: wrap !important;
+            gap: 1.5rem !important;
+            align-items: center !important;
+        }
+
+        /* TRIANGULAÇÃO — 4 colunas */
+        .pure-4col {
+            display: grid !important;
+            grid-template-columns: repeat(4, 1fr) !important;
+            gap: 12px !important;
+        }
+
+        /* SMOKING GUNS — horizontal em ecrãs largos */
+        @media (min-width: 900px) {
+            .pure-smoking-guns {
+                display: grid !important;
+                grid-template-columns: 1fr 1fr !important;
+                gap: 1rem !important;
+            }
+        }
+
+        /* Metric cards dentro de DISCREPÂNCIAS — horizontal */
+        #pureDiscCard > .pure-card-grid {
+            display: grid !important;
+            grid-template-columns: repeat(3, 1fr) !important;
+            gap: 12px !important;
+            margin-top: 14px !important;
+        }
+
+        /* RISCO DE ASFIXIA FINANCEIRA — horizontal */
+        #card-asfixia {
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            gap: 1.5rem !important;
+            flex-wrap: wrap !important;
+        }
+
+        /* Responsive */
+        @media (max-width: 700px) {
+            .pure-card-grid { grid-template-columns: 1fr !important; }
+            .pure-4col { grid-template-columns: repeat(2, 1fr) !important; }
+            .pure-atf-grid { grid-template-columns: repeat(2, 1fr) !important; }
+            #card-asfixia { flex-direction: column !important; }
+        }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,600;14..32,700&family=JetBrains+Mono&display=swap" rel="stylesheet">
 </head>
@@ -312,7 +384,7 @@
         </div>
 
         <!-- Evidências (oculto até script) -->
-        <div id="pureEvidenceSection" class="evidence-management-section-solid" style="margin-bottom: 1rem; display: none;">
+        <div id="pureEvidenceSection" class="evidence-management-section-solid" style="margin-bottom:1rem;display:none;flex-direction:row;flex-wrap:wrap;gap:0.75rem;align-items:center;">
             <div style="display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
                 <div class="evidence-management-btn-solid" style="flex:1; cursor:default;"><span><i class="fas fa-folder-open"></i> EVIDÊNCIAS CARREGADAS</span><span id="pure-evidence-count-display" class="evidence-count-solid">0</span></div>
                 <div class="pure-evidence-stats" style="display:flex; gap:0.75rem;">
@@ -342,10 +414,16 @@
 
         <div class="pure-card-grid">
             <!-- RISCO ASFIXIA -->
-            <div class="pure-card pure-card-warn" id="card-asfixia">
-                <div class="pure-card-title">RISCO DE ASFIXIA FINANCEIRA</div>
-                <div class="pure-card-value" id="pure-atf-score-val">--%</div>
-                <div class="pure-card-trend">Indicador de Probabilidade de Insolvência Forçada</div>
+            <div class="pure-card pure-card-warn" id="card-asfixia" style="display:flex;flex-direction:row;align-items:center;gap:1.5rem;flex-wrap:wrap;">
+                <div style="flex:1;min-width:160px;">
+                    <div class="pure-card-title" style="margin-bottom:0.5rem;">⚠ RISCO DE ASFIXIA FINANCEIRA</div>
+                    <div class="pure-card-trend" style="font-size:0.78rem;color:#94a3b8;">Indicador de Probabilidade de Insolvência Forçada</div>
+                    <div style="font-size:0.68rem;color:#64748b;margin-top:4px;">Art. 405.º C. Civil · Verba 2.18 CIVA</div>
+                </div>
+                <div style="flex:0;text-align:right;min-width:100px;">
+                    <div id="pure-atf-score-val" style="font-size:2.8rem;font-weight:900;color:#F59E0B;font-family:monospace;line-height:1;">--%</div>
+                    <div style="font-size:0.65rem;color:#94a3b8;margin-top:4px;">IVA 6% / Bruto</div>
+                </div>
             </div>
 
             <!-- GRÁFICO DISCREPÂNCIA (OCULTO) - já com display none -->
@@ -407,6 +485,10 @@
                     <div class="pure-atf-block"><div class="pure-atf-label" id="pure-atf-history-label" data-pt="HISTÓRICO" data-en="HISTORY">HISTÓRICO</div><div id="pure-atf-meses" class="pure-atf-meses-val" data-pt="2.º Semestre 2024 — 4 meses com dados (Set–Dez)" data-en="2nd Semester 2024 — 4 months with data (Sep–Dec)">2.º Semestre 2024 — 4 meses com dados (Set–Dez)</div><div class="pure-atf-sub" id="pure-atf-meses-sub" data-pt="4 meses com dados (Set–Dez 2024)" data-en="4 months with data (Sep–Dec 2024)">4 meses com dados (Set–Dez 2024)</div></div>
                 </div>
                 <div class="pure-atf-note" id="pure-atf-note"><strong id="pure-atf-note-strong" data-pt="Nota Metodológica:" data-en="Methodological Note:">Nota Metodológica:</strong><span id="pure-atf-note-text" data-pt="Score de Persistência calculado pelo motor computeTemporalAnalysis() sobre 4 meses de histórico (Set/Out/Nov/Dez 2024). SP calculado sobre o lote global (dados verificados UNIFED-MMLADX8Q-CV69L). As discrepâncias absolutas (C2: €2.184,95 — 89,26% · C1: €1.951,42 — 23,72%) mantêm relevância jurídica independente." data-en="Persistence Score calculated by computeTemporalAnalysis() engine over 4 months of history (Sep/Oct/Nov/Dec 2024). SP calculated over the global batch (verified data UNIFED-MMLADX8Q-CV69L). The absolute discrepancies (C2: €2,184.95 — 89.26% · C1: €1,951.42 — 23.72%) maintain independent legal relevance.">Score de Persistência calculado pelo motor computeTemporalAnalysis() sobre 4 meses de histórico (Set/Out/Nov/Dez 2024). SP calculado sobre o lote global (dados verificados UNIFED-MMLADX8Q-CV69L). As discrepâncias absolutas (C2: €2.184,95 — 89,26% · C1: €1.951,42 — 23,72%) mantêm relevância jurídica independente.</span></div>
+                <div style="margin-top:16px;background:rgba(255,255,255,0.03);border:1px solid rgba(0,229,255,0.15);border-radius:10px;padding:14px;">
+                    <div style="font-size:0.65rem;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">📈 EVOLUÇÃO TEMPORAL — DISCREPÂNCIA MENSAL</div>
+                    <canvas id="atfChartCanvas" width="800" height="260" style="width:100%;height:auto;max-height:260px;display:block;"></canvas>
+                </div>
                 <div style="text-align:center;margin-top:16px"><button onclick="if(typeof openATFModal === 'function') openATFModal();" class="pure-btn-atf" id="pure-atf-btn" data-pt="⏳ ABRIR ANÁLISE TEMPORAL FORENSE COMPLETA" data-en="⏳ OPEN COMPLETE FORENSIC TEMPORAL ANALYSIS" title="Abrir modal ATF completo / Open complete ATF modal"><span id="pure-atf-btn-text">⏳ ABRIR ANÁLISE TEMPORAL FORENSE COMPLETA</span></button></div>
             </div>
 
@@ -455,9 +537,7 @@
             </div>
         </div>
 
-        <div class="pure-atf-chart" style="margin-top: 16px;">
-            <canvas id="atfChartCanvas" width="800" height="300" style="width:100%; height:auto; max-height:300px;"></canvas>
-        </div>
+        <!-- atfChartCanvas movido para dentro de #pureATFCard (RET-PH-02) -->
 
         <div id="pure-tsa-anchor" style="font-family: monospace; font-size: 0.8em; margin-top: 4px;">
             Selo de Tempo Local (ISO 27037): <span style="color: #10b981;">ATIVO — CUSTÓDIA NÍVEL 1</span>

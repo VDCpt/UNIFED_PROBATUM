@@ -292,31 +292,35 @@ function safeExport() {
 
     // Inicialização da tríade (sem destruir a toolbar original)
     function initInterface() {
-        const container = document.getElementById('export-tools-container');
+        // RET-11: Injetar botões da tríade na segunda linha (#secondary-toolbar)
+        // Ocultos por defeito; revelados após execução da perícia
+        const container = document.getElementById('secondary-toolbar')
+                       || document.getElementById('export-tools-container');
         if (!container) return false;
-        if (container.children.length >= 6 && !container.querySelector('.btn-tool-pure')) return true;
-        if (container.getAttribute('data-original-restored') === 'true') return true;
 
-        const triadaBtns = container.querySelectorAll('.btn-tool-pure');
-        triadaBtns.forEach(btn => btn.remove());
-
-        if (container.children.length > 0) return true;
+        // Evitar duplicação
+        if (container.querySelector('[data-triada-btn="true"]')) return true;
+        if (container.getAttribute('data-triada-injected') === 'true') return true;
 
         const labels = _resolveLabels();
         const botoes = [
-            { id: 'triadaPdfBtn', label: labels.pdf, icon: 'fa-file-pdf', cor: '#00E5FF', handler: () => { if (typeof window.exportPDF === 'function') window.exportPDF(); else alert('PDF export not available.'); } },
-            { id: 'triadaDocxBtn', label: labels.docx, icon: 'fa-file-word', cor: '#0EA5E9', handler: () => { if (typeof window.exportDOCX === 'function') window.exportDOCX(); else alert('DOCX export not available.'); } },
-            { id: 'triadaCustodiaBtn', label: labels.custody, icon: 'fa-shield-alt', cor: '#EF4444', handler: gerarAnexoCustodia }
+            { id: 'triadaPdfBtn',      label: labels.pdf,     icon: 'fa-file-pdf',  cor: '#00E5FF',
+              handler: () => { if (typeof window.exportPDF  === 'function') window.exportPDF();  else alert('PDF export not available.'); } },
+            { id: 'triadaDocxBtn',     label: labels.docx,    icon: 'fa-file-word', cor: '#0EA5E9',
+              handler: () => { if (typeof window.exportDOCX === 'function') window.exportDOCX(); else alert('DOCX export not available.'); } },
+            { id: 'triadaCustodiaBtn', label: labels.custody, icon: 'fa-shield-alt', cor: '#EF4444',
+              handler: gerarAnexoCustodia }
         ];
+
         botoes.forEach(b => {
             const btn = document.createElement('button');
             btn.id = b.id;
-            btn.className = 'btn-tool-pure';
-            btn.style.cssText = `border-left: 3px solid ${b.cor}; margin:5px; padding:12px; cursor:pointer; background:rgba(15,23,42,0.9); color:white; border-top:none; border-right:none; border-bottom:none; font-family:'JetBrains Mono', monospace; font-size:11px; transition:background 0.3s; width:calc(100% - 10px); text-align:left;`;
-            btn.innerHTML = `<i class="fas ${b.icon}" style="color: ${b.cor}; margin-right: 8px;"></i> ${b.label}`;
+            btn.className = 'btn-tool btn-tool-pure';
+            btn.setAttribute('data-triada-btn', 'true');
+            // Ocultos por defeito — revelados pelo RET-08 após perícia
+            btn.style.cssText = `display:none; border-left:3px solid ${b.cor}; cursor:pointer;`;
+            btn.innerHTML = `<i class="fas ${b.icon}" style="color:${b.cor};margin-right:6px;"></i> ${b.label}`;
             btn.onclick = b.handler;
-            btn.onmouseover = () => { btn.style.background = 'rgba(30,41,59,1)'; };
-            btn.onmouseout = () => { btn.style.background = 'rgba(15,23,42,0.9)'; };
             container.appendChild(btn);
         });
 
@@ -331,7 +335,7 @@ function safeExport() {
         });
 
         container.setAttribute('data-triada-injected', 'true');
-        _log(`Interface Tríade Documental ${_VERSION} activada.`);
+        _log(`RET-11: Tríade Documental ${_VERSION} injetada em #secondary-toolbar (oculta até perícia).`);
         return true;
     }
 
