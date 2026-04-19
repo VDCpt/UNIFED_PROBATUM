@@ -1,7 +1,7 @@
 {
-  "build_date": "2026-04-19T00:00:00.000000",
-  "build_version": "v3.1.0-COMPLIANCE-FORGE-2026-04-19",
-  "master_hash_sha256": "53fb05583c378958575066989ea335b9f6caef81b3eb4f7f1db528dd77ef55d2",
+  "build_date": "2026-04-19T12:00:00.000000",
+  "build_version": "v3.1.1-COMPLIANCE-EVENT-2026-04-19",
+  "master_hash_sha256": "0a427ceeb5a2fe9d58975aec48b561e4775051bb71b80dce4fbe1a636b666406",
   "master_hash_method": "SHA-256(concat(SHA-256(file_1) || SHA-256(file_2) || ... || SHA-256(file_n))) — ordem canónica",
   "files": [
     {
@@ -84,9 +84,15 @@
     },
     {
       "file": "unifed_access_control.js",
-      "sha256": "0ef16f574784c56618ea095e166f1aa82f1c25ede064a50da223980bb67227f0",
-      "size_bytes": 69064,
-      "size_kb": 67.45
+      "sha256": "bb2aca32c519ab165fa93c16f5a43fe9d07adb5a6e73b4e921948cd306eb5f4e",
+      "size_bytes": 70210,
+      "size_kb": 68.56
+    },
+    {
+      "file": "unifed_core_harmonizer.js",
+      "sha256": "6991a2f52db992b81b3567483e28dc1a8af3968b78e386abe6a895a966cb7f13",
+      "size_bytes": 43081,
+      "size_kb": 42.07
     }
   ]
 }

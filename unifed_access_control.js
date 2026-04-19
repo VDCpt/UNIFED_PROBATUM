@@ -1358,6 +1358,24 @@
                         console.warn('[UNIFED-AC] Erro data-trigger t=0:', dataErrEarly.message);
                     }
 
+                    // ── EVENTO unifed:compliance:accepted — t=0 ───────────────
+                    // Despachado ANTES do fade-out para que o Harmonizer Fase 6
+                    // sincronize charts, toolbar e labels enquanto o blur se dissolve.
+                    // O { once: true } no listener do harmonizador garante
+                    // execução única — sem risco de re-trigger em reloads parciais.
+                    try {
+                        window.dispatchEvent(new CustomEvent('unifed:compliance:accepted', {
+                            detail: {
+                                timestamp : new Date().toISOString(),
+                                operator  : 'authenticated',
+                                source    : 'unifed_access_control.js v3.1.0'
+                            }
+                        }));
+                        console.log('[UNIFED-AC] unifed:compliance:accepted despachado em t=0.');
+                    } catch (evtErr) {
+                        console.warn('[UNIFED-AC] Erro ao despachar compliance:accepted:', evtErr.message);
+                    }
+
                     el.classList.add('co-fade-out');
                     setTimeout(function() {
                         el.remove();

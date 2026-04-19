@@ -3,7 +3,7 @@
  * UNIFED - PROBATUM · HARMONIZADOR DE NÚCLEO
  * unifed_core_harmonizer.js
  * ============================================================================
- * Versão      : v1.0.0-HARMONIZER
+ * Versão      : v1.1.0-COMPLIANCE
  * Data        : 2026-04-18
  * Consolida   : unifed_fixes_comprehensive.js   (VUL-001,002,003,007)
  *               unifed_localization_fix.js       (VUL-005 · ISO 4217)
@@ -40,7 +40,7 @@
 
 (function _unifedCoreHarmonizer() {
 
-    const _HARMONIZER_VERSION = 'v1.0.0-HARMONIZER';
+    const _HARMONIZER_VERSION = 'v1.1.0-COMPLIANCE';
 
     // Guardia de idempotência: prevenir re-execução em double-load
     if (window._UNIFED_HARMONIZER_INSTALLED === true) {
@@ -722,7 +722,7 @@
     // PONTO DE ENTRADA — Activar após autenticação concedida
     // =========================================================================
 
-    // Opção A: autenticação já concedida (unifed_access_control.js v2.0 garante
+    // Opção A: autenticação já concedida (unifed_access_control.js v3.1 garante
     //          que este módulo só carrega após login — via _loadModulesSequentially)
     if (window._UNIFED_ACCESS_GRANTED === true) {
         _runHarmonizer().catch(function(err) {
@@ -737,5 +737,121 @@
         }, { once: true });
         _log('MAIN', 'Aguardando evento unifed:access:granted...');
     }
+
+    // =========================================================================
+    // FASE 6 (PÓS-CONFORMIDADE) — Listener unifed:compliance:accepted
+    // =========================================================================
+    //
+    // ARQUITECTURA:
+    //   · As Fases 0–5 executam logo após unifed:access:granted (módulos carregados).
+    //   · Neste ponto o dashboard está ainda coberto pelo #complianceOverlay.
+    //   · unifed:compliance:accepted é despachado pelo unifed_access_control.js
+    //     em t=0 do click em #prosseguirAnalise — antes do fade-out do blur.
+    //   · Esta fase sincroniza elementos monetários, gráficos e toolbar com os
+    //     dados já hidratados por ensureDemoDataLoaded() (também em t=0).
+    //   · { once: true } — garante execução única; não re-executa em navegação
+    //     intra-SPA ou reloads parciais.
+    //
+    // NÃO duplica ensureDemoDataLoaded(): essa chamada já ocorre em t=0 no
+    // unifed_access_control.js antes do despacho deste evento.
+    // =========================================================================
+
+    window.addEventListener('unifed:compliance:accepted', function _onComplianceAccepted(e) {
+        _log('F6-COMPLIANCE', '════ Fase 6 · Sincronização Pós-Conformidade ════');
+        _log('F6-COMPLIANCE', 'Evento recebido: ' + (e.detail && e.detail.timestamp ? e.detail.timestamp : 'sem timestamp'));
+
+        var lang = window.currentLang || 'pt';
+
+        // ── 6a. Sincronizar elementos monetários com dados hidratados ─────────
+        if (typeof window.updateCurrencyElementsForLanguage === 'function') {
+            window.updateCurrencyElementsForLanguage(lang);
+            _log('F6-COMPLIANCE', '6a · Elementos monetários sincronizados (lang=' + lang + ').');
+        } else {
+            _log('F6-COMPLIANCE', '6a · updateCurrencyElementsForLanguage não disponível.', 'warn');
+        }
+
+        // ── 6b. Re-injectar Card AMT-01 (dashboard agora visível) ─────────────
+        if (typeof window.injectCardAMT01 === 'function') {
+            window.injectCardAMT01(lang);
+            _log('F6-COMPLIANCE', '6b · Card AMT-01 re-injectado no dashboard visível.');
+        } else {
+            _log('F6-COMPLIANCE', '6b · injectCardAMT01 não disponível.', 'warn');
+        }
+
+        // ── 6c. Configurar botões de toolbar (idempotente por data-attr) ───────
+        if (typeof window.setupAllToolbarButtons === 'function') {
+            window.setupAllToolbarButtons();
+            _log('F6-COMPLIANCE', '6c · setupAllToolbarButtons() executada.');
+        }
+        if (typeof window.setupGlobalButtonHandlers === 'function') {
+            window.setupGlobalButtonHandlers();
+            _log('F6-COMPLIANCE', '6c · setupGlobalButtonHandlers() executada.');
+        }
+
+        // ── 6d. Revelar gráficos Chart.js ─────────────────────────────────────
+        if (typeof window.showCharts === 'function') {
+            window.showCharts(true);
+            _log('F6-COMPLIANCE', '6d · showCharts(true) executada.');
+        } else {
+            _log('F6-COMPLIANCE', '6d · showCharts não disponível.', 'warn');
+        }
+
+        // ── 6e. Sincronizar labels da Tríade Documental ───────────────────────
+        try {
+            if (window.UNIFEDSystem && typeof window.UNIFEDSystem.triadaUpdateLabels === 'function') {
+                window.UNIFEDSystem.triadaUpdateLabels();
+                _log('F6-COMPLIANCE', '6e · triadaUpdateLabels() executada.');
+            }
+        } catch (triadaErr) {
+            _log('F6-COMPLIANCE', '6e · triadaUpdateLabels falhou: ' + triadaErr.message, 'warn');
+        }
+
+        // ── 6f. CSS override — toolbar compacta e elevação de cards ──────────
+        // Sobrepõe o CSS da Fase 4 que usa flex-direction:column e botões 100%.
+        // O mandato v3.1 exige toolbar horizontal (flex-end) com scale(0.85).
+        var CSS_OVERRIDE_ID = 'unifed-compliance-toolbar-override';
+        if (!document.getElementById(CSS_OVERRIDE_ID)) {
+            var overrideStyle = document.createElement('style');
+            overrideStyle.id  = CSS_OVERRIDE_ID;
+            overrideStyle.textContent = [
+                '/* Harmonizer F6 — Compliance Override · 2026-04-19 */',
+                '#export-tools-container {',
+                '    flex-direction: row !important;',
+                '    justify-content: flex-end !important;',
+                '    align-items: center !important;',
+                '    gap: 8px !important;',
+                '    width: auto !important;',
+                '    flex-wrap: wrap;',
+                '}',
+                '#export-tools-container button {',
+                '    width: auto !important;',
+                '    min-height: unset !important;',
+                '    transform: scale(0.85) !important;',
+                '    transform-origin: right center !important;',
+                '}',
+                '#export-tools-container h3 {',
+                '    flex: 1 !important; margin: 0 !important;',
+                '    font-size: 10px !important; letter-spacing: 2px !important;',
+                '    text-transform: uppercase !important;',
+                '    color: rgba(148,163,184,0.4) !important;',
+                '}',
+                '.dashboard-card, .forensic-card, .kpis-grid > * {',
+                '    box-shadow: 0 8px 32px 0 rgba(0,0,0,0.8) !important;',
+                '    border: 1px solid rgba(255,255,255,0.08) !important;',
+                '}',
+                '.kpis-grid { gap: 1.5rem !important; }'
+            ].join('\n');
+            (document.head || document.documentElement).appendChild(overrideStyle);
+            _log('F6-COMPLIANCE', '6f · CSS override de toolbar e cards injectado.');
+        }
+
+        _log('F6-COMPLIANCE', '✅ Fase 6 concluída — dashboard sincronizado e operacional.');
+
+        // Disparar evento de sistema para módulos externos que aguardem conformidade
+        window.dispatchEvent(new CustomEvent('UNIFED_COMPLIANCE_READY', {
+            detail: { lang: lang, timestamp: new Date().toISOString() }
+        }));
+
+    }, { once: true });
 
 })();
