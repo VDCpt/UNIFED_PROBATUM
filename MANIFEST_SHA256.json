@@ -1,9 +1,9 @@
 {
   "build_date": "2026-04-19T03:00:00.000000",
-  "build_version": "v2.2.1-FINAL",
-  "master_hash_sha256": "57a20f062bc3af85e0882db0dbb3a742a2788b6767c4083facbc4ce227f14f9b",
+  "build_version": "v2.2.2-OFFICIAL-GOLD",
+  "master_hash_sha256": "a538cdf55996f9509249c51ecdf5ee15f46b403b85411a4d0f18590f54f3a417",
   "master_hash_method": "SHA-256(concat(SHA-256(file_1) || SHA-256(file_2) || ... || SHA-256(file_n))) — ordem canónica",
-  "master_hash_note": "Rectificado em 2026-04-19: Implementado Cumulative Hydration no motor de ingestão (Achado EVD-01 · R-01 (Set→Array)).",
+  "master_hash_note": "v2.2.2-OFFICIAL-GOLD: R-03 aplicado — Set preservado em memória, Array.from() na fronteira de serialização.",
   "sanitation_record": {
     "despacho_autorizacao": "2026-04-19",
     "despacho_esclarecimento_forense": "2026-04-19T14:00:00 UTC",
@@ -15,11 +15,13 @@
       "ACHADO-SI-01",
       "ACHADO-PH-01",
       "ACHADO-A: Hash Discrepância Clarificada",
-      "ACHADO-EVD-01: Substituição Destrutiva de Totais na Ingestão"
+      "ACHADO-EVD-01: Substituição Destrutiva de Totais na Ingestão",
+      "ACHADO-R-03: Conflito Set/Array API — Script.js (imutável) compatibilidade restaurada"
     ],
     "ficheiros_modificados": [
       "unifed_card_amt01.js (v2.0.0 → v2.0.1-RECTIFIED)",
-      "unifed_ingestion_engine_v2.0.js (v2.0.0 → v2.2.0-CUMULATIVE-HYDRATION)"
+      "unifed_ingestion_engine_v2.0.js (v2.0.0 → v2.2.0-CUMULATIVE-HYDRATION)",
+      "unifed_ingestion_engine_v2.0.js (v2.2.1-FINAL → v2.2.2-OFFICIAL-GOLD)"
     ],
     "ficheiros_rectificados": [
       "unifed_card_amt01.js — Metadados de custódia actualizados",
@@ -166,10 +168,10 @@
     },
     {
       "file": "unifed_ingestion_engine_v2.0.js",
-      "sha256": "92a40cbfa9d09191f5f23cb405ebe1f8c1d884636a54ed60dd7c468cda662fb4",
-      "size_bytes": 29468,
-      "size_kb": 28.78,
-      "versao": "v2.2.1-FINAL",
+      "sha256": "381d8295fea15f77ea5e3a76c4da67e1c5aafd9665473f0b7331e52c87e88941",
+      "size_bytes": 29991,
+      "size_kb": 29.29,
+      "versao": "v2.2.2-OFFICIAL-GOLD",
       "status": "Rectificado — Cumulative Hydration",
       "nota": "Actualizado de v2.0.0 para v2.2.1 em 2026-04-19T14:00 UTC. Corrige Achado EVD-01: substituição destrutiva (overwrite) → acumulação cronológica (+=). Adicionadas funções _extractPeriodFromFilename e buckets mensais (monthlyData/dataMonths). R-01 corrigido: Set→Array (JSON.stringify safe)."
     }

@@ -2,7 +2,7 @@
  * ============================================================================
  * UNIFED-PROBATUM · unifed_ingestion_engine_v2.0.js
  * ============================================================================
- * Versão      : v2.2.1-FINAL
+ * Versão      : v2.2.2-OFFICIAL-GOLD
  * Data        : 2026-04-19
  * Conformidade: ISO/IEC 27037:2012 · Art. 158.º CPP · Art. 163.º CPP
  *               DORA (UE) 2022/2554 · OWASP CSV Injection Prevention
@@ -373,11 +373,8 @@
         // 2. Identificação de Período e Bucket Mensal
         const period = _extractPeriodFromFilename(dataPacket.filename);
         if (period !== 'UNKNOWN') {
-            if (!sys.dataMonths) sys.dataMonths = [];
-            if (!sys.dataMonths.includes(period)) {
-                sys.dataMonths.push(period);
-                sys.dataMonths.sort(); // Ordenação cronológica garantida
-            }
+            if (!sys.dataMonths) sys.dataMonths = new Set();
+            sys.dataMonths.add(period);
 
             if (!sys.monthlyData) sys.monthlyData = {};
             if (!sys.monthlyData[period]) sys.monthlyData[period] = { ganhos: 0, despesas: 0, ganhosLiq: 0 };
@@ -552,13 +549,23 @@
     function exportEvidenceRecord() {
         const sys = root.UNIFEDSystem;
         if (!sys) return '{}';
+        /* DATA MARSHALLING (R-03): Set → Array na fronteira de serialização.
+           A estrutura interna mantém-se Set (compatível com script.js imutável).
+           JSON.stringify serializa Set como {} — esta conversão explícita evita
+           perda silenciosa de dados na exportação. */
+        const dataMonthsSerializable = sys.dataMonths
+            ? (sys.dataMonths instanceof Set ? Array.from(sys.dataMonths).sort() : sys.dataMonths)
+            : [];
         return JSON.stringify({
-            schema_version:  'UNIFED-INGEST-EVIDENCE/2.0',
+            schema_version:  'UNIFED-INGEST-EVIDENCE/2.2',
             exported_at:     new Date().toISOString(),
             input_hash:      sys.analysis?.inputHash || null,
-            engine_version:  'v2.2.1-FINAL',
+            engine_version:  'v2.2.2-OFFICIAL-GOLD',
+            dataMonths:      dataMonthsSerializable,
+            inputHashes:     sys.analysis?.inputHashes || [],
             packets: (sys._ingestionPackets || []).map(p => ({
                 filename:          p.filename,
+                period:            p.period,
                 format:            p.format,
                 detectedDelimiter: p.detectedDelimiter,
                 originHash:        p.originHash,
@@ -575,7 +582,7 @@
        ============================================================ */
     root.UNIFED_INGESTION = Object.freeze({
         _INSTALLED       : true,
-        VERSION          : 'v2.2.1-FINAL',
+        VERSION          : 'v2.2.2-OFFICIAL-GOLD',
         ingestFile,
         exportEvidenceRecord,
         _parseNumeric,      // Exposto para testes unitários
