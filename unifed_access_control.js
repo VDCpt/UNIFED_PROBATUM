@@ -3,10 +3,20 @@
  * UNIFED - PROBATUM · CONTROLO DE ACESSO SOBERANO
  * unifed_access_control.js
  * ============================================================================
- * Versão      : v3.0.0-CYBER-FORGE
- * Data        : 2026-04-18
+ * Versão      : v3.1.0-COMPLIANCE-FORGE
+ * Data        : 2026-04-19
  * Finalidade  : Halt Execution Protocol + Glassmorphism UI + Forensic
- *               Hydration Visualizer + Post-Auth Panel Unlock garantido
+ *               Hydration Visualizer + Compliance Splash + Post-Auth Unlock
+ *
+ * NOVIDADES v3.1:
+ *   · #complianceOverlay entre login e dashboard (Glassmorphism profundo)
+ *   · Splash de Metodologia com Art. 6.º Lei n.º 109/2009
+ *   · Terminal de custódia animado (SHA-256 / ISO / SMOKING GUN)
+ *   · Botão #prosseguirAnalise dispara ensureDemoDataLoaded() + reveal
+ *   · Glow pulse no botão [CASO REAL] quando analysis.executed === false
+ *   · Footer de conformidade estático em todas as camadas
+ *   · Toolbar normalizada (scale 0.85, flex-end)
+ *   · Stat cards com hierarquia tipográfica (labels 0.75rem / valores 1.8rem)
  *
  * NOVIDADES v3.0:
  *   · Design Glassmorphism "Cyber-Security Command Center"
@@ -960,7 +970,11 @@
             console.warn('[UNIFED-AC] \u26A0 #pureDashboardWrapper n\u00E3o encontrado. Verifi\u00E7 o DOM.');
         }
 
-        // ── 8. Activar painel via função registada ────────────────────────
+        // ── 8a. COMPLIANCE OVERLAY — Intercalação entre login e dashboard ──
+        // Suspende a activação do painel até o perito confirmar metodologia.
+        await _showComplianceOverlay(loaded, total);
+
+        // ── 8b. Activar painel via função registada ───────────────────────
         // rAF garante que os scripts carregados acima já registaram _activatePurePanel
         await new Promise(function(r) { requestAnimationFrame(function() { requestAnimationFrame(r); }); });
 
@@ -970,13 +984,25 @@
                 console.log('[UNIFED-AC] \u2705 _activatePurePanel() executada com sucesso.');
             } catch (activateErr) {
                 console.warn('[UNIFED-AC] \u26A0 _activatePurePanel() lan\u00E7ou erro:', activateErr.message);
-                // Fallback: desbloqueio manual de emergência
                 if (wrapper) { wrapper.style.opacity = '1'; wrapper.style.display = 'block'; }
             }
         } else {
             console.warn('[UNIFED-AC] \u26A0 _activatePurePanel n\u00E3o dispon\u00EDvel. Desbloqueio manual aplicado.');
             if (wrapper) { wrapper.style.opacity = '1'; wrapper.style.display = 'block'; }
         }
+
+        // ── 8c. Trigger CASO REAL com glow quando analysis.executed === false ─
+        setTimeout(function() {
+            try {
+                var demoBtn = document.getElementById('demoModeBtn');
+                var executed = window.UNIFEDSystem &&
+                               window.UNIFEDSystem.analysis &&
+                               window.UNIFEDSystem.analysis.executed;
+                if (demoBtn && !executed) {
+                    demoBtn.classList.add('unifed-glow-pulse');
+                }
+            } catch(_) {}
+        }, 600);
 
         // ── 9. Eventos de sistema ─────────────────────────────────────────
         window.dispatchEvent(new CustomEvent('UNIFED_CORE_READY', {
@@ -987,6 +1013,383 @@
         }));
 
         console.log('[UNIFED-AC] \u2705 Post-Auth Flow conclu\u00EDdo. ' + loaded + '/' + total + ' m\u00F3dulos activos.');
+    }
+
+    // =========================================================================
+    // COMPLIANCE OVERLAY — Splash de Metodologia (v3.1)
+    // Intercalado entre login e dashboard. Resolve quando o perito clica em
+    // #prosseguirAnalise. Invoca ensureDemoDataLoaded() + revealForensicData().
+    // =========================================================================
+
+    function _showComplianceOverlay(loadedCount, totalCount) {
+        return new Promise(function(resolve) {
+
+            // CSS do overlay de conformidade
+            var cssId = 'unifed-compliance-css';
+            if (!document.getElementById(cssId)) {
+                var cs = document.createElement('style');
+                cs.id  = cssId;
+                cs.textContent = `
+                    @import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;800&family=JetBrains+Mono:wght@400;600&display=swap');
+
+                    #complianceOverlay {
+                        position: fixed; inset: 0; z-index: 100000;
+                        display: flex; flex-direction: column;
+                        align-items: center; justify-content: center;
+                        background: rgba(6, 13, 26, 0.72);
+                        backdrop-filter: blur(25px) saturate(180%);
+                        -webkit-backdrop-filter: blur(25px) saturate(180%);
+                        transition: opacity 0.45s ease;
+                        overflow-y: auto; padding: 20px 16px 80px;
+                    }
+                    #complianceOverlay.co-fade-out { opacity: 0; pointer-events: none; }
+
+                    /* Grid de fundo */
+                    #complianceOverlay::before {
+                        content: ''; position: fixed; inset: 0;
+                        background-image:
+                            linear-gradient(rgba(0,229,255,0.035) 1px, transparent 1px),
+                            linear-gradient(90deg, rgba(0,229,255,0.035) 1px, transparent 1px);
+                        background-size: 44px 44px;
+                        pointer-events: none; z-index: 0;
+                    }
+
+                    #co-box {
+                        position: relative; z-index: 1;
+                        width: 100%; max-width: 760px;
+                        background: rgba(10, 18, 36, 0.88);
+                        border: 1px solid rgba(0, 229, 255, 0.22);
+                        border-radius: 16px;
+                        box-shadow: 0 8px 48px rgba(0,0,0,0.75), 0 0 60px rgba(0,229,255,0.05);
+                        overflow: hidden;
+                    }
+
+                    /* Linha de acento superior */
+                    #co-box::before {
+                        content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+                        background: linear-gradient(90deg,transparent,rgba(0,229,255,0.7) 25%,rgba(139,92,246,0.7) 65%,transparent);
+                    }
+
+                    #co-header {
+                        padding: 28px 36px 20px;
+                        border-bottom: 1px solid rgba(0,229,255,0.1);
+                    }
+
+                    #co-badge {
+                        display: inline-flex; align-items: center; gap: 8px;
+                        font-family: 'JetBrains Mono', monospace;
+                        font-size: 8px; letter-spacing: 2.5px; text-transform: uppercase;
+                        color: rgba(0,229,255,0.5);
+                        border: 1px solid rgba(0,229,255,0.15);
+                        padding: 3px 10px; border-radius: 4px; margin-bottom: 14px;
+                        background: rgba(0,229,255,0.04);
+                    }
+                    #co-badge::before {
+                        content: ''; width: 5px; height: 5px; border-radius: 50%;
+                        background: #00e5ff; box-shadow: 0 0 7px #00e5ff;
+                        animation: _pulseDot 1.8s ease-in-out infinite;
+                    }
+
+                    #co-title {
+                        font-family: 'Syne', system-ui, sans-serif;
+                        font-size: clamp(16px, 2.2vw, 22px); font-weight: 800;
+                        letter-spacing: 0.15em; text-transform: uppercase;
+                        color: #e0f9ff; line-height: 1.2; margin-bottom: 8px;
+                    }
+
+                    #co-subtitle {
+                        font-family: 'JetBrains Mono', monospace;
+                        font-size: 9.5px; color: rgba(148,163,184,0.55);
+                        letter-spacing: 0.15px;
+                    }
+
+                    #co-body { padding: 24px 36px; }
+
+                    #co-legal {
+                        background: rgba(0,229,255,0.04);
+                        border: 1px solid rgba(0,229,255,0.12);
+                        border-left: 3px solid rgba(0,229,255,0.45);
+                        border-radius: 8px; padding: 16px 18px;
+                        margin-bottom: 20px;
+                    }
+                    #co-legal h4 {
+                        font-family: 'Syne', sans-serif; font-size: 10px;
+                        font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+                        color: rgba(0,229,255,0.7); margin-bottom: 8px;
+                    }
+                    #co-legal p {
+                        font-family: 'JetBrains Mono', monospace; font-size: 10.5px;
+                        color: rgba(148,163,184,0.85); line-height: 1.6;
+                    }
+                    #co-legal strong { color: rgba(0,229,255,0.9); font-weight: 600; }
+
+                    /* Terminal de custódia */
+                    #co-terminal {
+                        background: rgba(2, 8, 20, 0.82);
+                        border: 1px solid rgba(0,229,255,0.12);
+                        border-radius: 8px; overflow: hidden; margin-bottom: 20px;
+                    }
+                    #co-term-header {
+                        display: flex; align-items: center; gap: 6px;
+                        padding: 8px 14px;
+                        background: rgba(0,229,255,0.06);
+                        border-bottom: 1px solid rgba(0,229,255,0.08);
+                    }
+                    .co-dot { width: 8px; height: 8px; border-radius: 50%; }
+                    .co-dot-r { background: #ef4444; }
+                    .co-dot-y { background: #f59e0b; }
+                    .co-dot-g { background: #10b981; }
+                    #co-term-title {
+                        font-family: 'JetBrains Mono', monospace; font-size: 8.5px;
+                        letter-spacing: 1.5px; color: rgba(148,163,184,0.5);
+                        text-transform: uppercase; margin-left: 4px;
+                    }
+                    #co-term-body {
+                        padding: 14px 16px; min-height: 88px;
+                        font-family: 'JetBrains Mono', monospace; font-size: 10px;
+                        color: #00ff88; line-height: 1.75;
+                    }
+                    .co-term-line { opacity: 0; animation: coFadeIn 0.25s ease forwards; }
+                    .co-term-ok  { color: #00ff88; }
+                    .co-term-sys { color: rgba(0,229,255,0.7); }
+                    .co-term-hash { color: rgba(99,0,255,0.9); }
+                    @keyframes coFadeIn { from{opacity:0;transform:translateX(-4px)} to{opacity:1;transform:none} }
+
+                    /* Botão Prosseguir */
+                    #prosseguirAnalise {
+                        display: block; width: 100%;
+                        background: linear-gradient(135deg, rgba(0,229,255,0.1), rgba(139,92,246,0.1));
+                        border: 1px solid rgba(0,229,255,0.35);
+                        border-radius: 10px;
+                        color: #e0f7ff;
+                        font-family: 'Syne', sans-serif;
+                        font-size: 11.5px; font-weight: 700;
+                        letter-spacing: 3px; text-transform: uppercase;
+                        padding: 15px 24px; cursor: pointer;
+                        transition: all 0.28s ease; overflow: hidden; position: relative;
+                        margin-top: 6px;
+                    }
+                    #prosseguirAnalise::before {
+                        content: ''; position: absolute; inset: 0;
+                        background: linear-gradient(135deg, transparent, rgba(0,229,255,0.12), transparent);
+                        transform: translateX(-100%); transition: transform 0.42s ease;
+                    }
+                    #prosseguirAnalise:hover::before { transform: translateX(100%); }
+                    #prosseguirAnalise:hover {
+                        background: linear-gradient(135deg, rgba(0,229,255,0.18), rgba(139,92,246,0.18));
+                        border-color: rgba(0,229,255,0.7);
+                        box-shadow: 0 0 32px rgba(0,229,255,0.14);
+                    }
+
+                    /* Footer de conformidade */
+                    #co-footer {
+                        padding: 14px 36px;
+                        border-top: 1px solid rgba(0,229,255,0.07);
+                        font-family: 'JetBrains Mono', monospace;
+                        font-size: 7.5px; letter-spacing: 0.5px;
+                        color: rgba(148,163,184,0.3); text-align: center;
+                        line-height: 1.6;
+                    }
+
+                    /* Glow pulse para botão CASO REAL */
+                    .unifed-glow-pulse {
+                        animation: unifedGlowBtn 2s ease-in-out infinite !important;
+                    }
+                    @keyframes unifedGlowBtn {
+                        0%, 100% { box-shadow: 0 0 0px rgba(0,229,255,0); }
+                        50%       { box-shadow: 0 0 18px 4px rgba(0,229,255,0.55), 0 0 40px rgba(0,229,255,0.2); }
+                    }
+
+                    /* Dashboard: Stat card typography */
+                    .stat-card .stat-label,
+                    .kpi-card .kpi-label,
+                    [class*="kpi"] .label,
+                    [class*="stat"] .label {
+                        font-size: 0.75rem !important;
+                        text-transform: uppercase !important;
+                        letter-spacing: 0.08em !important;
+                        color: var(--text-tertiary, rgba(148,163,184,0.6)) !important;
+                        font-weight: 400 !important;
+                    }
+                    .stat-card .stat-value,
+                    .kpi-card .kpi-value,
+                    [class*="kpi"] .value,
+                    [class*="stat"] .value {
+                        font-size: 1.8rem !important;
+                        font-weight: 700 !important;
+                        color: var(--accent-primary, #00e5ff) !important;
+                        line-height: 1.1 !important;
+                    }
+
+                    /* Dashboard: Card elevation */
+                    .kpis-grid > *, .dashboard-card, .compliance-card,
+                    #complianceSection > *, .toolbar-section {
+                        box-shadow: 0 8px 32px 0 rgba(0,0,0,0.8) !important;
+                        border: 1px solid rgba(255,255,255,0.08) !important;
+                    }
+
+                    /* Toolbar normalização */
+                    #export-tools-container {
+                        display: flex !important;
+                        flex-direction: row !important;
+                        justify-content: flex-end !important;
+                        align-items: center !important;
+                        gap: 8px !important;
+                        flex-wrap: wrap;
+                    }
+                    #export-tools-container .btn-tool {
+                        transform: scale(0.85) !important;
+                        transform-origin: right center !important;
+                    }
+                    #export-tools-container h3 {
+                        flex: 1 !important;
+                        margin: 0 !important;
+                        font-size: 10px !important;
+                        letter-spacing: 2px !important;
+                        text-transform: uppercase !important;
+                        color: rgba(148,163,184,0.4) !important;
+                    }
+
+                    /* Grid gutters */
+                    .kpis-grid { gap: 1.5rem !important; }
+                    #complianceSection { gap: 1.5rem !important; display: flex; flex-direction: column; }
+                `;
+                document.head.appendChild(cs);
+            }
+
+            // Sequência de linhas do terminal de custódia
+            var termLines = [
+                { delay: 200,  cls: 'co-term-ok',   text: '[VERIFYING SHA-256 HASH...]&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#34d399">OK</span>' },
+                { delay: 600,  cls: 'co-term-hash',  text: '[MASTER HASH]&nbsp;7b451c1bd540d0ef6bbfa93baa429780fe2dcf694633e77cef89cb4a061d6d11' },
+                { delay: 1000, cls: 'co-term-ok',   text: '[LOADING ISO/IEC 27037:2012 PROTOCOLS...]&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#34d399">OK</span>' },
+                { delay: 1400, cls: 'co-term-ok',   text: '[INJECTING SMOKING GUN MODULE...]&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:#34d399">OK</span>' },
+                { delay: 1800, cls: 'co-term-sys',  text: '[SYS]&nbsp;' + (loadedCount || 0) + '/' + (totalCount || 7) + ' módulos hidratados · SISTEMA OPERACIONAL' }
+            ];
+
+            var now  = new Date();
+            var dateStr = now.toLocaleDateString('pt-PT');
+            var timeStr = now.toLocaleTimeString('pt-PT');
+
+            // Construir HTML do overlay
+            var el = document.createElement('div');
+            el.id  = 'complianceOverlay';
+            el.innerHTML = `
+                <div id="co-box">
+                    <div id="co-header">
+                        <div id="co-badge">ISO/IEC 27037:2012 · Art. 125.º CPP · DORA (UE) 2022/2554</div>
+                        <div id="co-title">Metodologia de Análise e Peritagem Forense</div>
+                        <div id="co-subtitle">UNIFED-PROBATUM v3.1 · Acesso concedido: ${dateStr} ${timeStr} · Operador autenticado via SHA-256</div>
+                    </div>
+                    <div id="co-body">
+                        <div id="co-legal">
+                            <h4>Base Legal e Advertência de Conformidade</h4>
+                            <p>
+                                Este sistema opera ao abrigo do <strong>Art. 6.º da Lei n.º 109/2009</strong> (Lei do Cibercrime)
+                                e do <strong>Regulamento (UE) 2022/2554 (DORA)</strong>. Toda a prova gerada constitui
+                                <strong>documento electrónico com valor pericial</strong> nos termos do Art. 125.º CPP,
+                                sujeito à cadeia de custódia ISO/IEC 27037:2012. A manipulação de evidências digitais sem
+                                autorização judicial é crime punível nos termos do Art. 3.º da Lei n.º 109/2009.
+                                O operador declara que a análise que vai iniciar é efectuada no âmbito de
+                                <strong>mandato pericial válido</strong> e que os dados carregados foram recolhidos
+                                com observância das garantias processuais aplicáveis.
+                            </p>
+                        </div>
+                        <div id="co-terminal">
+                            <div id="co-term-header">
+                                <span class="co-dot co-dot-r"></span>
+                                <span class="co-dot co-dot-y"></span>
+                                <span class="co-dot co-dot-g"></span>
+                                <span id="co-term-title">UNIFED-PROBATUM · Terminal de Custódia · Integridade Verificada</span>
+                            </div>
+                            <div id="co-term-body"></div>
+                        </div>
+                        <button id="prosseguirAnalise">
+                            ⚖ CONFIRMAR METODOLOGIA E PROSSEGUIR ANÁLISE FORENSE
+                        </button>
+                    </div>
+                    <div id="co-footer">
+                        Privacy by Design · UNIFED-PROBATUM © 2024/2026 · EM · v3.1.0 · DORA COMPLIANT · SMOKING GUN · COURT READY · NEXUS · BIG DATA<br>
+                        Art. 6.º Lei n.º 109/2009 · ISO/IEC 27037:2012 · RGPD Art. 32.º · eIDAS · Tribunal de Instrução Criminal
+                    </div>
+                </div>
+            `;
+
+            // Início com opacidade 0 para fade-in
+            el.style.opacity = '0';
+            document.body.appendChild(el);
+
+            // Fade-in do overlay de conformidade
+            requestAnimationFrame(function() {
+                el.style.transition = 'opacity 0.4s ease';
+                el.style.opacity    = '1';
+            });
+
+            // Animar linhas do terminal sequencialmente
+            var termBody = document.getElementById('co-term-body');
+            termLines.forEach(function(line) {
+                setTimeout(function() {
+                    if (!termBody) return;
+                    var d = document.createElement('div');
+                    d.className = 'co-term-line ' + line.cls;
+                    d.innerHTML = line.text;
+                    termBody.appendChild(d);
+                    termBody.scrollTop = termBody.scrollHeight;
+                }, line.delay);
+            });
+
+            // Handler do botão Prosseguir
+            setTimeout(function() {
+                var btn = document.getElementById('prosseguirAnalise');
+                if (!btn) return;
+                btn.addEventListener('click', function() {
+                    // ── DATA-TRIGGER t=0 ─────────────────────────────────────
+                    // ensureDemoDataLoaded() invocada ANTES do início da
+                    // dissolução do blur — dados prontos quando opacity=0.
+                    // Evita janela de dashboard a zeros mesmo que por ms.
+                    try {
+                        if (typeof window.ensureDemoDataLoaded === 'function') {
+                            window.ensureDemoDataLoaded();
+                            console.log('[UNIFED-AC] ensureDemoDataLoaded() invocada em t=0 (pré-fade).');
+                        }
+                        if (typeof window.revealForensicData === 'function') {
+                            window.revealForensicData();
+                        }
+                    } catch (dataErrEarly) {
+                        console.warn('[UNIFED-AC] Erro data-trigger t=0:', dataErrEarly.message);
+                    }
+
+                    el.classList.add('co-fade-out');
+                    setTimeout(function() {
+                        el.remove();
+                        // Manter o CSS de dashboard — regras de cards e glow continuam necessárias
+
+                        // Injectar footer de conformidade estático no dashboard
+                        (function _injectDashboardFooter() {
+                            var footerId = 'unifed-dashboard-footer';
+                            if (document.getElementById(footerId)) return;
+                            var ftr = document.createElement('footer');
+                            ftr.id  = footerId;
+                            ftr.style.cssText = [
+                                'font-family:"JetBrains Mono",monospace',
+                                'font-size:7.5px', 'letter-spacing:0.5px',
+                                'color:rgba(148,163,184,0.28)', 'text-align:center',
+                                'padding:18px 24px 28px', 'line-height:1.7',
+                                'border-top:1px solid rgba(0,229,255,0.06)',
+                                'margin-top:32px'
+                            ].join(';');
+                            ftr.innerHTML =
+                                'Privacy by Design &middot; UNIFED-PROBATUM &copy; 2024/2026 &middot; EM &middot; v3.1.0-COMPLIANCE-FORGE' +
+                                ' &middot; DORA COMPLIANT &middot; SMOKING GUN &middot; COURT READY &middot; NEXUS &middot; BIG DATA<br>' +
+                                'Art. 6.&ordm; Lei n.&ordm; 109/2009 &middot; ISO/IEC 27037:2012 &middot; RGPD Art. 32.&ordm; &middot; eIDAS &middot; Tribunal de Instru&ccedil;&atilde;o Criminal';
+                            var dash = document.getElementById('pureDashboard') || document.getElementById('pureDashboardWrapper');
+                            if (dash) dash.appendChild(ftr);
+                        })();
+
+                        resolve();
+                    }, 460);
+                });
+            }, 300);
+        });
     }
 
     // =========================================================================

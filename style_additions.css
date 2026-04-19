@@ -1335,3 +1335,89 @@ canvas#mainChart, canvas#discrepancyChart, canvas#atfChartCanvas {
 /* ============================================================================
    FIM — UNIFED PROBATUM v13.12.2-i18n CONSOLIDADO
    ============================================================================ */
+
+/* ============================================================================
+   UNIFED-PROBATUM · style_additions.css — PATCH v3.1 (2026-04-19)
+   Alterações para compliance v3.1: dashboard density + footer + glow
+   ============================================================================ */
+
+/* Glow pulse no botão CASO REAL quando analysis.executed === false */
+.unifed-glow-pulse {
+    animation: unifedGlowBtn 2s ease-in-out infinite !important;
+}
+@keyframes unifedGlowBtn {
+    0%, 100% { box-shadow: 0 0 0px rgba(0, 229, 255, 0); }
+    50%       { box-shadow: 0 0 18px 4px rgba(0, 229, 255, 0.55),
+                            0 0 40px rgba(0, 229, 255, 0.2); }
+}
+
+/* Hierarquia tipográfica dos Stat Cards */
+.stat-card .stat-label,
+.kpi-card .kpi-label,
+[class*="kpi"] .label,
+[class*="stat"] .label {
+    font-size: 0.75rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.08em !important;
+    color: var(--text-tertiary, rgba(148, 163, 184, 0.6)) !important;
+    font-weight: 400 !important;
+}
+
+.stat-card .stat-value,
+.kpi-card .kpi-value,
+[class*="kpi"] .value,
+[class*="stat"] .value {
+    font-size: 1.8rem !important;
+    font-weight: 700 !important;
+    color: var(--accent-primary, #00e5ff) !important;
+    line-height: 1.1 !important;
+}
+
+/* Elevação de cards forenses */
+.kpis-grid > *,
+.dashboard-card,
+.compliance-card,
+#complianceSection > *,
+.toolbar-section {
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Gutters entre secções */
+.kpis-grid                { gap: 1.5rem !important; }
+#complianceSection        { gap: 1.5rem !important; display: flex; flex-direction: column; }
+
+/* Toolbar normalizada (compacta, alinhada à direita) */
+#export-tools-container {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: flex-end !important;
+    align-items: center !important;
+    gap: 8px !important;
+    flex-wrap: wrap;
+}
+#export-tools-container .btn-tool {
+    transform: scale(0.85) !important;
+    transform-origin: right center !important;
+}
+#export-tools-container h3 {
+    flex: 1 !important;
+    margin: 0 !important;
+    font-size: 10px !important;
+    letter-spacing: 2px !important;
+    text-transform: uppercase !important;
+    color: rgba(148, 163, 184, 0.4) !important;
+}
+
+/* Footer de conformidade estático */
+#unifed-dashboard-footer {
+    font-family: 'JetBrains Mono', monospace !important;
+    font-size: 7.5px !important;
+    letter-spacing: 0.5px !important;
+    color: rgba(148, 163, 184, 0.28) !important;
+    text-align: center !important;
+    padding: 18px 24px 28px !important;
+    line-height: 1.7 !important;
+    border-top: 1px solid rgba(0, 229, 255, 0.06) !important;
+    margin-top: 32px !important;
+}

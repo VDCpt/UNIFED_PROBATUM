@@ -1,7 +1,7 @@
 {
-  "build_date": "2026-04-18T14:42:55.800563",
-  "build_version": "v13.12.2-i18n-fullbuild-2026-04-18",
-  "master_hash_sha256": "7b451c1bd540d0ef6bbfa93baa429780fe2dcf694633e77cef89cb4a061d6d11",
+  "build_date": "2026-04-19T00:00:00.000000",
+  "build_version": "v3.1.0-COMPLIANCE-FORGE-2026-04-19",
+  "master_hash_sha256": "53fb05583c378958575066989ea335b9f6caef81b3eb4f7f1db528dd77ef55d2",
   "master_hash_method": "SHA-256(concat(SHA-256(file_1) || SHA-256(file_2) || ... || SHA-256(file_n))) — ordem canónica",
   "files": [
     {
@@ -18,9 +18,9 @@
     },
     {
       "file": "style_additions.css",
-      "sha256": "e5563bfb362d9c3ac129f0004424db43079e4267205ac43ce5aa9610f92be0e8",
-      "size_bytes": 34971,
-      "size_kb": 34.15
+      "sha256": "b62e4136b3f9ccc7f31aaa99643287cd6d3868f1424bc8bc1e6fe7b5a0e135a4",
+      "size_bytes": 37787,
+      "size_kb": 36.9
     },
     {
       "file": "unifed_panel_activator.js",
@@ -81,6 +81,12 @@
       "sha256": "7f440762e2c518e264c8f188a645a5c63007ce66f5fbebb91bcd0644927e180c",
       "size_bytes": 21719,
       "size_kb": 21.21
+    },
+    {
+      "file": "unifed_access_control.js",
+      "sha256": "0ef16f574784c56618ea095e166f1aa82f1c25ede064a50da223980bb67227f0",
+      "size_bytes": 69064,
+      "size_kb": 67.45
     }
   ]
 }
