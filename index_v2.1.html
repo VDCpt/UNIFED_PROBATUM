@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNIFED-PROBATUM v2.1 — Auditoria Forense Transparente (Fases 1-2)</title>
+    
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style_additions.css">
+    
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+          integrity="sha512-iecdLmaskl7CVJkEZSMUkrQ6usKGgiYjwlrfcqKKcfx00MLp3YQe98bNvBCzEAKJRjL4NnHPVcKMuMrIZs7wqw=="
+          crossorigin="anonymous" referrerpolicy="no-referrer">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"
+            integrity="sha512-d5kLQpDQdMp5+mzgP8f5RpvPV+Dak4lFa8UVf1q5BVj2I04PPlBrF/+AxAXTHjg/dHp6/3z6DxMEQu0JqYeZA=="
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    <style>
+        /* Estilos para FASE 1 (Quórum) */
+        #quorumOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(20, 30, 48, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            font-family: 'Monaco', 'Courier New', monospace;
+        }
+
+        #quorumOverlay.hidden {
+            display: none !important;
+        }
+
+        #quorumForm {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid #0ea5e9;
+            border-radius: 8px;
+            padding: 40px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 0 40px rgba(14, 165, 233, 0.3);
+        }
+
+        #quorumForm h1 {
+            color: #0ea5e9;
+            margin: 0 0 10px 0;
+            font-size: 20px;
+            text-align: center;
+        }
+
+        #quorumForm .subtitle {
+            color: #94a3b8;
+            text-align: center;
+            font-size: 12px;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #cbd5e1;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .form-group input[type="text"] {
+            width: 100%;
+            padding: 10px 12px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 4px;
+            color: #e2e8f0;
+            font-family: 'Monaco', monospace;
+            font-size: 11px;
+        }
+
+        .form-group input[type="text"]:focus {
+            outline: none;
+            border-color: #0ea5e9;
+            box-shadow: 0 0 8px rgba(14, 165, 233, 0.2);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        #quorumSubmitBtn {
+            flex: 1;
+            padding: 12px;
+            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        #quorumSubmitBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(14, 165, 233, 0.4);
+        }
+
+        #quorumStatus {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            min-height: 40px;
+            display: none;
+        }
+
+        #quorumStatus.error {
+            display: block;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.5);
+            color: #fca5a5;
+        }
+
+        #quorumStatus.success {
+            display: block;
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.5);
+            color: #86efac;
+        }
+
+        /* Estilos para FASE 2 (Incerteza) */
+        #uncertaintySection {
+            background: linear-gradient(135deg, #1a3a3a 0%, #0d2b2b 100%);
+            border: 1px solid #10b981;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        #uncertaintySection h2 {
+            color: #10b981;
+            margin-top: 0;
+        }
+
+        .uncertainty-finding {
+            background: #0f172a;
+            border-left: 4px solid #10b981;
+            padding: 15px;
+            margin: 12px 0;
+            border-radius: 4px;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .uncertainty-finding.critical {
+            border-left-color: #ef4444;
+        }
+
+        .uncertainty-finding.warning {
+            border-left-color: #f59e0b;
+        }
+
+        .finding-type {
+            color: #10b981;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 10px;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .finding-type.critical {
+            color: #ef4444;
+        }
+
+        .finding-stat {
+            font-family: 'Monaco', monospace;
+            color: #7dd3fc;
+            margin: 5px 0;
+        }
+
+        .h0-notation {
+            font-style: italic;
+            color: #cbd5e1;
+        }
+
+        #pureDashboardWrapper {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        #pureDashboardWrapper.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .console-output {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 4px;
+            padding: 12px;
+            font-family: 'Monaco', monospace;
+            font-size: 11px;
+            color: #7dd3fc;
+            max-height: 300px;
+            overflow-y: auto;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <!-- HEADER -->
+    <header id="mainHeader" class="unifed-header">
+        <div class="header-left">
+            <h1>🔐 UNIFED-PROBATUM v2.1</h1>
+        </div>
+        <div class="header-right">
+            <button id="langToggleBtn" class="btn-lang-toggle" title="Alternar PT/EN">
+                <i class="fas fa-globe"></i> PT/EN
+            </button>
+        </div>
+    </header>
+
+    <!-- OVERLAY DE QUÓRUM (FASE 1) -->
+    <div id="quorumOverlay">
+        <div id="quorumForm">
+            <h1>🔑 VALIDAÇÃO DE QUÓRUM SHAMIR k=2</h1>
+            <p class="subtitle">Sistema bloqueado até à introdução de dois fragmentos autenticados</p>
+
+            <form onsubmit="return false;">
+                <div class="form-group">
+                    <label for="fragmentPeritoInput">Fragmento 1 — Perito/Defesa (Hex 64 chars)</label>
+                    <input 
+                        type="text" 
+                        id="fragmentPeritoInput" 
+                        placeholder="a1b2c3d4e5f6... (32 bytes = 64 hex caracteres)"
+                        autocomplete="off"
+                    />
+                </div>
+
+                <div class="form-group">
+                    <label for="fragmentTribunalInput">Fragmento 2 — Tribunal/Contraparte (Hex 64 chars)</label>
+                    <input 
+                        type="text" 
+                        id="fragmentTribunalInput" 
+                        placeholder="x9y8z7w6v5u4... (32 bytes = 64 hex caracteres)"
+                        autocomplete="off"
+                    />
+                </div>
+
+                <div class="button-group">
+                    <button type="button" id="quorumSubmitBtn">
+                        <i class="fas fa-check"></i> VALIDAR QUÓRUM
+                    </button>
+                </div>
+
+                <div id="quorumStatus"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- DASHBOARD PRINCIPAL (FASES 1-2) -->
+    <div id="pureDashboardWrapper">
+        <div id="pureDashboard" class="dashboard-container">
+
+            <!-- Confirmação de Quórum -->
+            <section id="quorumConfirmationSection">
+                <h2>✅ Quórum Validado (Fase 1)</h2>
+                <p>Sistema desbloqueado. Proceça com a análise de incerteza.</p>
+                <div id="quorumConfirmationDetails" class="details-box">
+                    <!-- Preenchido por JavaScript -->
+                </div>
+            </section>
+
+            <!-- FASE 2: Secção de Incerteza Estatística -->
+            <section id="uncertaintySection" style="display:none;">
+                <h2>📊 Análise de Incerteza Estatística (Fase 2)</h2>
+                <p style="color: #cbd5e1; font-size: 12px; margin-bottom: 20px;">
+                    Teste de Levene + ANOVA + Intervalos de Confiança (95%)
+                </p>
+                
+                <div id="uncertaintyFindings">
+                    <!-- Preenchido por JavaScript -->
+                </div>
+
+                <button id="runUncertaintyBtn" class="btn-tool" title="Executar análise de incerteza">
+                    <i class="fas fa-flask"></i> EXECUTAR ANÁLISE DE INCERTEZA
+                </button>
+
+                <div id="uncertaintyStatus" style="margin-top: 15px; display: none;"></div>
+            </section>
+
+            <!-- Consola de Auditoria -->
+            <section id="consoleSection" class="console-section">
+                <h3>🔍 CONSOLA DE AUDITORIA</h3>
+                <div id="consoleOutput" class="console-output">
+                    [INICIALIZADO] Sistema pronto para validação de quórum.
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- ================================================================ -->
+    <!-- SCRIPTS — CARREGAMENTO ESTÁTICO                               -->
+    <!-- ================================================================ -->
+
+    <!-- FASE 1: Motor de Custódia -->
+    <script src="unifed_custody_engine_v2.0.js"></script>
+
+    <!-- FASE 2: Motor de Incerteza -->
+    <script src="audit_uncertainty_engine_v1.0.js"></script>
+
+    <!-- Script de Orquestração -->
+    <script>
+        (function _orchestrateSystem() {
+            'use strict';
+
+            const MASTER_HASH_TARGET = '72760dfde44902ffdbd234160b8c53d9a354dd852c8000ca65b3b6f9394c8fec';
+            const SAMPLE_TRANSACTION_DATA = {
+                declared_income: [1000, 1200, 900, 1100, 950],
+                dac7_income: [2850, 3100, 2950, 3200, 3050],
+                platform_fees: [100, 120, 95, 110, 105]
+            };
+
+            // Elementos UI
+            const fragmentPeritoInput = document.getElementById('fragmentPeritoInput');
+            const fragmentTribunalInput = document.getElementById('fragmentTribunalInput');
+            const quorumSubmitBtn = document.getElementById('quorumSubmitBtn');
+            const quorumStatus = document.getElementById('quorumStatus');
+            const quorumOverlay = document.getElementById('quorumOverlay');
+            const pureDashboard = document.getElementById('pureDashboardWrapper');
+            const uncertaintySection = document.getElementById('uncertaintySection');
+            const runUncertaintyBtn = document.getElementById('runUncertaintyBtn');
+
+            function setStatus(message, type) {
+                quorumStatus.className = type;
+                quorumStatus.textContent = message;
+            }
+
+            function logConsole(message) {
+                const output = document.getElementById('consoleOutput');
+                const timestamp = new Date().toLocaleTimeString('pt-PT');
+                output.innerHTML += '[' + timestamp + '] ' + message + '<br/>';
+                output.scrollTop = output.scrollHeight;
+            }
+
+            // PASSO 1: Validação de Quórum
+            async function validateAndSubmit() {
+                const frag1 = fragmentPeritoInput.value.trim();
+                const frag2 = fragmentTribunalInput.value.trim();
+
+                if (!frag1 || !frag2) {
+                    setStatus('❌ Ambos os fragmentos são obrigatórios.', 'error');
+                    return;
+                }
+
+                if (frag1.length !== 64 || frag2.length !== 64) {
+                    setStatus('❌ Cada fragmento deve ter exatamente 64 caracteres hexadecimais.', 'error');
+                    return;
+                }
+
+                if (!/^[0-9a-fA-F]+$/.test(frag1) || !/^[0-9a-fA-F]+$/.test(frag2)) {
+                    setStatus('❌ Fragmentos contêm caracteres não-hexadecimais.', 'error');
+                    return;
+                }
+
+                setStatus('⏳ Validando quórum Shamir k=2...', 'info');
+                quorumSubmitBtn.disabled = true;
+
+                try {
+                    const result = await window._validateQuorumAndUnlock(frag1, frag2, MASTER_HASH_TARGET);
+
+                    if (result.success) {
+                        setStatus('✅ Quórum validado com sucesso!', 'success');
+                        logConsole('[QUORUM] Hash reconstituído e validado com sucesso.');
+                        
+                        const details = document.getElementById('quorumConfirmationDetails');
+                        if (details) {
+                            details.innerHTML = `
+                                <p><strong>Hash Reconstituído:</strong> ${result.hash.substring(0, 48)}...</p>
+                                <p><strong>Operações de Custódia:</strong> ${result.log.length} entradas</p>
+                                <p><strong>Timestamp:</strong> ${new Date().toISOString()}</p>
+                            `;
+                        }
+
+                        setTimeout(function () {
+                            quorumOverlay.classList.add('hidden');
+                            pureDashboard.classList.add('visible');
+                            uncertaintySection.style.display = 'block';
+                            logConsole('[PHASE2] Secção de incerteza estatística disponível.');
+                        }, 500);
+
+                    } else {
+                        setStatus('❌ Validação falhou: ' + (result.error || 'Erro desconhecido'), 'error');
+                        quorumSubmitBtn.disabled = false;
+                    }
+
+                } catch (err) {
+                    setStatus('❌ Erro: ' + err.message, 'error');
+                    quorumSubmitBtn.disabled = false;
+                }
+            }
+
+            // PASSO 2: Análise de Incerteza
+            async function runUncertaintyAnalysis() {
+                logConsole('[PHASE2] Iniciando análise de incerteza estatística...');
+                runUncertaintyBtn.disabled = true;
+
+                try {
+                    const result = await window._initiateUncertaintyAnalysis(SAMPLE_TRANSACTION_DATA);
+
+                    if (result.success) {
+                        logConsole('[PHASE2] ✅ Análise concluída com ' + result.findings.length + ' achados.');
+                        displayUncertaintyFindings(result.report, result.findings);
+                    } else {
+                        logConsole('[PHASE2] ❌ Erro: ' + result.error);
+                    }
+
+                } catch (err) {
+                    logConsole('[PHASE2] ❌ Exceção: ' + err.message);
+                } finally {
+                    runUncertaintyBtn.disabled = false;
+                }
+            }
+
+            function displayUncertaintyFindings(report, findings) {
+                const container = document.getElementById('uncertaintyFindings');
+                let html = '';
+
+                // Resumo
+                html += '<div style="background: #0f172a; padding: 15px; border-radius: 4px; margin-bottom: 15px;">';
+                html += '<p style="color: #7dd3fc;"><strong>Resumo:</strong></p>';
+                html += '<p>Teste de Levene: ' + (report.statistical_evidence.levene_test.equal_variance ? '✅' : '⚠️') + ' ' + 
+                        report.statistical_evidence.levene_test.interpretation + '</p>';
+                html += '<p>ANOVA: ' + (report.summary.h0_rejected ? '⚠️ ' : '✅ ') + 
+                        report.statistical_evidence.anova_test.interpretation + '</p>';
+                html += '</div>';
+
+                // Achados
+                for (const finding of findings) {
+                    const type = finding.type.includes('Homogeneidade') ? 'info' : 
+                                 finding.type.includes('Principal') ? 'warning' : 'info';
+                    const typeClass = type === 'warning' ? 'critical' : '';
+                    
+                    html += '<div class="uncertainty-finding ' + typeClass + '">';
+                    html += '<div class="finding-type">' + finding.type + '</div>';
+                    html += '<p>' + finding.interpretation + '</p>';
+                    html += '<div class="finding-stat">p-value: ' + (finding.p_value ? finding.p_value.toFixed(4) : 'N/A') + '</div>';
+                    html += '<p style="color: #cbd5e1; font-size: 10px;"><em>' + finding.implicacao + '</em></p>';
+                    html += '</div>';
+                }
+
+                container.innerHTML = html;
+                logConsole('[PHASE2] Achados apresentados no painel.');
+            }
+
+            // Event Listeners
+            quorumSubmitBtn.addEventListener('click', validateAndSubmit);
+            fragmentPeritoInput.addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') validateAndSubmit();
+            });
+            fragmentTribunalInput.addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') validateAndSubmit();
+            });
+            runUncertaintyBtn.addEventListener('click', runUncertaintyAnalysis);
+
+            logConsole('[INIT] UNIFED-PROBATUM v2.1 (Fases 1-2) carregado e pronto.');
+        })();
+    </script>
+</body>
+</html>

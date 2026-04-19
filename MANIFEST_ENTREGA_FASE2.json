@@ -1,0 +1,124 @@
+{
+  "entrega": {
+    "projeto": "UNIFED-PROBATUM",
+    "versao": "v2.1.0-RECTIFIED",
+    "fase": 2,
+    "nome_fase": "Retificação LACUNA-PROV-01 + Motor Ingestão CSV Sanitizado + FCC Dashboard",
+    "data_entrega": "2026-04-19T08:37:27Z",
+    "jurisdicao": "República Portuguesa",
+    "conformidade": [
+      "Art. 158.º CPP",
+      "Art. 163.º CPP",
+      "ISO/IEC 27037:2012",
+      "DORA (UE) 2022/2554",
+      "OWASP A03:2021 (CSV Injection Prevention)",
+      "RGPD Art. 25"
+    ]
+  },
+  "master_hash_sha256": "5f4fa0a8c9b910b5735167da1b0807f803e770c18fd8e9ebeeb76d1d3754ca7f",
+  "master_hash_method": "SHA-256(SHA-256(f1) || SHA-256(f2) || SHA-256(f3) || SHA-256(f4) || SHA-256(f5)) — ordem canónica",
+  "lote_anterior_v2.0": {
+    "master_hash": "39efcc10756e708bf735aa7f8b32d1541d63dec9866a409915201ac3fecb3ec0",
+    "lacunas_abertas": ["LACUNA-PROV-01", "ACHADO-04"],
+    "nota": "provenance_logger.js com SESSION_MASTER_HASH hardcoded; audit_uncertainty_engine_v1.0.js ausente do manifesto"
+  },
+  "rectificacoes_aplicadas": [
+    {
+      "id": "FIX-PROV-01",
+      "ficheiro": "provenance_logger.js",
+      "descricao": "SESSION_MASTER_HASH convertido de const hardcoded para let _sessionMasterHash=null. Captura dinâmica via event.detail.reconstructedHash no listener UNIFED_QUORUM_VALIDATED. Guarda de prontidão em signEvent(). Getter isReady() exposto na interface pública.",
+      "patches_aplicados": 6,
+      "verificacao": "grep SESSION_MASTER_HASH no código executável = 0 ocorrências"
+    },
+    {
+      "id": "NEW-ING-01",
+      "ficheiro": "unifed_ingestion_engine_v2.0.js",
+      "descricao": "CSV Injection sanitization (OWASP CWE-1236): prefixos =, +, -, @, TAB, CR neutralizados com apostrofe em _sanitizeCSVCell(). Stats em DataPacket.csvInjectionStats."
+    },
+    {
+      "id": "NEW-ING-02",
+      "ficheiro": "unifed_ingestion_engine_v2.0.js",
+      "descricao": "Delimitador CSV detectado (results.meta.delimiter) registado no log de auditoria e na cadeia de evidências."
+    },
+    {
+      "id": "AIRGAP-01",
+      "ficheiro": "unifed_forensic_command_center.html",
+      "descricao": "PapaParse carregado com SRI integrity hash + fallback automático para ./lib/papaparse.min.js em ambiente air-gap. Detecção via typeof window.Papa."
+    }
+  ],
+  "ficheiros": [
+    {
+      "nome": "unifed_ingestion_engine_v2.0.js",
+      "versao": "v2.0.0-INGESTÃO-CSV-SANITIZED",
+      "tipo": "JavaScript (ES6+)",
+      "descricao": "Motor de ingestão com CSV Injection sanitization (OWASP A03:2021), registo de delimitador e cadeia de custódia completa",
+      "tamanho_bytes": 27719,
+      "linhas": 561,
+      "hash_sha256": "27afa32dbf58272ec625ff2a05533568e9c05162ffd7af776c44cc214524bed8",
+      "status": "Conforme",
+      "fase": "INGESTÃO"
+    },
+    {
+      "nome": "unifed_custody_engine_v2.0.js",
+      "versao": "v2.0.0-QUORUM-FINAL",
+      "tipo": "JavaScript (ES6+)",
+      "descricao": "Shamir SSS k=2, QuorumValidator, CustodyLog — inalterado de FASE 1",
+      "tamanho_bytes": 20002,
+      "linhas": 530,
+      "hash_sha256": "fa5bf630c3b943b2a1ba8e88682229b1e22186fca486269cf79b8695216408c4",
+      "status": "Conforme — inalterado",
+      "fase": "FASE 1 (QUÓRUM)"
+    },
+    {
+      "nome": "audit_uncertainty_engine_v1.0.js",
+      "versao": "v1.0.0-UNCERTAINTY-FINAL",
+      "tipo": "JavaScript (ES6+)",
+      "descricao": "Levene, ANOVA unidirecional, ANOVA de Welch, p-values, IC 95%. Ausente do MANIFEST_FASE1 (ACHADO-04 rectificado).",
+      "tamanho_bytes": 25344,
+      "linhas": 658,
+      "hash_sha256": "8553329792f6e42c4422b970531af5dfb68607b593e629870c7560f7e674ad7a",
+      "status": "Conforme — adicionado ao manifesto (ACHADO-04)",
+      "fase": "FASE 2 (ANOVA)"
+    },
+    {
+      "nome": "provenance_logger.js",
+      "versao": "v1.1.0-FASE3-PROVENANCE-RECTIFIED",
+      "tipo": "JavaScript (ES6+)",
+      "descricao": "Logging de proveniência com cadeia SHA-256 encadeada. LACUNA-PROV-01 rectificada: SESSION_MASTER_HASH dinâmico via UNIFED_QUORUM_VALIDATED.",
+      "tamanho_bytes": 18609,
+      "linhas": 426,
+      "hash_sha256": "b6ddef743af1f7848c65f5e6569731a20b4eb590b3d6fdabdf45ead4b8164e69",
+      "status": "Rectificado — LACUNA-PROV-01 encerrada",
+      "fase": "FASE 3 (PROVENIÊNCIA)"
+    },
+    {
+      "nome": "unifed_forensic_command_center.html",
+      "versao": "v2.0.0-FCC",
+      "tipo": "HTML5 + CSS3 + JavaScript",
+      "descricao": "Dashboard FBI/INTERPOL. CSS Grid + clamp(). LED Differential Line ::before. Glassmorphism blur(12px). JetBrains Mono + Orbitron. PapaParse CDN + fallback air-gap.",
+      "tamanho_bytes": 44204,
+      "linhas": 1192,
+      "hash_sha256": "727e6576b211a9def0b723c2f177d0aa91b6b4dfddd85b96513f01f0cac65e92",
+      "status": "Conforme",
+      "fase": "UI (DASHBOARD)"
+    }
+  ],
+  "lacunas_estado": {
+    "LACUNA-PROV-01": "ENCERRADA — FIX-PROV-01 aplicado",
+    "ACHADO-04": "ENCERRADO — audit_uncertainty_engine_v1.0.js incluído neste manifesto",
+    "ACHADO-01": "ABERTA (risco baixo) — campo _raw exposto via console. Recomendada remoção em v2.1+ para produção.",
+    "ACHADO-02": "ENCERRADA — delimitador CSV registado na cadeia de custódia",
+    "ACHADO-03": "ENCERRADA — provenance_logger.js vinculado ao quórum dinâmico"
+  },
+  "auditoria_forense": {
+    "data": "2026-04-19",
+    "perito": "Consultor Estratégico Independente",
+    "jurisdicao": "República Portuguesa",
+    "metodo": "ISO/IEC 27037:2012",
+    "resultado": "CONFORME — lacunas críticas encerradas",
+    "achados_criticos": 0,
+    "achados_altos": 0,
+    "achados_baixos": 1,
+    "observacoes": "LACUNA-PROV-01 (Alta) encerrada. ACHADO-01 (Baixo) permanece aberto para decisão do advogado."
+  }
+}
