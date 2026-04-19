@@ -443,7 +443,15 @@
         </div>
 
         <!-- CONTAINER DO GRÁFICO MAINCHART (oculto conforme retificação cirúrgica) -->
-        <div id="mainChartContainer" class="chart-section" style="display: none;">
+        <!-- FIX-PH-01: ID renomeado de mainChartContainer → panel-mainChartContainer
+             MOTIVO: index.html contém <section id="mainChartContainer">. Quando panel.html
+             é injectado no DOM de index.html (via innerHTML ou appendChild), existiriam
+             dois elementos com o mesmo ID. document.getElementById('mainChartContainer')
+             retornaria o primeiro encontrado na ordem do DOM, podendo apontar para o canvas
+             errado. A unicidade de ID é obrigatória per HTML5 § 3.2.5.1.
+             Referência script.js: document.getElementById('panel-mainChartContainer').
+             DORA (UE) 2022/2554 · Halt Execution Protocol -->
+        <div id="panel-mainChartContainer" class="chart-section" style="display: none;">
             <h3 id="chartTitle"><i class="fas fa-chart-line"></i> ANÁLISE DE DISCREPÂNCIAS · GAP FORENSE</h3>
             <div class="chart-container">
                 <canvas id="mainChart"></canvas>
@@ -592,7 +600,7 @@
 <script>
     (function() {
         // Garantir que o container do gráfico mainChart e o pure-chart-container fiquem ocultos
-        const mainChartContainer = document.getElementById('mainChartContainer');
+        const mainChartContainer = document.getElementById('panel-mainChartContainer'); // FIX-PH-01
         if(mainChartContainer) mainChartContainer.style.display = 'none';
         const chartContainer = document.getElementById('pure-chart-container');
         if(chartContainer) chartContainer.style.display = 'none';

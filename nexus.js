@@ -56,7 +56,8 @@ window.UNIFEDSystem = window.UNIFEDSystem || {};
 		}
 	};
 	const proxiedFetch = new Proxy(originalFetch, handler);
-	proxiedFetch.__isNexusProxy = true;
+	proxiedFetch.__isNexusProxy  = true;
+	proxiedFetch.__nexusWrapped  = true; // FIX-NX-02: flag unificada — previne duplo wrapping por _nexusCore()
 	window.fetch = proxiedFetch;
 	console.info('[NEXUS·M1] ✅ Passive Network Observer activo — Proxy Wrapper Transparente (ISO/IEC 27037:2012).\n' + '  Modo  : Apenas observação e registo. Nenhum erro é suprimido.\n' + '  Escopo: Todas as chamadas fetch são auditadas, mas o comportamento nativo mantém-se.');
 })();
@@ -818,14 +819,19 @@ window.UNIFEDSystem = window.UNIFEDSystem || {};
 	}
 	window.injectBlockchainExplorerUI = injectBlockchainExplorerUI;
 	window.nexusOpenBlockchainExplorer = _openBlockchainExplorerModal;
-	window.addEventListener('UNIFED_CORE_READY', function() {
+	// FIX-NX-01: Migração de UNIFED_CORE_READY → unifed:compliance:accepted
+	// MOTIVO: A injecção do botão ⛓️ VER EXPLORER no #custodyModal só deve ocorrer
+	// após o overlay de compliance ser removido do DOM, garantindo que o botão não
+	// fica interactivo num estado não autorizado pelo Halt Execution Protocol.
+	// DORA (UE) 2022/2554 · Art. 125.º CPP · ISO/IEC 27037:2012
+	window.addEventListener('unifed:compliance:accepted', function _onComplianceM4() {
 		if(window.requestIdleCallback) {
 			requestIdleCallback(function() {
 				injectBlockchainExplorerUI();
-				console.log("[NEXUS] Ativado em modo de baixa prioridade para estabilidade UI.");
+				console.log('[NEXUS·M4] Blockchain Explorer activado após compliance:accepted (baixa prioridade).');
 			});
 		} else {
-			setTimeout(injectBlockchainExplorerUI, 2000);
+			setTimeout(injectBlockchainExplorerUI, 300);
 		}
 	}, {
 		once: true
@@ -846,21 +852,10 @@ window.UNIFEDSystem = window.UNIFEDSystem || {};
         }
     }, true);
 
-    // Proxy wrapper para fetch (auditoria silenciosa) — evita duplicação
-    if (window.fetch && !window.fetch.__nexusWrapped) {
-        const originalFetch = window.fetch;
-        window.fetch = function(...args) {
-            const url = args[0];
-            if (typeof url === 'string' && url.includes('api.unifed.com')) {
-                return originalFetch.apply(this, args).catch(err => {
-                    console.debug('[NEXUS] Requisição para api.unifed.com falhou (CORS esperado).', err.message);
-                    throw err;
-                });
-            }
-            return originalFetch.apply(this, args);
-        };
-        window.fetch.__nexusWrapped = true;
-    }
+    // FIX-NX-02: Proxy fetch secundário ELIMINADO — M1 (_nexusForensicProxy) define
+    // __isNexusProxy e __nexusWrapped atomicamente. Um segundo wrapping criaria
+    // uma cadeia dupla de Proxy invisível à ISO/IEC 27037 e comprometeria a
+    // auditabilidade das chamadas de rede.
 
     // Hook de Integridade Visual — Selo de Custódia em Canvas
     if (window.UNIFEDSystem && window.UNIFEDSystem.utils) {

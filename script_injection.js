@@ -1817,14 +1817,22 @@
         setupRealCaseButton();
         setupAnalyzeButton();
         
+        // FIX-SI-01: Race condition corrigida — DOMContentLoaded → readyState check
+        // CONTEXTO: script_injection.js é injectado DINAMICAMENTE pelo access_control.js
+        // APÓS autenticação. Quando o script executa, document.readyState é 'complete'
+        // na maioria dos ambientes, pelo que o listener 'DOMContentLoaded' NUNCA
+        // dispararia (o evento já ocorreu). O padrão correcto para carregamento dinâmico
+        // é verificar readyState imediatamente e executar de forma síncrona.
+        // Halt Execution Protocol · DORA (UE) 2022/2554
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => {
+            document.addEventListener('DOMContentLoaded', function _si01DomReady() {
                 initializeCoreDashboard();
                 forceDataPtVisibility();
                 if (typeof populateAnoFiscal === 'function') populateAnoFiscal();
                 if (typeof populateYears === 'function') populateYears();
-            });
+            }, { once: true });
         } else {
+            // Execução imediata — DOM já pronto no momento da injecção dinâmica
             initializeCoreDashboard();
             forceDataPtVisibility();
             if (typeof populateAnoFiscal === 'function') populateAnoFiscal();
@@ -2236,8 +2244,11 @@
     // Chamar após o dashboard estar visível
     window.addEventListener('UNIFED_CORE_READY', enableAllButtons);
 
+    // FIX-SI-01 (segunda ocorrência): idem — padrão readyState para carregamento dinâmico
+    // CONTEXTO: setupIniciarButton() configura o botão de início do fluxo forense.
+    // Se o DOM já estiver pronto (readyState !== 'loading'), a execução é imediata.
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', setupIniciarButton);
+        document.addEventListener('DOMContentLoaded', setupIniciarButton, { once: true });
     } else {
         setupIniciarButton();
     }

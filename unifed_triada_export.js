@@ -40,14 +40,14 @@
         };
     }
 
-function safeExport() {
-    if (window._isGraphRendering) {
-        window.showToast('Aguarde: Renderização de gráficos em curso...', 'warning');
-        return;
-    }
-    console.info('[TRIADA] Iniciando exportação segura (Integridade de Dados Validada).');
-    // Seguir com a lógica de exportação existente
-}
+
+    // ── safeExport() ELIMINADA (ACHADO-TR-02) ────────────────────────────────
+    // A função safeExport() estava definida fora do escopo da IIFE principal
+    // (sem encerramento de bloco), não estava ligada a nenhum botão e não estava
+    // exportada para window.*. Constituía código morto e foi removida para
+    // higienização do repositório conforme Despacho de Autorização 2026-04-19.
+    // Lógica de guarda equivalente integrada em unifed_triada_export.js v1.0.22.
+    // ─────────────────────────────────────────────────────────────────────────
 
     async function gerarAnexoCustodia() {
         const masterHash = getStableMasterHash();
@@ -361,21 +361,38 @@ function safeExport() {
         _log('MutationObserver em modo persistente (com filtro de gráficos) para garantir integridade após reset.');
     }
 
-    window.addEventListener('UNIFED_CORE_READY', () => {
+    // FIX-TR-01: Migração de UNIFED_CORE_READY → unifed:compliance:accepted
+    // MOTIVO: Os botões da Tríade Documental (PDF/DOCX/Custódia) devem ser
+    // injectados no DOM apenas APÓS o compliance overlay ser removido, garantindo
+    // que não ficam interactivos em estado não autorizado. O UNIFED_CORE_READY
+    // é mantido APENAS para registo das funções globais (sem DOM manipulation).
+    // Separação de responsabilidades: registo global vs. activação de UI.
+    // DORA (UE) 2022/2554 · Halt Execution Protocol · ISO/IEC 27037:2012
+
+    // PASSO A: Registo global das funções — ocorre logo após UNIFED_CORE_READY
+    window.addEventListener('UNIFED_CORE_READY', function _triadaRegisterGlobals() {
+        window.gerarAnexoCustodia     = gerarAnexoCustodia;
+        window.initTriadaButtons      = initInterface;
+        window._restoreOriginalToolbar = restoreOriginalToolbar;
+        window.UNIFEDSystem           = window.UNIFEDSystem || {};
+        window.UNIFEDSystem.triadaUpdateLabels = initInterface;
+        _log('Funções globais registadas em UNIFED_CORE_READY (sem DOM manipulation).');
+    }, { once: true });
+
+    // PASSO B: Injecção de UI — apenas após unifed:compliance:accepted (Fase 6)
+    window.addEventListener('unifed:compliance:accepted', function _triadaActivateUI() {
+        _log('FIX-TR-01 · unifed:compliance:accepted recebido — iniciando injecção de UI da Tríade.');
         if (initInterface()) return;
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => { if (!initInterface()) _startMutationObserver(); }, { once: true });
+            document.addEventListener('DOMContentLoaded', function() {
+                if (!initInterface()) _startMutationObserver();
+            }, { once: true });
         } else {
-            _startMutationObserver();
+            if (!initInterface()) _startMutationObserver();
         }
-    });
+    }, { once: true });
 
-    window.gerarAnexoCustodia = gerarAnexoCustodia;
-    window.initTriadaButtons = initInterface;
-    window._restoreOriginalToolbar = restoreOriginalToolbar;
-    window.UNIFEDSystem = window.UNIFEDSystem || {};
-    window.UNIFEDSystem.triadaUpdateLabels = initInterface;
-    _log(`Módulo Tríade Documental ${_VERSION} carregado com sucesso.`, 'success');
+    _log(`Módulo Tríade Documental ${_VERSION} carregado com sucesso. Aguarda unifed:compliance:accepted para activação de UI.`, 'success');
 })();
 
 // =============================================================================
