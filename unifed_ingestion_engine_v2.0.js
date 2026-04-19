@@ -2,7 +2,7 @@
  * ============================================================================
  * UNIFED-PROBATUM · unifed_ingestion_engine_v2.0.js
  * ============================================================================
- * Versão      : v2.0.0-INGESTÃO-CSV-SANITIZED
+ * Versão      : v2.2.0-CUMULATIVE-HYDRATION
  * Data        : 2026-04-19
  * Conformidade: ISO/IEC 27037:2012 · Art. 158.º CPP · Art. 163.º CPP
  *               DORA (UE) 2022/2554 · OWASP CSV Injection Prevention
@@ -341,32 +341,58 @@
     }
 
     /* ============================================================
-       INJECÇÃO NO UNIFEDSystem — v2.0 (inclui delimitador e stats)
+       IDENTIFICAÇÃO DE PERÍODO (METADATA EXTRACTION) - v2.2
+       ============================================================ */
+    function _extractPeriodFromFilename(filename) {
+        if (!filename) return 'UNKNOWN';
+        // Tenta capturar formatos como YYYYMM, YYYY-MM, YYYY_MM
+        const match = filename.match(/(\d{4})[-_]?(\d{2})/);
+        if (match) return match[1] + match[2]; // Retorna YYYYMM
+        return 'UNKNOWN';
+    }
+
+    /* ============================================================
+       INJECÇÃO NO UNIFEDSystem — v2.2 (CUMULATIVE HYDRATION)
        ============================================================ */
     function _injectIntoSystem(dataPacket) {
         const sys = root.UNIFEDSystem;
-        if (!sys) throw new Error('[INGEST-V2] UNIFEDSystem não encontrado. Carregue script.js primeiro.');
+        if (!sys) throw new Error('[INGEST-V2.2] UNIFEDSystem não encontrado. Carregue script.js primeiro.');
 
-        sys.analysis.inputHash                   = dataPacket.originHash;
-        sys.analysis.totals.ganhos               = dataPacket.totals.ganhos;
-        sys.analysis.totals.despesas             = dataPacket.totals.despesas;
-        sys.analysis.totals.ganhosLiquidos       = dataPacket.totals.diferencial;
+        // 1. Acumulação de Totais (Cumulative Hydration em vez de Substituição Destrutiva)
+        sys.analysis.totals.ganhos         = (sys.analysis.totals.ganhos || 0) + dataPacket.totals.ganhos;
+        sys.analysis.totals.despesas       = (sys.analysis.totals.despesas || 0) + dataPacket.totals.despesas;
+        sys.analysis.totals.ganhosLiquidos = (sys.analysis.totals.ganhosLiquidos || 0) + dataPacket.totals.diferencial;
 
         if (sys.documents && sys.documents.statements) {
-            sys.documents.statements.totals.ganhos         = dataPacket.totals.ganhos;
-            sys.documents.statements.totals.despesas        = dataPacket.totals.despesas;
-            sys.documents.statements.totals.ganhosLiquidos  = dataPacket.totals.diferencial;
-            sys.documents.statements.totals.records         = dataPacket.totals.nRegistos;
+            sys.documents.statements.totals.ganhos         = (sys.documents.statements.totals.ganhos || 0) + dataPacket.totals.ganhos;
+            sys.documents.statements.totals.despesas       = (sys.documents.statements.totals.despesas || 0) + dataPacket.totals.despesas;
+            sys.documents.statements.totals.ganhosLiquidos = (sys.documents.statements.totals.ganhosLiquidos || 0) + dataPacket.totals.diferencial;
+            sys.documents.statements.totals.records        = (sys.documents.statements.totals.records || 0) + dataPacket.totals.nRegistos;
         }
 
+        // 2. Identificação de Período e Bucket Mensal
+        const period = _extractPeriodFromFilename(dataPacket.filename);
+        if (period !== 'UNKNOWN') {
+            if (!sys.dataMonths) sys.dataMonths = new Set();
+            sys.dataMonths.add(period);
+
+            if (!sys.monthlyData) sys.monthlyData = {};
+            if (!sys.monthlyData[period]) sys.monthlyData[period] = { ganhos: 0, despesas: 0, ganhosLiq: 0 };
+
+            sys.monthlyData[period].ganhos    += dataPacket.totals.ganhos;
+            sys.monthlyData[period].despesas  += dataPacket.totals.despesas;
+            sys.monthlyData[period].ganhosLiq += dataPacket.totals.diferencial;
+        }
+
+        // 3. Integridade da Tríade e Cadeia de Custódia
         const evidenceEntry = {
-            id:               `EVD-ING-${Date.now()}`,
+            id:               `EVD-ING-${Date.now()}-${Math.floor(Math.random()*1000)}`,
             type:             'INGESTED_FILE',
             filename:         dataPacket.filename,
+            period:           period,
             format:           dataPacket.format,
             hash:             dataPacket.originHash.toUpperCase(),
             hashMethod:       'SHA-256 (bytes brutos, pré-parsing)',
-            /* v2.0: campos adicionais de custódia */
             detectedDelimiter: dataPacket.detectedDelimiter || 'N/A',
             csvInjectionStats: dataPacket.csvInjectionStats,
             ingestedAt:       dataPacket.ingestedAt,
@@ -381,13 +407,14 @@
         if (!sys._ingestionPackets) sys._ingestionPackets = [];
         sys._ingestionPackets.push(dataPacket);
 
+        // Acumulação de hashes para o Master Hash (mantendo rastro de todos os inputs)
+        if (!sys.analysis.inputHashes) sys.analysis.inputHashes = [];
+        sys.analysis.inputHashes.push(dataPacket.originHash);
+        sys.analysis.inputHash = sys.analysis.inputHashes.join('|');
+
         console.info(
-            `[INGEST-V2] ✅ DataPacket injectado. ` +
-            `Ganhos: ${dataPacket.totals.ganhos.toFixed(2)}€ | ` +
-            `Despesas: ${dataPacket.totals.despesas.toFixed(2)}€ | ` +
-            `Diferencial: ${dataPacket.totals.diferencial.toFixed(2)}€ | ` +
-            `CSV-INJ neutralizadas: ${dataPacket.csvInjectionStats?.cellsNeutralized ?? 'N/A'} | ` +
-            `Hash: ${dataPacket.originHash.slice(0, 16)}...`
+            `[INGEST-V2.2] ✅ DataPacket CUMULATIVO injectado. Período detectado: ${period} | ` +
+            `Ganhos Acumulados: ${sys.analysis.totals.ganhos.toFixed(2)}€`
         );
     }
 
@@ -526,7 +553,7 @@
             schema_version:  'UNIFED-INGEST-EVIDENCE/2.0',
             exported_at:     new Date().toISOString(),
             input_hash:      sys.analysis?.inputHash || null,
-            engine_version:  'v2.0.0-INGESTÃO-CSV-SANITIZED',
+            engine_version:  'v2.2.0-CUMULATIVE-HYDRATION',
             packets: (sys._ingestionPackets || []).map(p => ({
                 filename:          p.filename,
                 format:            p.format,
@@ -545,7 +572,7 @@
        ============================================================ */
     root.UNIFED_INGESTION = Object.freeze({
         _INSTALLED       : true,
-        VERSION          : 'v2.0.0-INGESTÃO-CSV-SANITIZED',
+        VERSION          : 'v2.2.0-CUMULATIVE-HYDRATION',
         ingestFile,
         exportEvidenceRecord,
         _parseNumeric,      // Exposto para testes unitários
@@ -553,9 +580,9 @@
         _sanitizeCSVCell    // Exposto para testes unitários (v2.0)
     });
 
-    console.info('[INGEST-V2] unifed_ingestion_engine_v2.0.js instalado.');
-    console.info('[INGEST-V2] Formatos suportados: CSV (PapaParse + Delimiter-Log), JSON (nativo)');
-    console.info('[INGEST-V2] Protecções: CSV-Injection-Sanitization (OWASP A03:2021)');
-    console.info('[INGEST-V2] Conformidade: ISO/IEC 27037:2012 · Art. 158.º CPP');
+    console.info('[INGEST-V2.2] unifed_ingestion_engine_v2.2.0 instalado — CUMULATIVE-HYDRATION activa.');
+    console.info('[INGEST-V2.2] Formatos suportados: CSV (PapaParse + Delimiter-Log), JSON (nativo)');
+    console.info('[INGEST-V2.2] Protecções: CSV-Injection-Sanitization (OWASP A03:2021)');
+    console.info('[INGEST-V2.2] Conformidade: ISO/IEC 27037:2012 · Art. 158.º CPP');
 
 })(window);

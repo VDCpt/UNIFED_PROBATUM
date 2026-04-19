@@ -1,12 +1,12 @@
 {
   "build_date": "2026-04-19T03:00:00.000000",
-  "build_version": "v3.1.2-FINAL-RECTIFIED",
-  "master_hash_sha256": "72760dfde44902ffdbd234160b8c53d9a354dd852c8000ca65b3b6f9394c8fec",
+  "build_version": "v2.2.0-CUMULATIVE-HYDRATION",
+  "master_hash_sha256": "9f466af6a5c889f72bca08b27dba2e03bc68d465a693357e195cafa962c1aab7",
   "master_hash_method": "SHA-256(concat(SHA-256(file_1) || SHA-256(file_2) || ... || SHA-256(file_n))) — ordem canónica",
-  "master_hash_note": "Rectificado em 2026-04-19T03:00 UTC: unifed_card_amt01.js actualizado de v2.0.0 para v2.0.1 com metadados forenses correctos",
+  "master_hash_note": "Rectificado em 2026-04-19: Implementado Cumulative Hydration no motor de ingestão (Achado EVD-01).",
   "sanitation_record": {
     "despacho_autorizacao": "2026-04-19",
-    "despacho_esclarecimento_forense": "2026-04-19T02:50:00 UTC",
+    "despacho_esclarecimento_forense": "2026-04-19T14:00:00 UTC",
     "achados_resolvidos": [
       "ACHADO-NX-01",
       "ACHADO-NX-02",
@@ -14,13 +14,16 @@
       "ACHADO-TR-02",
       "ACHADO-SI-01",
       "ACHADO-PH-01",
-      "ACHADO-A: Hash Discrepância Clarificada"
+      "ACHADO-A: Hash Discrepância Clarificada",
+      "ACHADO-EVD-01: Substituição Destrutiva de Totais na Ingestão"
     ],
     "ficheiros_modificados": [
-      "unifed_card_amt01.js (v2.0.0 → v2.0.1-RECTIFIED)"
+      "unifed_card_amt01.js (v2.0.0 → v2.0.1-RECTIFIED)",
+      "unifed_ingestion_engine_v2.0.js (v2.0.0 → v2.2.0-CUMULATIVE-HYDRATION)"
     ],
     "ficheiros_rectificados": [
-      "unifed_card_amt01.js — Metadados de custódia actualizados"
+      "unifed_card_amt01.js — Metadados de custódia actualizados",
+      "unifed_ingestion_engine_v2.0.js — Transição de state mutation destrutiva (overwrite) para agregação cronológica (+=). Metadados de período (Ano/Mês) extraídos via regex e acoplados a buckets mensais."
     ],
     "ficheiros_imutaveis": [
       "index.html",
@@ -40,7 +43,7 @@
     ],
     "lote_anterior": "v3.1.1-COMPLIANCE-EVENT-2026-04-19",
     "master_hash_anterior": "e4eed755ebe104b74011ad94826a6165bc462f683f389ecd5ffc62fb4b6c0086",
-    "causa_rectificacao": "Actualização de metadados em unifed_card_amt01.js para clarificar discrepância entre v1.0.0 (perdido) e v2.0.1 (rectificado). Despacho de Esclarecimento Forense acatado."
+    "causa_rectificacao": "Actualização de metadados em unifed_card_amt01.js para clarificar discrepância entre v1.0.0 (perdido) e v2.0.1 (rectificado). Despacho de Esclarecimento Forense acatado. Adicionalmente: Transição de state mutation destrutiva (overwrite) para agregação cronológica (+=). Metadados de período (Ano/Mês) são agora extraídos via regex e acoplados aos buckets mensais, garantindo que o master_hash reflecte a totalidade dos artefactos na sessão."
   },
   "conformidade": {
     "normas": [
@@ -160,6 +163,15 @@
       "size_bytes": 14336,
       "size_kb": 14.0,
       "status": "Conforme"
+    },
+    {
+      "file": "unifed_ingestion_engine_v2.0.js",
+      "sha256": "9857a8ce0ed7a3524ee2c919974439c9af9d7a5c8e69b5e63878ecc8612d62ab",
+      "size_bytes": 29372,
+      "size_kb": 28.68,
+      "versao": "v2.2.0-CUMULATIVE-HYDRATION",
+      "status": "Rectificado — Cumulative Hydration",
+      "nota": "Actualizado de v2.0.0 para v2.2.0 em 2026-04-19T14:00 UTC. Corrige Achado EVD-01: substituição destrutiva (overwrite) → acumulação cronológica (+=). Adicionadas funções _extractPeriodFromFilename e buckets mensais (monthlyData/dataMonths)."
     }
   ],
   "auditoria_forense": {
@@ -171,6 +183,6 @@
     "achados_criticos": 0,
     "achados_altos": 0,
     "achados_baixos": 0,
-    "observacoes": "Sistema completamente auditado. Discrepância de metadados clarificada e resolvida. Pronto para apresentação em tribunal."
+    "observacoes": "Sistema auditado e rectificado. ACHADO-EVD-01 (Substituição Destrutiva) resolvido com implementação de Cumulative Hydration (v2.2.0). Pronto para apresentação em tribunal."
   }
 }
