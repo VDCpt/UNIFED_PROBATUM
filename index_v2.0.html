@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UNIFED-PROBATUM v2.0 — Sistema de Auditoria Forense Transparente</title>
+    
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style_additions.css">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+          integrity="sha512-iecdLmaskl7CVJkEZSMUkrQ6usKGgiYjwlrfcqKKcfx00MLp3YQe98bNvBCzEAKJRjL4NnHPVcKMuMrIZs7wqw=="
+          crossorigin="anonymous" referrerpolicy="no-referrer">
+
+    <!-- Chart.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"
+            integrity="sha512-d5kLQpDQdMp5+mzgP8f5RpvPV+Dak4lFa8UVf1q5BVj2I04PPlBrF/+AxAXTHjg/dHp6/3z6DxMEQu0JqYeZA=="
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    <!-- Estilos de Quórum (adição) -->
+    <style>
+        /* Contentor de quórum em modo HALT */
+        #quorumOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(20, 30, 48, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            font-family: 'Monaco', 'Courier New', monospace;
+        }
+
+        #quorumOverlay.hidden {
+            display: none !important;
+        }
+
+        #quorumForm {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 2px solid #0ea5e9;
+            border-radius: 8px;
+            padding: 40px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 0 40px rgba(14, 165, 233, 0.3);
+        }
+
+        #quorumForm h1 {
+            color: #0ea5e9;
+            margin: 0 0 10px 0;
+            font-size: 20px;
+            text-align: center;
+        }
+
+        #quorumForm .subtitle {
+            color: #94a3b8;
+            text-align: center;
+            font-size: 12px;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #cbd5e1;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .form-group input[type="text"] {
+            width: 100%;
+            padding: 10px 12px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 4px;
+            color: #e2e8f0;
+            font-family: 'Monaco', monospace;
+            font-size: 11px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input[type="text"]:focus {
+            outline: none;
+            border-color: #0ea5e9;
+            box-shadow: 0 0 8px rgba(14, 165, 233, 0.2);
+        }
+
+        .form-group input[type="text"]::placeholder {
+            color: #475569;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        #quorumSubmitBtn {
+            flex: 1;
+            padding: 12px;
+            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        #quorumSubmitBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(14, 165, 233, 0.4);
+        }
+
+        #quorumSubmitBtn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #quorumStatus {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            line-height: 1.5;
+            min-height: 40px;
+            display: none;
+        }
+
+        #quorumStatus.error {
+            display: block;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.5);
+            color: #fca5a5;
+        }
+
+        #quorumStatus.success {
+            display: block;
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid rgba(34, 197, 94, 0.5);
+            color: #86efac;
+        }
+
+        #quorumStatus.info {
+            display: block;
+            background: rgba(14, 165, 233, 0.1);
+            border: 1px solid rgba(14, 165, 233, 0.5);
+            color: #7dd3fc;
+        }
+
+        .form-footer {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #334155;
+            color: #64748b;
+            font-size: 10px;
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        /* Dashboard oculto até quórum */
+        #pureDashboardWrapper {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        #pureDashboardWrapper.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+    </style>
+</head>
+<body>
+    <!-- ================================================================ -->
+    <!-- HEADER (SEMPRE VISÍVEL)                                         -->
+    <!-- ================================================================ -->
+    <header id="mainHeader" class="unifed-header">
+        <div class="header-left">
+            <h1>🔐 UNIFED-PROBATUM v2.0</h1>
+        </div>
+        <div class="header-right">
+            <button id="langToggleBtn" class="btn-lang-toggle" title="Alternar PT/EN">
+                <i class="fas fa-globe"></i> PT/EN
+            </button>
+        </div>
+    </header>
+
+    <!-- ================================================================ -->
+    <!-- OVERLAY DE QUÓRUM — BLOQUEIO HALT ATÉ VALIDAÇÃO               -->
+    <!-- ================================================================ -->
+    <div id="quorumOverlay">
+        <div id="quorumForm">
+            <h1>🔑 VALIDAÇÃO DE QUÓRUM SHAMIR k=2</h1>
+            <p class="subtitle">Sistema bloqueado até à introdução de dois fragmentos autenticados</p>
+
+            <form onsubmit="return false;">
+                <div class="form-group">
+                    <label for="fragmentPeritoInput">Fragmento 1 — Perito/Defesa (Hex 64 chars)</label>
+                    <input 
+                        type="text" 
+                        id="fragmentPeritoInput" 
+                        placeholder="a1b2c3d4e5f6... (32 bytes = 64 hex caracteres)"
+                        autocomplete="off"
+                    />
+                </div>
+
+                <div class="form-group">
+                    <label for="fragmentTribunalInput">Fragmento 2 — Tribunal/Contraparte (Hex 64 chars)</label>
+                    <input 
+                        type="text" 
+                        id="fragmentTribunalInput" 
+                        placeholder="x9y8z7w6v5u4... (32 bytes = 64 hex caracteres)"
+                        autocomplete="off"
+                    />
+                </div>
+
+                <div class="button-group">
+                    <button type="button" id="quorumSubmitBtn">
+                        <i class="fas fa-check"></i> VALIDAR QUÓRUM
+                    </button>
+                </div>
+
+                <div id="quorumStatus"></div>
+
+                <div class="form-footer">
+                    <strong>ISO/IEC 27037:2012 · Auditoria Forense Transparente</strong><br/>
+                    Cadeia de Custódia Distribuída — k=2 de n=3<br/>
+                    Shamir Secret Sharing em GF(257)
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ================================================================ -->
+    <!-- DASHBOARD PRINCIPAL (OCULTO ATÉ QUÓRUM)                        -->
+    <!-- ================================================================ -->
+    <div id="pureDashboardWrapper">
+        <div id="pureDashboard" class="dashboard-container">
+
+            <!-- Secção de Confirmação de Quórum -->
+            <section id="quorumConfirmationSection" class="info-section">
+                <h2>✅ Quórum Validado</h2>
+                <p>Sistema desbloqueado. Proceça com a análise forense.</p>
+                <div id="quorumConfirmationDetails" class="details-box">
+                    <!-- Preenchido por JavaScript -->
+                </div>
+            </section>
+
+            <!-- Secção de KPIs -->
+            <section id="kpisSection" class="kpis-grid">
+                <h2>MÉTRICAS OPERACIONAIS</h2>
+                <!-- KPIs injectados via JavaScript -->
+            </section>
+
+            <!-- Gráfico principal -->
+            <section id="mainChartContainer" style="display:none; opacity:0;">
+                <h2>ANÁLISE DE FLUXOS FINANCEIROS</h2>
+                <canvas id="mainChart" height="100"></canvas>
+            </section>
+
+            <!-- Toolbar de ferramentas -->
+            <section id="export-tools-container" class="toolbar-section">
+                <h3>FERRAMENTAS DE ANÁLISE</h3>
+                <button id="exportPDFBtn" class="btn-tool" title="Gerar Relatório Técnico (PDF)">
+                    <i class="fas fa-file-pdf"></i> PARECER TÉCNICO
+                </button>
+                <button id="exportJSONBtn" class="btn-tool" title="Exportar dados em JSON">
+                    <i class="fas fa-file-code"></i> EXPORTAR JSON
+                </button>
+                <button id="resetBtn" class="btn-tool" title="Reiniciar sistema">
+                    <i class="fas fa-redo"></i> REINICIAR
+                </button>
+            </section>
+
+            <!-- Consola de diagnóstico -->
+            <section id="consoleSection" class="console-section">
+                <h3>CONSOLA DE AUDITORIA</h3>
+                <div id="consoleOutput" class="console-output">
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- ================================================================ -->
+    <!-- SCRIPTS — CARREGAMENTO ESTÁTICO (SEM OCULTAÇÃO DINÂMICA)       -->
+    <!-- ================================================================ -->
+
+    <!-- FASE 1: Motor de Custódia -->
+    <script src="unifed_custody_engine_v2.0.js"></script>
+
+    <!-- Script de Inicialização e Orquestração de Quórum -->
+    <script>
+        (function _initQuorumUI() {
+            'use strict';
+
+            const MASTER_HASH_TARGET = '72760dfde44902ffdbd234160b8c53d9a354dd852c8000ca65b3b6f9394c8fec';
+
+            const fragmentPeritoInput = document.getElementById('fragmentPeritoInput');
+            const fragmentTribunalInput = document.getElementById('fragmentTribunalInput');
+            const quorumSubmitBtn = document.getElementById('quorumSubmitBtn');
+            const quorumStatus = document.getElementById('quorumStatus');
+            const quorumOverlay = document.getElementById('quorumOverlay');
+            const pureDashboard = document.getElementById('pureDashboardWrapper');
+
+            /**
+             * setStatus(message, type) → void
+             * type: 'info', 'error', 'success'
+             */
+            function setStatus(message, type) {
+                quorumStatus.className = type;
+                quorumStatus.textContent = message;
+            }
+
+            /**
+             * clearInputs() → void
+             */
+            function clearInputs() {
+                fragmentPeritoInput.value = '';
+                fragmentTribunalInput.value = '';
+            }
+
+            /**
+             * validateAndSubmit() → Promise<void>
+             */
+            async function validateAndSubmit() {
+                const frag1 = fragmentPeritoInput.value.trim();
+                const frag2 = fragmentTribunalInput.value.trim();
+
+                if (!frag1 || !frag2) {
+                    setStatus('❌ Ambos os fragmentos são obrigatórios.', 'error');
+                    return;
+                }
+
+                if (frag1.length !== 64) {
+                    setStatus('❌ Fragmento 1 deve ter exatamente 64 caracteres hexadecimais (32 bytes).', 'error');
+                    return;
+                }
+
+                if (frag2.length !== 64) {
+                    setStatus('❌ Fragmento 2 deve ter exatamente 64 caracteres hexadecimais (32 bytes).', 'error');
+                    return;
+                }
+
+                // Validar que são hex válido
+                if (!/^[0-9a-fA-F]+$/.test(frag1)) {
+                    setStatus('❌ Fragmento 1 contém caracteres não-hexadecimais.', 'error');
+                    return;
+                }
+
+                if (!/^[0-9a-fA-F]+$/.test(frag2)) {
+                    setStatus('❌ Fragmento 2 contém caracteres não-hexadecimais.', 'error');
+                    return;
+                }
+
+                setStatus('⏳ Validando quórum Shamir k=2...', 'info');
+                quorumSubmitBtn.disabled = true;
+
+                try {
+                    const result = await window._validateQuorumAndUnlock(frag1, frag2, MASTER_HASH_TARGET);
+
+                    if (result.success) {
+                        setStatus('✅ Quórum validado com sucesso! Sistema desbloqueado.', 'success');
+                        
+                        // Mostrar confirmação
+                        const details = document.getElementById('quorumConfirmationDetails');
+                        if (details) {
+                            details.innerHTML = `
+                                <p><strong>Hash Reconstituído:</strong> ${result.hash.substring(0, 32)}...</p>
+                                <p><strong>Operações Registadas:</strong> ${result.log.length} entradas</p>
+                                <p><strong>Timestamp:</strong> ${new Date().toISOString()}</p>
+                            `;
+                        }
+
+                        // Ocultar overlay e mostrar dashboard
+                        setTimeout(function () {
+                            quorumOverlay.classList.add('hidden');
+                            pureDashboard.classList.add('visible');
+                            console.log('[QUORUM-UI] ✅ Dashboard visível.');
+                        }, 500);
+
+                    } else {
+                        setStatus('❌ Validação falhou: ' + (result.error || 'Erro desconhecido'), 'error');
+                        quorumSubmitBtn.disabled = false;
+                    }
+
+                } catch (err) {
+                    setStatus('❌ Erro durante validação: ' + err.message, 'error');
+                    quorumSubmitBtn.disabled = false;
+                }
+            }
+
+            // Event listeners
+            quorumSubmitBtn.addEventListener('click', validateAndSubmit);
+            fragmentPeritoInput.addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') validateAndSubmit();
+            });
+            fragmentTribunalInput.addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') validateAndSubmit();
+            });
+
+            // Atalho de reset (Ctrl+Shift+R)
+            document.addEventListener('keydown', function (e) {
+                if (e.ctrlKey && e.shiftKey && e.key === 'R') {
+                    clearInputs();
+                    setStatus('', '');
+                    quorumOverlay.classList.remove('hidden');
+                    pureDashboard.classList.remove('visible');
+                }
+            });
+
+            console.log('[QUORUM-UI] ✅ Interface de quórum inicializada.');
+            console.log('[QUORUM-UI] Sistema em modo HALT — aguardando validação de quórum.');
+        })();
+    </script>
+
+    <!-- Script de Teste (removível após validação) -->
+    <script>
+        console.log('[UNIFED-PROBATUM v2.0] Sistema carregado e bloqueado.');
+        console.log('[UNIFED-PROBATUM v2.0] Aguardando validação de quórum Shamir k=2.');
+        console.log('[UNIFED-PROBATUM v2.0] Master Hash Target: 72760dfde44902ffdbd234160b8c53d9a354dd852c8000ca65b3b6f9394c8fec');
+    </script>
+</body>
+</html>
