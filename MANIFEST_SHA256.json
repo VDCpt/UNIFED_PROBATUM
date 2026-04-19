@@ -1,9 +1,9 @@
 {
   "build_date": "2026-04-19T03:00:00.000000",
-  "build_version": "v2.2.0-CUMULATIVE-HYDRATION",
-  "master_hash_sha256": "9f466af6a5c889f72bca08b27dba2e03bc68d465a693357e195cafa962c1aab7",
+  "build_version": "v2.2.1-FINAL",
+  "master_hash_sha256": "57a20f062bc3af85e0882db0dbb3a742a2788b6767c4083facbc4ce227f14f9b",
   "master_hash_method": "SHA-256(concat(SHA-256(file_1) || SHA-256(file_2) || ... || SHA-256(file_n))) — ordem canónica",
-  "master_hash_note": "Rectificado em 2026-04-19: Implementado Cumulative Hydration no motor de ingestão (Achado EVD-01).",
+  "master_hash_note": "Rectificado em 2026-04-19: Implementado Cumulative Hydration no motor de ingestão (Achado EVD-01 · R-01 (Set→Array)).",
   "sanitation_record": {
     "despacho_autorizacao": "2026-04-19",
     "despacho_esclarecimento_forense": "2026-04-19T14:00:00 UTC",
@@ -166,12 +166,12 @@
     },
     {
       "file": "unifed_ingestion_engine_v2.0.js",
-      "sha256": "9857a8ce0ed7a3524ee2c919974439c9af9d7a5c8e69b5e63878ecc8612d62ab",
-      "size_bytes": 29372,
-      "size_kb": 28.68,
-      "versao": "v2.2.0-CUMULATIVE-HYDRATION",
+      "sha256": "92a40cbfa9d09191f5f23cb405ebe1f8c1d884636a54ed60dd7c468cda662fb4",
+      "size_bytes": 29468,
+      "size_kb": 28.78,
+      "versao": "v2.2.1-FINAL",
       "status": "Rectificado — Cumulative Hydration",
-      "nota": "Actualizado de v2.0.0 para v2.2.0 em 2026-04-19T14:00 UTC. Corrige Achado EVD-01: substituição destrutiva (overwrite) → acumulação cronológica (+=). Adicionadas funções _extractPeriodFromFilename e buckets mensais (monthlyData/dataMonths)."
+      "nota": "Actualizado de v2.0.0 para v2.2.1 em 2026-04-19T14:00 UTC. Corrige Achado EVD-01: substituição destrutiva (overwrite) → acumulação cronológica (+=). Adicionadas funções _extractPeriodFromFilename e buckets mensais (monthlyData/dataMonths). R-01 corrigido: Set→Array (JSON.stringify safe)."
     }
   ],
   "auditoria_forense": {
