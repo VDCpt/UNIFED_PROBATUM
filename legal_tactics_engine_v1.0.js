@@ -642,6 +642,11 @@
        INTERFACE PÚBLICA (NAMESPACE SELADO)
        ====================================================================== */
 
+    /* FIX-LTE-01: Variável de módulo exterior ao objeto frozen.
+       Object.freeze() impede escrita de this._instance em modo estrito.
+       Solução: closure-level variable _engineInstance (padrão singleton seguro). */
+    let _engineInstance = null;
+
     const PUBLIC_API = Object.freeze({
         _INSTALLED: true,
         _VERSION: '1.0.0-LEGAL-TACTICS',
@@ -651,12 +656,13 @@
 
         /**
          * Instanciação singleton para uso global.
+         * NOTA: _engineInstance vive no scope da IIFE, fora do objeto frozen.
          */
         getInstance: function () {
-            if (!this._instance) {
-                this._instance = new LegalTacticsEngine();
+            if (!_engineInstance) {
+                _engineInstance = new LegalTacticsEngine();
             }
-            return this._instance;
+            return _engineInstance;
         }
     });
 

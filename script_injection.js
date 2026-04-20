@@ -2434,6 +2434,74 @@
         console.log('[UNIFED] forceBindAnalyze RET-08: listener completo registado (sem override de pipeline).');
     }
 
+    // ========== PATCH-SI-01: Revelação de Dados Forenses ==========
+    // Função crítica que desbloqueia todos os containers de evidência após perícia
+    // Chamada quando UNIFED_EXECUTE_PERITIA dispara ou quando análise termina
+    
+    function revealForensicData() {
+        console.log('[UNIFED] 🔓 PATCH-SI-01: Iniciando Desbloqueio de Evidências Forenses...');
+        
+        const elementsToReveal = [
+            'mainChartContainer', 
+            'mainDiscrepancyChartContainer',
+            'panel-mainChartContainer',
+            'pureContradictoryCard',
+            'revenueGapCard',
+            'expenseGapCard',
+            'pureEvidenceSection',
+            'quantumBox',
+            'bigDataAlert'
+        ];
+
+        elementsToReveal.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.style.setProperty('display', 'block', 'important');
+                el.style.setProperty('opacity', '1', 'important');
+                el.style.setProperty('visibility', 'visible', 'important');
+                console.log(`[UNIFED] ✓ Revelado: #${id}`);
+            }
+        });
+
+        // Chamar a renderização do enrichment que estava bloqueada
+        if (typeof window.renderDiscrepancyCharts === 'function') {
+            try {
+                window.renderDiscrepancyCharts();
+                console.log('[UNIFED] ✓ renderDiscrepancyCharts() executado com sucesso.');
+            } catch (err) {
+                console.warn('[UNIFED] renderDiscrepancyCharts() falhou:', err.message);
+            }
+        }
+
+        // Chamar _fillAnalysisStatCards se existir
+        if (typeof window._fillAnalysisStatCards === 'function') {
+            try {
+                window._fillAnalysisStatCards();
+                console.log('[UNIFED] ✓ _fillAnalysisStatCards() executado com sucesso.');
+            } catch (err) {
+                console.warn('[UNIFED] _fillAnalysisStatCards() falhou:', err.message);
+            }
+        }
+
+        // Renderizar gráficos se disponível
+        if (typeof window.renderForensicCharts === 'function') {
+            try {
+                window.renderForensicCharts();
+                console.log('[UNIFED] ✓ renderForensicCharts() executado com sucesso.');
+            } catch (err) {
+                console.warn('[UNIFED] renderForensicCharts() falhou:', err.message);
+            }
+        }
+
+        console.log('[UNIFED] 🔓 PATCH-SI-01: Desbloqueio de Evidências concluído.');
+    }
+    
+    window.revealForensicData = revealForensicData;
+
+    // Vincular ao evento de perícia completa
+    window.addEventListener('UNIFED_EXECUTE_PERITIA', revealForensicData);
+    window.addEventListener('UNIFED_ANALYSIS_COMPLETE', revealForensicData);
+
     // Auxiliar: preencher os stat-cards de análise após cálculo dos crossings
     function _fillAnalysisStatCards() {
         const sys = window.UNIFEDSystem;

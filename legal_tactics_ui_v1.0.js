@@ -478,6 +478,16 @@
                 return;
             }
 
+            /* ------------------------------------------------------------------
+               FIX-FREEZE-01: Object.freeze() impede reassignação directa de
+               PUBLIC_API.exportPDF. O módulo PDF regista a implementação real
+               em window._UNIFED_PDF_EXPORT_OVERRIDE. Verificamos esse hook
+               antes de cair no placeholder interno.
+               ------------------------------------------------------------------ */
+            if (typeof root._UNIFED_PDF_EXPORT_OVERRIDE === 'function') {
+                return root._UNIFED_PDF_EXPORT_OVERRIDE(Array.from(this.selectedQuestions));
+            }
+
             const metadata = {
                 caseId: 'CASE-2024-' + Date.now(),
                 perito: 'Sistema UNIFED Probatum v13.12.3-PRO',
@@ -488,7 +498,7 @@
 
             const guiao = this.engine.generateGuiaoAudiencia(Array.from(this.selectedQuestions), metadata);
 
-            // Placeholder para PDF (será implementado em FASE 3)
+            // Placeholder de fallback — módulo PDF ainda não carregado
             const statusEl = document.getElementById('pure-contradictory-export-status');
             if (statusEl) {
                 statusEl.style.display = 'block';
@@ -496,11 +506,11 @@
                     <strong>✓ Guião Técnico Preparado</strong><br>
                     Questões: ${guiao.questoes_selecionadas.length}<br>
                     Eixos: A(${guiao.distribuicao_eixos.A}) B(${guiao.distribuicao_eixos.B}) C(${guiao.distribuicao_eixos.C}) D(${guiao.distribuicao_eixos.D}) E(${guiao.distribuicao_eixos.E})<br>
-                    <em>A geração do PDF será acionada em breve. Integração com jsPDF em progresso...</em>
+                    <em>Módulo PDF não detectado (window._UNIFED_PDF_EXPORT_OVERRIDE ausente). Carregue legal_tactics_pdf_export_v1.0.js.</em>
                 `;
             }
 
-            console.log('[EXPORT] Guião preparado:', guiao);
+            console.log('[EXPORT] Guião preparado (fallback placeholder):', guiao);
         }
     }
 

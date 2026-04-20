@@ -91,8 +91,8 @@
             const conteudoGuiao = JSON.stringify(guiao, null, 2);
             const masterHash = await computeSHA256(conteudoGuiao);
 
-            // Tentar usar jsPDF (se disponível) — FIX-NS-01: detectar ambos os namespaces
-            if (typeof window.jsPDF !== 'undefined' || (window.jspdf && typeof window.jspdf.jsPDF !== 'undefined')) {
+            // Tentar usar jsPDF (se disponível)
+            if (typeof window.jsPDF !== 'undefined') {
                 return this._generateUsingJsPDF(guiao, masterHash);
             } else {
                 console.warn('[PDF_EXPORT] jsPDF não disponível. Usando fallback HTML-to-print.');
@@ -105,12 +105,7 @@
          * Usa jsPDF para gerar PDF profissional.
          */
         _generateUsingJsPDF(guiao, masterHash) {
-            /* FIX-NS-01: Compatibilidade de namespace jsPDF
-               UMD (jspdf 2.x): window.jspdf.jsPDF
-               Legado (jspdf 1.x / alias bridge): window.jsPDF
-               A bridge em index.html (FIX-NS-01) já faz o alias, mas esta
-               guarda defensiva garante funcionamento mesmo sem a bridge. */
-            const { jsPDF } = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf : window;
+            const { jsPDF } = window;
             const doc = new jsPDF({
                 orientation: 'portrait',
                 unit: 'mm',
@@ -460,54 +455,66 @@
     }
 
     /* ======================================================================
-       INTEGRAÇÃO COM UI
+       INTEGRAÇÃO COM UI — FIX-FREEZE-01
+       ======================================================================
+       CAUSA-RAIZ CORRIGIDA: UNIFED_LEGAL_TACTICS_UI.PUBLIC_API está selado
+       com Object.freeze(). A reassignação directa de .exportPDF lançava
+       TypeError: Cannot assign to read only property.
+
+       SOLUÇÃO: O módulo PDF regista a implementação real no hook global
+       window._UNIFED_PDF_EXPORT_OVERRIDE. O método exportPDF() da UI
+       verifica este hook antes de executar o placeholder interno
+       (correcção aplicada em legal_tactics_ui_v1.0.js).
        ====================================================================== */
 
-    // Estender UNIFED_LEGAL_TACTICS_UI para incluir função de export
-    if (root.UNIFED_LEGAL_TACTICS_UI) {
-        const originalExportPDF = root.UNIFED_LEGAL_TACTICS_UI.exportPDF;
-        root.UNIFED_LEGAL_TACTICS_UI.exportPDF = async function() {
-            const selectedQuestions = Array.from(document.querySelectorAll('.pure-accordion-checkbox:checked')).map(cb => cb.id.replace('cb-', ''));
-            
-            if (selectedQuestions.length === 0) {
-                alert('⚠️ Selecione pelo menos uma questão para exportar.');
-                return;
-            }
+    root._UNIFED_PDF_EXPORT_OVERRIDE = async function _pdfExportOverride(selectedQuestions) {
+        if (!selectedQuestions || selectedQuestions.length === 0) {
+            // Tentativa de leitura via DOM como fallback
+            selectedQuestions = Array.from(
+                document.querySelectorAll('.pure-accordion-checkbox:checked')
+            ).map(cb => cb.id.replace('cb-', ''));
+        }
 
-            const metadata = {
-                caseId: 'CASE-UNIFED-' + new Date().getFullYear() + '-' + String(Date.now()).slice(-6),
-                perito: 'Sistema UNIFED Probatum v13.12.3-PRO',
-                data: new Date().toLocaleDateString('pt-PT'),
-                discrepancia: document.getElementById('pure-disc-c2')?.textContent || '€ [conforme perícia]',
-                periodo: 'Outubro 2024'
-            };
+        if (selectedQuestions.length === 0) {
+            alert('⚠️ Selecione pelo menos uma questão para exportar.');
+            return;
+        }
 
-            try {
-                const exporter = new PDFExporter();
-                const blob = await exporter.generatePDF(selectedQuestions, metadata);
-                
-                const filename = 'GUIAO_AUDIENCIA_' + metadata.caseId + '.pdf';
-                PDFExporter.downloadFile(blob, filename);
-
-                const statusEl = document.getElementById('pure-contradictory-export-status');
-                if (statusEl) {
-                    statusEl.style.display = 'block';
-                    statusEl.style.background = 'rgba(16, 185, 129, 0.15)';
-                    statusEl.style.borderColor = '#10b981';
-                    statusEl.style.color = '#10b981';
-                    statusEl.innerHTML = `
-                        <strong>✓ PDF Exportado com Sucesso</strong><br/>
-                        Ficheiro: <code>${filename}</code><br/>
-                        Questões: ${selectedQuestions.length}/50<br/>
-                        <em>O documento está assinado com Master Hash SHA-256 no rodapé.</em>
-                    `;
-                }
-            } catch (err) {
-                console.error('[EXPORT_ERROR]', err);
-                alert('❌ Erro ao gerar PDF: ' + err.message);
-            }
+        const metadata = {
+            caseId: 'CASE-UNIFED-' + new Date().getFullYear() + '-' + String(Date.now()).slice(-6),
+            perito: 'Sistema UNIFED Probatum v13.12.3-PRO',
+            data: new Date().toLocaleDateString('pt-PT'),
+            discrepancia: document.getElementById('pure-disc-c2')?.textContent || '€ [conforme perícia]',
+            periodo: 'Outubro 2024'
         };
-    }
+
+        try {
+            const exporter = new PDFExporter();
+            const blob = await exporter.generatePDF(selectedQuestions, metadata);
+
+            const filename = 'GUIAO_AUDIENCIA_' + metadata.caseId + '.pdf';
+            PDFExporter.downloadFile(blob, filename);
+
+            const statusEl = document.getElementById('pure-contradictory-export-status');
+            if (statusEl) {
+                statusEl.style.display = 'block';
+                statusEl.style.background = 'rgba(16, 185, 129, 0.15)';
+                statusEl.style.borderColor = '#10b981';
+                statusEl.style.color = '#10b981';
+                statusEl.innerHTML = `
+                    <strong>✓ PDF Exportado com Sucesso</strong><br/>
+                    Ficheiro: <code>${filename}</code><br/>
+                    Questões: ${selectedQuestions.length}/50<br/>
+                    <em>O documento está assinado com Master Hash SHA-256 no rodapé.</em>
+                `;
+            }
+        } catch (err) {
+            console.error('[PDF_OVERRIDE_ERROR]', err);
+            alert('❌ Erro ao gerar PDF: ' + err.message);
+        }
+    };
+
+    console.log('[LEGAL_TACTICS_PDF] ✓ Hook window._UNIFED_PDF_EXPORT_OVERRIDE registado (FIX-FREEZE-01).');
 
     /* ======================================================================
        INTERFACE PÚBLICA

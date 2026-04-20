@@ -6,26 +6,6 @@
     <title>UNIFED · PROBATUM · Painel Forense</title>
     <style>
         /* ========== ESTILOS COMPLETOS (MANTIDOS DO ORIGINAL) ========== */
-        /* =========================================================================
-           FIX-CANVAS-01: Fundo explícito nos elementos <canvas>
-           Problema: canvas HTML5 é transparente por omissão. Sem Chart.js a renderizar
-           (cenário standalone / visualizadores externos), os canvas aparecem como áreas
-           transparentes — o que produz o padrão xadrez azul em Claude Artifacts,
-           VS Code Live Preview, Figma, e similares.
-           Solução: forçar background #0a0c12 (igual ao body) em todos os canvas.
-           Impacto zero em runtime normal: Chart.js sobrepõe com o seu próprio render.
-           ISO/IEC 27037:2012 — integridade visual do documento forense.
-           ========================================================================= */
-        canvas {
-            background: #0a0c12;
-        }
-        /* =========================================================================
-           FIX-STANDALONE-01: Garantir que body tem background opaco quando
-           panel.html é aberto como documento autónomo (debug / revisão)
-           ========================================================================= */
-        html {
-            background: #0a0c12;
-        }
         * {
             margin: 0;
             padding: 0;
@@ -401,6 +381,31 @@
             .pure-fiscal-row { flex-wrap: wrap !important; }
             #card-asfixia { flex-direction: column !important; }
         }
+        /* ========== PATCH-PH-01: Eliminação de Overlay Quadriculado ========== */
+        html, body { 
+            background-color: #0a0c12 !important; 
+            background-image: none !important;
+            color: #e6edf3;
+            margin: 0; 
+            padding: 0;
+        }
+        .pure-card { 
+            background: #161b22 !important; 
+            border: 1px solid #30363d; 
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            opacity: 1 !important;
+        }
+        canvas { 
+            background: #0a0c12 !important; 
+            opacity: 1 !important;
+        }
+        .unifed-hidden-until-analysis { 
+            display: none; 
+        }
+        #ds-ac-overlay { 
+            display: none !important; 
+        }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,600;14..32,700&family=JetBrains+Mono&display=swap" rel="stylesheet">
 </head>
@@ -677,6 +682,60 @@
         var el2 = document.getElementById('pure-chart-container');
         if (el2) el2.style.display = 'none';
     })();
+
+    // ========== PATCH-PH-02: Blocos de IDs Críticos Ocultos (Necessários para script.js) ==========
+    // Estes elementos são obrigatórios para que script.js não lance erros de DOM validation
+    // Os IDs são usados por listeners e triggers críticos da perícia
+    
+    if (!document.getElementById('analyzeBtn')) {
+        var analyzeBtn = document.createElement('button');
+        analyzeBtn.id = 'analyzeBtn';
+        analyzeBtn.style.display = 'none';
+        analyzeBtn.setAttribute('aria-hidden', 'true');
+        document.body.appendChild(analyzeBtn);
+    }
+    
+    if (!document.getElementById('demoModeBtn')) {
+        var demoModeBtn = document.createElement('button');
+        demoModeBtn.id = 'demoModeBtn';
+        demoModeBtn.style.display = 'none';
+        demoModeBtn.setAttribute('aria-hidden', 'true');
+        document.body.appendChild(demoModeBtn);
+    }
+    
+    if (!document.getElementById('forensicWipeBtn')) {
+        var forensicWipeBtn = document.createElement('button');
+        forensicWipeBtn.id = 'forensicWipeBtn';
+        forensicWipeBtn.style.display = 'none';
+        forensicWipeBtn.setAttribute('aria-hidden', 'true');
+        document.body.appendChild(forensicWipeBtn);
+    }
+    
+    if (!document.getElementById('logsModal')) {
+        var logsModal = document.createElement('div');
+        logsModal.id = 'logsModal';
+        logsModal.style.display = 'none';
+        logsModal.setAttribute('aria-hidden', 'true');
+        document.body.appendChild(logsModal);
+    }
+    
+    // Garantir que mainChartContainer e discrepancyChartContainer existem
+    if (!document.getElementById('mainChartContainer')) {
+        var mainChartContainer = document.createElement('div');
+        mainChartContainer.id = 'mainChartContainer';
+        mainChartContainer.style.display = 'none';
+        mainChartContainer.innerHTML = '<canvas id="mainChart"></canvas>';
+        document.body.appendChild(mainChartContainer);
+    }
+    
+    if (!document.getElementById('mainDiscrepancyChartContainer')) {
+        var discrepancyContainer = document.createElement('div');
+        discrepancyContainer.id = 'mainDiscrepancyChartContainer';
+        discrepancyContainer.style.display = 'none';
+        discrepancyContainer.innerHTML = '<canvas id="discrepancyChart"></canvas>';
+        document.body.appendChild(discrepancyContainer);
+    }
+
 </script>
 </body>
 </html>

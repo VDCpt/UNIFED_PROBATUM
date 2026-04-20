@@ -13,7 +13,6 @@
   Conformidade : DORA (UE) 2022/2554 · Art. 125.º CPP · ISO/IEC 27037:2012
                : Lei n.º 109/2009 (Cibercrime) · Diretiva DAC7 (UE) 2021/514
                : Art. 119.º RGIT · RGPD Art. 32.º · eIDAS
-  Password     : Beatriz2026###@@@
   Hash SHA-256 : 2cc9039cff521fa20ce9748ea10ebb59b83de0e922899071a81f1494a0728b54
   Master Hash  : a538cdf55996f9509249c51ecdf5ee15f46b403b85411a4d0f18590f54f3a417
   ============================================================================
@@ -26,10 +25,10 @@
 -->
 <title>UNIFED-PROBATUM — Sistema de Peritagem Forense Digital</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-      integrity="sha512-iecdLmaskl7CVJkEZSMUkrQ6usKGgiYjwlrfcqKKcfx00MLp3YQe98bNvBCzEAKJRjL4NnHPVcKMuMrIZs7wqw=="
+      integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="
       crossorigin="anonymous" referrerpolicy="no-referrer">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"
-        integrity="sha512-d5kLQpDQdMp5+mzgP8f5RpvPV+Dak4lFa8UVf1q5BVj2I04PPlBrF/+AxAXTHjg/dHp6/3z6DxMEQu0JqYeZA=="
+        integrity="sha512-ElRFoEQdI5Ht6kZvyzXhYG9NqjtkmlkfYk0wr6wHxU9JEHakS7UJZNeml5ALk+8IKlU6jDgMabC3vkumRokgJA=="
         crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <!-- ============================================================================
      FIX-EXT-02: jsPDF UMD — Obrigatório para exportação PDF (Tríade + Legal Tactics)
@@ -131,6 +130,159 @@ body::before {
   color: var(--accent-cyan);
 }
 .header-right { display: flex; align-items: center; gap: 8px; }
+
+/* ============================================================================
+   TOOLBAR — BOTÕES DO HEADER (hdr-btn variants)
+   ============================================================================ */
+.hdr-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 9px; letter-spacing: 1.4px;
+  text-transform: uppercase; font-weight: 600;
+  padding: 6px 12px; border-radius: 6px;
+  cursor: pointer; border: 1px solid transparent;
+  white-space: nowrap;
+  transition: all 0.18s ease;
+  flex-shrink: 0;
+}
+.hdr-btn i { font-size: 10px; }
+
+.hdr-btn-primary {
+  background: rgba(0,229,255,0.1);
+  border-color: rgba(0,229,255,0.35);
+  color: var(--accent-cyan);
+}
+.hdr-btn-primary:hover {
+  background: rgba(0,229,255,0.2);
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 12px rgba(0,229,255,0.25);
+}
+
+.hdr-btn-amber {
+  background: rgba(245,158,11,0.08);
+  border-color: rgba(245,158,11,0.3);
+  color: var(--accent-amber);
+}
+.hdr-btn-amber:hover {
+  background: rgba(245,158,11,0.18);
+  border-color: var(--accent-amber);
+  box-shadow: 0 0 10px rgba(245,158,11,0.2);
+}
+
+.hdr-btn-secondary {
+  background: rgba(139,92,246,0.08);
+  border-color: rgba(139,92,246,0.25);
+  color: var(--accent-purple);
+}
+.hdr-btn-secondary:hover {
+  background: rgba(139,92,246,0.18);
+  border-color: var(--accent-purple);
+}
+
+.hdr-btn-ghost {
+  background: rgba(255,255,255,0.03);
+  border-color: var(--border-solid);
+  color: var(--text-secondary);
+}
+.hdr-btn-ghost:hover {
+  background: rgba(255,255,255,0.07);
+  border-color: rgba(255,255,255,0.15);
+  color: var(--text-primary);
+}
+
+.hdr-btn-util {
+  background: rgba(0,229,255,0.04);
+  border-color: var(--border-glass);
+  color: var(--text-secondary);
+}
+.hdr-btn-util:hover {
+  background: rgba(0,229,255,0.1);
+  border-color: rgba(0,229,255,0.25);
+  color: var(--accent-cyan);
+}
+
+.hdr-btn-danger {
+  background: rgba(239,68,68,0.08);
+  border-color: rgba(239,68,68,0.25);
+  color: var(--accent-red);
+}
+.hdr-btn-danger:hover {
+  background: rgba(239,68,68,0.18);
+  border-color: var(--accent-red);
+  box-shadow: 0 0 10px rgba(239,68,68,0.2);
+}
+
+/* Header right — scroll horizontal em ecrãs < 1200px */
+.header-right {
+  display: flex; align-items: center;
+  gap: 6px; flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+/* ============================================================================
+   ZONA DE UPLOAD BIGDATA — #globalDropZone
+   ============================================================================ */
+#globalDropZone {
+  position: relative; z-index: 1;
+  margin: 0 24px 16px;
+  border: 2px dashed rgba(0,229,255,0.2);
+  border-radius: 12px;
+  background: rgba(5,8,16,0.7);
+  transition: border-color 0.25s, background 0.25s;
+  overflow: hidden;
+}
+#globalDropZone.drag-over {
+  border-color: var(--accent-cyan);
+  background: rgba(0,229,255,0.05);
+  box-shadow: var(--glow-cyan);
+}
+#globalDropZone input[type="file"] {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  opacity: 0; cursor: pointer; z-index: 2;
+}
+.drop-zone-inner {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 24px 16px; gap: 6px;
+  pointer-events: none;
+}
+.drop-zone-inner i {
+  font-size: 2rem; color: rgba(0,229,255,0.35);
+  margin-bottom: 6px;
+}
+.drop-zone-label {
+  font-family: var(--font-display);
+  font-size: 0.85rem; letter-spacing: 0.08em;
+  color: var(--text-secondary);
+}
+.drop-zone-sub {
+  font-size: 0.7rem; color: var(--text-muted);
+  letter-spacing: 0.05em;
+}
+#dropZoneSelectBtn { pointer-events: all; }
+.drop-zone-filelist {
+  padding: 0 16px 12px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem; color: var(--text-muted);
+  display: flex; flex-direction: column; gap: 4px;
+}
+.drop-zone-filelist .dz-file {
+  display: flex; align-items: center; gap: 8px;
+  padding: 4px 8px;
+  background: rgba(0,229,255,0.04);
+  border: 1px solid var(--border-glass);
+  border-radius: 4px; color: var(--text-secondary);
+}
+.drop-zone-filelist .dz-file i { color: var(--accent-cyan); }
+
+/* ============================================================================
+   MODAL DE INÍCIO DE SESSÃO — #startSessionModal
+   ============================================================================ */
+.modal-session-content {
+  max-width: 520px !important;
+  margin: auto;
+}
 
 #langToggleBtn, #custodyChainTriggerBtn {
   background: rgba(0,229,255,0.06);
@@ -601,20 +753,75 @@ footer.ds-footer {
 </head>
 <body>
 
-<!-- MAIN HEADER -->
+<!-- MAIN HEADER + TOOLBAR COMPLETA -->
 <header id="mainHeader" class="unifed-header" style="display:none;">
   <div class="header-left">
     <h1>&#128272; UNIFED-PROBATUM</h1>
   </div>
   <div class="header-right">
-    <button id="langToggleBtn" title="Alternar PT/GB">
+    <!-- GRUPO 1 — Ações de Análise -->
+    <button id="analyzeBtn" title="Executar Perícia Forense" class="hdr-btn hdr-btn-primary">
+      <i class="fas fa-microscope"></i> ANÁLISE DE PERÍCIA
+    </button>
+    <button id="demoModeBtn" title="Carregar caso real anonimizado" class="hdr-btn hdr-btn-amber">
+      <i class="fas fa-user-secret"></i> CASO REAL ANONIMIZADO
+    </button>
+
+    <!-- GRUPO 2 — Exportação -->
+    <button id="exportPDFBtn" title="Gerar Parecer Técnico PDF" class="hdr-btn hdr-btn-secondary">
+      <i class="fas fa-file-pdf"></i> PARECER TÉCNICO
+    </button>
+    <button id="exportJSONBtn" title="Exportar estado em JSON" class="hdr-btn hdr-btn-secondary">
+      <i class="fas fa-file-code"></i> EXPORTAR JSON
+    </button>
+    <button id="exportDOCXBtn" title="Exportar relatório DOCX" class="hdr-btn hdr-btn-secondary">
+      <i class="fas fa-file-word"></i> DOCX
+    </button>
+
+    <!-- GRUPO 3 — Modais e Gestão -->
+    <button id="openEvidenceModalBtn" title="Registo de evidências e custódia" class="hdr-btn hdr-btn-ghost">
+      <i class="fas fa-fingerprint"></i> EVIDÊNCIAS
+    </button>
+    <button id="atfModalBtn" title="Plano de Entrega — Custódia" class="hdr-btn hdr-btn-ghost">
+      <i class="fas fa-shield-alt"></i> CUSTÓDIA — PLANO DE ENTREGA
+    </button>
+    <button id="registerClientBtnFixed" title="Registar novo cliente" class="hdr-btn hdr-btn-ghost">
+      <i class="fas fa-user-plus"></i> CLIENTE
+    </button>
+
+    <!-- GRUPO 4 — Sistema -->
+    <button id="langToggleBtn" title="Alternar PT/GB" class="hdr-btn hdr-btn-util">
       <i class="fas fa-globe"></i> PT/GB
     </button>
-    <button id="custodyChainTriggerBtn" title="Cadeia de Custódia">
+    <button id="custodyChainTriggerBtn" title="Cadeia de Custódia" class="hdr-btn hdr-btn-util">
       <i class="fas fa-link"></i> CUSTÓDIA
+    </button>
+    <button id="resetBtn" title="Reiniciar sistema — purga de sessão" class="hdr-btn hdr-btn-util">
+      <i class="fas fa-redo"></i> REINICIAR
+    </button>
+    <button id="forensicWipeBtn" title="Purga total de dados forenses" class="hdr-btn hdr-btn-danger">
+      <i class="fas fa-fire"></i> PURGA TOTAL
     </button>
   </div>
 </header>
+
+<!-- ============================================================================
+     ZONA GLOBAL DE UPLOAD BIGDATA — #globalDropZone + #globalFileInput
+     Visível após activação do dashboard; aceita múltiplos ficheiros.
+     ============================================================================ -->
+<div id="globalDropZone" style="display:none;">
+  <input type="file" id="globalFileInput" multiple accept=".json,.csv,.xml,.zip,.pdf,.xlsx"
+         aria-label="Upload de ficheiros forenses">
+  <div class="drop-zone-inner">
+    <i class="fas fa-cloud-upload-alt"></i>
+    <span class="drop-zone-label">Arraste ficheiros ou clique para carregar</span>
+    <span class="drop-zone-sub">JSON · CSV · XML · SAF-T · DAC7 · PDF · XLSX — máx. 500 MB por lote</span>
+    <button type="button" id="dropZoneSelectBtn" class="hdr-btn hdr-btn-primary" style="margin-top:10px;">
+      <i class="fas fa-folder-open"></i> SELECCIONAR FICHEIROS
+    </button>
+  </div>
+  <div id="dropZoneFileList" class="drop-zone-filelist"></div>
+</div>
 
 <!-- DASHBOARD PRINCIPAL — Zero-State por defeito -->
 <div id="pureDashboardWrapper">
@@ -684,13 +891,13 @@ footer.ds-footer {
     <!-- Ferramentas -->
     <section id="export-tools-container">
       <h3 id="tools-heading">Ferramentas de Análise</h3>
-      <button id="exportPDFBtn" class="btn-tool">
+      <button class="btn-tool" onclick="document.getElementById('exportPDFBtn').click()">
         <i class="fas fa-file-pdf"></i> <span data-pt="PARECER TÉCNICO" data-en="TECHNICAL REPORT">PARECER TÉCNICO</span>
       </button>
-      <button id="exportJSONBtn" class="btn-tool">
+      <button class="btn-tool" onclick="document.getElementById('exportJSONBtn').click()">
         <i class="fas fa-file-code"></i> <span data-pt="EXPORTAR JSON" data-en="EXPORT JSON">EXPORTAR JSON</span>
       </button>
-      <button id="resetBtn" class="btn-tool">
+      <button class="btn-tool" onclick="document.getElementById('resetBtn').click()">
         <i class="fas fa-redo"></i> <span data-pt="REINICIAR" data-en="RESET">REINICIAR</span>
       </button>
     </section>
@@ -720,6 +927,35 @@ footer.ds-footer {
   </div>
 </div>
 
+<!-- ============================================================================
+     MODAL DE INÍCIO DE SESSÃO — #startSessionModal · #startSessionBtn
+     Criado de forma autónoma em index.html. A lógica de activação existe
+     em script_injection.js mas o elemento HTML correspondente estava ausente.
+     ============================================================================ -->
+<div id="startSessionModal" class="modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="startSessionTitle">
+  <div class="modal-content modal-session-content">
+    <div class="modal-header">
+      <h2 id="startSessionTitle">&#128274; UNIFED-PROBATUM · Início de Sessão Forense</h2>
+    </div>
+    <div class="modal-body" style="text-align:center; padding: 2rem 1.5rem;">
+      <div style="font-size: 0.75rem; letter-spacing: 0.15em; color: var(--text-muted); text-transform: uppercase; margin-bottom: 1rem;">
+        Sistema de Peritagem Forense Digital · v13.12.3-DIAMOND-SHIELD
+      </div>
+      <div style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-secondary); line-height: 1.8; margin-bottom: 1.5rem; text-align: left; background: rgba(0,229,255,0.04); border: 1px solid var(--border-glass); border-radius: 8px; padding: 1rem;">
+        <span style="color: var(--accent-cyan);">&#9654;</span> Conformidade: Art. 125.º CPP · ISO/IEC 27037:2012 · DORA (UE) 2022/2554<br>
+        <span style="color: var(--accent-cyan);">&#9654;</span> Cadeia de custódia activa: toda a sessão é registada no CSC Terminal<br>
+        <span style="color: var(--accent-cyan);">&#9654;</span> Identificador de sessão gerado por <code>crypto.getRandomValues()</code>
+      </div>
+      <div style="font-size: 0.7rem; color: var(--text-muted); margin-bottom: 1.5rem;" id="startSessionId">
+        SESSION_ID: ---
+      </div>
+      <button id="startSessionBtn" class="hdr-btn hdr-btn-primary" style="font-size: 1rem; padding: 12px 48px; letter-spacing: 0.2em;">
+        <i class="fas fa-lock-open"></i> INICIAR SESSÃO FORENSE
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- RODAPÉ GLOBAL -->
 <footer class="ds-footer" id="globalFooter" style="display:none;">
   <span>UNIFED-PROBATUM v13.12.3 · Art. 125.º CPP · ISO/IEC 27037:2012 · DORA (UE) 2022/2554</span>
@@ -740,35 +976,6 @@ footer.ds-footer {
    O timing-attack bloqueava o pipeline forense e impedia renderização de dados.
    Reativar APENAS em produção, após validação completa do motor de análise. */
 window._UNIFED_HALT = function() {};
-  }
-
-  // Timing attack: DevTools atrasa console.log em >5ms
-  var _devCheckInterval = setInterval(function() {
-    if (!window._UNIFED_ACCESS_GRANTED) return; // Só ativo após login
-    var t0 = performance.now();
-    // eslint-disable-next-line no-console
-    console.log('\u200B'); // Zero-width space — invisível mas processado
-    var t1 = performance.now();
-    if (t1 - t0 > 150) {
-      clearInterval(_devCheckInterval);
-      _zeroState();
-    }
-  }, 2000);
-
-  // Deteção via dimensões da janela (painel lateral abre com >160px de diferença)
-  var _winCheck = setInterval(function() {
-    if (!window._UNIFED_ACCESS_GRANTED) return;
-    var threshold = 160;
-    var widthDiff = window.outerWidth - window.innerWidth;
-    var heightDiff = window.outerHeight - window.innerHeight;
-    if (widthDiff > threshold || heightDiff > threshold) {
-      clearInterval(_winCheck);
-      _zeroState();
-    }
-  }, 3000);
-
-  window._UNIFED_HALT = _zeroState;
-})();
 
 /* ============================================================================
    MÓDULO 1 — ESTADO GLOBAL (Zero-State por defeito)
@@ -2088,6 +2295,169 @@ function _bindDashboardEvents() {
      Motor forense principal → Nexus → Enriquecimento → Injeção do Painel
      Bateria de Contraditório (art. 327.º CPP) carregada por último
      ============================================================================ -->
+<!-- ============================================================================
+     FIX-DOM-01 CORRIGIDO: Ghost DOM Stubs substituídos por elementos funcionais.
+     Os IDs #analyzeBtn · #demoModeBtn · #forensicWipeBtn · #startSessionBtn
+     existem agora no header e no modal de sessão com CSS e lógica real.
+     Os IDs abaixo são mantidos apenas para compatibilidade com script.js legado
+     que possa referenciar #logsModal e #clearConsoleBtn.
+     ============================================================================ -->
+<button id="clearConsoleBtn"  style="display:none;" aria-hidden="true"></button>
+<div    id="logsModal"        style="display:none;" aria-hidden="true"></div>
+
+<script>
+/* ============================================================================
+   MÓDULO 13 — INICIALIZAÇÃO DA DROPZONE (#globalDropZone)
+   ============================================================================ */
+(function _initDropZone() {
+  var zone = document.getElementById('globalDropZone');
+  var input = document.getElementById('globalFileInput');
+  var fileList = document.getElementById('dropZoneFileList');
+  var selectBtn = document.getElementById('dropZoneSelectBtn');
+  if (!zone || !input) return;
+
+  function _handleFiles(files) {
+    if (!files || files.length === 0) return;
+    var arr = Array.from(files);
+    if (fileList) {
+      fileList.innerHTML = '';
+      arr.forEach(function(f) {
+        var d = document.createElement('div');
+        d.className = 'dz-file';
+        var icon = f.name.endsWith('.pdf') ? 'fa-file-pdf' :
+                   f.name.endsWith('.json') ? 'fa-file-code' :
+                   f.name.endsWith('.csv') ? 'fa-file-csv' :
+                   f.name.endsWith('.xlsx') ? 'fa-file-excel' : 'fa-file';
+        d.innerHTML = '<i class="fas ' + icon + '"></i>' +
+          '<span>' + f.name + '</span>' +
+          '<span style="margin-left:auto;color:var(--text-muted);">' +
+          (f.size > 1048576 ? (f.size/1048576).toFixed(2) + ' MB' : (f.size/1024).toFixed(1) + ' KB') +
+          '</span>';
+        fileList.appendChild(d);
+      });
+    }
+    // Dispatchar evento para script.js / enrichment.js processar
+    window.dispatchEvent(new CustomEvent('UNIFED_FILES_DROPPED', { detail: { files: arr } }));
+    if (window.cscLog) cscLog('[UPLOAD] ' + arr.length + ' ficheiro(s) carregado(s) via globalDropZone.', 'sys');
+  }
+
+  zone.addEventListener('dragover', function(e) {
+    e.preventDefault(); zone.classList.add('drag-over');
+  });
+  zone.addEventListener('dragleave', function() { zone.classList.remove('drag-over'); });
+  zone.addEventListener('drop', function(e) {
+    e.preventDefault(); zone.classList.remove('drag-over');
+    _handleFiles(e.dataTransfer.files);
+  });
+  input.addEventListener('change', function() { _handleFiles(this.files); });
+  if (selectBtn) {
+    selectBtn.addEventListener('click', function(e) {
+      e.stopPropagation(); input.click();
+    });
+  }
+})();
+
+/* ============================================================================
+   MÓDULO 14 — MODAL DE INÍCIO DE SESSÃO (#startSessionModal / #startSessionBtn)
+   ============================================================================ */
+(function _initSessionModal() {
+  var modal = document.getElementById('startSessionModal');
+  var startBtn = document.getElementById('startSessionBtn');
+  var sessionIdEl = document.getElementById('startSessionId');
+
+  if (!modal) return;
+
+  // Injectar SESSION_ID gerado pelo Módulo 1
+  if (sessionIdEl && window.UNIFEDState && window.UNIFEDState.sessionId) {
+    sessionIdEl.textContent = 'SESSION_ID: ' + window.UNIFEDState.sessionId;
+  }
+
+  if (startBtn) {
+    startBtn.addEventListener('click', function() {
+      modal.style.display = 'none';
+      // Mostrar a dropzone após início de sessão
+      var dz = document.getElementById('globalDropZone');
+      if (dz) dz.style.display = 'block';
+      if (window.cscLog) cscLog('[SESSION] Sessão forense iniciada · ID: ' + (window.UNIFEDState ? window.UNIFEDState.sessionId : '---'), 'sys');
+    });
+  }
+
+  // Expor método para script_injection.js abrir o modal
+  window._UNIFED_OPEN_SESSION_MODAL = function() {
+    if (modal) {
+      modal.style.display = 'flex';
+      modal.style.alignItems = 'center';
+      modal.style.justifyContent = 'center';
+    }
+  };
+})();
+
+/* ============================================================================
+   MÓDULO 15 — BOTÕES DA TOOLBAR (#forensicWipeBtn · #demoModeBtn · etc.)
+   Binding de eventos que não estão em _bindDashboardEvents() por ausência prévia.
+   ============================================================================ */
+(function _initToolbarButtons() {
+  // Purga total forense
+  var wipeBtn = document.getElementById('forensicWipeBtn');
+  if (wipeBtn) {
+    wipeBtn.addEventListener('click', function() {
+      if (!confirm('⚠️ PURGA TOTAL: Todos os dados forenses da sessão serão eliminados irreversivelmente. Confirmar?')) return;
+      if (window.UNIFEDState) {
+        window.UNIFEDState.analysis.evidencia = [];
+        window.UNIFEDState.analysis.executed = false;
+        window.UNIFEDState.masterHash = '---';
+      }
+      var dfl = document.getElementById('dropZoneFileList');
+      if (dfl) dfl.innerHTML = '';
+      var consoleOut = document.getElementById('consoleOutput');
+      if (consoleOut) consoleOut.innerHTML = '';
+      if (window.cscLog) cscLog('[PURGA] Dados forenses eliminados · FIX-DOM-01 · v13.12.3', 'warn');
+    });
+  }
+
+  // Exportar DOCX (stub — depende de unifed_triada_export.js)
+  var docxBtn = document.getElementById('exportDOCXBtn');
+  if (docxBtn) {
+    docxBtn.addEventListener('click', function() {
+      if (typeof window.gerarDocx === 'function') {
+        window.gerarDocx();
+      } else if (window.cscLog) {
+        cscLog('[DOCX] Módulo unifed_triada_export.js não carregado ou gerarDocx() ausente.', 'warn');
+      }
+    });
+  }
+
+  // Modal de evidências
+  var evBtn = document.getElementById('openEvidenceModalBtn');
+  if (evBtn) {
+    evBtn.addEventListener('click', function() {
+      var m = document.getElementById('hashVerificationModal');
+      if (m) m.style.display = 'flex';
+    });
+  }
+
+  // Modal ATF / Custódia — Plano de Entrega
+  var atfBtn = document.getElementById('atfModalBtn');
+  if (atfBtn) {
+    atfBtn.addEventListener('click', function() {
+      // Reusa hashVerificationModal como contentor de custódia até modal dedicado existir
+      var m = document.getElementById('hashVerificationModal');
+      if (m) m.style.display = 'flex';
+      if (window.cscLog) cscLog('[ATF] Plano de Entrega de Custódia solicitado.', 'sys');
+    });
+  }
+
+  // Registar cliente (stub)
+  var regBtn = document.getElementById('registerClientBtnFixed');
+  if (regBtn) {
+    regBtn.addEventListener('click', function() {
+      if (window.cscLog) cscLog('[CLIENTE] Módulo de registo de cliente não disponível nesta sessão.', 'warn');
+      alert('Módulo de registo de cliente: funcionalidade disponível na versão com backend activo.');
+    });
+  }
+})();
+</script>
+
 <script src="script.js" defer></script>
 <script src="nexus.js" defer></script>
 <script src="enrichment.js" defer></script>
