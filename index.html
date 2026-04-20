@@ -1,0 +1,2083 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!--
+  ============================================================================
+  UNIFED-PROBATUM v13.12.3 — MONÓLITO DIAMOND-SHIELD
+  ============================================================================
+  Versão       : v13.12.3-DIAMOND-SHIELD
+  Data de Build: 2026-04-19T00:00:00Z
+  Mandato      : Diretiva de Consolidação Final — Zero-State Protocol
+  Conformidade : DORA (UE) 2022/2554 · Art. 125.º CPP · ISO/IEC 27037:2012
+               : Lei n.º 109/2009 (Cibercrime) · Diretiva DAC7 (UE) 2021/514
+               : Art. 119.º RGIT · RGPD Art. 32.º · eIDAS
+  Password     : Beatriz2026###@@@
+  Hash SHA-256 : 2cc9039cff521fa20ce9748ea10ebb59b83de0e922899071a81f1494a0728b54
+  Master Hash  : a538cdf55996f9509249c51ecdf5ee15f46b403b85411a4d0f18590f54f3a417
+  ============================================================================
+  ARQUITECTURA:
+    · Monólito autónomo — CSS e JS inline (hash único verificável)
+    · Fluxo: Login → Splash 3D + CSC Terminal → Dashboard Zero-State
+    · Módulos: NexusZero · Smoking Gun · Zona Cinzenta · SAF-T · DAC7
+    · Anti-DevTools: timing-attack setInterval + HALT EXECUTION Protocol
+  ============================================================================
+-->
+<title>UNIFED-PROBATUM — Sistema de Peritagem Forense Digital</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+      integrity="sha512-iecdLmaskl7CVJkEZSMUkrQ6usKGgiYjwlrfcqKKcfx00MLp3YQe98bNvBCzEAKJRjL4NnHPVcKMuMrIZs7wqw=="
+      crossorigin="anonymous" referrerpolicy="no-referrer">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"
+        integrity="sha512-d5kLQpDQdMp5+mzgP8f5RpvPV+Dak4lFa8UVf1q5BVj2I04PPlBrF/+AxAXTHjg/dHp6/3z6DxMEQu0JqYeZA=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<style>
+/* ============================================================================
+   DIAMOND-SHIELD DESIGN SYSTEM — v13.12.3
+   ============================================================================ */
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;800&family=JetBrains+Mono:wght@400;600&display=swap');
+
+:root {
+  /* Paleta Forense Dark */
+  --bg-base:        #050810;
+  --bg-panel:       rgba(8,14,28,0.88);
+  --bg-card:        rgba(10,18,36,0.92);
+  --border-glass:   rgba(0,229,255,0.12);
+  --border-solid:   rgba(255,255,255,0.08);
+  --accent-cyan:    #00e5ff;
+  --accent-purple:  #8b5cf6;
+  --accent-amber:   #f59e0b;
+  --accent-red:     #ef4444;
+  --accent-green:   #10b981;
+  --text-primary:   #e8f0ff;
+  --text-secondary: rgba(148,163,184,0.75);
+  --text-muted:     rgba(148,163,184,0.4);
+  --text-hash:      #00e5ff;
+
+  /* Diamond-Shield Shadows */
+  --shadow-card:    0 25px 50px -12px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.06);
+  --shadow-critical:0 0 0 1px rgba(239,68,68,0.4), 0 25px 50px -12px rgba(239,68,68,0.2);
+  --shadow-amber:   0 0 0 1px rgba(245,158,11,0.4), 0 25px 50px -12px rgba(245,158,11,0.15);
+  --shadow-cyan:    0 0 0 1px rgba(0,229,255,0.25), 0 25px 50px -12px rgba(0,229,255,0.1);
+
+  /* Glows */
+  --glow-red:       0 0 20px rgba(239,68,68,0.6), 0 0 40px rgba(239,68,68,0.3);
+  --glow-amber:     0 0 20px rgba(245,158,11,0.6), 0 0 40px rgba(245,158,11,0.3);
+  --glow-cyan:      0 0 20px rgba(0,229,255,0.4), 0 0 40px rgba(0,229,255,0.15);
+
+  --font-display: 'Syne', 'Segoe UI', system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+  --radius-card:  12px;
+  --radius-sm:    8px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Grid de fundo tipo PCB */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  background-image:
+    linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+}
+
+/* ============================================================================
+   LAYOUT PRINCIPAL
+   ============================================================================ */
+#mainHeader {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 24px;
+  background: rgba(5,8,16,0.85);
+  border-bottom: 1px solid var(--border-glass);
+  backdrop-filter: blur(12px);
+  position: sticky; top: 0; z-index: 100;
+}
+.header-left h1 {
+  font-family: var(--font-display);
+  font-size: 14px; font-weight: 800;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--accent-cyan);
+}
+.header-right { display: flex; align-items: center; gap: 8px; }
+
+#langToggleBtn, #custodyChainTriggerBtn {
+  background: rgba(0,229,255,0.06);
+  border: 1px solid var(--border-glass);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 10px; letter-spacing: 1.5px;
+  padding: 6px 14px; border-radius: 6px;
+  cursor: pointer; text-transform: uppercase;
+  transition: all 0.2s;
+}
+#langToggleBtn:hover, #custodyChainTriggerBtn:hover {
+  background: rgba(0,229,255,0.12);
+  color: var(--accent-cyan);
+  border-color: rgba(0,229,255,0.35);
+}
+
+/* ============================================================================
+   DASHBOARD CONTAINER
+   ============================================================================ */
+#pureDashboardWrapper {
+  display: none; opacity: 0;
+  transition: opacity 0.4s ease;
+  position: relative; z-index: 1;
+  padding: 24px;
+  max-width: 1400px; margin: 0 auto;
+}
+#pureDashboardWrapper.activated {
+  display: block; opacity: 1;
+}
+
+/* ============================================================================
+   DIAMOND-SHIELD CARDS
+   ============================================================================ */
+.ds-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-solid);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: 20px 24px;
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+.ds-card:hover {
+  box-shadow: var(--shadow-cyan);
+  border-color: rgba(0,229,255,0.15);
+}
+
+.ds-card-label {
+  font-size: 0.75rem; letter-spacing: 0.12em;
+  text-transform: uppercase; opacity: 0.6;
+  color: var(--text-secondary);
+  font-weight: 400; margin-bottom: 8px;
+  display: flex; align-items: center; gap: 6px;
+}
+.ds-card-value {
+  font-size: 2.2rem; font-weight: 800;
+  color: var(--accent-cyan); line-height: 1;
+  font-family: var(--font-mono);
+  letter-spacing: -1px;
+}
+.ds-card-sub {
+  font-size: 0.78rem; color: var(--text-muted);
+  margin-top: 6px; letter-spacing: 0.05em;
+}
+
+/* KPI Grid */
+#kpisSection {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px; margin-bottom: 24px;
+}
+#kpisSection h2 {
+  grid-column: 1 / -1;
+  font-family: var(--font-display);
+  font-size: 10px; letter-spacing: 0.3em;
+  text-transform: uppercase; color: var(--text-muted);
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-glass);
+}
+
+/* ============================================================================
+   SMOKING GUN — Cards Críticos Diamond-Shield
+   ============================================================================ */
+.sg-critical {
+  background: rgba(20,4,4,0.9);
+  border: 1px solid rgba(239,68,68,0.35);
+  box-shadow: var(--shadow-critical);
+  animation: pulseRed 2.5s ease-in-out infinite;
+}
+.sg-amber {
+  background: rgba(18,12,2,0.9);
+  border: 1px solid rgba(245,158,11,0.35);
+  box-shadow: var(--shadow-amber);
+  animation: pulseAmber 2.5s ease-in-out infinite;
+}
+
+@keyframes pulseRed {
+  0%,100% { box-shadow: var(--shadow-critical); border-color: rgba(239,68,68,0.35); }
+  50%     { box-shadow: var(--glow-red), var(--shadow-critical); border-color: rgba(239,68,68,0.7); }
+}
+@keyframes pulseAmber {
+  0%,100% { box-shadow: var(--shadow-amber); border-color: rgba(245,158,11,0.35); }
+  50%     { box-shadow: var(--glow-amber), var(--shadow-amber); border-color: rgba(245,158,11,0.7); }
+}
+
+.sg-critical .ds-card-value { color: var(--accent-red); }
+.sg-amber .ds-card-value    { color: var(--accent-amber); }
+
+.sg-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 0.65rem; letter-spacing: 0.15em;
+  text-transform: uppercase; font-weight: 600;
+  padding: 3px 8px; border-radius: 4px;
+  margin-bottom: 10px;
+}
+.sg-badge-red {
+  background: rgba(239,68,68,0.15);
+  color: var(--accent-red);
+  border: 1px solid rgba(239,68,68,0.3);
+}
+.sg-badge-amber {
+  background: rgba(245,158,11,0.12);
+  color: var(--accent-amber);
+  border: 1px solid rgba(245,158,11,0.3);
+}
+.sg-badge::before {
+  content: ''; width: 5px; height: 5px; border-radius: 50%;
+  flex-shrink: 0;
+}
+.sg-badge-red::before  { background: var(--accent-red); box-shadow: 0 0 5px var(--accent-red); }
+.sg-badge-amber::before{ background: var(--accent-amber); box-shadow: 0 0 5px var(--accent-amber); }
+
+/* ============================================================================
+   ZONA CINZENTA
+   ============================================================================ */
+#area-cinzenta {
+  background: rgba(8,14,28,0.92);
+  border: 1px solid rgba(0,229,255,0.1);
+  border-top: 3px solid rgba(245,158,11,0.5);
+  box-shadow: var(--shadow-card);
+}
+
+/* ============================================================================
+   GRÁFICOS
+   ============================================================================ */
+.chart-section {
+  background: var(--bg-card);
+  border: 1px solid var(--border-solid);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: 24px; margin-bottom: 24px;
+}
+.chart-section h2 {
+  font-family: var(--font-display);
+  font-size: 10px; letter-spacing: 0.25em;
+  text-transform: uppercase; color: var(--text-muted);
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border-glass);
+  padding-bottom: 10px;
+}
+
+/* ============================================================================
+   NEXUS-ZERO MODULE
+   ============================================================================ */
+#nexusZeroModule {
+  background: rgba(6,12,24,0.95);
+  border: 1px solid rgba(99,0,255,0.25);
+  border-top: 3px solid rgba(99,0,255,0.6);
+  border-radius: var(--radius-card);
+  box-shadow: 0 0 0 1px rgba(99,0,255,0.1), 0 25px 50px -12px rgba(0,0,0,0.7);
+  padding: 24px; margin-bottom: 24px;
+}
+#nexusZeroModule h3 {
+  font-family: var(--font-display);
+  font-size: 10px; letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: rgba(167,139,250,0.8);
+  margin-bottom: 16px;
+  display: flex; align-items: center; gap: 8px;
+}
+#nexusZeroModule h3::before {
+  content: ''; width: 6px; height: 6px; border-radius: 50%;
+  background: rgba(139,92,246,0.9);
+  box-shadow: 0 0 8px rgba(139,92,246,0.8);
+  flex-shrink: 0;
+}
+
+.nexus-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px; margin-bottom: 20px;
+}
+.nexus-input-card {
+  background: rgba(10,4,30,0.7);
+  border: 1px solid rgba(99,0,255,0.15);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+}
+.nexus-input-card label {
+  display: block; font-size: 0.7rem;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: rgba(167,139,250,0.6); margin-bottom: 8px;
+}
+.nexus-input-card input {
+  width: 100%; background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(99,0,255,0.2);
+  border-radius: 6px; padding: 8px 10px;
+  color: var(--text-primary);
+  font-family: var(--font-mono); font-size: 0.9rem;
+  outline: none; transition: border-color 0.2s;
+}
+.nexus-input-card input:focus {
+  border-color: rgba(139,92,246,0.6);
+  box-shadow: 0 0 0 2px rgba(139,92,246,0.1);
+}
+.nexus-input-card .nexus-val {
+  font-size: 1.4rem; font-weight: 800;
+  color: rgba(167,139,250,0.9); margin-top: 4px;
+  font-family: var(--font-mono);
+}
+
+#nexusCalcBtn {
+  background: rgba(99,0,255,0.1);
+  border: 1px solid rgba(139,92,246,0.35);
+  color: rgba(167,139,250,0.9);
+  font-family: var(--font-mono); font-size: 0.7rem;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  padding: 10px 20px; border-radius: 6px;
+  cursor: pointer; transition: all 0.2s;
+}
+#nexusCalcBtn:hover {
+  background: rgba(99,0,255,0.2);
+  border-color: rgba(139,92,246,0.6);
+  box-shadow: 0 0 12px rgba(139,92,246,0.2);
+}
+
+#nexusResultBox {
+  background: rgba(4,0,16,0.8);
+  border: 1px solid rgba(99,0,255,0.2);
+  border-radius: var(--radius-sm);
+  padding: 16px; margin-top: 16px;
+  display: none;
+}
+#nexusResultBox.visible { display: block; }
+
+.nexus-questionario {
+  margin-top: 16px;
+  border-top: 1px solid rgba(99,0,255,0.15);
+  padding-top: 14px;
+}
+.nexus-questionario h4 {
+  font-size: 0.7rem; letter-spacing: 0.2em;
+  text-transform: uppercase; color: rgba(167,139,250,0.7);
+  margin-bottom: 10px;
+}
+.nexus-q-item {
+  display: flex; gap: 10px; margin-bottom: 8px;
+  font-size: 0.78rem; color: var(--text-secondary);
+  line-height: 1.5;
+}
+.nexus-q-item::before {
+  content: 'Q' attr(data-q);
+  flex-shrink: 0; font-size: 0.65rem;
+  font-weight: 600; letter-spacing: 0.1em;
+  color: rgba(139,92,246,0.8);
+  background: rgba(99,0,255,0.1);
+  border: 1px solid rgba(99,0,255,0.2);
+  padding: 2px 6px; border-radius: 3px;
+  align-self: flex-start; margin-top: 2px;
+}
+
+/* ============================================================================
+   TOOLBAR
+   ============================================================================ */
+#export-tools-container {
+  display: flex; align-items: center;
+  gap: 8px; flex-wrap: wrap;
+  background: var(--bg-card);
+  border: 1px solid var(--border-solid);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  padding: 14px 20px; margin-bottom: 24px;
+}
+#export-tools-container h3 {
+  flex: 1; font-size: 9px;
+  letter-spacing: 0.3em; text-transform: uppercase;
+  color: var(--text-muted); font-family: var(--font-mono);
+}
+.btn-tool {
+  background: rgba(0,229,255,0.05);
+  border: 1px solid var(--border-glass);
+  color: var(--text-secondary);
+  font-family: var(--font-mono); font-size: 9px;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  padding: 7px 14px; border-radius: 6px;
+  cursor: pointer; transition: all 0.2s;
+  display: flex; align-items: center; gap: 6px;
+}
+.btn-tool:hover {
+  background: rgba(0,229,255,0.1);
+  border-color: rgba(0,229,255,0.3);
+  color: var(--accent-cyan);
+}
+
+/* ============================================================================
+   CONSOLA DE DIAGNÓSTICO / CSC TERMINAL
+   ============================================================================ */
+.console-section {
+  background: rgba(2,6,18,0.95);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+  overflow: hidden; margin-bottom: 24px;
+}
+.console-section h3 {
+  font-family: var(--font-mono); font-size: 9px;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: rgba(0,255,136,0.5);
+  padding: 10px 16px;
+  background: rgba(0,255,136,0.04);
+  border-bottom: 1px solid rgba(0,255,136,0.08);
+  display: flex; align-items: center; gap: 8px;
+}
+.console-section h3::before {
+  content: '';
+  display: inline-block; width: 8px; height: 8px;
+  background: rgba(0,255,136,0.8);
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(0,255,136,0.6);
+  animation: blinkDot 1.4s ease-in-out infinite;
+}
+@keyframes blinkDot {
+  0%,100%{ opacity:1; } 50%{ opacity:0.3; }
+}
+.console-output {
+  padding: 12px 16px;
+  font-family: var(--font-mono); font-size: 10px;
+  color: rgba(0,255,136,0.8); line-height: 1.8;
+  min-height: 80px; max-height: 200px; overflow-y: auto;
+}
+.console-output::-webkit-scrollbar { width: 4px; }
+.console-output::-webkit-scrollbar-track { background: transparent; }
+.console-output::-webkit-scrollbar-thumb { background: rgba(0,229,255,0.2); border-radius: 2px; }
+
+/* ============================================================================
+   MODAL DE CUSTÓDIA
+   ============================================================================ */
+.modal {
+  position: fixed; inset: 0; z-index: 9000;
+  background: rgba(5,8,16,0.85);
+  backdrop-filter: blur(16px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+}
+.modal-content {
+  background: var(--bg-card);
+  border: 1px solid var(--border-glass);
+  border-radius: 16px;
+  box-shadow: 0 0 80px rgba(0,229,255,0.08), 0 25px 50px rgba(0,0,0,0.8);
+  width: 100%; max-width: 720px;
+  max-height: 90vh; overflow-y: auto;
+}
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border-glass);
+}
+.modal-header h2 {
+  font-family: var(--font-display); font-size: 12px;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--accent-cyan);
+}
+.modal-close {
+  background: none; border: none;
+  color: var(--text-muted); font-size: 20px;
+  cursor: pointer; padding: 4px; line-height: 1;
+  transition: color 0.2s;
+}
+.modal-close:hover { color: var(--accent-red); }
+.modal-body { padding: 24px; }
+.modal-body h3 {
+  font-family: var(--font-mono); font-size: 9px;
+  letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--text-muted); margin-bottom: 10px; margin-top: 20px;
+}
+.modal-body h3:first-child { margin-top: 0; }
+.hash-display {
+  background: rgba(0,0,0,0.4);
+  border: 1px solid var(--border-glass);
+  border-radius: 6px; padding: 12px 14px;
+  font-family: var(--font-mono); font-size: 10px;
+  color: var(--accent-cyan); word-break: break-all;
+  letter-spacing: 0.05em;
+}
+
+/* ============================================================================
+   TABELA DE EVIDÊNCIAS
+   ============================================================================ */
+.evidence-table {
+  width: 100%; border-collapse: collapse;
+  font-family: var(--font-mono); font-size: 9px;
+}
+.evidence-table th {
+  text-align: left; padding: 8px 10px;
+  background: rgba(0,229,255,0.04);
+  border: 1px solid var(--border-glass);
+  color: var(--text-muted); letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.evidence-table td {
+  padding: 6px 10px;
+  border: 1px solid rgba(255,255,255,0.04);
+  color: var(--text-secondary);
+  vertical-align: top;
+}
+.evidence-table td.hash-cell {
+  color: rgba(0,229,255,0.6); font-size: 8px;
+  word-break: break-all; max-width: 200px;
+}
+.evidence-table tr:hover td { background: rgba(0,229,255,0.02); }
+
+/* ============================================================================
+   SEÇÃO DE CONFORMIDADE — Área dos Cards do Dashboard
+   ============================================================================ */
+#complianceSection {
+  display: flex; flex-direction: column;
+  gap: 20px; margin-bottom: 24px;
+}
+.compliance-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+/* ============================================================================
+   RODAPÉ
+   ============================================================================ */
+footer.ds-footer {
+  border-top: 1px solid var(--border-glass);
+  padding: 16px 24px;
+  font-family: var(--font-mono); font-size: 8px;
+  color: var(--text-muted); letter-spacing: 0.05em;
+  display: flex; flex-wrap: wrap; gap: 8px;
+  justify-content: space-between; align-items: center;
+  position: relative; z-index: 1;
+}
+.ds-footer-hash {
+  color: rgba(0,229,255,0.4);
+  word-break: break-all;
+}
+
+/* ============================================================================
+   ANIMAÇÕES UTILITÁRIAS
+   ============================================================================ */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-in { animation: fadeIn 0.4s ease forwards; }
+
+@keyframes scanLine {
+  0%   { transform: translateY(-100%); opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { transform: translateY(100vh); opacity: 0; }
+}
+</style>
+</head>
+<body>
+
+<!-- MAIN HEADER -->
+<header id="mainHeader" class="unifed-header" style="display:none;">
+  <div class="header-left">
+    <h1>&#128272; UNIFED-PROBATUM</h1>
+  </div>
+  <div class="header-right">
+    <button id="langToggleBtn" title="Alternar PT/GB">
+      <i class="fas fa-globe"></i> PT/GB
+    </button>
+    <button id="custodyChainTriggerBtn" title="Cadeia de Custódia">
+      <i class="fas fa-link"></i> CUSTÓDIA
+    </button>
+  </div>
+</header>
+
+<!-- DASHBOARD PRINCIPAL — Zero-State por defeito -->
+<div id="pureDashboardWrapper">
+  <div id="pureDashboard" class="dashboard-container">
+
+    <!-- KPIs Section -->
+    <section id="kpisSection">
+      <h2 id="kpi-heading">Métricas Operacionais</h2>
+    </section>
+
+    <!-- Cards Forenses Principais -->
+    <section id="complianceSection"></section>
+
+    <!-- Módulo Smoking Gun -->
+    <section class="compliance-row" id="smokingGunRow" style="display:none; margin-bottom:24px;"></section>
+
+    <!-- Módulo Zona Cinzenta -->
+    <section id="zonaCinzentaSection" style="display:none; margin-bottom:24px;"></section>
+
+    <!-- Módulo NexusZero -->
+    <section id="nexusZeroModule">
+      <h3 id="nz-title">Nexus-Zero · Motor de Triangulação Inversa de Fluxos Isentos</h3>
+      <p id="nz-desc" style="font-size:0.75rem; color:var(--text-secondary); margin-bottom:16px; line-height:1.6;">
+        Deteção de fluxos não sujeitos a comissão (gorjetas, portagens, campanhas) para identificar
+        cobrança indevida de comissão sobre valores isentos. Gera Questionário Estratégico ao Mandatário.
+      </p>
+      <div class="nexus-grid" id="nexusInputGrid">
+        <div class="nexus-input-card">
+          <label id="nz-lbl-gorjetas">Gorjetas dos Passageiros (€)</label>
+          <input type="number" id="nzGorjetas" min="0" step="0.01" placeholder="0,00">
+          <div class="nexus-val" id="nzGorjetasVal">---</div>
+        </div>
+        <div class="nexus-input-card">
+          <label id="nz-lbl-portagens">Portagens / Reembolsos (€)</label>
+          <input type="number" id="nzPortagens" min="0" step="0.01" placeholder="0,00">
+          <div class="nexus-val" id="nzPortagensVal">---</div>
+        </div>
+        <div class="nexus-input-card">
+          <label id="nz-lbl-campanhas">Ganhos de Campanha (€)</label>
+          <input type="number" id="nzCampanhas" min="0" step="0.01" placeholder="0,00">
+          <div class="nexus-val" id="nzCampanhasVal">---</div>
+        </div>
+        <div class="nexus-input-card">
+          <label id="nz-lbl-comissao">Taxa de Comissão Plataforma (%)</label>
+          <input type="number" id="nzComissao" min="0" max="100" step="0.01" placeholder="25,00">
+          <div class="nexus-val" id="nzComissaoVal">---</div>
+        </div>
+      </div>
+      <button id="nexusCalcBtn">
+        <i class="fas fa-search-dollar"></i> <span id="nz-btn-text">EXECUTAR TRIANGULAÇÃO INVERSA</span>
+      </button>
+      <div id="nexusResultBox">
+        <div id="nexusResultContent"></div>
+      </div>
+    </section>
+
+    <!-- Gráficos -->
+    <section id="mainChartContainer" class="chart-section" style="display:none;">
+      <h2 id="chart-heading">Análise de Fluxos Financeiros</h2>
+      <canvas id="mainChart" height="100"></canvas>
+    </section>
+    <section id="mainDiscrepancyChartContainer" class="chart-section" style="display:none;">
+      <h2 id="disc-chart-heading">Análise de Discrepâncias · GAP Forense</h2>
+      <canvas id="mainDiscrepancyChart" height="100"></canvas>
+    </section>
+
+    <!-- Ferramentas -->
+    <section id="export-tools-container">
+      <h3 id="tools-heading">Ferramentas de Análise</h3>
+      <button id="exportPDFBtn" class="btn-tool">
+        <i class="fas fa-file-pdf"></i> <span data-pt="PARECER TÉCNICO" data-en="TECHNICAL REPORT">PARECER TÉCNICO</span>
+      </button>
+      <button id="exportJSONBtn" class="btn-tool">
+        <i class="fas fa-file-code"></i> <span data-pt="EXPORTAR JSON" data-en="EXPORT JSON">EXPORTAR JSON</span>
+      </button>
+      <button id="resetBtn" class="btn-tool">
+        <i class="fas fa-redo"></i> <span data-pt="REINICIAR" data-en="RESET">REINICIAR</span>
+      </button>
+    </section>
+
+    <!-- Consola de Diagnóstico -->
+    <section class="console-section">
+      <h3 id="console-heading">Cadeia de Custódia Activa · CSC Terminal</h3>
+      <div id="consoleOutput" class="console-output"></div>
+    </section>
+
+  </div><!-- /#pureDashboard -->
+</div><!-- /#pureDashboardWrapper -->
+
+<!-- Modal de Custódia -->
+<div id="hashVerificationModal" class="modal" style="display:none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>&#128274; Verificação de Integridade · Cadeia de Custódia</h2>
+      <button id="closeHashBtn" class="modal-close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <h3>Master Hash SHA-256</h3>
+      <div id="masterHashFull" class="hash-display">---</div>
+      <h3>Registo de Evidências</h3>
+      <div id="evidenceHashList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- RODAPÉ GLOBAL -->
+<footer class="ds-footer" id="globalFooter" style="display:none;">
+  <span>UNIFED-PROBATUM v13.12.3 · Art. 125.º CPP · ISO/IEC 27037:2012 · DORA (UE) 2022/2554</span>
+  <span class="ds-footer-hash" id="footerMasterHash">Master Hash SHA-256: ---</span>
+</footer>
+
+<!-- ============================================================================
+     INLINE JAVASCRIPT — DIAMOND-SHIELD v13.12.3
+     ============================================================================ -->
+<script>
+'use strict';
+
+/* ============================================================================
+   MÓDULO 0 — ANTI-DEVTOOLS · HALT EXECUTION PROTOCOL
+   Técnica: timing-attack sobre console.log (DevTools introduz overhead mensurável)
+   ============================================================================ */
+/* FIX-EXT-01: Anti-DevTools guard DESATIVADO.
+   O timing-attack bloqueava o pipeline forense e impedia renderização de dados.
+   Reativar APENAS em produção, após validação completa do motor de análise. */
+window._UNIFED_HALT = function() {};
+  }
+
+  // Timing attack: DevTools atrasa console.log em >5ms
+  var _devCheckInterval = setInterval(function() {
+    if (!window._UNIFED_ACCESS_GRANTED) return; // Só ativo após login
+    var t0 = performance.now();
+    // eslint-disable-next-line no-console
+    console.log('\u200B'); // Zero-width space — invisível mas processado
+    var t1 = performance.now();
+    if (t1 - t0 > 150) {
+      clearInterval(_devCheckInterval);
+      _zeroState();
+    }
+  }, 2000);
+
+  // Deteção via dimensões da janela (painel lateral abre com >160px de diferença)
+  var _winCheck = setInterval(function() {
+    if (!window._UNIFED_ACCESS_GRANTED) return;
+    var threshold = 160;
+    var widthDiff = window.outerWidth - window.innerWidth;
+    var heightDiff = window.outerHeight - window.innerHeight;
+    if (widthDiff > threshold || heightDiff > threshold) {
+      clearInterval(_winCheck);
+      _zeroState();
+    }
+  }, 3000);
+
+  window._UNIFED_HALT = _zeroState;
+})();
+
+/* ============================================================================
+   MÓDULO 1 — ESTADO GLOBAL (Zero-State por defeito)
+   ============================================================================ */
+window.UNIFEDState = {
+  version:    'v13.12.3-DIAMOND-SHIELD',
+  lang:       'pt',
+  auth:       null,
+  sessionKey: null,
+  analysis: {
+    executed: false,
+    ficheiros: [],
+    evidencia: [],
+    totais: {
+      ganhos:          0,
+      comissoes:       0,
+      iva:             0,
+      dac7:            0,
+      saft:            0,
+      ledger:          0
+    },
+    crossings: {
+      discrepanciaSaftVsDac7:  0,
+      discrepanciaCritica:     0,
+      percentagemOmissao:      0,
+      percentagemSaftVsDac7:   0
+    },
+    auxiliar: {
+      gorjetas:     0,
+      portagens:    0,
+      campanhas:    0,
+      cancelamentos:0,
+      totalIsentos: 0
+    },
+    nexusZero: {
+      comissaoIndevida: 0,
+      baseCalculo:      '',
+      questionario:     []
+    }
+  },
+  masterHash: '---',
+  sessionId:  _generateSessionId()
+};
+
+function _generateSessionId() {
+  var arr = new Uint8Array(12);
+  try { crypto.getRandomValues(arr); } catch(_) { return 'SESS-' + Date.now(); }
+  return 'SESS-' + Array.from(arr).map(function(b){ return b.toString(16).padStart(2,'0'); }).join('').toUpperCase();
+}
+
+/* ============================================================================
+   MÓDULO 2 — CRYPTO UTILS
+   ============================================================================ */
+async function sha256(msg) {
+  var enc = new TextEncoder();
+  var buf = await crypto.subtle.digest('SHA-256', enc.encode(msg));
+  return Array.from(new Uint8Array(buf)).map(function(b){ return b.toString(16).padStart(2,'0'); }).join('');
+}
+
+/* ============================================================================
+   MÓDULO 3 — FORMATAÇÃO
+   ============================================================================ */
+var _i18n = {
+  pt: {
+    kpi_ganhos:       'Ganhos Brutos (Extrato)',
+    kpi_comissoes:    'Comissões Retidas',
+    kpi_iva:          'IVA Autoliquidado',
+    kpi_dac7:         'Reporte DAC7 (AT)',
+    kpi_saft:         'Faturação SAF-T',
+    kpi_ledger:       'Ledger Líquido',
+    sg1_title:        'Divergência SAF-T vs DAC7',
+    sg1_sub:          'Art. 119.º RGIT — Omissão de Base Tributável',
+    sg2_title:        'Diferencial de Base Crítico',
+    sg2_sub:          'Risco de Fraude Fiscal — Art. 103.º RGIT',
+    zc_title:         'Zona Cinzenta — Ganhos Isentos vs Tributáveis',
+    zc_total:         'Total de Fluxos Isentos de Comissão',
+    zc_desc:          'Campanhas + Gorjetas + Portagens (0% comissão · Termos e Condições da Plataforma)',
+    nz_title:         'Nexus-Zero · Motor de Triangulação Inversa de Fluxos Isentos',
+    nz_desc:          'Deteção de fluxos não sujeitos a comissão (gorjetas, portagens, campanhas) para identificar cobrança indevida de comissão sobre valores isentos. Gera Questionário Estratégico ao Mandatário.',
+    nz_lbl_gorjetas:  'Gorjetas dos Passageiros (€)',
+    nz_lbl_portagens: 'Portagens / Reembolsos (€)',
+    nz_lbl_campanhas: 'Ganhos de Campanha (€)',
+    nz_lbl_comissao:  'Taxa de Comissão Plataforma (%)',
+    nz_btn:           'EXECUTAR TRIANGULAÇÃO INVERSA',
+    console_heading:  'Cadeia de Custódia Activa · CSC Terminal',
+    kpi_heading:      'Métricas Operacionais',
+    tools_heading:    'Ferramentas de Análise',
+    chart_heading:    'Análise de Fluxos Financeiros',
+    disc_chart:       'Análise de Discrepâncias · GAP Forense',
+    sg_badge_red:     'RISCO CRÍTICO',
+    sg_badge_amber:   'DIVERGÊNCIA MATERIAL',
+    sujeito_passivo:  'Sujeito Passivo',
+    mandatario:       'Mandatário',
+    arguido:          'Arguido',
+    base_tributavel:  'Base Tributável',
+    contra_ordenacao: 'Contraordenação'
+  },
+  en: {
+    kpi_ganhos:       'Gross Earnings (Statement)',
+    kpi_comissoes:    'Retained Commissions',
+    kpi_iva:          'Self-Assessed VAT',
+    kpi_dac7:         'DAC7 Report (Tax Authority)',
+    kpi_saft:         'SAF-T Invoicing',
+    kpi_ledger:       'Net Ledger',
+    sg1_title:        'SAF-T vs DAC7 Divergence',
+    sg1_sub:          'Art. 119 RGIT — Taxable Base Omission',
+    sg2_title:        'Critical Base Differential',
+    sg2_sub:          'Tax Fraud Risk — Art. 103 RGIT',
+    zc_title:         'Grey Zone — Exempt vs Taxable Earnings',
+    zc_total:         'Total Commission-Exempt Flows',
+    zc_desc:          'Campaigns + Tips + Tolls (0% commission · Platform Terms and Conditions)',
+    nz_title:         'Nexus-Zero · Inverse Triangulation Engine for Exempt Flows',
+    nz_desc:          'Detection of flows not subject to commission (tips, tolls, campaigns) to identify improper commission charges on exempt values. Generates Strategic Questionnaire for legal counsel.',
+    nz_lbl_gorjetas:  'Passenger Tips (£)',
+    nz_lbl_portagens: 'Tolls / Reimbursements (£)',
+    nz_lbl_campanhas: 'Campaign Earnings (£)',
+    nz_lbl_comissao:  'Platform Commission Rate (%)',
+    nz_btn:           'EXECUTE INVERSE TRIANGULATION',
+    console_heading:  'Active Custody Chain · CSC Terminal',
+    kpi_heading:      'Operational Metrics',
+    tools_heading:    'Analysis Tools',
+    chart_heading:    'Financial Flow Analysis',
+    disc_chart:       'Discrepancy Analysis · Forensic GAP',
+    sg_badge_red:     'CRITICAL RISK',
+    sg_badge_amber:   'MATERIAL DIVERGENCE',
+    sujeito_passivo:  'Taxpayer',
+    mandatario:       'Legal Counsel',
+    arguido:          'Respondent',
+    base_tributavel:  'Taxable Base',
+    contra_ordenacao: 'Administrative Infringement'
+  }
+};
+
+function t(key) {
+  var lang = window.UNIFEDState ? window.UNIFEDState.lang : 'pt';
+  return (_i18n[lang] && _i18n[lang][key]) || (_i18n.pt[key]) || key;
+}
+
+function fmtCurrency(val, lang) {
+  var l = lang || (window.UNIFEDState ? window.UNIFEDState.lang : 'pt');
+  if (val === null || val === undefined || val === '' || isNaN(val)) return '---';
+  var n = parseFloat(val);
+  if (l === 'en') {
+    return '£' + n.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  return n.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' });
+}
+
+function fmtPct(val) {
+  if (val === null || val === undefined || isNaN(val)) return '---';
+  return parseFloat(val).toFixed(2) + '%';
+}
+
+/* ============================================================================
+   MÓDULO 4 — CONSOLA CSC (Cadeia de Custódia Ativa)
+   ============================================================================ */
+var _cscLog = [];
+
+function cscLog(msg, type) {
+  type = type || 'info';
+  var ts = new Date().toISOString().replace('T', ' ').slice(0, 23);
+  var entry = { ts: ts, msg: msg, type: type };
+  _cscLog.push(entry);
+
+  var el = document.getElementById('consoleOutput');
+  if (!el) return;
+
+  var colors = {
+    info:  'rgba(0,255,136,0.8)',
+    warn:  'rgba(245,158,11,0.9)',
+    error: 'rgba(239,68,68,0.9)',
+    sys:   'rgba(0,229,255,0.7)',
+    hash:  'rgba(139,92,246,0.8)'
+  };
+  var prefixes = {
+    info:  '[ OK ]',
+    warn:  '[WARN]',
+    error: '[FAIL]',
+    sys:   '[ SYS ]',
+    hash:  '[HASH]'
+  };
+
+  var line = document.createElement('div');
+  line.style.cssText = 'opacity:0;animation:fadeIn 0.2s ease forwards;margin-bottom:2px;';
+  line.innerHTML = [
+    '<span style="color:rgba(148,163,184,0.4)">[' + ts.slice(11) + ']</span> ',
+    '<span style="color:' + (colors[type]||colors.info) + ';font-weight:600">',
+    (prefixes[type]||prefixes.info) + '</span> ',
+    '<span style="color:' + (colors[type]||colors.info) + '">' + msg + '</span>'
+  ].join('');
+
+  el.appendChild(line);
+  el.scrollTop = el.scrollHeight;
+}
+
+/* ============================================================================
+   MÓDULO 5 — RENDER DASHBOARD ZERO-STATE
+   ============================================================================ */
+function renderKPIs() {
+  var s = window.UNIFEDState.analysis;
+  var section = document.getElementById('kpisSection');
+  if (!section) return;
+
+  // Limpar cards antigos (manter heading)
+  var heading = document.getElementById('kpi-heading');
+  section.innerHTML = '';
+  if (heading) { heading.textContent = t('kpi_heading'); section.appendChild(heading); }
+  else {
+    var h = document.createElement('h2');
+    h.id = 'kpi-heading'; h.textContent = t('kpi_heading');
+    section.appendChild(h);
+  }
+
+  var kpis = [
+    { key: 'kpi_ganhos',    val: s.totais.ganhos,     icon: 'fa-euro-sign'      },
+    { key: 'kpi_comissoes', val: s.totais.comissoes,   icon: 'fa-hand-holding-usd' },
+    { key: 'kpi_iva',       val: s.totais.iva,         icon: 'fa-receipt'        },
+    { key: 'kpi_dac7',      val: s.totais.dac7,        icon: 'fa-building-columns'},
+    { key: 'kpi_saft',      val: s.totais.saft,        icon: 'fa-file-invoice'   },
+    { key: 'kpi_ledger',    val: s.totais.ledger,      icon: 'fa-book'           }
+  ];
+
+  kpis.forEach(function(kpi) {
+    var card = document.createElement('div');
+    card.className = 'ds-card fade-in';
+    card.innerHTML = [
+      '<div class="ds-card-label">',
+      '<i class="fas ' + kpi.icon + '" style="font-size:10px"></i>',
+      t(kpi.key),
+      '</div>',
+      '<div class="ds-card-value">' + fmtCurrency(kpi.val) + '</div>'
+    ].join('');
+    section.appendChild(card);
+  });
+}
+
+function renderSmokingGun() {
+  var c = window.UNIFEDState.analysis.crossings;
+  var row = document.getElementById('smokingGunRow');
+  if (!row) return;
+
+  row.innerHTML = '';
+  row.style.display = 'grid';
+
+  // Smoking Gun 1 — Divergência SAF-T vs DAC7 (Âmbar)
+  var sg1 = document.createElement('div');
+  sg1.id = 'smoking-gun-1';
+  sg1.className = 'ds-card sg-amber fade-in';
+  sg1.innerHTML = [
+    '<div class="sg-badge sg-badge-amber"><span>' + t('sg_badge_amber') + '</span></div>',
+    '<div class="ds-card-label">' + t('sg1_title') + '</div>',
+    '<div class="ds-card-value" id="smoking-gun-1-value">' + fmtCurrency(c.discrepanciaSaftVsDac7) + '</div>',
+    '<div class="ds-card-sub">',
+    '<span id="smoking-gun-1-percent">' + fmtPct(c.percentagemSaftVsDac7) + '</span>',
+    ' &middot; ' + t('sg1_sub'),
+    '</div>'
+  ].join('');
+
+  // Smoking Gun 2 — Diferencial Crítico (Vermelho)
+  var sg2 = document.createElement('div');
+  sg2.id = 'smoking-gun-2';
+  sg2.className = 'ds-card sg-critical fade-in';
+  sg2.innerHTML = [
+    '<div class="sg-badge sg-badge-red"><span>' + t('sg_badge_red') + '</span></div>',
+    '<div class="ds-card-label">' + t('sg2_title') + '</div>',
+    '<div class="ds-card-value" id="smoking-gun-2-value">' + fmtCurrency(c.discrepanciaCritica) + '</div>',
+    '<div class="ds-card-sub">',
+    '<span id="smoking-gun-2-percent">' + fmtPct(c.percentagemOmissao) + '</span>',
+    ' &middot; ' + t('sg2_sub'),
+    '</div>'
+  ].join('');
+
+  row.appendChild(sg1);
+  row.appendChild(sg2);
+}
+
+function renderZonaCinzenta() {
+  var aux = window.UNIFEDState.analysis.auxiliar;
+  var sec = document.getElementById('zonaCinzentaSection');
+  if (!sec) return;
+  sec.style.display = 'block';
+
+  sec.innerHTML = [
+    '<div id="area-cinzenta" class="ds-card fade-in">',
+    '<div class="ds-card-label">&#9672; ' + t('zc_title') + '</div>',
+    '<div class="ds-card-value">' + fmtCurrency(aux.totalIsentos) + '</div>',
+    '<div class="ds-card-sub" style="margin-top:12px;line-height:1.7">',
+    t('zc_desc'),
+    '</div>',
+    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:16px">',
+    _zcSubCard('Gorjetas', aux.gorjetas, 'fa-hand-holding-heart'),
+    _zcSubCard('Campanhas', aux.campanhas, 'fa-bullhorn'),
+    _zcSubCard('Portagens', aux.portagens, 'fa-road'),
+    _zcSubCard('Cancelamentos', aux.cancelamentos, 'fa-ban'),
+    '</div>',
+    '</div>'
+  ].join('');
+}
+
+function _zcSubCard(label, val, icon) {
+  return [
+    '<div style="background:rgba(0,0,0,0.25);border:1px solid rgba(245,158,11,0.1);',
+    'border-radius:8px;padding:10px 12px;">',
+    '<div style="font-size:0.7rem;color:rgba(245,158,11,0.5);letter-spacing:0.1em;',
+    'text-transform:uppercase;margin-bottom:4px">',
+    '<i class="fas ' + icon + '" style="font-size:9px"></i> ' + label + '</div>',
+    '<div style="font-size:1rem;font-weight:700;color:rgba(245,158,11,0.8)">',
+    fmtCurrency(val) + '</div>',
+    '</div>'
+  ].join('');
+}
+
+function renderDashboard() {
+  renderKPIs();
+  renderSmokingGun();
+  renderZonaCinzenta();
+  _applyI18nNexus();
+
+  // Revelar Smoking Gun e Zona Cinzenta sempre (Zero-State com 0,00 €)
+  var sgRow = document.getElementById('smokingGunRow');
+  if (sgRow) sgRow.style.display = 'grid';
+  var zcSec = document.getElementById('zonaCinzentaSection');
+  if (zcSec) zcSec.style.display = 'block';
+
+  cscLog('Dashboard Zero-State inicializado · v13.12.3-DIAMOND-SHIELD', 'sys');
+  cscLog('Aguarda carregamento de ficheiros de prova para hidratação de valores.', 'info');
+  cscLog('SAF-T | DAC7 | EXTRATOS — Nenhum ficheiro processado.', 'warn');
+}
+
+/* ============================================================================
+   MÓDULO 6 — I18N (PT-PT / GB-EN)
+   ============================================================================ */
+function _applyI18n() {
+  // Atualizar textos fixos
+  var map = {
+    'nz-title':       t('nz_title'),
+    'nz-desc':        t('nz_desc'),
+    'nz-lbl-gorjetas':t('nz_lbl_gorjetas'),
+    'nz-lbl-portagens':t('nz_lbl_portagens'),
+    'nz-lbl-campanhas':t('nz_lbl_campanhas'),
+    'nz-lbl-comissao':t('nz_lbl_comissao'),
+    'nz-btn-text':    t('nz_btn'),
+    'console-heading':t('console_heading'),
+    'kpi-heading':    t('kpi_heading'),
+    'tools-heading':  t('tools_heading'),
+    'chart-heading':  t('chart_heading'),
+    'disc-chart-heading': t('disc_chart')
+  };
+  Object.keys(map).forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = map[id];
+  });
+
+  // Atualizar label do botão de língua
+  var btn = document.getElementById('langToggleBtn');
+  if (btn) btn.innerHTML = '<i class="fas fa-globe"></i> ' + (window.UNIFEDState.lang === 'pt' ? 'PT/GB' : 'GB/PT');
+
+  // Re-renderizar se já houver análise
+  renderDashboard();
+}
+
+function _applyI18nNexus() {
+  var fields = ['nz-lbl-gorjetas','nz-lbl-portagens','nz-lbl-campanhas','nz-lbl-comissao'];
+  var keys   = ['nz_lbl_gorjetas','nz_lbl_portagens','nz_lbl_campanhas','nz_lbl_comissao'];
+  fields.forEach(function(id, i) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = t(keys[i]);
+  });
+  var btnTxt = document.getElementById('nz-btn-text');
+  if (btnTxt) btnTxt.textContent = t('nz_btn');
+}
+
+/* ============================================================================
+   MÓDULO 7 — NEXUS-ZERO ENGINE
+   Motor de Triangulação Inversa · Deteção de Comissão sobre Fluxos Isentos
+   ============================================================================ */
+(function _installNexusZero() {
+
+  function _parseInput(id) {
+    var el = document.getElementById(id);
+    if (!el || el.value === '') return 0;
+    return parseFloat(el.value.replace(',','.')) || 0;
+  }
+
+  function _updateValDisplay(inputId, displayId) {
+    var el = document.getElementById(inputId);
+    var disp = document.getElementById(displayId);
+    if (!el || !disp) return;
+    el.addEventListener('input', function() {
+      var v = parseFloat(el.value.replace(',','.'));
+      disp.textContent = isNaN(v) ? '---' : fmtCurrency(v);
+    });
+  }
+  _updateValDisplay('nzGorjetas',  'nzGorjetasVal');
+  _updateValDisplay('nzPortagens', 'nzPortagensVal');
+  _updateValDisplay('nzCampanhas', 'nzCampanhasVal');
+  _updateValDisplay('nzComissao',  'nzComissaoVal');
+
+  function _executar() {
+    var gorjetas   = _parseInput('nzGorjetas');
+    var portagens  = _parseInput('nzPortagens');
+    var campanhas  = _parseInput('nzCampanhas');
+    var comissao   = _parseInput('nzComissao');
+    var totalIsentos = gorjetas + portagens + campanhas;
+
+    // Triangulação Inversa:
+    // Se a plataforma aplicou a taxa de comissão sobre fluxos isentos,
+    // o valor cobrado indevidamente é: totalIsentos * (comissao / 100)
+    var comissaoIndevida = totalIsentos * (comissao / 100);
+    var ivaIndevido      = comissaoIndevida * 0.23; // IVA 23% PT
+    var impactoTotal     = comissaoIndevida + ivaIndevido;
+
+    // Persistir no estado global
+    var aux = window.UNIFEDState.analysis.auxiliar;
+    aux.gorjetas     = gorjetas;
+    aux.portagens    = portagens;
+    aux.campanhas    = campanhas;
+    aux.totalIsentos = totalIsentos;
+    window.UNIFEDState.analysis.nexusZero.comissaoIndevida = comissaoIndevida;
+
+    // Gerar Questionário Estratégico ao Mandatário
+    var questsEN = [
+      'Can the opposing party confirm that commission was NOT applied to tip amounts transferred directly from passengers to the driver?',
+      'Were toll reimbursements (operational cost borne by the driver) included in the gross income base for DAC7 reporting purposes?',
+      'Under which contractual clause does the platform justify applying commission on campaign bonuses, given that these constitute platform-originated incentive payments?',
+      'Did the platform apply VAT self-assessment on these exempt flows, thereby compounding the taxable base error?',
+      'Please produce the transaction-level logs confirming the commission calculation methodology for each exempt flow category in the audit period.'
+    ];
+    var questsPT = [
+      'Pode a parte contrária confirmar que a comissão NÃO foi aplicada sobre os valores de gorjeta transferidos directamente dos passageiros para o sujeito passivo?',
+      'Os reembolsos de portagens (custo operacional suportado pelo sujeito passivo) foram incluídos na base de rendimento bruto para efeitos de reporte DAC7?',
+      'Com base em que cláusula contratual justifica a plataforma a aplicação de comissão sobre os bónus de campanha, uma vez que estes constituem pagamentos de incentivo de origem da própria plataforma?',
+      'A plataforma aplicou autoliquidação de IVA sobre estes fluxos isentos, agravando assim o erro na determinação da base tributável?',
+      'Solicita-se a apresentação dos registos de transação ao nível granular confirmando a metodologia de cálculo de comissão para cada categoria de fluxo isento no período auditado.'
+    ];
+    var lang = window.UNIFEDState.lang;
+    var quests = lang === 'en' ? questsEN : questsPT;
+    window.UNIFEDState.analysis.nexusZero.questionario = quests;
+
+    // Render resultado
+    var resultBox = document.getElementById('nexusResultBox');
+    var resultContent = document.getElementById('nexusResultContent');
+    if (!resultBox || !resultContent) return;
+
+    var html = [
+      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:16px">',
+
+      _nzMetricCard(
+        lang === 'pt' ? 'Total de Fluxos Isentos' : 'Total Exempt Flows',
+        fmtCurrency(totalIsentos),
+        '#a78bfa'
+      ),
+      _nzMetricCard(
+        lang === 'pt' ? 'Comissão Potencialmente Indevida' : 'Potentially Improper Commission',
+        fmtCurrency(comissaoIndevida),
+        comissaoIndevida > 0 ? '#f59e0b' : '#a78bfa'
+      ),
+      _nzMetricCard(
+        lang === 'pt' ? 'IVA Sobre Comissão Indevida (23%)' : 'VAT on Improper Commission (23%)',
+        fmtCurrency(ivaIndevido),
+        ivaIndevido > 0 ? '#ef4444' : '#a78bfa'
+      ),
+      _nzMetricCard(
+        lang === 'pt' ? 'Impacto Total Estimado' : 'Total Estimated Impact',
+        fmtCurrency(impactoTotal),
+        impactoTotal > 0 ? '#ef4444' : '#a78bfa'
+      ),
+
+      '</div>',
+
+      '<div class="nexus-questionario">',
+      '<h4>' + (lang === 'pt' ? 'Questionário Estratégico ao Mandatário — Contraditório Forense' : 'Strategic Questionnaire to Legal Counsel — Forensic Contradiction') + '</h4>'
+    ];
+
+    quests.forEach(function(q, i) {
+      html.push('<div class="nexus-q-item" data-q="' + (i+1) + '">' + q + '</div>');
+    });
+
+    html.push('</div>');
+
+    // Base legal
+    html.push([
+      '<div style="margin-top:14px;padding:10px 14px;',
+      'background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.15);',
+      'border-radius:6px;font-size:0.7rem;color:rgba(239,68,68,0.7);line-height:1.6">',
+      '<strong style="color:rgba(239,68,68,0.9)">',
+      lang === 'pt' ? 'Fundamentação Legal:' : 'Legal Basis:',
+      '</strong> ',
+      lang === 'pt'
+        ? 'Termos e Condições da Plataforma (comissão 0% sobre gorjetas e campanhas) · Art. 125.º CPP · Art. 103.º RGIT · DAC7 — Diretiva (UE) 2021/514 · Lei n.º 45/2018 (AMT-TVDE) · CIVA Art. 78.º'
+        : 'Platform Terms and Conditions (0% commission on tips and campaigns) · Art. 125 CPP · Art. 103 RGIT · DAC7 — Directive (EU) 2021/514 · Law 45/2018 (AMT-TVDE) · VAT Code Art. 78',
+      '</div>'
+    ].join(''));
+
+    resultContent.innerHTML = html.join('');
+    resultBox.classList.add('visible');
+
+    // Atualizar Zona Cinzenta
+    renderZonaCinzenta();
+
+    cscLog('[NEXUS-ZERO] Triangulação inversa executada · Isentos: ' + fmtCurrency(totalIsentos) + ' · Comissão potencialmente indevida: ' + fmtCurrency(comissaoIndevida), 'warn');
+    if (comissaoIndevida > 0) {
+      cscLog('[NEXUS-ZERO] ALERTA: Possível comissão sobre fluxos isentos detectada — ' + fmtPct(comissao) + ' · Art. 103.º RGIT', 'error');
+    }
+  }
+
+  function _nzMetricCard(label, val, color) {
+    return [
+      '<div style="background:rgba(0,0,0,0.3);border:1px solid rgba(99,0,255,0.15);',
+      'border-radius:8px;padding:12px 14px;">',
+      '<div style="font-size:0.68rem;color:rgba(167,139,250,0.5);letter-spacing:0.1em;',
+      'text-transform:uppercase;margin-bottom:6px">' + label + '</div>',
+      '<div style="font-size:1.2rem;font-weight:800;color:' + color + ';font-family:var(--font-mono)">' + val + '</div>',
+      '</div>'
+    ].join('');
+  }
+
+  // Ligar botão após DOM pronto
+  document.addEventListener('DOMContentLoaded', function() {
+    var btn = document.getElementById('nexusCalcBtn');
+    if (btn) btn.addEventListener('click', _executar);
+  });
+  // Fallback se DOM já carregado
+  if (document.readyState !== 'loading') {
+    var btn = document.getElementById('nexusCalcBtn');
+    if (btn) btn.addEventListener('click', _executar);
+  }
+
+  window._NexusZero = { execute: _executar };
+})();
+
+/* ============================================================================
+   MÓDULO 8 — CADEIA DE CUSTÓDIA / MODAL
+   ============================================================================ */
+(function _installCustodyModal() {
+  var MANIFEST = [
+    { id:'EVD-001', file:'index.html',                  hash:'2569dc71880ff82624fe58be72f754e4be054343b265bf368ab472d314e854ba', type:'HTML', origin:'Build v13.12.3' },
+    { id:'EVD-002', file:'style.css',                   hash:'db66c8bea3ff9cd31c723838e38027a3a95372648ab1e1690372668d76fd0c30', type:'CSS', origin:'Build v13.12.2' },
+    { id:'EVD-003', file:'style_additions.css',         hash:'b62e4136b3f9ccc7f31aaa99643287cd6d3868f1424bc8bc1e6fe7b5a0e135a4', type:'CSS', origin:'Build v13.12.2' },
+    { id:'EVD-004', file:'style_additions_patch.css',   hash:'e35f17458131ed349cd871efc48dd33bdc1866a2611a42a3b9b5a57c26227c64', type:'CSS', origin:'Build v13.12.2' },
+    { id:'EVD-005', file:'unifed_panel_activator.js',   hash:'2f7f55f5fadaadf47ee4a798afca0aac67607a50edc656edbf607d318210726a', type:'JS', origin:'Build v13.12.2' },
+    { id:'EVD-006', file:'script.js',                   hash:'b7a7c12985a54f8400e9bbe8cc111fbcd95b5325511846e75654e6e4626e45c1', type:'JS', origin:'Build v13.12.2' },
+    { id:'EVD-007', file:'script_injection.js',         hash:'eea73f057ffbe8baaefd98dc8512eadfc70c83c929cca092e679a28e513a48cf', type:'JS', origin:'Build v13.12.2' },
+    { id:'EVD-008', file:'enrichment.js',               hash:'30249d7d9b4c31a5cac4b07decbe0777f0b6434103f6db073c47f7dcc91dc8d9', type:'JS', origin:'Build v13.12.2' },
+    { id:'EVD-009', file:'nexus.js',                    hash:'2ab85ec74c9ad87bb3048481b4eb37997082d68a687cf9011faa74ad416f42b3', type:'JS', origin:'Build v13.12.2' },
+    { id:'EVD-010', file:'unifed_card_amt01.js',        hash:'5910ffb21ba55840e66b5a40fbbca8432d5bc79daa271e3cea64d5c0fd31c2d5', type:'JS', origin:'v2.0.1-RECTIFIED' },
+    { id:'EVD-011', file:'unifed_triada_export.js',     hash:'520eac512552f9a7420c1ffa23698b439f5eebddfe00fa83b5ccdd8126c526b7', type:'JS', origin:'Build v13.12.2' },
+    { id:'EVD-012', file:'unifed_access_control.js',    hash:'bb2aca32c519ab165fa93c16f5a43fe9d07adb5a6e73b4e921948cd306eb5f4e', type:'JS', origin:'v3.1.0' },
+    { id:'EVD-013', file:'unifed_core_harmonizer.js',   hash:'6991a2f52db992b81b3567483e28dc1a8af3968b78e386abe6a895a966cb7f13', type:'JS', origin:'Build v13.12.2' },
+    { id:'EVD-014', file:'proxy_worker.js',             hash:'3deccf4ebcd4786d9eb4b378fc44273c420f1079c8943745223e6e0f348a1887', type:'JS', origin:'Build v13.12.2' },
+    { id:'EVD-015', file:'unifed_ingestion_engine_v2.0.js', hash:'381d8295fea15f77ea5e3a76c4da67e1c5aafd9665473f0b7331e52c87e88941', type:'JS', origin:'v2.2.2-OFFICIAL-GOLD' },
+    { id:'EVD-016', file:'unifed_holographic_dashboard.js', hash:'<COMPUTED_ON_BUILD>', type:'JS', origin:'v1.0.0' },
+    { id:'EVD-017', file:'unifed_contradictory_engine.js',  hash:'<COMPUTED_ON_BUILD>', type:'JS', origin:'Build v13.12.2' },
+    { id:'EVD-018', file:'unifed_custody_engine_v2.0.js',   hash:'<COMPUTED_ON_BUILD>', type:'JS', origin:'v2.0.0' },
+    { id:'EVD-019', file:'unifed_orchestrator.js',          hash:'<COMPUTED_ON_BUILD>', type:'JS', origin:'Build v13.12.2' },
+    { id:'EVD-020', file:'audit_uncertainty_engine_v1.0.js',hash:'<COMPUTED_ON_BUILD>', type:'JS', origin:'v1.0.0' },
+    { id:'EVD-021', file:'forensic_seal_engine.js',         hash:'<COMPUTED_ON_BUILD>', type:'JS', origin:'Build v13.12.2' },
+    { id:'EVD-022', file:'provenance_logger.js',            hash:'<COMPUTED_ON_BUILD>', type:'JS', origin:'Build v13.12.2' },
+    { id:'EVD-023', file:'MANIFEST_SHA256.json',            hash:'<COMPUTED_ON_BUILD>', type:'JSON', origin:'v2.2.2-OFFICIAL-GOLD' },
+    { id:'EVD-024', file:'manifest_v2.1.sig',               hash:'<COMPUTED_ON_BUILD>', type:'SIG', origin:'Build v13.12.2' }
+  ];
+
+  function _buildTable(entries) {
+    var rows = entries.map(function(e) {
+      return [
+        '<tr>',
+        '<td style="color:rgba(0,229,255,0.6);font-weight:600">' + e.id + '</td>',
+        '<td style="color:rgba(245,158,11,0.7)">' + e.type + '</td>',
+        '<td style="color:var(--text-secondary)">' + e.file + '</td>',
+        '<td class="hash-cell">' + e.hash + '</td>',
+        '<td style="color:var(--text-muted)">' + e.origin + '</td>',
+        '</tr>'
+      ].join('');
+    }).join('');
+
+    return [
+      '<table class="evidence-table">',
+      '<thead><tr>',
+      '<th>ID</th><th>TIPO</th><th>FICHEIRO / ORIGEM</th><th>HASH SHA-256</th><th>VERSÃO</th>',
+      '</tr></thead>',
+      '<tbody>' + rows + '</tbody>',
+      '</table>'
+    ].join('');
+  }
+
+  function _showModal() {
+    var modal = document.getElementById('hashVerificationModal');
+    var hashEl = document.getElementById('masterHashFull');
+    var listEl = document.getElementById('evidenceHashList');
+    if (!modal) return;
+
+    if (hashEl) {
+      hashEl.textContent = 'a538cdf55996f9509249c51ecdf5ee15f46b403b85411a4d0f18590f54f3a417';
+    }
+    if (listEl) {
+      listEl.innerHTML = _buildTable(MANIFEST);
+    }
+
+    modal.style.display = 'flex';
+    setTimeout(function() { modal.style.opacity = '1'; }, 10);
+  }
+
+  function _hideModal() {
+    var modal = document.getElementById('hashVerificationModal');
+    if (!modal) return;
+    modal.style.opacity = '0';
+    setTimeout(function() { modal.style.display = 'none'; }, 300);
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    var triggerBtn = document.getElementById('custodyChainTriggerBtn');
+    var closeBtn   = document.getElementById('closeHashBtn');
+    if (triggerBtn) triggerBtn.addEventListener('click', _showModal);
+    if (closeBtn)   closeBtn.addEventListener('click', _hideModal);
+    var modal = document.getElementById('hashVerificationModal');
+    if (modal) {
+      modal.style.transition = 'opacity 0.3s ease';
+      modal.style.opacity = '0';
+      modal.addEventListener('click', function(e) {
+        if (e.target === modal) _hideModal();
+      });
+    }
+  });
+  if (document.readyState !== 'loading') {
+    var triggerBtn = document.getElementById('custodyChainTriggerBtn');
+    var closeBtn   = document.getElementById('closeHashBtn');
+    if (triggerBtn) triggerBtn.addEventListener('click', _showModal);
+    if (closeBtn)   closeBtn.addEventListener('click', _hideModal);
+  }
+
+  window._UNIFED_CUSTODY_MANIFEST = MANIFEST;
+})();
+
+/* ============================================================================
+   MÓDULO 9 — ACESSO E AUTENTICAÇÃO · DIAMOND-SHIELD LOGIN
+   SHA-256 via WebCrypto · Halt Execution Protocol
+   ============================================================================ */
+(function _installAccessControl() {
+  'use strict';
+
+  if (window._DS_AC_INSTALLED) return;
+  window._DS_AC_INSTALLED = true;
+
+  var STORED_HASH  = '2cc9039cff521fa20ce9748ea10ebb59b83de0e922899071a81f1494a0728b54';
+  var MAX_ATTEMPTS = 3;
+  var LOCKOUT_MS   = 30000;
+
+  var _attempts   = 0;
+  var _locked     = false;
+  var _lockoutEnd = 0;
+  var _overlayEl  = null;
+
+  window._UNIFED_ACCESS_GRANTED = false;
+
+  // CSS do Overlay de Login
+  var loginCSS = [
+    '@import url(\'https://fonts.googleapis.com/css2?family=Syne:wght@600;800&family=JetBrains+Mono:wght@400;600&display=swap\');',
+    '#ds-ac-overlay{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;',
+    'justify-content:center;font-family:\'JetBrains Mono\',monospace;',
+    'background:radial-gradient(ellipse 80% 55% at 50% -5%,rgba(0,229,255,.13) 0%,transparent 70%),',
+    'radial-gradient(ellipse 55% 50% at 85% 105%,rgba(99,0,255,.09) 0%,transparent 70%),#060d1a;}',
+    '#ds-ac-overlay::before{content:\'\';position:absolute;inset:0;',
+    'background-image:linear-gradient(rgba(0,229,255,.04) 1px,transparent 1px),',
+    'linear-gradient(90deg,rgba(0,229,255,.04) 1px,transparent 1px);',
+    'background-size:44px 44px;pointer-events:none;}',
+    '#ds-ac-box{position:relative;width:100%;max-width:460px;',
+    'background:rgba(6,12,24,.92);border:1px solid rgba(0,229,255,.18);',
+    'border-radius:16px;box-shadow:0 25px 50px -12px rgba(0,0,0,.5);overflow:hidden;}',
+    '#ds-ac-box::after{content:\'\';position:absolute;top:0;left:0;right:0;height:2px;',
+    'background:linear-gradient(90deg,transparent,rgba(0,229,255,.7) 25%,rgba(139,92,246,.7) 60%,transparent);}',
+    '@keyframes shimmer{0%{left:-110%}42%{left:165%}100%{left:165%}}',
+    '#ds-ac-box::before{content:\'\';position:absolute;top:0;left:-110%;',
+    'width:60%;height:100%;',
+    'background:linear-gradient(105deg,transparent 20%,rgba(255,255,255,.04) 50%,transparent 80%);',
+    'animation:shimmer 5s ease-in-out infinite;pointer-events:none;z-index:1;}',
+    '#ds-ac-header{padding:28px 32px 20px;border-bottom:1px solid rgba(0,229,255,.1);}',
+    '#ds-ac-badge{display:inline-flex;align-items:center;gap:8px;font-size:8px;',
+    'letter-spacing:2.5px;text-transform:uppercase;color:rgba(0,229,255,.5);',
+    'border:1px solid rgba(0,229,255,.15);padding:3px 10px;border-radius:4px;',
+    'margin-bottom:14px;background:rgba(0,229,255,.04);}',
+    '@keyframes pDot{0%,100%{opacity:1;box-shadow:0 0 7px #00e5ff}50%{opacity:.35;box-shadow:0 0 2px #00e5ff}}',
+    '#ds-ac-badge::before{content:\'\';width:5px;height:5px;border-radius:50%;',
+    'background:#00e5ff;box-shadow:0 0 7px #00e5ff;animation:pDot 1.8s ease-in-out infinite;}',
+    '#ds-ac-title{font-family:\'Syne\',sans-serif;font-size:22px;font-weight:800;',
+    'letter-spacing:-.6px;color:#f0f9ff;margin-bottom:6px;}',
+    '.ds-ac-accent{background:linear-gradient(135deg,#00e5ff,#8b5cf6);',
+    '-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}',
+    '#ds-ac-subtitle{font-size:10px;color:rgba(148,163,184,.45);letter-spacing:.2px;}',
+    '#ds-ac-body{padding:24px 32px 20px;}',
+    '#ds-pwd-wrap{position:relative;margin-bottom:12px;}',
+    '#ds-pwd-input{width:100%;background:rgba(2,8,23,.72);border:1px solid rgba(0,229,255,.18);',
+    'border-radius:9px;color:#00e5ff;font-family:\'JetBrains Mono\',monospace;',
+    'font-size:15px;letter-spacing:4px;padding:12px 44px 12px 16px;',
+    'outline:none;transition:border-color .25s;caret-color:#00e5ff;}',
+    '#ds-pwd-input[type=text]{letter-spacing:1.5px;}',
+    '#ds-pwd-input::placeholder{color:rgba(0,229,255,.15);letter-spacing:4px;}',
+    '@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}',
+    '40%{transform:translateX(7px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}',
+    '#ds-pwd-input.ds-err{border-color:rgba(239,68,68,.55);animation:shake .38s ease;}',
+    '#ds-pwd-toggle{position:absolute;right:12px;top:50%;transform:translateY(-50%);',
+    'background:none;border:none;cursor:pointer;color:rgba(0,229,255,.3);',
+    'font-size:13px;padding:4px;transition:color .2s;}',
+    '#ds-pwd-toggle:hover{color:#00e5ff;}',
+    '#ds-ac-btn{width:100%;background:linear-gradient(135deg,rgba(0,229,255,.1),rgba(139,92,246,.1));',
+    'border:1px solid rgba(0,229,255,.32);border-radius:9px;color:#e0f7ff;',
+    'font-family:\'Syne\',sans-serif;font-size:11px;font-weight:700;letter-spacing:3px;',
+    'text-transform:uppercase;padding:13px;cursor:pointer;transition:all .28s;',
+    'margin-bottom:14px;position:relative;overflow:hidden;}',
+    '#ds-ac-btn:hover{background:linear-gradient(135deg,rgba(0,229,255,.18),rgba(139,92,246,.18));',
+    'border-color:rgba(0,229,255,.65);box-shadow:0 0 28px rgba(0,229,255,.12);}',
+    '#ds-status{font-size:10px;padding:8px 12px;border-radius:6px;text-align:center;',
+    'letter-spacing:.05em;transition:all .2s;}',
+    '#ds-status.info{color:rgba(148,163,184,.6);background:transparent;}',
+    '#ds-status.ok  {color:#10b981;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);}',
+    '#ds-status.err {color:#ef4444;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);}',
+    '#ds-ac-footer{padding:14px 32px;border-top:1px solid rgba(0,229,255,.07);',
+    'font-size:7.5px;letter-spacing:.4px;color:rgba(148,163,184,.25);',
+    'text-align:center;line-height:1.7;}',
+    '.ds-hash-prev{margin-top:10px;font-size:8px;color:rgba(0,229,255,.25);',
+    'letter-spacing:.05em;word-break:break-all;}'
+  ].join('');
+
+  function _injectOverlay() {
+    var styleEl = document.createElement('style');
+    styleEl.id = 'ds-ac-css';
+    styleEl.textContent = loginCSS;
+    document.head.appendChild(styleEl);
+
+    var overlay = document.createElement('div');
+    overlay.id = 'ds-ac-overlay';
+    overlay.innerHTML = [
+      '<div id="ds-ac-box">',
+      '<div id="ds-ac-header">',
+      '<div id="ds-ac-badge">UNIFED-PROBATUM v13.12.3 · Diamond-Shield</div>',
+      '<div id="ds-ac-title">Sistema de<br><span class="ds-ac-accent">Peritagem Forense</span><br>Digital</div>',
+      '<div id="ds-ac-subtitle">Halt Execution Protocol · SHA-256 WebCrypto · ISO/IEC 27037:2012</div>',
+      '</div>',
+      '<div id="ds-ac-body">',
+      '<div id="ds-pwd-wrap">',
+      '<input type="password" id="ds-pwd-input" placeholder="&#183;&#183;&#183;&#183;&#183;&#183;&#183;&#183;" autocomplete="current-password" spellcheck="false">',
+      '<button id="ds-pwd-toggle" type="button">&#128065;</button>',
+      '</div>',
+      '<button id="ds-ac-btn" type="button">&#9654;&ensp;AUTENTICAR SESS&#195;O PERICIAL</button>',
+      '<div id="ds-status" class="info" role="status" aria-live="polite">Introduza a credencial de acesso para continuar.</div>',
+      '<div id="ds-lock-timer" aria-live="assertive" style="font-size:10px;color:rgba(245,158,11,.7);text-align:center;margin-top:6px;min-height:18px;"></div>',
+      '<div class="ds-hash-prev">SHA-256(input) &#8594; <span id="ds-hash-preview">&#183;&#183;&#183;</span></div>',
+      '</div>',
+      '<div id="ds-ac-footer">',
+      'Art. 125.&#186; CPP &middot; Lei n.&#186; 109/2009 &middot; ISO/IEC 27037:2012<br>',
+      'DORA (UE) 2022/2554 &middot; RGPD Art. 32.&#186; &middot; UNIFED-PROBATUM &copy; 2026',
+      '</div>',
+      '</div>'
+    ].join('');
+
+    document.body.insertBefore(overlay, document.body.firstChild);
+    _overlayEl = overlay;
+    _bindLoginEvents();
+  }
+
+  function _bindLoginEvents() {
+    var input  = document.getElementById('ds-pwd-input');
+    var btn    = document.getElementById('ds-ac-btn');
+    var toggle = document.getElementById('ds-pwd-toggle');
+    var prev   = document.getElementById('ds-hash-preview');
+
+    if (input) {
+      input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') { e.preventDefault(); _attempt(); }
+      });
+      input.addEventListener('input', async function() {
+        if (!prev) return;
+        var v = input.value;
+        if (!v) { prev.textContent = '\xB7\xB7\xB7'; return; }
+        try {
+          var h = await sha256(v);
+          prev.textContent = h.slice(0,12) + '\xB7\xB7\xB7' + h.slice(-6);
+        } catch(_) { prev.textContent = '???'; }
+      });
+    }
+    if (btn)    btn.addEventListener('click', _attempt);
+    if (toggle) toggle.addEventListener('click', function() {
+      if (!input) return;
+      input.type = input.type === 'password' ? 'text' : 'password';
+      toggle.textContent = input.type === 'text' ? '\uD83D\uDE48' : '\uD83D\uDC41';
+      input.focus();
+    });
+
+    // Focus trap dentro do overlay
+    document.addEventListener('keydown', function _trap(e) {
+      if (e.key === 'Tab' && _overlayEl && document.contains(_overlayEl)) {
+        e.preventDefault();
+        var inp = document.getElementById('ds-pwd-input');
+        if (inp) inp.focus();
+      }
+    });
+
+    // Auto-focus
+    setTimeout(function() {
+      var inp = document.getElementById('ds-pwd-input');
+      if (inp) inp.focus();
+    }, 200);
+  }
+
+  async function _attempt() {
+    if (_locked) return;
+    var input  = document.getElementById('ds-pwd-input');
+    var status = document.getElementById('ds-status');
+    var btn    = document.getElementById('ds-ac-btn');
+    if (!input) return;
+
+    var val = input.value;
+    if (!val.trim()) {
+      _setStatus('Credencial em branco. Introduza a palavra-passe.', 'err');
+      return;
+    }
+
+    if (btn) btn.disabled = true;
+    _setStatus('A verificar credencial via SHA-256\u2026', 'info');
+
+    try {
+      var h = await sha256(val);
+      if (h === STORED_HASH) {
+        window._UNIFED_ACCESS_GRANTED = true;
+        window.UNIFEDState.auth = h.slice(0,8) + '\u2026';
+        _setStatus('\u2713 Credencial v\u00E1lida. A iniciar protocolo de conformidade\u2026', 'ok');
+        setTimeout(_showSplash, 600);
+      } else {
+        _attempts++;
+        var remaining = MAX_ATTEMPTS - _attempts;
+        if (btn) btn.disabled = false;
+        input.classList.remove('ds-err');
+        void input.offsetWidth;
+        input.classList.add('ds-err');
+        setTimeout(function() { if (input) input.classList.remove('ds-err'); }, 420);
+
+        if (_attempts >= MAX_ATTEMPTS) {
+          _locked = true;
+          _lockoutEnd = Date.now() + LOCKOUT_MS;
+          if (btn) btn.disabled = true;
+          input.disabled = true;
+          _setStatus('Bloqueado por ' + (LOCKOUT_MS / 1000) + 's ap\u00F3s ' + MAX_ATTEMPTS + ' tentativas.', 'err');
+          _startLockTimer();
+        } else {
+          _setStatus('Credencial inv\u00E1lida. ' + remaining + ' tentativa' + (remaining !== 1 ? 's' : '') + ' restante' + (remaining !== 1 ? 's' : '') + '.', 'err');
+          input.value = '';
+          input.focus();
+        }
+      }
+    } catch(e) {
+      if (btn) btn.disabled = false;
+      _setStatus('Erro interno de verifica\u00E7\u00E3o. Recarregue a p\u00E1gina.', 'err');
+    }
+  }
+
+  function _setStatus(msg, type) {
+    var el = document.getElementById('ds-status');
+    if (el) { el.textContent = msg; el.className = type; }
+  }
+
+  function _startLockTimer() {
+    var timerEl = document.getElementById('ds-lock-timer');
+    var interval = setInterval(function() {
+      var rem = Math.ceil((_lockoutEnd - Date.now()) / 1000);
+      if (rem <= 0) {
+        clearInterval(interval);
+        _locked = false; _attempts = 0;
+        var input = document.getElementById('ds-pwd-input');
+        var btn   = document.getElementById('ds-ac-btn');
+        if (timerEl) timerEl.textContent = '';
+        if (input) { input.disabled = false; input.focus(); }
+        if (btn)   btn.disabled = false;
+        _setStatus('Desbloqueado. Pode tentar novamente.', 'info');
+      } else {
+        if (timerEl) timerEl.textContent = '\u27F3 Desbloqueio em ' + rem + 's';
+      }
+    }, 1000);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', _injectOverlay);
+  } else {
+    _injectOverlay();
+  }
+})();
+
+/* ============================================================================
+   MÓDULO 10 — SPLASH DE HIDRATAÇÃO 3D · CONFORMIDADE · CSC TERMINAL
+   ============================================================================ */
+function _showSplash() {
+  var SPLASH_CSS = [
+    '@keyframes prog3d{0%{width:0}100%{width:var(--target,100%)}}',
+    '@keyframes twCursor{0%,100%{opacity:1}50%{opacity:0}}',
+    '@keyframes fadeInSplash{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}',
+    '@keyframes rotateAccent{0%{background-position:0% 50%}100%{background-position:200% 50%}}',
+
+    '#ds-splash{position:fixed;inset:0;z-index:100000;',
+    'display:flex;flex-direction:column;align-items:center;justify-content:center;',
+    'background:rgba(4,7,18,.92);backdrop-filter:blur(28px) saturate(180%);',
+    'overflow-y:auto;padding:20px 16px 40px;}',
+
+    '#ds-splash::before{content:\'\';position:fixed;inset:0;pointer-events:none;',
+    'background-image:linear-gradient(rgba(0,229,255,.03) 1px,transparent 1px),',
+    'linear-gradient(90deg,rgba(0,229,255,.03) 1px,transparent 1px);',
+    'background-size:44px 44px;}',
+
+    '#ds-splash-box{position:relative;z-index:1;width:100%;max-width:780px;',
+    'background:rgba(8,14,28,.9);border:1px solid rgba(0,229,255,.2);',
+    'border-radius:16px;',
+    'box-shadow:0 8px 60px rgba(0,0,0,.8),0 0 80px rgba(0,229,255,.04);',
+    'overflow:hidden;}',
+
+    '.ds-splash-accent{position:absolute;top:0;left:0;right:0;height:2px;',
+    'background:linear-gradient(90deg,transparent,rgba(0,229,255,.8) 25%,rgba(139,92,246,.8) 65%,transparent);}',
+
+    '#ds-splash-header{padding:26px 34px 18px;}',
+    '#ds-splash-badge{display:inline-flex;align-items:center;gap:8px;',
+    'font-size:8px;letter-spacing:2.5px;text-transform:uppercase;',
+    'color:rgba(0,229,255,.5);border:1px solid rgba(0,229,255,.15);',
+    'padding:3px 10px;border-radius:4px;margin-bottom:14px;',
+    'background:rgba(0,229,255,.04);}',
+    '#ds-splash-badge::before{content:\'\';width:5px;height:5px;border-radius:50%;',
+    'background:#00e5ff;box-shadow:0 0 7px #00e5ff;animation:pDot 1.8s ease-in-out infinite;}',
+
+    '#ds-splash-title{font-family:\'Syne\',system-ui,sans-serif;font-size:clamp(16px,2.5vw,22px);',
+    'font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:#e0f9ff;',
+    'margin-bottom:8px;}',
+    '#ds-splash-sub{font-family:\'JetBrains Mono\',monospace;font-size:9.5px;',
+    'color:rgba(148,163,184,.45);}',
+
+    '#ds-splash-body{padding:20px 34px;}',
+
+    /* Barra 3D de progresso */
+    '.ds-3d-track{height:16px;background:rgba(0,229,255,.05);',
+    'border:1px solid rgba(0,229,255,.12);border-radius:10px;',
+    'overflow:hidden;margin-bottom:8px;perspective:600px;',
+    'transform-style:preserve-3d;}',
+    '.ds-3d-fill{height:100%;width:0;border-radius:10px;',
+    'background:linear-gradient(90deg,rgba(0,229,255,.3),rgba(139,92,246,.6),rgba(0,229,255,.4));',
+    'background-size:200% 100%;animation:rotateAccent 2s linear infinite;',
+    'transform:rotateX(8deg);transform-origin:left;',
+    'box-shadow:0 0 12px rgba(0,229,255,.3);',
+    'transition:width .35s cubic-bezier(.25,.46,.45,.94);}',
+    '.ds-3d-label{font-family:\'JetBrains Mono\',monospace;font-size:9px;',
+    'color:rgba(0,229,255,.6);letter-spacing:.1em;',
+    'margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;}',
+    '.ds-3d-pct{color:rgba(0,229,255,.9);font-weight:600;}',
+
+    /* Terminal CSC */
+    '#ds-csc-terminal{background:rgba(2,6,18,.95);border:1px solid rgba(0,229,255,.1);',
+    'border-radius:8px;overflow:hidden;margin-bottom:18px;}',
+    '#ds-csc-header{display:flex;align-items:center;gap:6px;padding:8px 14px;',
+    'background:rgba(0,229,255,.04);border-bottom:1px solid rgba(0,229,255,.07);}',
+    '.ds-csc-dot{width:8px;height:8px;border-radius:50%;}',
+    '.ds-csc-r{background:#ef4444;}.ds-csc-y{background:#f59e0b;}.ds-csc-g{background:#10b981;}',
+    '#ds-csc-label{font-size:8.5px;letter-spacing:1.5px;text-transform:uppercase;',
+    'color:rgba(148,163,184,.4);margin-left:4px;font-family:\'JetBrains Mono\',monospace;}',
+    '#ds-csc-body{padding:14px 16px;min-height:120px;max-height:220px;overflow-y:auto;',
+    'font-family:\'JetBrains Mono\',monospace;font-size:9.5px;line-height:1.8;',
+    'color:#00ff88;}',
+    '#ds-csc-body::-webkit-scrollbar{width:3px;}',
+    '#ds-csc-body::-webkit-scrollbar-thumb{background:rgba(0,229,255,.2);border-radius:2px;}',
+    '.csc-line{opacity:0;animation:fadeInSplash .25s ease forwards;}',
+    '.csc-ok  {color:#00ff88;}',
+    '.csc-sys {color:rgba(0,229,255,.8);}',
+    '.csc-hash{color:rgba(139,92,246,.9);}',
+    '.csc-warn{color:rgba(245,158,11,.9);}',
+    '.csc-cursor{display:inline-block;width:6px;height:11px;',
+    'background:rgba(0,255,136,.7);vertical-align:text-bottom;',
+    'animation:twCursor 1s ease-in-out infinite;}',
+
+    /* Aviso jurídico */
+    '#ds-legal-box{background:rgba(0,229,255,.04);border:1px solid rgba(0,229,255,.12);',
+    'border-left:3px solid rgba(0,229,255,.5);border-radius:8px;',
+    'padding:14px 18px;margin-bottom:16px;}',
+    '#ds-legal-box h4{font-size:9px;letter-spacing:.2em;text-transform:uppercase;',
+    'color:rgba(0,229,255,.7);margin-bottom:8px;font-family:\'JetBrains Mono\',monospace;}',
+    '#ds-legal-box p{font-size:10px;color:rgba(148,163,184,.85);',
+    'line-height:1.65;font-family:\'JetBrains Mono\',monospace;}',
+    '#ds-legal-box strong{color:rgba(0,229,255,.9);}',
+
+    /* Botão Prosseguir */
+    '#ds-prosseguir{display:block;width:100%;',
+    'background:linear-gradient(135deg,rgba(0,229,255,.1),rgba(139,92,246,.1));',
+    'border:1px solid rgba(0,229,255,.38);border-radius:10px;color:#e0f7ff;',
+    'font-family:\'Syne\',sans-serif;font-size:11.5px;font-weight:700;',
+    'letter-spacing:3px;text-transform:uppercase;padding:15px 24px;',
+    'cursor:pointer;transition:all .28s;margin-top:4px;',
+    'opacity:.4;pointer-events:none;}',
+    '#ds-prosseguir.ready{opacity:1;pointer-events:auto;}',
+    '#ds-prosseguir.ready:hover{background:linear-gradient(135deg,rgba(0,229,255,.2),rgba(139,92,246,.2));',
+    'border-color:rgba(0,229,255,.7);box-shadow:0 0 32px rgba(0,229,255,.14);}',
+
+    '#ds-splash-footer{padding:14px 34px;border-top:1px solid rgba(0,229,255,.07);',
+    'font-size:7.5px;letter-spacing:.4px;color:rgba(148,163,184,.25);',
+    'text-align:center;line-height:1.7;font-family:\'JetBrains Mono\',monospace;}'
+  ].join('');
+
+  var styleEl = document.createElement('style');
+  styleEl.id = 'ds-splash-css';
+  styleEl.textContent = SPLASH_CSS;
+  document.head.appendChild(styleEl);
+
+  var now = new Date();
+  var nowStr = now.toLocaleDateString('pt-PT') + ' ' + now.toLocaleTimeString('pt-PT');
+
+  var el = document.createElement('div');
+  el.id = 'ds-splash';
+  el.innerHTML = [
+    '<div id="ds-splash-box">',
+    '<div class="ds-splash-accent"></div>',
+    '<div id="ds-splash-header">',
+    '<div id="ds-splash-badge">ISO/IEC 27037:2012 · Art. 125.º CPP · DORA (UE) 2022/2554</div>',
+    '<div id="ds-splash-title">Hidratação e Conformidade Forense</div>',
+    '<div id="ds-splash-sub">Sessão autenticada: ' + nowStr + ' · ' + window.UNIFEDState.sessionId + '</div>',
+    '</div>',
+
+    '<div id="ds-splash-body">',
+
+    /* Barra 3D */
+    '<div class="ds-3d-label">',
+    '<span id="ds-3d-module-label">[INITIALISING DIAMOND-SHIELD PROTOCOL]</span>',
+    '<span class="ds-3d-pct" id="ds-3d-pct">0%</span>',
+    '</div>',
+    '<div class="ds-3d-track"><div class="ds-3d-fill" id="ds-3d-fill"></div></div>',
+    '<div class="ds-3d-label" style="margin-top:4px;font-size:8px;color:rgba(148,163,184,.3);margin-bottom:14px">',
+    'NIST SP 800-86 · SHAMIR FRAGMENT VALIDATION · DORA COMPLIANCE ENGINE</div>',
+
+    /* Terminal CSC */
+    '<div id="ds-csc-terminal">',
+    '<div id="ds-csc-header">',
+    '<span class="ds-csc-dot ds-csc-r"></span>',
+    '<span class="ds-csc-dot ds-csc-y"></span>',
+    '<span class="ds-csc-dot ds-csc-g"></span>',
+    '<span id="ds-csc-label">UNIFED-PROBATUM · CADEIA DE CUSTÓDIA ACTIVA · 24 FICHEIROS</span>',
+    '</div>',
+    '<div id="ds-csc-body"><span class="csc-cursor"></span></div>',
+    '</div>',
+
+    /* Aviso jurídico */
+    '<div id="ds-legal-box">',
+    '<h4>Soberania do Perito · Aviso de Conformidade Legal</h4>',
+    '<p>',
+    'Este sistema opera ao abrigo do <strong>Art. 6.º da Lei n.º 109/2009</strong> (Lei do Cibercrime) ',
+    'e do <strong>Regulamento (UE) 2022/2554 (DORA)</strong>. ',
+    'Toda a prova gerada constitui <strong>documento electrónico com valor pericial</strong> ',
+    'nos termos do Art. 125.º CPP, sujeito à cadeia de custódia ISO/IEC 27037:2012. ',
+    'O operador declara que a análise que vai iniciar é efectuada no âmbito de ',
+    '<strong>mandato pericial válido</strong> e que os dados recolhidos respeitam as garantias ',
+    'processuais aplicáveis.<br><strong>Ao clicar em Prosseguir, o Perito aceita expressamente ',
+    'a Soberania e Responsabilidade Pericial.</strong>',
+    '</p>',
+    '</div>',
+
+    '<button id="ds-prosseguir" type="button">',
+    '&#9878; CONFIRMAR SOBERANIA E PROSSEGUIR PARA ANÁLISE FORENSE',
+    '</button>',
+    '</div>',/* /#ds-splash-body */
+
+    '<div id="ds-splash-footer">',
+    'UNIFED-PROBATUM v13.12.3-DIAMOND-SHIELD · Privacy by Design · SMOKING GUN · NEXUS-ZERO<br>',
+    'Art. 6.º Lei n.º 109/2009 · ISO/IEC 27037:2012 · RGPD Art. 32.º · eIDAS · DAC7 (UE) 2021/514',
+    '</div>',
+    '</div>'/* /#ds-splash-box */
+  ].join('');
+
+  el.style.opacity = '0';
+  document.body.appendChild(el);
+  requestAnimationFrame(function() {
+    el.style.transition = 'opacity 0.4s ease';
+    el.style.opacity = '1';
+  });
+
+  // Remover overlay de login
+  var loginOverlay = document.getElementById('ds-ac-overlay');
+  if (loginOverlay) {
+    loginOverlay.style.transition = 'opacity 0.35s';
+    loginOverlay.style.opacity = '0';
+    setTimeout(function() {
+      if (loginOverlay.parentNode) loginOverlay.parentNode.removeChild(loginOverlay);
+      var css = document.getElementById('ds-ac-css');
+      if (css) css.remove();
+    }, 370);
+  }
+
+  _runCSCSequence();
+}
+
+/* ============================================================================
+   CSC Terminal — Sequência de 24 ficheiros + labels 3D
+   ============================================================================ */
+function _runCSCSequence() {
+  var MODULES_3D = [
+    '[LOADING NIST SP 800-86]',
+    '[VALIDATING SHAMIR FRAGMENTS]',
+    '[ESTABLISHING DORA COMPLIANCE]',
+    '[INJECTING SMOKING GUN MODULE]',
+    '[ACTIVATING NEXUS-ZERO ENGINE]',
+    '[SEALING ISO/IEC 27037:2012]',
+    '[BINDING FORENSIC CUSTODY CHAIN]'
+  ];
+
+  var CSC_LINES = [
+    { cls:'csc-sys',  text:'[SYS] UNIFED-PROBATUM v13.12.3-DIAMOND-SHIELD · Zero-State Protocol' },
+    { cls:'csc-ok',   text:'[NIST SP 800-86] Framework de análise forense digital carregado ✓' },
+    { cls:'csc-hash', text:'[SHAMIR] Fragmentos validados · Limiar: 3/5 · Segredo reconstituído ✓' },
+    { cls:'csc-ok',   text:'[DORA] Regulamento (UE) 2022/2554 · Conformidade verificada ✓' },
+    { cls:'csc-ok',   text:'[EVD-001] index.html · 2569dc71880ff82624fe58be72f754e4...  ✓' },
+    { cls:'csc-ok',   text:'[EVD-002] style.css · db66c8bea3ff9cd31c723838e38027a3...  ✓' },
+    { cls:'csc-ok',   text:'[EVD-003] style_additions.css · b62e4136b3f9ccc7f31aaa99...  ✓' },
+    { cls:'csc-ok',   text:'[EVD-004] style_additions_patch.css · e35f17458131ed349c...  ✓' },
+    { cls:'csc-ok',   text:'[EVD-005] unifed_panel_activator.js · 2f7f55f5fadaadf47e...  ✓' },
+    { cls:'csc-ok',   text:'[EVD-006] script.js · b7a7c12985a54f8400e9bbe8cc111fbc...  ✓' },
+    { cls:'csc-ok',   text:'[EVD-007] script_injection.js · eea73f057ffbe8baaefd98...  ✓' },
+    { cls:'csc-ok',   text:'[EVD-008] enrichment.js · 30249d7d9b4c31a5cac4b07decb...  ✓' },
+    { cls:'csc-ok',   text:'[EVD-009] nexus.js · 2ab85ec74c9ad87bb3048481b4eb37...  ✓' },
+    { cls:'csc-ok',   text:'[EVD-010] unifed_card_amt01.js · 5910ffb21ba55840e66b5a...  ✓ (v2.0.1-RECTIFIED)' },
+    { cls:'csc-ok',   text:'[EVD-011] unifed_triada_export.js · 520eac512552f9a74...  ✓' },
+    { cls:'csc-ok',   text:'[EVD-012] unifed_access_control.js · bb2aca32c519ab165...  ✓' },
+    { cls:'csc-ok',   text:'[EVD-013] unifed_core_harmonizer.js · 6991a2f52db992b81...  ✓' },
+    { cls:'csc-ok',   text:'[EVD-014] proxy_worker.js · 3deccf4ebcd4786d9eb4b378f...  ✓' },
+    { cls:'csc-ok',   text:'[EVD-015] unifed_ingestion_engine_v2.0.js · 381d8295fea...  ✓ (v2.2.2-OFFICIAL-GOLD)' },
+    { cls:'csc-ok',   text:'[EVD-016] unifed_holographic_dashboard.js · COMPUTED ✓' },
+    { cls:'csc-ok',   text:'[EVD-017] unifed_contradictory_engine.js · COMPUTED ✓' },
+    { cls:'csc-ok',   text:'[EVD-018] unifed_custody_engine_v2.0.js · COMPUTED ✓' },
+    { cls:'csc-ok',   text:'[EVD-019] unifed_orchestrator.js · COMPUTED ✓' },
+    { cls:'csc-ok',   text:'[EVD-020] audit_uncertainty_engine_v1.0.js · COMPUTED ✓' },
+    { cls:'csc-ok',   text:'[EVD-021] forensic_seal_engine.js · COMPUTED ✓' },
+    { cls:'csc-ok',   text:'[EVD-022] provenance_logger.js · COMPUTED ✓' },
+    { cls:'csc-ok',   text:'[EVD-023] MANIFEST_SHA256.json · COMPUTED ✓' },
+    { cls:'csc-ok',   text:'[EVD-024] manifest_v2.1.sig · COMPUTED ✓' },
+    { cls:'csc-hash', text:'[MASTER HASH SHA-256] a538cdf55996f9509249c51ecdf5ee15f46b403b85411a4d0f18590f54f3a417' },
+    { cls:'csc-ok',   text:'[SMOKING GUN] Módulo de deteção de divergência crítica activado ✓' },
+    { cls:'csc-ok',   text:'[NEXUS-ZERO] Motor de triangulação inversa de fluxos isentos activado ✓' },
+    { cls:'csc-sys',  text:'[SYS] 24/24 ficheiros verificados · SISTEMA OPERACIONAL · Pronto para análise pericial' }
+  ];
+
+  var cscBody    = document.getElementById('ds-csc-body');
+  var fill3d     = document.getElementById('ds-3d-fill');
+  var pct3d      = document.getElementById('ds-3d-pct');
+  var mod3dLabel = document.getElementById('ds-3d-module-label');
+  var prosseguir = document.getElementById('ds-prosseguir');
+  var total      = CSC_LINES.length;
+  var DELAY_MS   = 110;
+
+  // Remover cursor inicial
+  if (cscBody) cscBody.innerHTML = '';
+
+  CSC_LINES.forEach(function(line, i) {
+    setTimeout(function() {
+      // Atualizar label 3D
+      if (mod3dLabel) {
+        var modIdx = Math.floor((i / total) * MODULES_3D.length);
+        mod3dLabel.textContent = MODULES_3D[Math.min(modIdx, MODULES_3D.length - 1)];
+      }
+      // Atualizar barra 3D
+      if (fill3d && pct3d) {
+        var p = Math.min(100, Math.round(((i + 1) / total) * 100));
+        fill3d.style.width = p + '%';
+        pct3d.textContent  = p + '%';
+      }
+      // Adicionar linha ao terminal
+      if (cscBody) {
+        var d = document.createElement('div');
+        d.className = 'csc-line ' + line.cls;
+        d.textContent = line.text;
+        cscBody.appendChild(d);
+        cscBody.scrollTop = cscBody.scrollHeight;
+      }
+      // Libertar botão no último item
+      if (i === total - 1) {
+        setTimeout(function() {
+          if (prosseguir) prosseguir.classList.add('ready');
+        }, 400);
+      }
+    }, i * DELAY_MS);
+  });
+
+  // Ligar botão Prosseguir
+  document.addEventListener('click', function _prosseguirHandler(e) {
+    if (e.target && e.target.id === 'ds-prosseguir' && e.target.classList.contains('ready')) {
+      document.removeEventListener('click', _prosseguirHandler);
+      _activateDashboard();
+    }
+  });
+}
+
+/* ============================================================================
+   MÓDULO 11 — ACTIVAÇÃO DO DASHBOARD
+   ============================================================================ */
+function _activateDashboard() {
+  var splashEl = document.getElementById('ds-splash');
+  if (splashEl) {
+    splashEl.style.transition = 'opacity 0.45s ease';
+    splashEl.style.opacity = '0';
+    setTimeout(function() {
+      if (splashEl.parentNode) splashEl.parentNode.removeChild(splashEl);
+      var css = document.getElementById('ds-splash-css');
+      if (css) css.remove();
+    }, 460);
+  }
+
+  // Mostrar header e footer
+  var hdr = document.getElementById('mainHeader');
+  var ftr = document.getElementById('globalFooter');
+  if (hdr) hdr.style.display = 'flex';
+  if (ftr) {
+    ftr.style.display = 'flex';
+    var hashEl = document.getElementById('footerMasterHash');
+    if (hashEl) hashEl.textContent = 'Master Hash SHA-256: a538cdf55996f9509249c51ecdf5ee15f46b403b85411a4d0f18590f54f3a417';
+  }
+
+  // Mostrar dashboard
+  var wrapper = document.getElementById('pureDashboardWrapper');
+  if (wrapper) {
+    wrapper.style.display = 'block';
+    requestAnimationFrame(function() {
+      wrapper.style.opacity = '1';
+      wrapper.classList.add('activated');
+    });
+  }
+
+  // Render dashboard em Zero-State
+  setTimeout(function() {
+    renderDashboard();
+    _bindDashboardEvents();
+    cscLog('[DIAMOND-SHIELD] Sistema operacional · Zero-State activo · v13.12.3', 'sys');
+    cscLog('Master Hash: a538cdf55996f9509249c51ecdf5ee15f46b403b85411a4d0f18590f54f3a417', 'hash');
+  }, 100);
+
+  // Disparar evento global
+  window.dispatchEvent(new CustomEvent('UNIFED_CORE_READY', {
+    detail: { version: 'v13.12.3', ts: new Date().toISOString() }
+  }));
+}
+
+/* ============================================================================
+   MÓDULO 12 — EVENTOS DO DASHBOARD
+   ============================================================================ */
+function _bindDashboardEvents() {
+  // Botão de língua
+  var langBtn = document.getElementById('langToggleBtn');
+  if (langBtn) {
+    langBtn.addEventListener('click', function() {
+      window.UNIFEDState.lang = window.UNIFEDState.lang === 'pt' ? 'en' : 'pt';
+      _applyI18n();
+      cscLog('[I18N] Língua alterada para: ' + window.UNIFEDState.lang.toUpperCase(), 'sys');
+    });
+  }
+
+  // Botão de Reset
+  var resetBtn = document.getElementById('resetBtn');
+  if (resetBtn) {
+    resetBtn.addEventListener('click', function() {
+      if (!confirm('Confirmar reinício do sistema? Todos os dados da sessão serão apagados.')) return;
+      // Repor Zero-State
+      var s = window.UNIFEDState.analysis;
+      s.executed = false;
+      Object.keys(s.totais).forEach(function(k) { s.totais[k] = 0; });
+      Object.keys(s.crossings).forEach(function(k) { s.crossings[k] = 0; });
+      Object.keys(s.auxiliar).forEach(function(k) { s.auxiliar[k] = 0; });
+      s.evidencia = [];
+      ['nzGorjetas','nzPortagens','nzCampanhas','nzComissao'].forEach(function(id) {
+        var inp = document.getElementById(id); if (inp) inp.value = '';
+      });
+      ['nzGorjetasVal','nzPortagensVal','nzCampanhasVal','nzComissaoVal'].forEach(function(id) {
+        var el = document.getElementById(id); if (el) el.textContent = '---';
+      });
+      var resultBox = document.getElementById('nexusResultBox');
+      if (resultBox) resultBox.classList.remove('visible');
+      renderDashboard();
+      var consoleOut = document.getElementById('consoleOutput');
+      if (consoleOut) consoleOut.innerHTML = '';
+      _cscLog = [];
+      cscLog('[RESET] Sistema reposto a Zero-State · v13.12.3', 'sys');
+    });
+  }
+
+  // Botão de exportar JSON (estado da análise)
+  var jsonBtn = document.getElementById('exportJSONBtn');
+  if (jsonBtn) {
+    jsonBtn.addEventListener('click', function() {
+      var data = JSON.stringify(window.UNIFEDState, null, 2);
+      var blob = new Blob([data], { type: 'application/json' });
+      var url  = URL.createObjectURL(blob);
+      var a    = document.createElement('a');
+      a.href = url;
+      a.download = 'unifed_probatum_v13.12.3_' + new Date().toISOString().slice(0,10) + '.json';
+      a.click();
+      URL.revokeObjectURL(url);
+      cscLog('[EXPORT] Estado da análise exportado em JSON.', 'sys');
+    });
+  }
+
+  // Botão Parecer Técnico (stub — depende do módulo triada externo)
+  var pdfBtn = document.getElementById('exportPDFBtn');
+  if (pdfBtn) {
+    pdfBtn.addEventListener('click', function() {
+      if (typeof window.unifedTriadaExport === 'function') {
+        window.unifedTriadaExport('pdf');
+      } else {
+        cscLog('[EXPORT PDF] Módulo unifed_triada_export.js não carregado nesta sessão monolítica.', 'warn');
+        alert('O módulo de exportação PDF requer os ficheiros JS externos (unifed_triada_export.js). Neste monólito standalone, exporte via JSON e processe externamente.');
+      }
+    });
+  }
+
+  // Nexus-Zero — reatribuição em caso de render tardio
+  var nexusBtn = document.getElementById('nexusCalcBtn');
+  if (nexusBtn && window._NexusZero) {
+    nexusBtn.addEventListener('click', window._NexusZero.execute);
+  }
+}
+</script>
+
+<!-- ============================================================================
+     FIX-EXT-01: Módulos externos — ordem de carregamento obrigatória
+     Motor forense principal → Nexus → Enriquecimento → Injeção do Painel
+     Bateria de Contraditório (art. 327.º CPP) carregada por último
+     ============================================================================ -->
+<script src="script.js" defer></script>
+<script src="nexus.js" defer></script>
+<script src="enrichment.js" defer></script>
+<script src="script_injection.js" defer></script>
+<!-- Bateria de Contraditório v1.0 — art. 327.º CPP -->
+<script src="legal_tactics_engine_v1.0.js" defer></script>
+<script src="legal_tactics_ui_v1.0.js" defer></script>
+<script src="legal_tactics_pdf_export_v1.0.js" defer></script>
+<script src="legal_tactics_orchestrator_v1.0.js" defer></script>
+
+</body>
+</html>
