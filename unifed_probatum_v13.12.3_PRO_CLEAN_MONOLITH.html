@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UNIFED-PROBATUM v13.12.3-PRO</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; width: 100%; }
+body { font-family: 'Courier New', Courier, monospace; background: #0a0e27; color: #e4e4e7; line-height: 1.6; }
+
+.viewport { width: 100%; height: 100%; display: flex; flex-direction: column; background: #0a0e27; }
+
+.header { background: #1a1f3a; border-bottom: 1px solid #2a2f4a; padding: 2.5rem 3rem; }
+.header h1 { font-size: 18px; font-weight: 500; letter-spacing: 0.15em; color: #f0f0f0; margin-bottom: 0.75rem; }
+.header .subtitle { font-size: 13px; color: #a0a0a8; letter-spacing: 0.08em; }
+
+.main-grid { flex: 1; padding: 2rem 3rem; display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; overflow-y: auto; }
+
+.panel { background: #1a1f3a; border: 1px solid #2a2f4a; border-radius: 8px; padding: 2rem; }
+.panel h2 { font-size: 12px; font-weight: 600; color: #7a7a88; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 2rem; }
+
+.form-field { margin-bottom: 1.75rem; }
+.form-field label { display: block; font-size: 12px; color: #7a7a88; margin-bottom: 0.75rem; letter-spacing: 0.05em; text-transform: uppercase; }
+.form-field input { width: 100%; padding: 0.875rem; font-family: 'Courier New', monospace; font-size: 13px; background: #0a0e27; border: 1px solid #2a2f4a; border-radius: 6px; color: #e4e4e7; transition: border-color 0.3s; }
+.form-field input:focus { outline: none; border-color: #4a4f6a; }
+.form-field input:hover { border-color: #3a3f5a; }
+.form-field .hint { font-size: 11px; color: #5a5a68; margin-top: 0.5rem; }
+
+.status-row { display: flex; justify-content: space-between; padding: 0.875rem; background: #0a0e27; border-radius: 6px; margin-bottom: 1rem; font-size: 13px; border: 1px solid #2a2f4a; }
+.status-label { color: #7a7a88; }
+.status-value { color: #e4e4e7; font-weight: 600; font-family: 'Courier New', monospace; }
+.status-value.empty { color: #5a5a68; }
+.status-value.active { color: #10b981; }
+.status-value.inactive { color: #6b7280; }
+
+.top5-panel { background: #0a0e27; border-left: 2px solid #2a2f4a; padding: 1.5rem; border-radius: 6px; margin-top: 1.5rem; }
+.top5-title { font-size: 12px; color: #7a7a88; font-weight: 600; margin-bottom: 1rem; letter-spacing: 0.05em; text-transform: uppercase; }
+.top5-empty { font-size: 12px; color: #5a5a68; font-style: italic; }
+.top5-item { display: none; padding: 0.75rem 0; border-bottom: 1px solid #2a2f4a; font-size: 12px; }
+.top5-item:last-child { border-bottom: none; }
+.top5-item.active { display: block; color: #e4e4e7; }
+
+.button-group { display: flex; gap: 1rem; margin-top: 2rem; }
+button { padding: 0.875rem 1.75rem; font-size: 12px; background: transparent; border: 1px solid #2a2f4a; color: #e4e4e7; border-radius: 6px; cursor: pointer; font-family: 'Courier New', monospace; letter-spacing: 0.05em; transition: all 0.3s; }
+button:hover { border-color: #4a4f6a; background: #0a0e27; }
+button:active { transform: scale(0.98); }
+
+.footer { border-top: 1px solid #2a2f4a; padding: 2rem 3rem; background: #1a1f3a; text-align: center; }
+.footer-label { font-size: 11px; color: #5a5a68; letter-spacing: 0.05em; margin-bottom: 0.75rem; text-transform: uppercase; }
+.footer-hash { font-size: 11px; color: #7a7a88; font-family: 'Courier New', monospace; word-break: break-all; word-wrap: break-word; padding: 1rem; background: #0a0e27; border: 1px solid #2a2f4a; border-radius: 6px; }
+
+@media (max-width: 1200px) {
+  .main-grid { grid-template-columns: 1fr; gap: 1.5rem; }
+  .header, .main-grid, .footer { padding: 1.5rem 2rem; }
+}
+
+@media (max-width: 768px) {
+  body { font-size: 14px; }
+  .header h1 { font-size: 16px; }
+  .main-grid { padding: 1rem; gap: 1rem; }
+  .panel { padding: 1.5rem; }
+}
+</style>
+</head>
+<body>
+
+<div class="viewport">
+
+  <div class="header">
+    <h1>UNIFED-PROBATUM v13.12.3-PRO</h1>
+    <div class="subtitle">MOTOR FORENSE INDEPENDENTE | PERÍCIA DIGITAL | PORTUGAL PT-PT</div>
+  </div>
+
+  <div class="main-grid">
+
+    <div class="panel">
+      <h2>INICIALIZAÇÃO DE PROCESSO</h2>
+
+      <div class="form-field">
+        <label for="field-case-id">ID do Processo (Obrigatório)</label>
+        <input type="text" id="field-case-id" placeholder="" autocomplete="off" spellcheck="false">
+        <div class="hint">Formato: UNIFED-XXXXXXXXXX-XXXXX</div>
+      </div>
+
+      <div class="form-field">
+        <label for="field-mandatario">Mandatário / Advogado</label>
+        <input type="text" id="field-mandatario" placeholder="" autocomplete="off">
+        <div class="hint">Nome completo e inscrição na Ordem</div>
+      </div>
+
+      <div class="form-field">
+        <label for="field-periodo">Período de Análise</label>
+        <input type="text" id="field-periodo" placeholder="" autocomplete="off">
+        <div class="hint">Ex: Jan 2024 — Dez 2024</div>
+      </div>
+
+      <div class="form-field">
+        <label for="field-evidencias">Carregamento de Evidências</label>
+        <input type="file" id="field-evidencias" multiple accept=".csv,.pdf,.json,.xlsx">
+        <div class="hint">CSV, PDF, JSON, XLSX | Máx. 13 ficheiros</div>
+      </div>
+
+      <div class="button-group">
+        <button onclick="initializeProcess()">INICIALIZAR PROCESSO</button>
+        <button onclick="clearAllFields()">LIMPAR TUDO</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>ESTADO DO SISTEMA</h2>
+
+      <div class="status-row">
+        <span class="status-label">Processo Carregado</span>
+        <span class="status-value empty" id="status-process">---</span>
+      </div>
+
+      <div class="status-row">
+        <span class="status-label">Mandatário Registado</span>
+        <span class="status-value empty" id="status-mandatario">---</span>
+      </div>
+
+      <div class="status-row">
+        <span class="status-label">Período Identificado</span>
+        <span class="status-value empty" id="status-periodo">---</span>
+      </div>
+
+      <div class="status-row">
+        <span class="status-label">Evidências Integradas</span>
+        <span class="status-value empty" id="status-evidencias">---</span>
+      </div>
+
+      <div class="status-row">
+        <span class="status-label">Análise Executada</span>
+        <span class="status-value inactive" id="status-analysis">NÃO EXECUTADA</span>
+      </div>
+
+      <div class="status-row">
+        <span class="status-label">Cadeia de Custódia</span>
+        <span class="status-value inactive" id="status-custody">NÃO VALIDADO</span>
+      </div>
+
+      <div class="top5-panel">
+        <div class="top5-title">QUESTÕES DE ELEVADA RELEVÂNCIA TÉCNICA (TOP 5)</div>
+        <div id="top5-container">
+          <div class="top5-empty">Aguardando execução de análise forense...</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footer">
+    <div class="footer-label">Master Hash SHA-256 (Integridade do Sistema)</div>
+    <div class="footer-hash" id="master-hash-output">Calculando integridade do código...</div>
+  </div>
+
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  window.UNIFED_STATE = {
+    processId: null,
+    mandatario: null,
+    periodo: null,
+    evidenciasCount: 0,
+    analysisExecuted: false,
+    masterHash: null
+  };
+
+  async function calculateMasterHash() {
+    try {
+      const htmlContent = document.documentElement.outerHTML;
+      const encoder = new TextEncoder();
+      const data = encoder.encode(htmlContent);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const hashHex = hashArray.map(function(b) { return b.toString(16).padStart(2, '0'); }).join('');
+      window.UNIFED_STATE.masterHash = hashHex;
+      document.getElementById('master-hash-output').textContent = hashHex;
+    } catch (err) {
+      console.error('[UNIFED] Erro ao calcular Master Hash:', err);
+      document.getElementById('master-hash-output').textContent = 'ERRO: Não foi possível calcular hash';
+    }
+  }
+
+  window.initializeProcess = function() {
+    const caseIdInput = document.getElementById('field-case-id').value.trim();
+    const mandatarioInput = document.getElementById('field-mandatario').value.trim();
+    const periodoInput = document.getElementById('field-periodo').value.trim();
+
+    if (!caseIdInput) {
+      alert('ERRO: ID do Processo é obrigatório.');
+      return;
+    }
+
+    const caseIdRegex = /^UNIFED-[A-Z0-9]{10}-[A-Z0-9]{5}$/;
+    if (!caseIdRegex.test(caseIdInput)) {
+      alert('ERRO: Formato de ID inválido.\nUse: UNIFED-XXXXXXXXXX-XXXXX\nExemplo: UNIFED-MNGFN3C0-X57MO');
+      return;
+    }
+
+    window.UNIFED_STATE.processId = caseIdInput;
+    window.UNIFED_STATE.mandatario = mandatarioInput || null;
+    window.UNIFED_STATE.periodo = periodoInput || null;
+
+    document.getElementById('status-process').textContent = caseIdInput;
+    document.getElementById('status-process').className = 'status-value active';
+
+    if (mandatarioInput) {
+      document.getElementById('status-mandatario').textContent = mandatarioInput;
+      document.getElementById('status-mandatario').className = 'status-value';
+    }
+
+    if (periodoInput) {
+      document.getElementById('status-periodo').textContent = periodoInput;
+      document.getElementById('status-periodo').className = 'status-value';
+    }
+
+    alert('✓ Processo inicializado com sucesso.\n\nID: ' + caseIdInput + '\n\nCarregue ficheiros de evidência para prosseguir com a análise forense.');
+  };
+
+  window.clearAllFields = function() {
+    document.getElementById('field-case-id').value = '';
+    document.getElementById('field-mandatario').value = '';
+    document.getElementById('field-periodo').value = '';
+    document.getElementById('field-evidencias').value = '';
+
+    document.getElementById('status-process').textContent = '---';
+    document.getElementById('status-process').className = 'status-value empty';
+    document.getElementById('status-mandatario').textContent = '---';
+    document.getElementById('status-mandatario').className = 'status-value empty';
+    document.getElementById('status-periodo').textContent = '---';
+    document.getElementById('status-periodo').className = 'status-value empty';
+    document.getElementById('status-evidencias').textContent = '---';
+    document.getElementById('status-evidencias').className = 'status-value empty';
+    document.getElementById('status-analysis').textContent = 'NÃO EXECUTADA';
+    document.getElementById('status-analysis').className = 'status-value inactive';
+    document.getElementById('status-custody').textContent = 'NÃO VALIDADO';
+    document.getElementById('status-custody').className = 'status-value inactive';
+
+    document.getElementById('top5-container').innerHTML = '<div class="top5-empty">Aguardando execução de análise forense...</div>';
+
+    window.UNIFED_STATE = {
+      processId: null,
+      mandatario: null,
+      periodo: null,
+      evidenciasCount: 0,
+      analysisExecuted: false,
+      masterHash: null
+    };
+  };
+
+  document.addEventListener('DOMContentLoaded', calculateMasterHash);
+})();
+</script>
+
+</body>
+</html>
