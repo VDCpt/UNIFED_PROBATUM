@@ -31,6 +31,25 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"
         integrity="sha512-d5kLQpDQdMp5+mzgP8f5RpvPV+Dak4lFa8UVf1q5BVj2I04PPlBrF/+AxAXTHjg/dHp6/3z6DxMEQu0JqYeZA=="
         crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<!-- ============================================================================
+     FIX-EXT-02: jsPDF UMD — Obrigatório para exportação PDF (Tríade + Legal Tactics)
+     Expõe: window.jspdf.jsPDF (UMD) e window.jsPDF (alias de compatibilidade)
+     Requerido por: unifed_triada_export.js · legal_tactics_pdf_export_v1.0.js
+     ============================================================================ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script>
+    /* FIX-NS-01: Alias de namespace — uniformiza window.jsPDF para módulos legados
+       legal_tactics_pdf_export_v1.0.js usa: window.jsPDF (CamelCase direto)
+       unifed_triada_export.js usa:          window.jspdf.jsPDF (UMD namespace)
+       Esta ponte garante compatibilidade entre ambos sem alterar lógica interna. */
+    (function _jsPDFNamespaceBridge() {
+        if (window.jspdf && window.jspdf.jsPDF && !window.jsPDF) {
+            window.jsPDF = window.jspdf.jsPDF;
+            console.info('[FIX-NS-01] jsPDF namespace bridge activo: window.jsPDF → window.jspdf.jsPDF');
+        }
+    })();
+</script>
 <style>
 /* ============================================================================
    DIAMOND-SHIELD DESIGN SYSTEM — v13.12.3
@@ -2078,6 +2097,13 @@ function _bindDashboardEvents() {
 <script src="legal_tactics_ui_v1.0.js" defer></script>
 <script src="legal_tactics_pdf_export_v1.0.js" defer></script>
 <script src="legal_tactics_orchestrator_v1.0.js" defer></script>
+<!-- ============================================================================
+     FIX-EXT-03: Módulo Tríade Documental — anteriormente ausente do manifesto
+     Expõe: window._triadaUpdateLabels · gerarPDF · gerarDocx · gerarAnexoCustodia
+     Referenciado em EVD-011 mas nunca carregado (falha de manifesto identificada
+     por análise forense 2026-04-20). Posição: após orchestrator (última dependência).
+     ============================================================================ -->
+<script src="unifed_triada_export.js" defer></script>
 
 </body>
 </html>

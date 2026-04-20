@@ -91,8 +91,8 @@
             const conteudoGuiao = JSON.stringify(guiao, null, 2);
             const masterHash = await computeSHA256(conteudoGuiao);
 
-            // Tentar usar jsPDF (se disponível)
-            if (typeof window.jsPDF !== 'undefined') {
+            // Tentar usar jsPDF (se disponível) — FIX-NS-01: detectar ambos os namespaces
+            if (typeof window.jsPDF !== 'undefined' || (window.jspdf && typeof window.jspdf.jsPDF !== 'undefined')) {
                 return this._generateUsingJsPDF(guiao, masterHash);
             } else {
                 console.warn('[PDF_EXPORT] jsPDF não disponível. Usando fallback HTML-to-print.');
@@ -105,7 +105,12 @@
          * Usa jsPDF para gerar PDF profissional.
          */
         _generateUsingJsPDF(guiao, masterHash) {
-            const { jsPDF } = window;
+            /* FIX-NS-01: Compatibilidade de namespace jsPDF
+               UMD (jspdf 2.x): window.jspdf.jsPDF
+               Legado (jspdf 1.x / alias bridge): window.jsPDF
+               A bridge em index.html (FIX-NS-01) já faz o alias, mas esta
+               guarda defensiva garante funcionamento mesmo sem a bridge. */
+            const { jsPDF } = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf : window;
             const doc = new jsPDF({
                 orientation: 'portrait',
                 unit: 'mm',

@@ -6,6 +6,26 @@
     <title>UNIFED · PROBATUM · Painel Forense</title>
     <style>
         /* ========== ESTILOS COMPLETOS (MANTIDOS DO ORIGINAL) ========== */
+        /* =========================================================================
+           FIX-CANVAS-01: Fundo explícito nos elementos <canvas>
+           Problema: canvas HTML5 é transparente por omissão. Sem Chart.js a renderizar
+           (cenário standalone / visualizadores externos), os canvas aparecem como áreas
+           transparentes — o que produz o padrão xadrez azul em Claude Artifacts,
+           VS Code Live Preview, Figma, e similares.
+           Solução: forçar background #0a0c12 (igual ao body) em todos os canvas.
+           Impacto zero em runtime normal: Chart.js sobrepõe com o seu próprio render.
+           ISO/IEC 27037:2012 — integridade visual do documento forense.
+           ========================================================================= */
+        canvas {
+            background: #0a0c12;
+        }
+        /* =========================================================================
+           FIX-STANDALONE-01: Garantir que body tem background opaco quando
+           panel.html é aberto como documento autónomo (debug / revisão)
+           ========================================================================= */
+        html {
+            background: #0a0c12;
+        }
         * {
             margin: 0;
             padding: 0;
