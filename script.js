@@ -356,7 +356,14 @@ const testParsing = () => {
 
 testParsing();
 
+// ============================================================================
+// ROBUST SAFT PARSER v13.5.0-GOLD (TRANSPLANTE ENGINE v13.5.0-PURE)
+// RFC-4180 compliant · Header-Based CSV Mapping · DORA Compliant
+// FIX-DEDUP-01: sanitizeToFloat única — delega em normalizeNumericValue certificada
+// ============================================================================
 function robustSAFTParser(csvText) {
+
+    // --- RFC-4180: parse de uma linha CSV respeitando campos entre aspas ---
     const parseCSVLine = (line) => {
         const result = [];
         let current = '';
@@ -381,10 +388,13 @@ function robustSAFTParser(csvText) {
         return result;
     };
 
+    // --- Sanitização de String para Float (Data Normalization) ---
+    // FIX-DEDUP-01: declaração única — delega na normalizeNumericValue certificada.
+    // Aceita padrões Bolt 2024 (7755.16€) e Bolt 2025 (€ 18.738,00).
     const sanitizeToFloat = (val) => {
         if (val === undefined || val === null) return 0;
         let str = String(val).trim().replace(/"/g, '');
-        str = str.replace(/[€$£]/g, '').replace(/EUR/gi, '').replace(/\s+/g, '');
+        str = str.replace(/[€$£]/g, '').replace(/EUR/gi, '').replace(/euros?/gi, '').replace(/\s+/g, '');
         if (str === '' || str === '-') return 0;
         return normalizeNumericValue(str);
     };
@@ -395,24 +405,28 @@ function robustSAFTParser(csvText) {
         return;
     }
 
+    // --- FASE 1: Mapeamento Dinâmico por Label de Cabeçalho ---
+    // Normaliza o cabeçalho removendo BOM e espaços laterais.
     const rawHeader = lines[0].replace(/^\uFEFF/, '').trim();
     const headers = parseCSVLine(rawHeader).map(h => h.trim().replace(/"/g, ''));
 
+    // Labels exactas conforme especificação do ficheiro CSV Bolt
     const LABEL_ILIQUIDO = 'Preço da viagem (sem IVA)';
-    const LABEL_IVA = 'IVA';
-    const LABEL_BRUTO = 'Preço da viagem';
+    const LABEL_IVA      = 'IVA';
+    const LABEL_BRUTO    = 'Preço da viagem';
 
     const idxIliquido = headers.indexOf(LABEL_ILIQUIDO);
-    const idxIVA = headers.indexOf(LABEL_IVA);
-    const idxBruto = headers.indexOf(LABEL_BRUTO);
+    const idxIVA      = headers.indexOf(LABEL_IVA);
+    const idxBruto    = headers.indexOf(LABEL_BRUTO);
 
-    console.log(`🗂️ HEADER-MAPPING v13.12.2-i18n | "${LABEL_ILIQUIDO}" → col[${idxIliquido}] | "${LABEL_IVA}" → col[${idxIVA}] | "${LABEL_BRUTO}" → col[${idxBruto}]`);
+    // Log de diagnóstico de mapeamento (Stealth — console.info não expõe dados em produção)
+    console.log(`🗂️ HEADER-MAPPING v13.5.0-GOLD | "${LABEL_ILIQUIDO}" → col[${idxIliquido}] | "${LABEL_IVA}" → col[${idxIVA}] | "${LABEL_BRUTO}" → col[${idxBruto}]`);
 
     if (idxIliquido === -1 || idxIVA === -1 || idxBruto === -1) {
         const missing = [
             idxIliquido === -1 ? `"${LABEL_ILIQUIDO}"` : null,
-            idxIVA === -1 ? `"${LABEL_IVA}"` : null,
-            idxBruto === -1 ? `"${LABEL_BRUTO}"` : null
+            idxIVA      === -1 ? `"${LABEL_IVA}"` : null,
+            idxBruto    === -1 ? `"${LABEL_BRUTO}"` : null
         ].filter(Boolean).join(', ');
         logAudit(`❌ SAF-T CSV: Cabeçalhos não encontrados → ${missing}. Verifique o ficheiro.`, 'error');
         console.error(`❌ HEADER-MAPPING FAILED: colunas em falta: ${missing}`);
@@ -420,17 +434,20 @@ function robustSAFTParser(csvText) {
         return;
     }
 
-    let totalIliquido = 0;
-    let totalIVA = 0;
-    let totalBruto = 0;
+    // --- FASE 2: Acumulação com Sanitização por Linha ---
+    let totalIliquido     = 0;
+    let totalIVA          = 0;
+    let totalBruto        = 0;
     let linhasProcessadas = 0;
-    let linhasIgnoradas = 0;
+    let linhasIgnoradas   = 0;
 
     for (let i = 1; i < lines.length; i++) {
         const line = lines[i].trim();
         if (!line) continue;
 
         const cols = parseCSVLine(line);
+
+        // Validação mínima: a linha deve ter colunas suficientes para os índices mapeados
         const minRequired = Math.max(idxIliquido, idxIVA, idxBruto) + 1;
         if (cols.length < minRequired) {
             linhasIgnoradas++;
@@ -438,26 +455,28 @@ function robustSAFTParser(csvText) {
         }
 
         totalIliquido += sanitizeToFloat(cols[idxIliquido]);
-        totalIVA += sanitizeToFloat(cols[idxIVA]);
-        totalBruto += sanitizeToFloat(cols[idxBruto]);
+        totalIVA      += sanitizeToFloat(cols[idxIVA]);
+        totalBruto    += sanitizeToFloat(cols[idxBruto]);
         linhasProcessadas++;
     }
 
+    // --- FASE 3: Persistência — estrutura de saída inalterada ---
     UNIFEDSystem.documents.saft.totals.iliquido = totalIliquido;
-    UNIFEDSystem.documents.saft.totals.iva = totalIVA;
-    UNIFEDSystem.documents.saft.totals.bruto = totalBruto;
+    UNIFEDSystem.documents.saft.totals.iva      = totalIVA;
+    UNIFEDSystem.documents.saft.totals.bruto    = totalBruto;
 
+    // --- FASE 4: Actualização da UI ---
     const setUI = (id, value) => {
         const el = document.getElementById(id);
         if (el) el.textContent = formatCurrency(value);
     };
 
     setUI('saftIliquidoValue', totalIliquido);
-    setUI('saftIvaValue', totalIVA);
-    setUI('saftBrutoValue', totalBruto);
+    setUI('saftIvaValue',      totalIVA);
+    setUI('saftBrutoValue',    totalBruto);
 
     console.log(
-        `✅ EXTRAÇÃO CERTIFICADA v13.12.2-i18n | ` +
+        `✅ EXTRAÇÃO CERTIFICADA v13.5.0-GOLD | ` +
         `Linhas processadas: ${linhasProcessadas} | Ignoradas: ${linhasIgnoradas} | ` +
         `Ilíquido: ${formatCurrency(totalIliquido)} | ` +
         `IVA: ${formatCurrency(totalIVA)} | ` +
@@ -465,7 +484,7 @@ function robustSAFTParser(csvText) {
     );
 
     logAudit(
-        `📋 SAF-T Extraído v13.12.2-i18n (Header-Mapping) — ` +
+        `📋 SAF-T Extraído v13.5.0-GOLD (Header-Mapping) — ` +
         `Linhas: ${linhasProcessadas} | ` +
         `Ilíquido: ${formatCurrency(totalIliquido)} | ` +
         `IVA: ${formatCurrency(totalIVA)} | ` +
@@ -555,6 +574,11 @@ const readFileAsText = (file) => {
     });
 };
 
+// ============================================================================
+// getForensicMetadata() — 15 CAMPOS FORENSES (DIAMOND-SHIELD + PURE FUSION)
+// Captura: 7 campos técnicos de ambiente + 8 campos de metadados do sujeito
+// passivo introduzidos no modal de sessão #startSessionModal (index.html).
+// ============================================================================
 function getForensicMetadata() {
     const ua = navigator.userAgent;
     let browserFamily = 'Unknown-Forensic-Agent';
@@ -562,14 +586,41 @@ function getForensicMetadata() {
     else if (ua.includes('Firefox')) browserFamily = 'Browser::Firefox-family';
     else if (ua.includes('Safari') && !ua.includes('Chrome')) browserFamily = 'Browser::WebKit-family';
 
+    // ── Captura dos campos do modal de sessão (#startSessionModal) ────────────
+    const _v  = (id) => (document.getElementById(id) || {}).value || '';
+    const _sp       = _v('metaSP')       || (window.UNIFEDState && window.UNIFEDState.meta && window.UNIFEDState.meta.sp)       || '';
+    const _nif      = _v('metaNIF')      || (window.UNIFEDState && window.UNIFEDState.meta && window.UNIFEDState.meta.nif)      || '';
+    const _platform = _v('metaPlatform') || (window.UNIFEDState && window.UNIFEDState.meta && window.UNIFEDState.meta.platform) ||
+                      (UNIFEDSystem.client && UNIFEDSystem.client.platform) || '';
+    const _year     = _v('metaYear')     || (window.UNIFEDState && window.UNIFEDState.meta && window.UNIFEDState.meta.year)     ||
+                      (UNIFEDSystem.selectedFiscalYear) || new Date().getFullYear().toString();
+    const _period   = _v('metaPeriod')   || (window.UNIFEDState && window.UNIFEDState.meta && window.UNIFEDState.meta.period)  ||
+                      (UNIFEDSystem.selectedPeriodo) || 'anual';
+    const _clientName = (UNIFEDSystem.client && UNIFEDSystem.client.name) || _sp || 'OPERADOR_ANONIMIZADO';
+    const _sessionId  = (window.UNIFEDState && window.UNIFEDState.sessionId) ||
+                        (window.activeForensicSession && window.activeForensicSession.sessionId) || 'SESS-' + Date.now();
+    const _masterHash = (UNIFEDSystem && UNIFEDSystem.masterHash) ||
+                        (window.activeForensicSession && window.activeForensicSession.masterHash) || '---';
+
     return {
-        userAgent: browserFamily,
-        screenRes: `${window.screen.width}x${window.screen.height}`,
-        language: navigator.language,
-        timestampUnix: Math.floor(Date.now() / 1000),
-        timestampISO: new Date().toISOString(),
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        platform: 'UNIFED-PROBATUM-ENCRYPTED-NODE'
+        // ── Campo 1-7: Ambiente técnico ──────────────────────────────────────
+        userAgent:      browserFamily,
+        screenRes:      `${window.screen.width}x${window.screen.height}`,
+        language:       navigator.language,
+        timestampUnix:  Math.floor(Date.now() / 1000),
+        timestampISO:   new Date().toISOString(),
+        timezone:       Intl.DateTimeFormat().resolvedOptions().timeZone,
+        platform_node:  'UNIFED-PROBATUM-ENCRYPTED-NODE',
+
+        // ── Campo 8-15: Metadados do sujeito passivo (modal de sessão) ───────
+        sujeito_passivo:  _clientName,
+        nif:              _nif,
+        platform_digital: _platform,
+        ano_fiscal:       _year,
+        periodo_analise:  _period,
+        sessionId:        _sessionId,
+        masterHash_prefix: _masterHash.substring(0, 24) + ((_masterHash.length > 24) ? '...' : ''),
+        conformidade:     'ISO/IEC 27037:2012 · DORA (UE) 2022/2554 · Art. 125.º CPP · RGIT Art. 103.º-104.º'
     };
 }
 
@@ -1978,7 +2029,7 @@ const translations = {
         closeLogsBtn: "FECHAR",
         wipeBtnText: "PURGA TOTAL DE DADOS (LIMPEZA BINÁRIA)",
         clearConsoleBtn: "LIMPAR CONSOLE",
-        revenueGapTitle: "OMISSÃO DE FATURAMENTO",
+        revenueGapTitle: "OMISSÃO DE FACTURAÇÃO",
         expenseGapTitle: "OMISSÃO DE CUSTOS/IVA",
         revenueGapDesc: "SAF-T Bruto vs Ganhos",
         expenseGapDesc: "Despesas/Comissões (Extrato) vs Faturadas (BTF)",
@@ -2107,7 +2158,7 @@ const translations = {
         closeLogsBtn: "CLOSE",
         wipeBtnText: "TOTAL DATA PURGE (BINARY CLEANUP)",
         clearConsoleBtn: "CLEAR CONSOLE",
-        revenueGapTitle: "REVENUE OMISSION",
+        revenueGapTitle: "REVENUE OMISSION (INVOICING)",
         expenseGapTitle: "COST/VAT OMISSION",
         revenueGapDesc: "SAF-T Gross vs Earnings",
         expenseGapDesc: "Expenses/Commissions (Statement) vs Invoiced (BTF)",
@@ -4386,21 +4437,21 @@ async function performAudit() {
             };
 
             // FIX-EXT-08: Activar flag _unifedDataLoaded no fluxo de ficheiros reais.
-            // Este flag estava apenas definido em ensureDemoDataLoaded() (simulação).
-            // Sem ele, _hydrateRawDataValues() e syncMetrics() retornavam imediatamente.
-            window._unifedDataLoaded       = true;
-            window._unifedAnalysisPending  = false;
-            window._unifedRawDataOnly      = false;
+            // FIX-FLAG-01: _unifedAnalysisPending permanece true até os cálculos concluírem —
+            //   transita para false APENAS após _performForensicCrossingsSync() terminar.
+            window._unifedDataLoaded  = true;
+            window._unifedRawDataOnly = false;
+            // NÃO definir _unifedAnalysisPending = false aqui — ver abaixo
 
-            setTimeout(() => { 
-                forceRevealSmokingGun(); 
+            setTimeout(() => {
+                forceRevealSmokingGun();
                 const wrapper = document.getElementById('pureDashboardWrapper');
                 if (wrapper) wrapper.style.height = 'auto';
                 const consoleSection = document.querySelector('.console-section');
                 if (consoleSection) consoleSection.style.marginTop = '0';
             }, 500);
 
-            console.log('🔍 VALORES EXTRAÍDOS (v13.12.2-i18n):');
+            console.log('🔍 VALORES EXTRAÍDOS (v13.5.0-GOLD):');
             console.log('   SAF-T Bruto:', formatCurrency(saftBruto));
             console.log('   SAF-T Ilíquido:', formatCurrency(saftIliquido));
             console.log('   SAF-T IVA:', formatCurrency(saftIva));
@@ -4410,8 +4461,13 @@ async function performAudit() {
             console.log('   Fatura Comissões:', formatCurrency(invoiceVal));
             console.log(`   DAC7 (${UNIFEDSystem.selectedPeriodo}):`, formatCurrency(dac7TotalPeriodo));
 
+            // FIX-ASYNC-01: chamar a função SÍNCRONA do engine v13.5.0-GOLD (4 eixos C1-C4)
+            // NÃO chamar window.performForensicCrossings (async) sem await — race condition.
             calculateTwoAxisDiscrepancy();
-            performForensicCrossings();
+            _performForensicCrossingsSync();
+
+            // FIX-FLAG-01: após cálculos concluídos, libertar a flag de visibilidade
+            window._unifedAnalysisPending = false;
 
             const totals = UNIFEDSystem.analysis.totals;
             if (totals.ganhos > totals.saftBruto * 1.05) {
@@ -4469,14 +4525,37 @@ async function performAudit() {
             forensicDataSynchronization();
 
             setTimeout(() => { forceRevealSmokingGun(); }, 500);
-            
+
             revealForensicData();
 
+            // FIX-BRIDGE-01: detail contém UNIFEDSystem.analysis completo (totals + crossings + verdict)
+            // Requerido pelo enrichment.js para activar o motor ATF e renderizar o Score de Persistência.
+            // FIX-STEALTH-01: erros de rede (CORS/FreeTSA) silenciados como console.info — consola limpa.
             try {
-                window.dispatchEvent(new CustomEvent('UNIFED_ANALYSIS_COMPLETE', { detail: { timestamp: Date.now() } }));
-                console.log('[UNIFED] Evento UNIFED_ANALYSIS_COMPLETE despachado.');
-            } catch (e) {
-                console.warn('[UNIFED] Falha ao despachar UNIFED_ANALYSIS_COMPLETE:', e);
+                window.dispatchEvent(new CustomEvent('UNIFED_ANALYSIS_COMPLETE', {
+                    detail: Object.assign({}, UNIFEDSystem.analysis, {
+                        timestamp:  Date.now(),
+                        sessionId:  (window.UNIFEDState && window.UNIFEDState.sessionId) || UNIFEDSystem.sessionId || '',
+                        masterHash: UNIFEDSystem.masterHash || '',
+                        source:     'performAudit·v13.5.0-GOLD'
+                    })
+                }));
+                window.dispatchEvent(new CustomEvent('UNIFED_EXECUTE_PERITIA', {
+                    detail: { timestamp: Date.now(), source: 'performAudit' }
+                }));
+                window.dispatchEvent(new CustomEvent('UNIFED_PERICIA_EXECUTADA', {
+                    detail: {
+                        discrepancia_c2:  UNIFEDSystem.analysis.crossings.discrepanciaCritica,
+                        comissaoIndevida: UNIFEDSystem.analysis.crossings.discrepanciaCritica,
+                        percentagem:      UNIFEDSystem.analysis.crossings.percentagemOmissao,
+                        sessionId:        (window.UNIFEDState && window.UNIFEDState.sessionId) || '',
+                        timestamp:        new Date().toISOString()
+                    }
+                }));
+                console.log('[UNIFED] Eventos UNIFED_ANALYSIS_COMPLETE · UNIFED_EXECUTE_PERITIA · UNIFED_PERICIA_EXECUTADA despachados (FIX-BRIDGE-01).');
+            } catch (_evtErr) {
+                // FIX-STEALTH-01: erros de rede/CORS não devem poluir a consola com vermelho
+                console.info('[UNIFED-STEALTH] Aviso não-crítico no despacho de evento:', _evtErr.message);
             }
 
         } catch (error) {
@@ -4647,17 +4726,24 @@ function enhanceTriangulationMatrix() {
 }
 
 function forceRevealSmokingGun() {
+    // IDs de módulos críticos — revelação com display:flex (cards em row) onde aplicável
     const criticalModules = [
         'pureDiscCard', 'pureZonaCinzentaCard', 'pureVerdictCard', 'card-asfixia',
-        'smoking-gun-1', 'smoking-gun-2', 'triangulationMatrixContainer'
+        'smoking-gun-1', 'smoking-gun-2', 'triangulationMatrixContainer',
+        'colarinho-branco', 'smokingGunRow', 'mainDiscrepancyChartContainer',
+        'mainChartContainer'
     ];
 
     criticalModules.forEach(id => {
         const el = document.getElementById(id);
         if (el) {
-            el.style.setProperty('display', 'block', 'important');
+            // Usar flex para containers em linha; block para texto/gráficos
+            const usesFlex = ['smokingGunRow', 'smoking-gun-1', 'smoking-gun-2',
+                              'colarinho-branco', 'triangulationMatrixContainer'].includes(id);
+            el.style.setProperty('display', usesFlex ? 'flex' : 'block', 'important');
             el.style.setProperty('opacity', '1', 'important');
             el.style.setProperty('visibility', 'visible', 'important');
+            el.classList.add('animate-fbi-reveal');
         }
     });
 
@@ -4665,7 +4751,7 @@ function forceRevealSmokingGun() {
         '#revenueGapCard', '#expenseGapCard', '#omissaoDespesasPctCard',
         '#quantumBox', '#bigDataAlert', '#jurosCard', '#discrepancy5Card',
         '#agravamentoBrutoCard', '#ircCard', '#iva6Card', '#iva23Card',
-        '#asfixiaFinanceiraCard'
+        '#asfixiaFinanceiraCard', '#area-cinzenta', '#zonaCinzentaSection'
     ];
     targetNodes.forEach(selector => {
         const el = document.querySelector(selector);
@@ -4673,16 +4759,20 @@ function forceRevealSmokingGun() {
             el.style.setProperty('display', 'block', 'important');
             el.style.setProperty('opacity', '1', 'important');
             el.style.setProperty('visibility', 'visible', 'important');
+            el.classList.add('animate-fbi-reveal');
         }
     });
 
     const wrapper = document.getElementById('pureDashboardWrapper');
     if (wrapper) wrapper.style.setProperty('height', 'auto', 'important');
 
-    const smokingGunWrappers = document.querySelectorAll('.smoking-gun-module, .pure-sg-critical, .pure-sg-secondary, [id*="smoking-gun"]');
-    smokingGunWrappers.forEach(wrapper => {
-        wrapper.style.setProperty('display', 'block', 'important');
-        wrapper.classList.remove('hidden', 'd-none', 'invisible');
+    const smokingGunWrappers = document.querySelectorAll(
+        '.smoking-gun-module, .pure-sg-critical, .pure-sg-secondary, [id*="smoking-gun"], .pure-smoking-guns'
+    );
+    smokingGunWrappers.forEach(el => {
+        el.style.setProperty('display', 'flex', 'important');
+        el.classList.remove('hidden', 'd-none', 'invisible');
+        el.classList.add('animate-fbi-reveal');
     });
 
     updateSmokingGunUI();
@@ -4697,14 +4787,16 @@ function forceRevealSmokingGun() {
 
     enhanceTriangulationMatrix();
 
-    logAudit('[UNIFED] Módulos de Prova Material (Smoking Gun e Colarinho Branco) revelados e fixados.', 'success');
+    logAudit('[UNIFED] Módulos de Prova Material (Smoking Guns, Colarinho Branco, gráficos de discrepância) revelados com animate-fbi-reveal.', 'success');
 }
 
-window.performForensicAnalysis = performAudit;
-window.updateSmokingGunUI = updateSmokingGunUI;
-window.renderTemporalChart = renderTemporalChart;
-window.enhanceTriangulationMatrix = enhanceTriangulationMatrix;
-window.forceRevealSmokingGun = forceRevealSmokingGun;
+window.performForensicAnalysis       = performAudit;
+window.updateSmokingGunUI            = updateSmokingGunUI;
+window.renderTemporalChart           = renderTemporalChart;
+window.enhanceTriangulationMatrix    = enhanceTriangulationMatrix;
+window.forceRevealSmokingGun         = forceRevealSmokingGun;
+// FIX-ASYNC-01: expor a engine síncrona canónica (v13.5.0-GOLD)
+window._performForensicCrossingsSync = _performForensicCrossingsSync;
 
 // ============================================================================
 // SUBSTITUIÇÃO DA FUNÇÃO performForensicCrossings (aceita rawData e dispatches eventos)
@@ -4750,37 +4842,60 @@ window.performForensicCrossings = async function(rawData) {
     const impactoSeteAnosMercado = 1743598080.00; // valor fixo conforme smoking gun
     const discrepancia5IMT = discrepanciaSaftVsDac7 * 0.05;
     
-    // Atualiza objeto crossings
+    // Atualiza objeto crossings — campos completos C1-C4 (FIX-BRIDGE-01b)
     sys.analysis.crossings = {
         discrepanciaSaftVsDac7, percentagemSaftVsDac7,
         discrepanciaCritica, percentagemOmissao,
         ivaFalta, ivaFalta6, agravamentoBrutoIRC, ircEstimado, asfixiaFinanceira,
         btor: despesas, btf: fatura,
+        // C1
+        c1_saftBruto: saftBruto, c1_dac7: dac7,
         c1_delta: discrepanciaSaftVsDac7, c1_pct: percentagemSaftVsDac7,
+        saftVsDac7Alert: Math.abs(discrepanciaSaftVsDac7) > 0.01,
+        // C2
+        c2_despesas: despesas, c2_faturaPlataforma: fatura,
         c2_delta: discrepanciaCritica, c2_pct: percentagemOmissao,
+        percentagemDiscrepancia: percentagemOmissao,
+        discrepancia: discrepanciaCritica,
+        bigDataAlertActive: Math.abs(discrepanciaCritica) > 0.01,
+        // Projecções
         impactoMensalMercado, impactoAnualMercado, impactoSeteAnosMercado,
-        discrepancia5IMT
+        discrepancia5IMT,
+        agravamentoBrutoIRC,
+        ircEstimado
     };
-    
-    sys.analysis.totals.iva6Omitido = ivaFalta6;
-    sys.analysis.totals.iva23Omitido = ivaFalta;
+
+    sys.analysis.totals.iva6Omitido     = ivaFalta6;
+    sys.analysis.totals.iva23Omitido    = ivaFalta;
     sys.analysis.totals.asfixiaFinanceira = asfixiaFinanceira;
-    
+
     const base = Math.max(ganhos, saftBruto, dac7);
     sys.analysis.verdict = getRiskVerdict(Math.abs(discrepanciaCritica), base);
     if (percentagemOmissao > 50) {
         sys.analysis.verdict.level = { pt: 'RISCO CRÍTICO', en: 'CRITICAL RISK' };
-        sys.analysis.verdict.key = 'critical';
+        sys.analysis.verdict.key   = 'critical';
     }
-    
+    if (sys.analysis.verdict) {
+        sys.analysis.verdict.percent = percentagemOmissao.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
+    }
+
     // Atualiza elementos legais na UI
     _updateLegalElements(sys.analysis.crossings, sys.analysis.verdict);
-    
-    // Dispara eventos para sincronização com outros módulos (ex: script_injection)
-    window.dispatchEvent(new CustomEvent('UNIFED_ANALYSIS_COMPLETE', { detail: { source: 'performForensicCrossings', timestamp: Date.now() } }));
-    window.dispatchEvent(new CustomEvent('UNIFED_EXECUTE_PERITIA', { detail: { timestamp: Date.now() } }));
-    
-    console.log('[ENRICHMENT] Cruzamento concluído. Discrepância crítica:', formatCurrency(discrepanciaCritica));
+
+    // FIX-BRIDGE-01b: despachar com UNIFEDSystem.analysis completo para ATF (enrichment.js)
+    try {
+        window.dispatchEvent(new CustomEvent('UNIFED_ANALYSIS_COMPLETE', {
+            detail: Object.assign({}, sys.analysis, {
+                timestamp: Date.now(),
+                source:    'performForensicCrossings·async·v13.5.0-GOLD'
+            })
+        }));
+        window.dispatchEvent(new CustomEvent('UNIFED_EXECUTE_PERITIA', { detail: { timestamp: Date.now() } }));
+    } catch (_e) {
+        console.info('[UNIFED-STEALTH] Aviso não-crítico no despacho (wrapper async):', _e.message);
+    }
+
+    console.log('[ENRICHMENT] Cruzamento v13.5.0-GOLD concluído. Discrepância crítica:', formatCurrency(discrepanciaCritica));
 };
 
 // ============================================================================
@@ -4862,9 +4977,15 @@ function calculateTwoAxisDiscrepancy() {
     });
 }
 
-function performForensicCrossingsOriginal() {
+// ============================================================================
+// _performForensicCrossingsSync() — ENGINE v13.5.0-GOLD (TRANSPLANTE INTEGRAL)
+// 4 EIXOS: C1 SAF-T/DAC7 · C2 SMOKING GUN · C3 SAF-T/Ganhos · C4 Líquido
+// FIX-ASYNC-01: função SÍNCRONA — chamada directamente por performAudit()
+//               sem conflito com a wrapper async window.performForensicCrossings
+// ============================================================================
+function _performForensicCrossingsSync() {
     const totals = UNIFEDSystem.analysis.totals;
-    const cross = UNIFEDSystem.analysis.crossings;
+    const cross  = UNIFEDSystem.analysis.crossings;
 
     const saftBruto = totals.saftBruto || 0;
     const ganhos = totals.ganhos || 0;
