@@ -262,16 +262,19 @@
            ESTADOS DE VISIBILIDADE — zero-state · locked · forensic-revealed
            revealForensicData() remove estas classes após análise concluída
            ================================================================ */
+        /* ── Estado zero-knowledge: dados ainda não carregados ─────────────────────── */
         .zero-state {
-            opacity: 0.2; pointer-events: none;
-            filter: blur(1.5px);
-            transition: opacity 0.4s ease, filter 0.4s ease;
+            opacity: 0.18; pointer-events: none;
+            filter: blur(1.5px) grayscale(0.4);
+            transition: opacity 0.5s ease, filter 0.5s ease, transform 0.5s ease;
         }
+        /* ── Estado bloqueado: módulo aguarda análise (pós-carregamento) ──────── */
         .locked {
             opacity: 0; pointer-events: none;
-            transform: translateY(8px);
-            transition: opacity 0.45s ease, transform 0.45s ease;
+            transform: translateY(10px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
         }
+        /* ── Estado revelado: após revealForensicData() ── animação FBI enter ─── */
         .forensic-revealed {
             opacity: 1 !important; pointer-events: all !important;
             filter: none !important; transform: none !important;
@@ -874,9 +877,10 @@
                     VI. MÓDULOS DE APOIO PERICIAL
                 </span>
             </h3>
-            <!-- .aux-boxes-grid será injectada por injectAuxiliaryHelperBoxes() -->
-            <div id="aux-boxes-container" class="aux-boxes-grid">
-                <!-- Placeholder — preenchido dinamicamente -->
+            <!-- .aux-boxes-grid preparada para Fase 4 — largura uniforme com Zona Cinzenta -->
+            <!-- injectAuxiliaryHelperBoxes() preenche este contentor dinamicamente -->
+            <div id="aux-boxes-container" class="aux-boxes-grid" data-ready-for-phase4="true">
+                <!-- Placeholder — preenchido por injectAuxiliaryHelperBoxes() -->
             </div>
         </div><!-- /#auxiliaryHelperSection -->
 
@@ -976,7 +980,7 @@
         var sys = window.UNIFEDSystem;
         if (!sys || !sys.analysis || !sys.analysis.crossings) return;
 
-        var c = sys.analysis.crossings;
+        var c   = sys.analysis.crossings;
         var fmt = (window.UNIFED_INTERNAL && window.UNIFED_INTERNAL.fmt)
             || function(v) {
                 return new Intl.NumberFormat('pt-PT', { style:'currency', currency:'EUR' }).format(v || 0);
@@ -987,27 +991,86 @@
             if (el) el.textContent = typeof val === 'string' ? val : fmt(val || 0);
         };
 
-        _s('cb-irc-estimado',    c.ircEstimado       || 0);
-        _s('cb-irc-anual',       c.agravamentoBrutoIRC || 0);
-        _s('cb-iva-23',          c.ivaFalta           || 0);
-        _s('cb-iva-6',           c.ivaFalta6          || 0);
+        // ── Métricas fiscais do engine v13.5.0-GOLD ───────────────────────────
+        _s('cb-irc-estimado',    c.ircEstimado         || 0);
+        _s('cb-irc-anual',       c.agravamentoBrutoIRC  || 0);
+        _s('cb-iva-23',          c.ivaFalta             || 0);
+        _s('cb-iva-6',           c.ivaFalta6            || 0);
         _s('cb-impacto-mercado', c.impactoMensalMercado || 0);
+        // Valor sistémico: preferir calculado; fallback no valor verificado do caso real (7 anos)
         _s('cb-impacto-7anos',   c.impactoSeteAnosMercado || 1743598080);
-        _s('cb-disc-mensal',     c.discrepanciaCritica || 0);
+        // Discrepância mensal — formatada como moeda (não como número puro)
+        _s('cb-disc-mensal',     c.discrepanciaCritica  || 0);
 
-        // Escala de dano sistémico — classificação qualitativa
-        var escala = 'INCONCLUSIVO';
-        var impt = c.impactoSeteAnosMercado || 0;
-        if (impt > 1e9)      escala = 'ESCALA CRÍTICA (> 1B€)';
-        else if (impt > 1e8) escala = 'ESCALA ELEVADA (> 100M€)';
-        else if (impt > 1e7) escala = 'ESCALA MATERIAL (> 10M€)';
-        else if (impt > 0)   escala = 'ESCALA RELEVANTE';
-        _s('cb-escala-dano', escala);
+        // ── Escala de dano sistémico — classificação qualitativa com cor dinâmica ──
+        var escalaEl = document.getElementById('cb-escala-dano');
+        if (escalaEl) {
+            var impt = c.impactoSeteAnosMercado || 0;
+            var escala, cor;
+            if      (impt > 1e9) { escala = 'ESCALA CRÍTICA (> 1B€)';    cor = '#ff003c'; }
+            else if (impt > 1e8) { escala = 'ESCALA ELEVADA (> 100M€)';  cor = '#ef4444'; }
+            else if (impt > 1e7) { escala = 'ESCALA MATERIAL (> 10M€)';  cor = '#f97316'; }
+            else if (impt > 0)   { escala = 'ESCALA RELEVANTE';            cor = '#f59e0b'; }
+            else                 { escala = 'INCONCLUSIVO';                 cor = '#94a3b8'; }
+            escalaEl.textContent  = escala;
+            escalaEl.style.color  = cor;
+        }
 
-        // Meses com dados
+        // ── Meses com dados ───────────────────────────────────────────────────
         var mesesEl = document.getElementById('cb-meses');
         if (mesesEl) mesesEl.textContent = (sys.dataMonths && sys.dataMonths.size) || '4';
+
+        // ── Actualizar hash no footer Diamond-Shield ──────────────────────────
+        var footerHashEl = document.getElementById('panel-footer-hash-display');
+        if (footerHashEl) {
+            var dynHash = (window.activeForensicSession && window.activeForensicSession.masterHash)
+                || sys.masterHash || '---';
+            footerHashEl.textContent = dynHash.length > 32
+                ? dynHash.substring(0, 32) + '...' : dynHash;
+        }
     };
+
+    /* =========================================================================
+       FASE 3 — Listener UNIFED_ANALYSIS_COMPLETE
+       Auto-chama revealForensicData() quando o engine de análise conclui,
+       sem depender de chamada manual do script_injection.js ou script.js.
+       Garante que o LED Diamond-Shield no footer é actualizado com o hash dinâmico.
+       ========================================================================= */
+    window.addEventListener('UNIFED_ANALYSIS_COMPLETE', function _onAnalysisComplete(evt) {
+        var detail = (evt && evt.detail) || {};
+        // Só revelar se a análise está realmente concluída (não apenas READY/zero-state)
+        if (detail.status === 'READY') return;
+
+        if (typeof window.revealForensicData === 'function') {
+            window.revealForensicData();
+        }
+        if (typeof window._syncColariinhoBranco === 'function') {
+            window._syncColariinhoBranco();
+        }
+
+        // Actualizar footer hash com o hash dinâmico recebido no evento
+        var receivedHash = detail.masterHash
+            || (window.activeForensicSession && window.activeForensicSession.masterHash)
+            || (window.UNIFEDSystem && window.UNIFEDSystem.masterHash);
+        if (receivedHash) {
+            var footerEl = document.getElementById('panel-footer-hash-display');
+            if (footerEl) {
+                footerEl.textContent = receivedHash.length > 32
+                    ? receivedHash.substring(0, 32) + '...' : receivedHash;
+                footerEl.style.color = '#00e5ff';
+            }
+        }
+
+        // Activar auxiliaryHelperSection se injectAuxiliaryHelperBoxes disponível
+        var auxEl = document.getElementById('auxiliaryHelperSection');
+        if (auxEl && typeof window.injectAuxiliaryHelperBoxes === 'function') {
+            window.injectAuxiliaryHelperBoxes();
+            auxEl.style.setProperty('display', 'block', 'important');
+            auxEl.classList.add('forensic-revealed');
+        }
+
+        console.log('[UNIFED] panel.html · UNIFED_ANALYSIS_COMPLETE recebido · revealForensicData() invocado · LED Diamond-Shield actualizado.');
+    });
 
     /* =========================================================================
        FIX-PH-03: Substituição do IIFE destrutivo por _panelReady()
