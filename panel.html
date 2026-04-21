@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>UNIFED · PROBATUM · Painel Forense</title>
+    <!-- Orbitron + JetBrains Mono — tipografia forense táctica -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
     <style>
         /* ========== ESTILOS COMPLETOS (MANTIDOS DO ORIGINAL) ========== */
         * {
@@ -14,13 +17,15 @@
 
         body {
             background: #0a0c12;
-            font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            letter-spacing: -0.3px;
             padding: 2rem;
             color: #e2e8f0;
         }
 
         .pure-container {
-            max-width: 1600px;
+            max-width: 98vw;
+            width: 98%;
             margin: 0 auto;
         }
 
@@ -102,6 +107,46 @@
             padding: 1.2rem;
             border: 1px solid rgba(71, 85, 105, 0.5);
             transition: all 0.1s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        /* LED ciano — percorre o topo de cada card */
+        .pure-card::before {
+            content: '';
+            position: absolute; top: 0; left: -40%;
+            width: 40%; height: 2px;
+            background: linear-gradient(90deg, transparent, #00e5ff, transparent);
+            animation: led-scan 3s linear infinite;
+            pointer-events: none; z-index: 10;
+        }
+        /* LED vermelho — Smoking Gun / Critical */
+        .pure-sg-critical::before,
+        .pure-card-alert::before,
+        [id*="smoking-gun"]::before {
+            background: linear-gradient(90deg, transparent, #ff003c, transparent) !important;
+            animation: led-scan 1.8s linear infinite !important;
+        }
+        @keyframes led-scan {
+            0%   { left: -40%; }
+            100% { left: 140%; }
+        }
+        @keyframes fbiFadeIn {
+            from { opacity: 0; transform: translateY(10px) scale(0.98); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .animate-fbi-reveal {
+            animation: fbiFadeIn 0.55s cubic-bezier(0.22,1,0.36,1) forwards !important;
+        }
+
+        /* Orbitron — títulos forenses */
+        .pure-section-title,
+        .pure-card-title,
+        .pure-sg-label,
+        #pure-title-text,
+        h1, h2, h3 {
+            font-family: 'Orbitron', 'JetBrains Mono', monospace !important;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
         }
 
         .pure-card-title {
@@ -152,6 +197,126 @@
         .pure-card-alert {
             border-left: 4px solid #ef4444;
             background: rgba(239,68,68,0.05);
+        }
+
+        /* ================================================================
+           COLARINHO BRANCO — Card de Criminalidade Financeira v13.12.3
+           ================================================================ */
+        .colarinho-branco-module {
+            border: 1px solid rgba(239,68,68,0.5);
+            border-left: 4px solid #ef4444;
+            background: rgba(239,68,68,0.06);
+            position: relative;
+            overflow: hidden;
+        }
+        .colarinho-branco-module::before {
+            background: linear-gradient(90deg, transparent, #ff003c, transparent) !important;
+            animation: led-scan 1.6s linear infinite !important;
+        }
+        .colarinho-branco-header { display:flex; align-items:center; gap:10px; margin-bottom:16px; }
+        .colarinho-branco-badge {
+            background: rgba(239,68,68,0.15);
+            border: 1px solid rgba(239,68,68,0.4);
+            color: #ef4444;
+            font-size: 0.6rem; letter-spacing:0.12em; text-transform:uppercase;
+            padding: 3px 8px; border-radius:3px; font-weight:700;
+        }
+        .cb-metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
+            gap: 10px; margin-bottom: 14px;
+        }
+        .cb-metric {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(239,68,68,0.15);
+            border-radius: 6px; padding: 10px 14px; text-align: center;
+        }
+        .cb-metric-label { font-size:0.6rem; color:rgba(255,255,255,0.5); letter-spacing:0.06em; text-transform:uppercase; margin-bottom:6px; }
+        .cb-metric-value { font-size:1.15rem; font-weight:700; color:#ef4444; font-family:'Orbitron','JetBrains Mono',monospace; }
+        .cb-metric-sub   { font-size:0.58rem; color:rgba(255,255,255,0.4); margin-top:4px; }
+        .cb-systemic-bar {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(239,68,68,0.2);
+            border-radius: 6px; padding:12px 14px; margin-bottom:10px;
+        }
+        .cb-systemic-label { font-size:0.62rem; color:rgba(255,255,255,0.5); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:8px; }
+        .cb-systemic-value { font-size:1.6rem; font-weight:900; color:#ef4444; font-family:'Orbitron','JetBrains Mono',monospace; letter-spacing:-0.02em; }
+        .cb-legal-note  { font-size:0.6rem; color:rgba(255,255,255,0.4); line-height:1.6; margin-top:10px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.06); }
+        .cb-legal-note strong { color:rgba(239,68,68,0.7); }
+
+        /* ================================================================
+           AUXILIARY HELPER SECTION — #auxiliaryHelperSection
+           Preparado para receber .aux-boxes-grid na Fase 4
+           ================================================================ */
+        #auxiliaryHelperSection { margin-top:16px; }
+        .aux-boxes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px; width: 100%;
+        }
+        .aux-helper-box { background:rgba(255,255,255,0.03); border:1px solid rgba(0,229,255,0.12); border-radius:6px; padding:12px 14px; }
+        .aux-helper-label { font-size:0.6rem; color:rgba(255,255,255,0.5); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:6px; }
+        .aux-helper-value { font-size:1.1rem; font-weight:700; color:#00e5ff; }
+
+        /* ================================================================
+           ESTADOS DE VISIBILIDADE — zero-state · locked · forensic-revealed
+           revealForensicData() remove estas classes após análise concluída
+           ================================================================ */
+        .zero-state {
+            opacity: 0.2; pointer-events: none;
+            filter: blur(1.5px);
+            transition: opacity 0.4s ease, filter 0.4s ease;
+        }
+        .locked {
+            opacity: 0; pointer-events: none;
+            transform: translateY(8px);
+            transition: opacity 0.45s ease, transform 0.45s ease;
+        }
+        .forensic-revealed {
+            opacity: 1 !important; pointer-events: all !important;
+            filter: none !important; transform: none !important;
+            animation: fbiFadeIn 0.55s cubic-bezier(0.22,1,0.36,1) forwards !important;
+        }
+        @keyframes fbiFadeIn {
+            from { opacity:0; transform:translateY(10px) scale(0.98); }
+            to   { opacity:1; transform:translateY(0) scale(1); }
+        }
+
+        /* ================================================================
+           FOOTER DIAMOND-SHIELD v13.12.3
+           ================================================================ */
+        .panel-footer-diamond {
+            display: flex; align-items: center; justify-content: space-between;
+            flex-wrap: wrap; gap: 8px;
+            margin-top: 24px; padding: 14px 16px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(0,229,255,0.1);
+            border-top: 2px solid rgba(0,229,255,0.25);
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.65rem; color: rgba(255,255,255,0.35);
+            letter-spacing: 0.04em;
+            position: relative; overflow: hidden;
+        }
+        .panel-footer-diamond::before {
+            content:''; position:absolute; top:0; left:-40%;
+            width:40%; height:2px;
+            background: linear-gradient(90deg, transparent, #00e5ff, transparent);
+            animation: led-scan 4s linear infinite;
+            pointer-events: none;
+        }
+        .panel-footer-hash  { color:rgba(0,229,255,0.5); font-size:0.6rem; word-break:break-all; }
+        .panel-footer-shield-badge {
+            display: inline-flex; align-items:center; gap:5px;
+            background: rgba(0,229,255,0.07);
+            border: 1px solid rgba(0,229,255,0.2);
+            border-radius: 3px; padding: 3px 8px;
+            color: rgba(0,229,255,0.6); font-size:0.58rem;
+            letter-spacing:0.1em; text-transform:uppercase;
+        }
+        .panel-footer-shield-badge::before {
+            content:''; width:5px; height:5px; border-radius:50%;
+            background:#00e5ff; box-shadow:0 0 6px #00e5ff;
         }
 
         .pure-smoking-guns {
@@ -619,18 +784,233 @@
             <div id="pure-despesas-extrato"></div><div id="pure-ganhos-liquidos-extrato"></div><div id="pure-saft-bruto-val"></div>
             <div id="pure-dac7-val"></div><div id="pure-iva-devido-val"></div><div id="pure-nao-declarado-val"></div>
         </div>
-    </section>
-</div>
+
+        <!-- =================================================================
+             COLARINHO BRANCO — Módulo de Criminalidade Financeira v13.12.3
+             IDs preparados para receber dados do script_injection.js:
+             #cb-irc-anual · #cb-escala-dano · #cb-impacto-mercado · #cb-impacto-7anos
+             ================================================================= -->
+        <div class="pure-card colarinho-branco-module" id="colarinho-branco"
+             style="display:none;" data-forensic-module="white-collar">
+
+            <div class="colarinho-branco-header">
+                <h3 class="pure-card-title" style="margin:0;">
+                    <span class="pure-icon">⚖️</span>
+                    <span data-pt="V. COLARINHO BRANCO — ANÁLISE DE CRIMINALIDADE FINANCEIRA" data-en="V. WHITE COLLAR — FINANCIAL CRIME ANALYSIS">
+                        V. COLARINHO BRANCO — ANÁLISE DE CRIMINALIDADE FINANCEIRA
+                    </span>
+                </h3>
+                <span class="colarinho-branco-badge">Art. 103.º-104.º RGIT</span>
+            </div>
+
+            <!-- Métricas fiscais derivadas dos crossings -->
+            <div class="cb-metrics-grid">
+                <div class="cb-metric">
+                    <div class="cb-metric-label" data-pt="IRC Estimado (21%)" data-en="Estimated CIT (21%)">IRC Estimado (21%)</div>
+                    <div id="cb-irc-estimado" class="cb-metric-value">€ 0,00</div>
+                    <div class="cb-metric-sub">Art. 17.º CIRC</div>
+                </div>
+                <div class="cb-metric">
+                    <div class="cb-metric-label" data-pt="Agravamento IRC Anual" data-en="Annual CIT Aggravation">Agravamento IRC Anual</div>
+                    <div id="cb-irc-anual" class="cb-metric-value">€ 0,00</div>
+                    <div class="cb-metric-sub">(C2 / meses) × 12</div>
+                </div>
+                <div class="cb-metric">
+                    <div class="cb-metric-label" data-pt="IVA 23% Omitido" data-en="VAT 23% Omitted">IVA 23% Omitido</div>
+                    <div id="cb-iva-23" class="cb-metric-value">€ 0,00</div>
+                    <div class="cb-metric-sub">Art. 2.º n.º 1 al. i) CIVA</div>
+                </div>
+                <div class="cb-metric">
+                    <div class="cb-metric-label" data-pt="IVA 6% (Asfixia)" data-en="VAT 6% (Suffocation)">IVA 6% — Asfixia Financeira</div>
+                    <div id="cb-iva-6" class="cb-metric-value">€ 0,00</div>
+                    <div class="cb-metric-sub">Art. 405.º C. Civil</div>
+                </div>
+                <div class="cb-metric">
+                    <div class="cb-metric-label" data-pt="Impacto Mensal (38K)" data-en="Monthly Impact (38K)">Impacto Mensal Mercado</div>
+                    <div id="cb-impacto-mercado" class="cb-metric-value">€ 0,00</div>
+                    <div class="cb-metric-sub">38.000 motoristas estimados</div>
+                </div>
+                <div class="cb-metric">
+                    <div class="cb-metric-label" data-pt="Escala de Dano Sistémico" data-en="Systemic Damage Scale">Escala de Dano Sistémico</div>
+                    <div id="cb-escala-dano" class="cb-metric-value" style="font-size:0.95rem;">A CALCULAR</div>
+                    <div class="cb-metric-sub">Art. 104.º n.º 2 RGIT</div>
+                </div>
+            </div>
+
+            <!-- Barra de impacto sistémico (7 anos) -->
+            <div class="cb-systemic-bar">
+                <div class="cb-systemic-label"
+                     data-pt="PROJECÇÃO SISTÉMICA — 7 ANOS · 38.000 MOTORISTAS (ART. 128.º CPP — CONTEXTO MACROECONÓMICO)"
+                     data-en="SYSTEMIC PROJECTION — 7 YEARS · 38,000 DRIVERS (ART. 128 CPP — MACROECONOMIC CONTEXT)">
+                    PROJECÇÃO SISTÉMICA — 7 ANOS · 38.000 MOTORISTAS
+                </div>
+                <div id="cb-impacto-7anos" class="cb-systemic-value">€ 1.743.598.080,00</div>
+                <div class="cb-legal-note">
+                    <strong>Nota Art. 128.º CPP:</strong>
+                    Os valores de impacto sistémico constituem contexto macroeconómico indicativo e não prova directa de ilícito alheio.
+                    Metodologia: Extrapolação Estatística de Baixa Variância · ISO/IEC 27037:2012.
+                    Base: (<span id="cb-disc-mensal">€ 0,00</span> / <span id="cb-meses">4</span> meses) × 12 × 38.000 motoristas × 7 anos.
+                </div>
+            </div>
+
+            <!-- Fundamento legal -->
+            <div class="cb-legal-note">
+                <strong>Fundamento Legal:</strong>
+                Art. 103.º RGIT (Fraude Fiscal) · Art. 104.º RGIT (Fraude Fiscal Qualificada) ·
+                Art. 119.º RGIT (Omissão de Entrega) · Art. 36.º n.º 11 CIVA · DL n.º 41/2023 (DAC7) ·
+                DORA (UE) 2022/2554 · ISO/IEC 27037:2012.
+            </div>
+        </div><!-- /#colarinho-branco -->
+
+        <!-- =================================================================
+             AUXILIARY HELPER SECTION — #auxiliaryHelperSection
+             Contentor preparado para receber .aux-boxes-grid na Fase 4.
+             injectAuxiliaryHelperBoxes() injecta caixas de apoio pericial aqui.
+             ================================================================= -->
+        <div id="auxiliaryHelperSection" class="pure-card" style="display:none;" data-forensic-module="aux">
+            <h3 class="pure-card-title">
+                <span class="pure-icon">🔧</span>
+                <span data-pt="VI. MÓDULOS DE APOIO PERICIAL" data-en="VI. FORENSIC SUPPORT MODULES">
+                    VI. MÓDULOS DE APOIO PERICIAL
+                </span>
+            </h3>
+            <!-- .aux-boxes-grid será injectada por injectAuxiliaryHelperBoxes() -->
+            <div id="aux-boxes-container" class="aux-boxes-grid">
+                <!-- Placeholder — preenchido dinamicamente -->
+            </div>
+        </div><!-- /#auxiliaryHelperSection -->
+
+        <!-- =================================================================
+             FOOTER DIAMOND-SHIELD v13.12.3
+             LED ciano animado · hash de sessão dinâmico · conformidade legal
+             ================================================================= -->
+        <footer class="panel-footer-diamond" id="panelFooterDiamond">
+            <div>
+                <span class="panel-footer-shield-badge">v13.12.3-DIAMOND-SHIELD</span>
+                <span style="margin-left:8px;">
+                    Art. 125.º CPP · ISO/IEC 27037:2012 · DORA (UE) 2022/2554 · RGIT Art. 103.º-104.º
+                </span>
+            </div>
+            <div class="panel-footer-hash">
+                Master Hash SHA-256: <span id="panel-footer-hash-display">---</span>
+            </div>
+        </footer><!-- /.panel-footer-diamond -->
+    </section><!-- /#pureDashboard -->
+</div><!-- /pure-container -->
 
 <script>
     /* =========================================================================
+       revealForensicData() — Gatilho de visibilidade pós-análise (Fase 3)
+       Remove estados .zero-state e .locked; adiciona .forensic-revealed.
+       Chamada por: performAudit() → script.js · script_injection.js
+       ========================================================================= */
+    window.revealForensicData = function revealForensicData() {
+        // 1. Remover estados de ocultação — revelar com animação FBI
+        document.querySelectorAll('.zero-state, .locked').forEach(function(el) {
+            el.classList.remove('zero-state', 'locked');
+            el.classList.add('forensic-revealed');
+        });
+
+        // 2. Revelar módulos forenses com display:block / display:flex
+        var flexModules = ['colarinho-branco', 'smoking-gun-1', 'smoking-gun-2',
+                           'pureDiscCard', 'smokingGunRow'];
+        var blockModules = ['pureATFCard', 'pureZonaCinzentaCard', 'pureVerdictCard',
+                            'pureTriangulationCard', 'panel-mainChartContainer',
+                            'pure-chart-container', 'auxiliaryHelperSection',
+                            'card-asfixia', 'gapConciliacaoC1'];
+
+        flexModules.forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) {
+                el.style.setProperty('display', 'flex', 'important');
+                el.style.setProperty('opacity', '1', 'important');
+                el.classList.remove('unifed-hidden-until-analysis', 'locked', 'zero-state');
+                el.classList.add('forensic-revealed');
+            }
+        });
+        blockModules.forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) {
+                el.style.setProperty('display', 'block', 'important');
+                el.style.setProperty('opacity', '1', 'important');
+                el.classList.remove('unifed-hidden-until-analysis', 'locked', 'zero-state');
+                el.classList.add('forensic-revealed');
+            }
+        });
+
+        // 3. Revelar #colarinho-branco e sincronizar valores
+        var cbEl = document.getElementById('colarinho-branco');
+        if (cbEl) {
+            cbEl.style.setProperty('display', 'block', 'important');
+            cbEl.classList.add('forensic-revealed', 'animate-fbi-reveal');
+            window._syncColariinhoBranco();
+        }
+
+        // 4. Revelar #auxiliaryHelperSection
+        var auxEl = document.getElementById('auxiliaryHelperSection');
+        if (auxEl && typeof window.injectAuxiliaryHelperBoxes === 'function') {
+            window.injectAuxiliaryHelperBoxes();
+            auxEl.style.setProperty('display', 'block', 'important');
+            auxEl.classList.add('forensic-revealed');
+        }
+
+        // 5. Actualizar footer Diamond-Shield com hash dinâmico
+        var footerHash = document.getElementById('panel-footer-hash-display');
+        if (footerHash) {
+            var dynHash = (window.activeForensicSession && window.activeForensicSession.masterHash)
+                || (window.UNIFEDSystem && window.UNIFEDSystem.masterHash)
+                || '---';
+            footerHash.textContent = dynHash.length > 24
+                ? dynHash.substring(0, 24) + '...'
+                : dynHash;
+        }
+
+        console.log('[UNIFED] revealForensicData() · Módulos forenses revelados · colarinho-branco activo · LED Diamond-Shield activo.');
+    };
+
+    /* =========================================================================
+       _syncColariinhoBranco() — Sincroniza os valores do card #colarinho-branco
+       a partir de UNIFEDSystem.analysis.crossings (calculados pelo engine v13.5.0-GOLD)
+       ========================================================================= */
+    window._syncColariinhoBranco = function _syncColariinhoBranco() {
+        var sys = window.UNIFEDSystem;
+        if (!sys || !sys.analysis || !sys.analysis.crossings) return;
+
+        var c = sys.analysis.crossings;
+        var fmt = (window.UNIFED_INTERNAL && window.UNIFED_INTERNAL.fmt)
+            || function(v) {
+                return new Intl.NumberFormat('pt-PT', { style:'currency', currency:'EUR' }).format(v || 0);
+            };
+
+        var _s = function(id, val) {
+            var el = document.getElementById(id);
+            if (el) el.textContent = typeof val === 'string' ? val : fmt(val || 0);
+        };
+
+        _s('cb-irc-estimado',    c.ircEstimado       || 0);
+        _s('cb-irc-anual',       c.agravamentoBrutoIRC || 0);
+        _s('cb-iva-23',          c.ivaFalta           || 0);
+        _s('cb-iva-6',           c.ivaFalta6          || 0);
+        _s('cb-impacto-mercado', c.impactoMensalMercado || 0);
+        _s('cb-impacto-7anos',   c.impactoSeteAnosMercado || 1743598080);
+        _s('cb-disc-mensal',     c.discrepanciaCritica || 0);
+
+        // Escala de dano sistémico — classificação qualitativa
+        var escala = 'INCONCLUSIVO';
+        var impt = c.impactoSeteAnosMercado || 0;
+        if (impt > 1e9)      escala = 'ESCALA CRÍTICA (> 1B€)';
+        else if (impt > 1e8) escala = 'ESCALA ELEVADA (> 100M€)';
+        else if (impt > 1e7) escala = 'ESCALA MATERIAL (> 10M€)';
+        else if (impt > 0)   escala = 'ESCALA RELEVANTE';
+        _s('cb-escala-dano', escala);
+
+        // Meses com dados
+        var mesesEl = document.getElementById('cb-meses');
+        if (mesesEl) mesesEl.textContent = (sys.dataMonths && sys.dataMonths.size) || '4';
+    };
+
+    /* =========================================================================
        FIX-PH-03: Substituição do IIFE destrutivo por _panelReady()
-       PROBLEMA ORIGINAL: O IIFE executava imediatamente ao ser injectado no DOM
-       via wrapper.innerHTML, apagando os valores que syncMetrics() / 
-       _hydrateRawDataValues() já tinham escrito — ou que estavam prestes a escrever.
-       SOLUÇÃO: Converter em função chamável. O script_injection.js invoca
-       window._panelReady() APÓS a injecção e APÓS a primeira hidratação.
-       ISO/IEC 27037:2012 · DORA (UE) 2022/2554 — Halt Execution Protocol
        ========================================================================= */
     window._panelReady = function _panelReady() {
         // 1. Ocultar apenas contentores de gráfico que NÃO têm dados ainda

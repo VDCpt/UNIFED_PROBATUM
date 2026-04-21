@@ -124,71 +124,234 @@
     // =========================================================================
     // 1. DATASET MESTRE (OBJETO IMUTÁVEL) – valores hardcoded ATUALIZADOS
     // =========================================================================
-    const _PDF_CASE = Object.freeze({
-        sessionId:  "UNIFED-MNGFN3C0-X57MO",
-        masterHash: "2A38423FED220D681D86E959F2C34F993BA71FCE9B92791199453B41E23A63E5",
-        client: { 
-            name: "Real Demo - Unipessoal, Lda", 
-            nif: "999999990", 
-            platform: "Plataforma A" 
-        },
-        counts: {
-            ctrl: 4,
-            saft: 4,
-            fat: 2,
-            ext: 4,
-            dac7: 1
-        },
-        totals: {
-            ganhos:           10157.73,
-            ganhosLiquidos:    7709.84,
-            saftBruto:         8227.97,
-            saftIliquido:      7761.67,
-            saftIva:            466.30,
-            despesas:          2447.89,
-            faturaPlataforma:   262.94,
-            dac7TotalPeriodo:  7755.16,   // 4.º TRI conforme solicitado
-            iva6Omitido:        131.10,
-            iva23Omitido:       502.54,
-            asfixiaFinanceira:  493.68,
-            totalNaoSujeitos:   451.15,    // Campanhas+Portagens+Gorjetas
-            gorjetas:           46.00,
-            portagens:           0.15,
-            campanhas:         405.00,
-            cancelamentos:      58.10
-        },
-        fluxosIsentos: {
-            campanhas: 405.00,
-            gorjetas:   46.00,
-            portagens:   0.15,
-            total:     451.15
-        },
-        atf: {
-            zScore: 2.45,
-            confianca: "99.2%",
-            periodo: "Q4 2024",
-            anomalias: 4,
-            version: "v13.12.3",
-            score: 40,
-            trend: "DESCENDENTE",
-            outliers: 0
-        },
-        macro_analysis: {
-            sector_drivers: 38000,
-            operational_years: 7,
-            avg_monthly_discrepancy: 546.24,
-            estimated_systemic_gap: 1743598080.00,
-            confidence_level: "High (based on verified algorithmic pattern)",
-            legal_implication: "Potential systemic tax erosion under Art. 119.º RGIT (Iteration)",
-            methodology: "Extrapolação Estatística de Baixa Variância · ISO/IEC 27037:2012",
-            status: "INDICATIVO_MACRO",
-            disclaimer: "Os valores de impacto sistémico constituem contexto macroeconómico e não prova direta de ilícito alheio, nos termos do Art. 128.º do CPP."
-        },
-        meta: {
-            lastUpdate: "2026-04-17",
-            forensicIntegrity: true
+    // =========================================================================
+    // 1. DADOS VERIFICADOS — _REAL_CASE_MMLADX8Q (TRANSPLANTE v13.5.0-PURE)
+    // =========================================================================
+    // Fonte de verdade: JSON exportado UNIFED-MMLADX8Q-CV69L
+    // Hash de integridade dos dados (imutável):
+    //   SHA-256 = 5150e7674b891d5d07ca990e4c7124fc66af40488452759aeebdf84976eaa8f6
+    //
+    // ARQUITECTURA DE HASH DINÂMICO (FIX-HASH-DYN-01):
+    //   masterHash_sessão = SHA-256(hash_dados_imutável + nonce_crypto + timestamp_unix)
+    //   · Garante unicidade por sessão (nonce 128-bit via crypto.getRandomValues)
+    //   · Rastreabilidade: o hash_dados_imutável está embedido no payload → auditável
+    //   · Cumpre ISO/IEC 27037:2012 §8.2 — integridade verificável e não-repúdio
+    // =========================================================================
+
+    // Hash dos dados imutáveis (source of truth — NÃO alterar)
+    const _DATA_INTEGRITY_HASH = '5150e7674b891d5d07ca990e4c7124fc66af40488452759aeebdf84976eaa8f6';
+
+    // Gerador de hash de sessão dinâmico — async, via crypto.subtle
+    async function _generateSessionHash(dataHash) {
+        try {
+            // Nonce criptográfico de 128 bits (16 bytes)
+            const nonceBytes = new Uint8Array(16);
+            crypto.getRandomValues(nonceBytes);
+            const nonce = Array.from(nonceBytes).map(b => b.toString(16).padStart(2, '0')).join('');
+
+            const timestampUnix = Math.floor(Date.now() / 1000).toString();
+
+            // Payload do hash de sessão: dados_imutáveis + nonce + timestamp
+            const payload = dataHash + ':' + nonce + ':' + timestampUnix;
+
+            const encoder = new TextEncoder();
+            const buf = await crypto.subtle.digest('SHA-256', encoder.encode(payload));
+            const sessionHash = Array.from(new Uint8Array(buf))
+                .map(b => b.toString(16).padStart(2, '0'))
+                .join('')
+                .toUpperCase();
+
+            return {
+                sessionHash,
+                nonce,
+                timestampUnix,
+                dataIntegrityHash: dataHash,
+                // Cadeia de prova auditável — inclui componentes para verificação independente
+                auditTrail: `SHA-256(${dataHash.substring(0, 8)}...:${nonce.substring(0, 8)}...:${timestampUnix})`
+            };
+        } catch (_cryptoErr) {
+            // Fallback robusto: hash deterministico baseado em timestamp (sem nonce)
+            console.info('[UNIFED-HASH] crypto.subtle indisponível — a usar fallback determinístico.');
+            const fallback = dataHash.toUpperCase() + Date.now().toString(16).toUpperCase();
+            return {
+                sessionHash:       fallback.substring(0, 64).padEnd(64, '0'),
+                nonce:             '0'.repeat(32),
+                timestampUnix:     Math.floor(Date.now() / 1000).toString(),
+                dataIntegrityHash: dataHash,
+                auditTrail:        `FALLBACK(${dataHash.substring(0, 8)}...)`
+            };
         }
+    }
+
+    const _REAL_CASE_MMLADX8Q = Object.freeze({
+
+        // ── Metadados de sessão ───────────────────────────────────────────────
+        sessionId:          'UNIFED-MMLADX8Q-CV69L',
+        dataIntegrityHash:  _DATA_INTEGRITY_HASH,  // hash dos dados — imutável
+        // masterHash de sessão: calculado dinamicamente em _initDynamicHash()
+        // (ver window.activeForensicSession.masterHash após inicialização)
+        periodoAnalise:     '2s',   // 2.º Semestre 2024
+        anoFiscal:          2024,
+        platform:           'bolt',
+        dataMonths:         ['202409', '202410', '202411', '202412'],
+
+        // ── Cliente anonimizado ───────────────────────────────────────────────
+        client: Object.freeze({
+            name:     'OPERADOR_ANONIMIZADO_REF_2024',
+            nif:      '*** ANONIMIZADO ***',
+            platform: 'Bolt'
+        }),
+
+        // ── Contagem de evidências (15 documentos verificados) ────────────────
+        counts: Object.freeze({
+            ctrl: 4,  // ficheiros de controlo
+            saft: 4,  // ficheiros SAF-T
+            fat:  2,  // faturas PDF
+            ext:  4,  // extratos PDF/CSV
+            dac7: 1   // declaração DAC7
+        }),
+
+        // ── Totais extraídos do JSON (analysis.totals) ────────────────────────
+        totals: Object.freeze({
+            saftBruto:        10157.73,
+            saftIliquido:      9582.76,
+            saftIva:            574.97,
+            ganhos:           10157.73,
+            despesas:          2447.89,
+            ganhosLiquidos:    7709.84,
+            faturaPlataforma:   262.94,
+            dac7Q1:               0.00,
+            dac7Q2:               0.00,
+            dac7Q3:               0.00,
+            dac7Q4:            7755.16,
+            dac7TotalPeriodo:  7755.16,
+            iva6Omitido:        131.10,   // 6%  × 2184.95
+            iva23Omitido:       502.54,   // 23% × 2184.95
+            asfixiaFinanceira:  609.46,   // 6%  × 10157.73 (SAF-T Bruto)
+            totalNaoSujeitos:   451.00,
+            gorjetas:            46.00,
+            portagens:            0.00,
+            campanhas:          451.00,
+            cancelamentos:       58.10
+        }),
+
+        // ── Discrepâncias verificadas (analysis.crossings) ───────────────────
+        crossings: Object.freeze({
+            discrepanciaCritica:    2184.95,  // BTOR(2447.89) - BTF(262.94)
+            percentagemOmissao:       89.26,  // (2184.95/2447.89)×100
+            discrepanciaSaftVsDac7: 2402.57,  // 10157.73 - 7755.16
+            percentagemSaftVsDac7:    23.65,
+            c3_delta:                  0.00,
+            c4_delta:                351.45,
+            ivaFalta:               502.54,
+            ivaFalta6:              131.10,
+            agravamentoBrutoIRC:   2184.95,
+            ircEstimado:            458.84,
+            impactoMensalMercado:  20757120,
+            impactoAnualMercado:  249085440,
+            impactoSeteAnosMercado: 1743598080
+        }),
+
+        // ── Fluxos isentos (Zona Cinzenta) ────────────────────────────────────
+        fluxosIsentos: Object.freeze({
+            campanhas: 451.00,
+            gorjetas:   46.00,
+            portagens:   0.00,
+            total:     451.00
+        }),
+
+        // ── Veredicto ─────────────────────────────────────────────────────────
+        verdict: Object.freeze({
+            level: { pt: 'RISCO CRÍTICO', en: 'CRITICAL RISK' },
+            key:   'critical',
+            color: '#ff0000',
+            percent: '89,26%'
+        }),
+
+        // ── ATF (Análise Temporal Forense) ────────────────────────────────────
+        atf: Object.freeze({
+            score:     40,
+            trend:     'DESCENDENTE',
+            outliers:  0,
+            periodo:   '2.º Semestre 2024 — 4 meses (Set–Dez)',
+            status:    'OMISSÃO PONTUAL / RISCO MODERADO',
+            zScore:    2.45,
+            confianca: '99.2%',
+            anomalias: 4,
+            version:   'v13.5.0-GOLD'
+        }),
+
+        // ── Análise macro-sistémica ───────────────────────────────────────────
+        macro_analysis: Object.freeze({
+            sector_drivers:           38000,
+            operational_years:            7,
+            avg_monthly_discrepancy:  546.24,
+            estimated_systemic_gap:   1743598080.00,
+            confidence_level:         'High (based on verified algorithmic pattern)',
+            legal_implication:        'Potential systemic tax erosion under Art. 119.º RGIT (Iteration)',
+            methodology:              'Extrapolação Estatística de Baixa Variância · ISO/IEC 27037:2012',
+            status:                   'INDICATIVO_MACRO',
+            disclaimer:               'Os valores de impacto sistémico constituem contexto macroeconómico e não prova directa de ilícito alheio, nos termos do Art. 128.º do CPP.'
+        }),
+
+        meta: Object.freeze({
+            lastUpdate:        '2026-04-21',
+            forensicIntegrity: true,
+            hashArchitecture:  'SHA-256(dataHash + nonce_128bit + timestamp_unix)',
+            norm:              'ISO/IEC 27037:2012 · DORA (UE) 2022/2554 · Art. 125.º CPP'
+        })
     });
+
+    // ── Inicialização assíncrona do hash de sessão dinâmico ───────────────────
+    // Executada imediatamente — o hash dinâmico fica disponível antes da
+    // primeira renderização do dashboard (aguardado em simulateEvidenceUpload).
+    const _hashPromise = _generateSessionHash(_DATA_INTEGRITY_HASH).then(function(result) {
+        const dynHash = result.sessionHash;
+
+        // Registar na sessão activa
+        window.activeForensicSession = {
+            sessionId:         _REAL_CASE_MMLADX8Q.sessionId,
+            masterHash:        dynHash,
+            dataIntegrityHash: _DATA_INTEGRITY_HASH,
+            nonce:             result.nonce,
+            timestampUnix:     result.timestampUnix,
+            auditTrail:        result.auditTrail
+        };
+
+        // Sincronizar com UNIFEDSystem se já disponível
+        if (window.UNIFEDSystem) {
+            window.UNIFEDSystem.masterHash = dynHash;
+            window.UNIFEDSystem.sessionId  = _REAL_CASE_MMLADX8Q.sessionId;
+        }
+
+        // Actualizar elementos DOM de hash/sessão (se já renderizados)
+        ['pure-hash-prefix', 'pure-hash-prefix-verdict'].forEach(function(id) {
+            document.querySelectorAll('#' + id).forEach(function(el) {
+                el.textContent = dynHash.substring(0, 16) + '...';
+            });
+        });
+        document.querySelectorAll('#pure-session-id').forEach(function(el) {
+            el.textContent = _REAL_CASE_MMLADX8Q.sessionId;
+        });
+        const mhEl = document.getElementById('masterHashValue');
+        if (mhEl) mhEl.textContent = dynHash;
+
+        console.info(
+            '[UNIFED-HASH] ✓ Hash dinâmico de sessão gerado (FIX-HASH-DYN-01).\n' +
+            '  Sessão      : ' + _REAL_CASE_MMLADX8Q.sessionId + '\n' +
+            '  Data Hash   : ' + _DATA_INTEGRITY_HASH.substring(0, 16) + '...\n' +
+            '  Session Hash: ' + dynHash.substring(0, 16) + '...\n' +
+            '  Audit Trail : ' + result.auditTrail
+        );
+
+        return dynHash;
+    });
+
+    // Expor a promise globalmente para uso em simulateEvidenceUpload e forceFinalState
+    window._unifedHashPromise = _hashPromise;
+
+    // _PDF_CASE mantido como alias para retrocompatibilidade com referências internas
+    const _PDF_CASE = _REAL_CASE_MMLADX8Q;
 
     // 2. ESCUDO SILENCIOSO PARA CORS (TSA / FREETSA FALLBACK)
     (function _installCORSSilentShield() {
@@ -1856,12 +2019,15 @@
             const sys = window.UNIFEDSystem;
             const _sessionId = (sys && sys.sessionId)
                 ? sys.sessionId
-                : (window.UNIFED_INTERNAL && window.UNIFED_INTERNAL.data)
-                    ? window.UNIFED_INTERNAL.data.sessionId
-                    : 'UNIFED-SESSION';
+                : (window.activeForensicSession && window.activeForensicSession.sessionId)
+                    ? window.activeForensicSession.sessionId
+                    : _REAL_CASE_MMLADX8Q.sessionId;
+            // FIX-HASH-DYN-01: hash dinâmico de sessão (nunca o estático hardcoded)
             const _hash = (sys && sys.masterHash)
                 ? sys.masterHash
-                : '2A38423FED220D681D86E959F2C34F993BA71FCE9B92791199453B41E23A63E5';
+                : (window.activeForensicSession && window.activeForensicSession.masterHash)
+                    ? window.activeForensicSession.masterHash
+                    : _DATA_INTEGRITY_HASH.toUpperCase(); // fallback: hash de integridade dos dados
 
             document.querySelectorAll('#pure-session-id').forEach(el => { el.textContent = _sessionId; });
             document.querySelectorAll('#pure-hash-prefix').forEach(el => { el.textContent = _hash.substring(0, 12).toUpperCase() + '...'; });
@@ -1897,8 +2063,13 @@
 
             window.dispatchEvent(new CustomEvent('UNIFED_EXECUTE_PERITIA', {
                 detail: {
-                    timestamp:  new Date().toISOString(),
-                    masterHash: '2A38423FED220D681D86E959F2C34F993BA71FCE9B92791199453B41E23A63E5'
+                    timestamp:         new Date().toISOString(),
+                    // FIX-HASH-DYN-01: hash dinâmico de sessão
+                    masterHash:        (window.activeForensicSession && window.activeForensicSession.masterHash)
+                                           || (window.UNIFEDSystem && window.UNIFEDSystem.masterHash)
+                                           || _DATA_INTEGRITY_HASH.toUpperCase(),
+                    dataIntegrityHash: _DATA_INTEGRITY_HASH,
+                    sessionId:         _REAL_CASE_MMLADX8Q.sessionId
                 }
             }));
             console.log('[UNIFED] Estado 2 (PERITIA): uncloaking atómico concluído — UNIFED_EXECUTE_PERITIA disparado.');
@@ -2222,10 +2393,20 @@
             // os flags mantêm-se para que syncMetrics() saiba que há dados brutos
             // mas a análise ainda não foi executada (aguarda clique em "EXECUTAR PERÍCIA").
             
-            // 5. Despacho de Eventos de Sincronização (apenas eventos, sem dados)
+            // 5. Despacho de Eventos de Sincronização
+            // FIX-HASH-DYN-01: hash dinâmico de sessão via activeForensicSession (nunca o estático)
+            const _dynHashForReady = (window.activeForensicSession && window.activeForensicSession.masterHash)
+                || (window.UNIFEDSystem && window.UNIFEDSystem.masterHash)
+                || _DATA_INTEGRITY_HASH.toUpperCase();
+
             window.dispatchEvent(new CustomEvent('UNIFED_CORE_READY'));
-            window.dispatchEvent(new CustomEvent('UNIFED_ANALYSIS_COMPLETE', { 
-                detail: { status: 'READY', masterHash: window.activeForensicSession?.masterHash || _PDF_CASE.masterHash } 
+            window.dispatchEvent(new CustomEvent('UNIFED_ANALYSIS_COMPLETE', {
+                detail: {
+                    status:            'READY',
+                    masterHash:        _dynHashForReady,
+                    dataIntegrityHash: _DATA_INTEGRITY_HASH,
+                    sessionId:         _REAL_CASE_MMLADX8Q.sessionId
+                }
             }));
 
             console.log('[PERÍCIA] Sistema desbloqueado: Splash removido, Dashboard ativado (zero‑knowledge).');
@@ -2403,6 +2584,41 @@
                 if (typeof window.forceRevealSmokingGun === 'function') {
                     window.forceRevealSmokingGun();
                 }
+                // 6b. revealForensicEvidence — garantia adicional com flex !important e animação FBI
+                (function revealForensicEvidence() {
+                    const flexTargets = [
+                        '#smoking-gun-1', '#smoking-gun-2', '#colarinho-branco',
+                        '#smokingGunRow', '.pure-smoking-guns', '#triangulationMatrixContainer'
+                    ];
+                    const blockTargets = [
+                        '#mainDiscrepancyChartContainer', '#mainChartContainer',
+                        '#zonaCinzentaSection', '#area-cinzenta', '#revenueGapCard',
+                        '#expenseGapCard', '#quantumBox', '#bigDataAlert'
+                    ];
+                    flexTargets.forEach(function(sel) {
+                        document.querySelectorAll(sel).forEach(function(el) {
+                            el.style.setProperty('display', 'flex', 'important');
+                            el.style.setProperty('opacity', '1', 'important');
+                            el.style.setProperty('visibility', 'visible', 'important');
+                            el.classList.remove('hidden', 'd-none');
+                            el.classList.add('animate-fbi-reveal');
+                        });
+                    });
+                    blockTargets.forEach(function(sel) {
+                        document.querySelectorAll(sel).forEach(function(el) {
+                            el.style.setProperty('display', 'block', 'important');
+                            el.style.setProperty('opacity', '1', 'important');
+                            el.style.setProperty('visibility', 'visible', 'important');
+                            el.classList.remove('hidden', 'd-none');
+                            el.classList.add('animate-fbi-reveal');
+                        });
+                    });
+                    // Disparo do evento UNIFED_LEGAL_TACTICS para desbloqueio do painel de contraditório
+                    window.dispatchEvent(new CustomEvent('UNIFED_PERICIA_EXECUTADA', {
+                        detail: { source: 'revealForensicEvidence', timestamp: new Date().toISOString() }
+                    }));
+                    console.log('[UNIFED] revealForensicEvidence(): módulos forenses revelados com display:flex/block !important + animate-fbi-reveal.');
+                })();
                 if (typeof window.renderForensicCharts === 'function') {
                     window.renderForensicCharts();
                 }
