@@ -24,6 +24,8 @@
   ============================================================================
 -->
 <title>UNIFED-PROBATUM — Sistema de Peritagem Forense Digital</title>
+<!-- style.css: Single Source of Truth (fusão style_additions) -->
+<link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
       integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="
       crossorigin="anonymous" referrerpolicy="no-referrer">
@@ -53,7 +55,7 @@
 /* ============================================================================
    DIAMOND-SHIELD DESIGN SYSTEM — v13.12.3
    ============================================================================ */
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;800&family=JetBrains+Mono:wght@400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;900&family=JetBrains+Mono:wght@400;600&display=swap');
 
 :root {
   /* Paleta Forense Dark */
@@ -83,7 +85,7 @@
   --glow-amber:     0 0 20px rgba(245,158,11,0.6), 0 0 40px rgba(245,158,11,0.3);
   --glow-cyan:      0 0 20px rgba(0,229,255,0.4), 0 0 40px rgba(0,229,255,0.15);
 
-  --font-display: 'Syne', 'Segoe UI', system-ui, sans-serif;
+  --font-display: 'Orbitron', 'Syne', system-ui, sans-serif;
   --font-mono:    'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
   --radius-card:  12px;
   --radius-sm:    8px;
@@ -308,7 +310,7 @@ body::before {
   transition: opacity 0.4s ease;
   position: relative; z-index: 1;
   padding: 24px;
-  max-width: 1400px; margin: 0 auto;
+  max-width: 98vw; width: 98%; margin: 0 auto;
 }
 #pureDashboardWrapper.activated {
   display: block; opacity: 1;
@@ -743,11 +745,81 @@ footer.ds-footer {
 }
 .fade-in { animation: fadeIn 0.4s ease forwards; }
 
-@keyframes scanLine {
-  0%   { transform: translateY(-100%); opacity: 0; }
-  10%  { opacity: 1; }
-  90%  { opacity: 1; }
-  100% { transform: translateY(100vh); opacity: 0; }
+/* ============================================================================
+   TIPOGRAFIA ORBITRON — TÍTULOS FORENSES
+   ============================================================================ */
+h1, h2, h3,
+.ds-card-label,
+.header-left h1,
+#kpisSection h2,
+.chart-section h2,
+#nexusZeroModule h3,
+#export-tools-container h3,
+.console-section h3 {
+  font-family: var(--font-display) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+/* ============================================================================
+   EFEITO LED FORENSE — percorre o topo de cada card (2px animado)
+   ============================================================================ */
+.ds-card,
+.pure-card,
+.pure-section,
+.chart-section,
+#nexusZeroModule,
+#area-cinzenta {
+  position: relative;
+  overflow: hidden;
+}
+.ds-card::before,
+.pure-card::before,
+.pure-section::before,
+.chart-section::before,
+#nexusZeroModule::before {
+  content: '';
+  position: absolute; top: 0; left: -100%;
+  width: 40%; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent-cyan), transparent);
+  animation: led-scan 3s linear infinite;
+  pointer-events: none; z-index: 10;
+}
+/* Smoking Gun / Critical — LED vermelho pulsante */
+.sg-critical::before,
+[id*="smoking-gun"]::before,
+.pure-sg-critical::before {
+  background: linear-gradient(90deg, transparent, #ff003c, transparent) !important;
+  animation: led-scan 1.8s linear infinite !important;
+}
+@keyframes led-scan {
+  0%   { left: -40%; }
+  100% { left: 140%; }
+}
+
+/* ============================================================================
+   ANIMAÇÃO FBI REVEAL — módulos forenses revelados após perícia
+   ============================================================================ */
+@keyframes fbiFadeIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.animate-fbi-reveal {
+  animation: fbiFadeIn 0.55s cubic-bezier(0.22,1,0.36,1) forwards !important;
+}
+
+/* ============================================================================
+   BOTÕES — dimensão táctica aumentada
+   ============================================================================ */
+.hdr-btn {
+  padding: 10px 18px !important;
+  font-size: 0.78rem !important;
+}
+#analyzeBtn {
+  padding: 12px 28px !important;
+  font-size: 0.88rem !important;
+  border-color: var(--accent-cyan) !important;
+  box-shadow: 0 0 14px rgba(0,229,255,0.18) !important;
 }
 </style>
 </head>
@@ -945,6 +1017,41 @@ footer.ds-footer {
         <span style="color: var(--accent-cyan);">&#9654;</span> Conformidade: Art. 125.º CPP · ISO/IEC 27037:2012 · DORA (UE) 2022/2554<br>
         <span style="color: var(--accent-cyan);">&#9654;</span> Cadeia de custódia activa: toda a sessão é registada no CSC Terminal<br>
         <span style="color: var(--accent-cyan);">&#9654;</span> Identificador de sessão gerado por <code>crypto.getRandomValues()</code>
+      </div>
+
+      <!-- METADADOS FORENSES — campos obrigatórios para cadeia de custódia -->
+      <div class="forensic-meta-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:1.5rem; text-align:left;">
+        <input type="text" id="metaSP" placeholder="Sujeito Passivo / Nome"
+          style="background:rgba(0,229,255,0.05);border:1px solid var(--border-glass);border-radius:6px;padding:9px 12px;color:var(--text-primary);font-family:var(--font-mono);font-size:0.8rem;outline:none;transition:border-color 0.2s;"
+          onfocus="this.style.borderColor='var(--accent-cyan)'" onblur="this.style.borderColor='var(--border-glass)'">
+        <input type="text" id="metaNIF" placeholder="NIF (9 dígitos)" maxlength="9" pattern="[0-9]{9}"
+          style="background:rgba(0,229,255,0.05);border:1px solid var(--border-glass);border-radius:6px;padding:9px 12px;color:var(--text-primary);font-family:var(--font-mono);font-size:0.8rem;outline:none;transition:border-color 0.2s;"
+          onfocus="this.style.borderColor='var(--accent-cyan)'" onblur="this.style.borderColor='var(--border-glass)'">
+        <select id="metaPlatform"
+          style="background:rgba(5,8,16,0.9);border:1px solid var(--border-glass);border-radius:6px;padding:9px 12px;color:var(--text-primary);font-family:var(--font-mono);font-size:0.8rem;outline:none;cursor:pointer;">
+          <option value="">— Plataforma Digital —</option>
+          <option value="uber">Uber B.V.</option>
+          <option value="bolt">Bolt</option>
+          <option value="freenow">FreeNow</option>
+          <option value="cabify">Cabify</option>
+          <option value="heetch">Heetch</option>
+          <option value="outra">Outra</option>
+        </select>
+        <select id="metaYear"
+          style="background:rgba(5,8,16,0.9);border:1px solid var(--border-glass);border-radius:6px;padding:9px 12px;color:var(--text-primary);font-family:var(--font-mono);font-size:0.8rem;outline:none;cursor:pointer;">
+          <option value="">— Ano Fiscal —</option>
+        </select>
+        <select id="metaPeriod" style="grid-column:span 2;background:rgba(5,8,16,0.9);border:1px solid var(--border-glass);border-radius:6px;padding:9px 12px;color:var(--text-primary);font-family:var(--font-mono);font-size:0.8rem;outline:none;cursor:pointer;">
+          <option value="">— Período de Análise —</option>
+          <option value="anual">Anual</option>
+          <option value="1s">1.º Semestre</option>
+          <option value="2s">2.º Semestre</option>
+          <option value="t1">1.º Trimestre</option>
+          <option value="t2">2.º Trimestre</option>
+          <option value="t3">3.º Trimestre</option>
+          <option value="t4">4.º Trimestre</option>
+          <option value="mensal">Mensal</option>
+        </select>
       </div>
       <div style="font-size: 0.7rem; color: var(--text-muted); margin-bottom: 1.5rem;" id="startSessionId">
         SESSION_ID: ---
@@ -2307,6 +2414,20 @@ function _bindDashboardEvents() {
 
 <script>
 /* ============================================================================
+   MÓDULO 12B — POPULAR SELECT DE ANOS E CAPTURAR METADADOS
+   ============================================================================ */
+(function _initMetaSelects() {
+  var yearSel = document.getElementById('metaYear');
+  if (yearSel) {
+    for (var y = 2036; y >= 2018; y--) {
+      var opt = document.createElement('option');
+      opt.value = y; opt.textContent = y;
+      yearSel.appendChild(opt);
+    }
+  }
+})();
+
+/* ============================================================================
    MÓDULO 13 — INICIALIZAÇÃO DA DROPZONE (#globalDropZone)
    ============================================================================ */
 (function _initDropZone() {
@@ -2374,11 +2495,37 @@ function _bindDashboardEvents() {
 
   if (startBtn) {
     startBtn.addEventListener('click', function() {
+      // Capturar e validar metadados
+      var sp       = (document.getElementById('metaSP') || {}).value || '';
+      var nif      = (document.getElementById('metaNIF') || {}).value || '';
+      var platform = (document.getElementById('metaPlatform') || {}).value || '';
+      var year     = (document.getElementById('metaYear') || {}).value || '';
+      var period   = (document.getElementById('metaPeriod') || {}).value || '';
+
+      if (nif && !/^\d{9}$/.test(nif)) {
+        alert('⚠️ NIF inválido — deve conter exactamente 9 dígitos numéricos.');
+        return;
+      }
+
+      // Persistir no estado global
+      if (window.UNIFEDState) {
+        window.UNIFEDState.meta = { sp: sp, nif: nif, platform: platform, year: year, period: period };
+      }
+      // Compatibilidade com UNIFEDSystem (script.js)
+      if (window.UNIFEDSystem) {
+        window.UNIFEDSystem.client = window.UNIFEDSystem.client || {};
+        if (sp) window.UNIFEDSystem.client.name = sp;
+        if (nif) window.UNIFEDSystem.client.nif  = nif;
+        if (platform) window.UNIFEDSystem.client.platform = platform;
+      }
+
       modal.style.display = 'none';
-      // Mostrar a dropzone após início de sessão
       var dz = document.getElementById('globalDropZone');
       if (dz) dz.style.display = 'block';
-      if (window.cscLog) cscLog('[SESSION] Sessão forense iniciada · ID: ' + (window.UNIFEDState ? window.UNIFEDState.sessionId : '---'), 'sys');
+      if (window.cscLog) cscLog('[SESSION] Sessão forense iniciada · ID: ' +
+        (window.UNIFEDState ? window.UNIFEDState.sessionId : '---') +
+        (sp ? ' · SP: ' + sp : '') +
+        (nif ? ' · NIF: ' + nif : ''), 'sys');
     });
   }
 
@@ -2458,10 +2605,128 @@ function _bindDashboardEvents() {
 })();
 </script>
 
+<!-- ============================================================================
+     FASE 4 — injectAuxiliaryHelperBoxes()
+     Preenche #aux-boxes-container (panel.html) com 5 cards de apoio pericial.
+     Alinhamento: .aux-boxes-grid = mesma proporção que Smoking Guns e Zona Cinzenta.
+     Chamada por: revealForensicData() e listener UNIFED_ANALYSIS_COMPLETE.
+     ============================================================================ -->
+<script>
+/* ============================================================================
+   injectAuxiliaryHelperBoxes() — 5 CARDS DE APOIO PERICIAL (FASE 4)
+   Injecta no #aux-boxes-container os dados calculados pelo engine v13.5.0-GOLD.
+   Consome: UNIFEDSystem.analysis.crossings + .totals + .verdict
+   ============================================================================ */
+window.injectAuxiliaryHelperBoxes = function injectAuxiliaryHelperBoxes() {
+    var container = document.getElementById('aux-boxes-container');
+    if (!container) return;
+
+    var sys = window.UNIFEDSystem;
+    var c   = sys && sys.analysis && sys.analysis.crossings  || {};
+    var t   = sys && sys.analysis && sys.analysis.totals     || {};
+    var v   = sys && sys.analysis && sys.analysis.verdict    || {};
+
+    var _fmt = (window.UNIFED_INTERNAL && window.UNIFED_INTERNAL.fmt)
+        || function(val) {
+            return new Intl.NumberFormat('pt-PT', {
+                style: 'currency', currency: 'EUR'
+            }).format(val || 0);
+        };
+
+    /* Definição dos 5 cards auxiliares — IDs prontos para sincronização */
+    var boxes = [
+        {
+            id:    'aux-box-c1',
+            icon:  '📊',
+            label: 'C1 · SAF-T vs DAC7',
+            value: _fmt(c.discrepanciaSaftVsDac7 || 0),
+            sub:   (c.percentagemSaftVsDac7 || 0).toFixed(2) + '% — Sub-comunicação AT',
+            color: '#f59e0b',
+            legal: 'Art. 119.º RGIT'
+        },
+        {
+            id:    'aux-box-c2',
+            icon:  '🔫',
+            label: 'C2 · Smoking Gun (BTOR−BTF)',
+            value: _fmt(c.discrepanciaCritica || 0),
+            sub:   (c.percentagemOmissao || 0).toFixed(2) + '% — Retenção ilegal',
+            color: '#ef4444',
+            legal: 'Art. 103.º-104.º RGIT'
+        },
+        {
+            id:    'aux-box-iva',
+            icon:  '🧾',
+            label: 'IVA Omitido (23% + 6%)',
+            value: _fmt((c.ivaFalta || 0) + (c.ivaFalta6 || 0)),
+            sub:   '23%: ' + _fmt(c.ivaFalta || 0) + ' · 6%: ' + _fmt(c.ivaFalta6 || 0),
+            color: '#f97316',
+            legal: 'Art. 2.º n.º 1 al. i) CIVA'
+        },
+        {
+            id:    'aux-box-atf',
+            icon:  '📈',
+            label: 'Score ATF (Persistência)',
+            value: (sys && sys.atf && sys.atf.score !== undefined
+                    ? sys.atf.score : 40) + '/100',
+            sub:   (sys && sys.atf && sys.atf.trend) || 'DESCENDENTE',
+            color: '#8b5cf6',
+            legal: 'ISO/IEC 27037:2012 §8.2'
+        },
+        {
+            id:    'aux-box-verdict',
+            icon:  '⚖️',
+            label: 'Veredicto Pericial',
+            value: (v.level && (v.level.pt || v.level.en)) || 'RISCO CRÍTICO',
+            sub:   v.percent || '89,26%',
+            color: v.color || '#ef4444',
+            legal: 'Art. 125.º CPP'
+        }
+    ];
+
+    /* Renderização dos cards */
+    container.innerHTML = boxes.map(function(box) {
+        return [
+            '<div class="aux-helper-box" id="' + box.id + '">',
+            '  <div class="aux-helper-label">' + box.icon + ' ' + box.label + '</div>',
+            '  <div class="aux-helper-value" style="color:' + box.color + '">' + box.value + '</div>',
+            '  <div class="aux-helper-sub">' + box.sub + '</div>',
+            '  <div class="aux-helper-sub" style="color:rgba(0,229,255,0.4);margin-top:6px;">' + box.legal + '</div>',
+            '</div>'
+        ].join('\n');
+    }).join('\n');
+
+    /* Revelar a secção pai */
+    var auxSection = document.getElementById('auxiliaryHelperSection');
+    if (auxSection) {
+        auxSection.style.setProperty('display', 'block', 'important');
+        auxSection.classList.add('forensic-revealed');
+    }
+
+    console.log('[UNIFED] injectAuxiliaryHelperBoxes() · 5 cards auxiliares injectados em #aux-boxes-container · Fase 4 activa.');
+};
+
+/* Auto-registar como listener para UNIFED_ANALYSIS_COMPLETE no index.html */
+window.addEventListener('UNIFED_ANALYSIS_COMPLETE', function(evt) {
+    var detail = (evt && evt.detail) || {};
+    /* Só injectar quando análise concluída (não em estado READY/zero-knowledge) */
+    if (detail.status === 'READY') return;
+    if (typeof window.injectAuxiliaryHelperBoxes === 'function') {
+        window.injectAuxiliaryHelperBoxes();
+    }
+});
+</script>
+
+<!-- ============================================================
+     ORDEM DE CARREGAMENTO v13.5.0-GOLD (FIX-LOAD-ORDER-01)
+     1. script_injection.js — _REAL_CASE_MMLADX8Q + window._unifedHashPromise
+     2. script.js           — engine v13.5.0-GOLD + performForensicCrossings
+     3. nexus.js            — motor nexus-zero
+     4. enrichment.js       — ATF + Score de Persistência (consome HashPromise)
+     ============================================================ -->
+<script src="script_injection.js" defer></script>
 <script src="script.js" defer></script>
 <script src="nexus.js" defer></script>
 <script src="enrichment.js" defer></script>
-<script src="script_injection.js" defer></script>
 <!-- Bateria de Contraditório v1.0 — art. 327.º CPP -->
 <script src="legal_tactics_engine_v1.0.js" defer></script>
 <script src="legal_tactics_ui_v1.0.js" defer></script>
