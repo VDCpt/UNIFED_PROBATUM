@@ -1272,29 +1272,6 @@ function cscLog(msg, type) {
     '<span style="color:' + (colors[type]||colors.info) + ';font-weight:600">',
     (prefixes[type]||prefixes.info) + '</span> ',
     '<span style="color:' + (colors[type]||colors.info) + '">' + msg + '</span>'
-
-    /* [FIX-UI-03] LED-MATRIX: Aplicar no final do loginCSS para sobrepor estilos */
-    '#ds-ac-led-wrap{padding:0 32px 18px;}',
-    '.led-matrix{',
-    'font-family:\'Courier New\',Courier,monospace;',
-    'color:#33ff33;',
-    'text-shadow:0 0 2px rgba(51,255,51,0.8),0 0 10px rgba(51,255,51,0.5),0 0 20px rgba(51,255,51,0.3);',
-    'background:#000;',
-    'padding:14px 16px;',
-    'border:1px solid rgba(51,255,51,0.5);',
-    'border-radius:5px;',
-    'position:relative;',
-    'overflow:hidden;',
-    'margin-bottom:0;}',
-    '.led-matrix::before{',
-    'content:\' \';display:block;position:absolute;',
-    'top:0;left:0;bottom:0;right:0;',
-    'background:linear-gradient(rgba(18,16,16,0) 50%,rgba(0,0,0,0.22) 50%);',
-    'background-size:100% 4px;z-index:2;pointer-events:none;}',
-    '.led-matrix pre.ascii-art{',
-    'margin:0;line-height:1;letter-spacing:2px;opacity:0.88;',
-    'font-size:clamp(5px,0.95vw,9px);white-space:pre;',
-    'position:relative;z-index:1;}',
   ].join('');
 
   el.appendChild(line);
@@ -1825,7 +1802,11 @@ function _applyI18nNexus() {
     'font-size:7.5px;letter-spacing:.4px;color:rgba(148,163,184,.25);',
     'text-align:center;line-height:1.7;}',
     '.ds-hash-prev{margin-top:10px;font-size:8px;color:rgba(0,229,255,.25);',
-    'letter-spacing:.05em;word-break:break-all;}'
+    'letter-spacing:.05em;word-break:break-all;}',
+    '#ds-ac-led-wrap{padding:0 28px 0;}',
+    '.led-matrix{font-family:\'Courier New\',Courier,monospace;color:#33ff33;text-shadow:0 0 2px rgba(51,255,51,0.8),0 0 10px rgba(51,255,51,0.5),0 0 20px rgba(51,255,51,0.3);background:#000;padding:12px 14px;border:1px solid rgba(51,255,51,0.45);border-radius:6px;position:relative;overflow:hidden;margin:0 0 12px;}',
+    '.led-matrix::before{content:\'\';display:block;position:absolute;top:0;left:0;bottom:0;right:0;background:linear-gradient(rgba(18,16,16,0) 50%,rgba(0,0,0,0.22) 50%);background-size:100% 4px;z-index:2;pointer-events:none;}',
+    '.led-matrix pre.ascii-art{margin:0;line-height:1;letter-spacing:2px;opacity:0.88;font-size:clamp(4px,0.7vw,7px);white-space:pre;position:relative;z-index:1;}'
   ].join('');
 
   function _injectOverlay() {
@@ -1838,7 +1819,12 @@ function _applyI18nNexus() {
     overlay.id = 'ds-ac-overlay';
     overlay.innerHTML = [
       '<div id="ds-ac-box">',
-      '<div id="ds-ac-led-wrap">','<div class="led-matrix">','<pre class="ascii-art">\u2588\u2588\u2557   \u2588\u2588\u2557\u2588\u2588\u2588\u2557   \u2588\u2588\u2557\u2588\u2588\u2557\u2588\u2588\u2588\u2588\u2588\u2588\u2557 \u2588\u2588\u2588\u2588\u2588\u2588\u2557 \u2588\u2588\u2588\u2588\u2588\u2588\u2557 \n\u2588\u2588\u2551   \u2588\u2588\u2551\u2588\u2588\u2588\u2588\u2557  \u2588\u2588\u2551\u2588\u2588\u2551\u2588\u2588\u2554\u2550\u2550\u2550\u2550\u255d\u2588\u2588\u2554\u2550\u2550\u2550\u2550\u255d \u2588\u2588\u2554\u2550\u2550\u2588\u2588\u2557\n\u2588\u2588\u2551   \u2588\u2588\u2551\u2588\u2588\u2554\u2588\u2588\u2557 \u2588\u2588\u2551\u2588\u2588\u2551\u2588\u2588\u2588\u2588\u2588\u2557  \u2588\u2588\u2588\u2588\u2588\u2557  \u2588\u2588\u2551  \u2588\u2588\u2551\n\u2588\u2588\u2551   \u2588\u2588\u2551\u2588\u2588\u2551\u255a\u2588\u2588\u2557\u2588\u2588\u2551\u2588\u2588\u2551\u2588\u2588\u2554\u2550\u2550\u255d  \u2588\u2588\u2554\u2550\u2550\u255d  \u2588\u2588\u2551  \u2588\u2588\u2551\n\u255a\u2588\u2588\u2588\u2588\u2588\u2588\u2554\u255d\u2588\u2588\u2551 \u255a\u2588\u2588\u2588\u2588\u2551\u2588\u2588\u2551\u2588\u2588\u2551     \u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2557\u2588\u2588\u2588\u2588\u2588\u2588\u2554\u255d\n \u255a\u2550\u2550\u2550\u2550\u2550\u255d \u255a\u2550\u2550\u255d  \u255a\u2550\u2550\u2550\u255d\u255a\u2550\u255d\u255a\u2550\u255d     \u255a\u2550\u2550\u2550\u2550\u2550\u2550\u255d\u255a\u2550\u2550\u2550\u2550\u2550\u255d </pre>','</div>','</div>',
+      '<div id="ds-ac-led-wrap"><div class="led-matrix"><pre class="ascii-art">██╗   ██╗███╗   ██╗██╗██████╗ ██████╗ ██████╗ 
+██║   ██║████╗  ██║██║██╔════╝██╔════╝ ██╔══██╗
+██║   ██║██╔██╗ ██║██║█████╗  █████╗  ██║  ██║
+██║   ██║██║╚██╗██║██║██╔══╝  ██╔══╝  ██║  ██║
+╚██████╔╝██║ ╚████║██║██║     ███████╗██████╔╝
+ ╚═════╝ ╚══╝  ╚═══╝╚═╝╚═╝     ╚══════╝╚═════╝ </pre></div></div>',
       '<div id="ds-ac-header">',
       '<div id="ds-ac-badge">UNIFED-PROBATUM v13.12.3 · Diamond-Shield</div>',
       '<div id="ds-ac-title">Sistema de<br><span class="ds-ac-accent">Peritagem Forense</span><br>Digital</div>',
