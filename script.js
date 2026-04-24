@@ -8319,7 +8319,19 @@ function injectAuxiliaryHelperBoxes() {
 
     const container = document.getElementById('dashboardAlerts');
     if (!container) {
-        console.warn('[AUX] Container dashboardAlerts não encontrado. Injeção adiada.');
+        /* FIX-SCR-8322: Retry diferido via rAF — evita injeção prematura sem polling */
+        if (!injectAuxiliaryHelperBoxes._retryPending) {
+            injectAuxiliaryHelperBoxes._retryPending = true;
+            requestAnimationFrame(function _retryInjectAux() {
+                injectAuxiliaryHelperBoxes._retryPending = false;
+                const retryContainer = document.getElementById('dashboardAlerts');
+                if (retryContainer) {
+                    injectAuxiliaryHelperBoxes();
+                } else {
+                    console.info('[AUX] dashboardAlerts ainda não disponível. Aguardar revealForensicData().');
+                }
+            });
+        }
         return;
     }
 

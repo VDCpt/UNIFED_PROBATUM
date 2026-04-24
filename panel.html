@@ -30,12 +30,13 @@
         }
 
         .pure-section {
-            background: rgba(15, 20, 30, 0.65);
-            backdrop-filter: blur(2px);
+            background: rgba(8, 14, 28, 0.88);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
             border-radius: 1.5rem;
             padding: 1.5rem;
-            border: 1px solid rgba(66, 153, 225, 0.2);
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(0, 229, 255, 0.14);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255,255,255,0.04);
         }
 
         .pure-section-header {
@@ -91,6 +92,9 @@
         .pure-label {
             font-size: 0.7rem;
             color: #7e8a9c;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            font-weight: 500;
         }
 
         .pure-card-grid {
@@ -101,14 +105,19 @@
         }
 
         .pure-card {
-            background: rgba(10, 14, 23, 0.85);
-            backdrop-filter: blur(4px);
+            background: rgba(10, 14, 23, 0.92);
+            backdrop-filter: blur(20px) saturate(160%);
+            -webkit-backdrop-filter: blur(20px) saturate(160%);
             border-radius: 1.2rem;
             padding: 1.2rem;
-            border: 1px solid rgba(71, 85, 105, 0.5);
-            transition: all 0.1s ease;
+            border: 1px solid rgba(0, 229, 255, 0.12);
+            transition: box-shadow 0.25s ease, border-color 0.25s ease;
             position: relative;
             overflow: hidden;
+        }
+        .pure-card:hover {
+            border-color: rgba(0, 229, 255, 0.22);
+            box-shadow: 0 0 0 1px rgba(0,229,255,0.18), 0 20px 40px rgba(0,0,0,0.5);
         }
         /* LED ciano — percorre o topo de cada card */
         .pure-card::before {
@@ -435,6 +444,69 @@
             gap: 1rem !important;
         }
 
+
+        /* [FIX-UI-03] LED-MATRIX: Box de identidade tática no topo do painel */
+        .panel-led-header {
+            margin-bottom: 1rem;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .led-matrix {
+            font-family: 'Courier New', Courier, monospace;
+            color: #33ff33;
+            text-shadow:
+                0 0 2px  rgba(51, 255, 51, 0.80),
+                0 0 10px rgba(51, 255, 51, 0.50),
+                0 0 20px rgba(51, 255, 51, 0.30);
+            background: #000000;
+            padding: 18px 20px 14px;
+            border: 2px solid #33ff33;
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+        .led-matrix::before {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(
+                rgba(18, 16, 16, 0) 50%,
+                rgba(0, 0, 0, 0.25) 50%
+            );
+            background-size: 100% 4px;
+            z-index: 2;
+            pointer-events: none;
+        }
+        .led-matrix pre.ascii-art {
+            margin: 0;
+            line-height: 1;
+            letter-spacing: 2px;
+            opacity: 0.90;
+            font-size: clamp(5px, 0.95vw, 9px);
+            white-space: pre;
+            overflow-x: auto;
+            position: relative;
+            z-index: 1;
+        }
+        .led-matrix-sub {
+            margin-top: 8px;
+            font-size: 0.6rem;
+            color: rgba(51, 255, 51, 0.55);
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            font-family: 'JetBrains Mono', monospace;
+            position: relative;
+            z-index: 1;
+        }
+        @keyframes led-flicker {
+            0%, 100% { opacity: 0.90; }
+            92%       { opacity: 0.88; }
+            94%       { opacity: 0.76; }
+            96%       { opacity: 0.85; }
+        }
+        .ascii-art { animation: led-flicker 8s ease-in-out infinite; }
+
         @media (max-width: 720px) {
             body { padding: 1rem; }
             .pure-card-grid { grid-template-columns: 1fr; }
@@ -575,11 +647,122 @@
             display: none !important; 
         }
     </style>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,600;14..32,700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+<style>
+        /* ===== PARÂMETROS DE AUDITORIA FORENSE — Estilos da Box Intermédia ===== */
+        .pure-audit-params-card {
+            background: rgba(8, 14, 28, 0.92) !important;
+            backdrop-filter: blur(20px) saturate(180%) !important;
+            -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+            border: 1px solid rgba(0, 229, 255, 0.16) !important;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04) !important;
+        }
+        .pure-audit-field {
+            background: rgba(0, 229, 255, 0.03);
+            border: 1px solid rgba(0, 229, 255, 0.08);
+            border-radius: 0.75rem;
+            padding: 0.75rem 1rem;
+            transition: border-color 0.2s ease;
+        }
+        .pure-audit-field:hover {
+            border-color: rgba(0, 229, 255, 0.18);
+        }
+        .pure-audit-label {
+            font-size: 0.62rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: rgba(148, 163, 184, 0.55);
+            font-family: 'JetBrains Mono', monospace;
+            margin-bottom: 0.35rem;
+            font-weight: 500;
+        }
+        .pure-audit-value {
+            font-family: 'Orbitron', 'JetBrains Mono', monospace;
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: #e8f0ff;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            line-height: 1.2;
+        }
+        .pure-audit-primary {
+            color: #00e5ff !important;
+            font-size: 0.9rem !important;
+        }
+        .pure-audit-sub {
+            font-size: 0.6rem;
+            color: rgba(148, 163, 184, 0.35);
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: 0.04em;
+            margin-top: 0.25rem;
+        }
+        .pure-evidence-counter-zero {
+            font-size: 0.7rem;
+            font-family: 'JetBrains Mono', monospace;
+            color: rgba(148, 163, 184, 0.45);
+            background: rgba(0, 229, 255, 0.04);
+            border: 1px solid rgba(0, 229, 255, 0.1);
+            padding: 3px 8px;
+            border-radius: 4px;
+            letter-spacing: 0.06em;
+        }
+        .pure-evidence-counter-zero strong {
+            color: rgba(245, 158, 11, 0.7);
+        }
+        @media (max-width: 900px) {
+            .pure-audit-row { grid-template-columns: repeat(2, 1fr) !important; }
+        }
+        @media (max-width: 600px) {
+            .pure-audit-row { grid-template-columns: 1fr !important; }
+        }
+
+</style>
+
+            <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,600;14..32,700&family=JetBrains+Mono&display=swap" rel="stylesheet">
 </head>
 <body>
+
+<div class="pure-container panel-led-header">
+    <div class="led-matrix">
+        <pre class="ascii-art">
+██╗   ██╗███╗   ██╗██╗███████╗███████╗██████╗ 
+██║   ██║████╗  ██║██║██╔════╝██╔════╝██╔══██╗
+██║   ██║██╔██╗ ██║██║█████╗  █████╗  ██║  ██║
+██║   ██║██║╚██╗██║██║██╔══╝  ██╔══╝  ██║  ██║
+╚██████╔╝██║ ╚████║██║██║     ███████╗██████╔╝
+ ╚═════╝ ╚═╝  ╚═══╝╚═╝╚═╝     ╚══════╝╚═════╝</pre>
+        <div class="led-matrix-sub">
+            PROBATUM · Sistema de Peritagem Forense Digital · v13.12.3-DIAMOND-SHIELD ·
+            ISO/IEC 27037:2012 · Art. 125.º CPP · DORA (UE) 2022/2554
+        </div>
+    </div>
+</div>
+
 <div class="pure-container">
     <section id="pureDashboard" class="pure-section" aria-label="Painel Caso Real Anonimizado v13.12.2-i18n">
+
+        <!-- =================================================================
+             LED-MATRIX ASCII ART — FIX-UI-03 · Verde Phosphor #33ff33
+             Encapsulado em .led-matrix para bloom + scanlines tácticos
+             ================================================================= -->
+        <div class="led-matrix" id="unifedLedMatrix" aria-hidden="true">
+            <pre class="ascii-art">
+  ██╗   ██╗███╗   ██╗██╗███████╗███████╗██████╗ 
+  ██║   ██║████╗  ██║██║██╔════╝██╔════╝██╔══██╗
+  ██║   ██║██╔██╗ ██║██║█████╗  █████╗  ██║  ██║
+  ██║   ██║██║╚██╗██║██║██╔══╝  ██╔══╝  ██║  ██║
+  ╚██████╔╝██║ ╚████║██║██║     ███████╗██████╔╝ 
+   ╚═════╝ ╚═╝  ╚═══╝╚═╝╚═╝     ╚══════╝╚═════╝  
+
+  ██████╗ ██████╗  ██████╗ ██████╗  █████╗ ████████╗██╗   ██╗███╗   ███╗
+  ██╔══██╗██╔══██╗██╔═══██╗██╔══██╗██╔══██╗╚══██╔══╝██║   ██║████╗ ████║
+  ██████╔╝██████╔╝██║   ██║██████╔╝███████║   ██║   ██║   ██║██╔████╔██║
+  ██╔═══╝ ██╔══██╗██║   ██║██╔══██╗██╔══██║   ██║   ██║   ██║██║╚██╔╝██║
+  ██║     ██║  ██║╚██████╔╝██████╔╝██║  ██║   ██║   ╚██████╔╝██║ ╚═╝ ██║
+  ╚═╝     ╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚═╝  ╚═╝   ╚═╝    ╚═════╝ ╚═╝     ╚═╝
+
+  v13.12.3-DIAMOND-SHIELD · ISO/IEC 27037:2012 · Art. 125.º CPP · DORA (UE) 2022/2554
+            </pre>
+        </div>
 
         <!-- HEADER -->
         <div class="pure-section-header">
@@ -598,21 +781,138 @@
             ID_OPERADOR_FORENSE: <span class="pure-value-warn" style="color: #00e5ff;">UNIFED-A.S.-9W3HI [VALIDADO/eIDAS]</span>
         </div>
 
-        <!-- SUJEITO PASSIVO -->
-        <div class="pure-subject-header" style="display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
-            <div class="pure-data-block" style="flex:1; background: rgba(255,255,255,0.03); border-radius: 6px; padding: 12px 14px;">
-                <div class="pure-data-label">Sujeito Passivo</div>
-                <div id="pure-subject-name" class="pure-subject-value" style="font-size:1rem; font-weight:600; color:#00E5FF;">---</div>
+        <!-- SUJEITO PASSIVO migrado para #pureAuditParamsCard — IDs mantidos lá -->
+
+
+        <!-- =================================================================
+             PARÂMETROS DE AUDITORIA FORENSE — Box Intermédia
+             Integra: Sujeito Passivo | Mandato | Período | Norma | Perito
+             Estado Zero: todos os campos iniciam em placeholder seguro.
+             Actualizado por: script_injection.js → hydrateRawDataValues()
+             ================================================================= -->
+        <div id="pureAuditParamsCard" class="pure-card pure-audit-params-card" style="margin-bottom:1rem;" data-forensic-module="audit-params">
+
+            <!-- Separador visual elite -->
+            <div style="position:absolute;top:0;left:0;right:0;height:2px;
+                        background:linear-gradient(90deg,transparent,rgba(0,229,255,0.7) 30%,rgba(139,92,246,0.6) 70%,transparent);
+                        border-radius:2px 2px 0 0;"></div>
+
+            <h3 class="pure-card-title" style="margin-bottom:1.2rem;">
+                <span class="pure-icon">⚖️</span>
+                <span style="font-family:'Orbitron',monospace;text-transform:uppercase;letter-spacing:0.1em;
+                             background:linear-gradient(135deg,#00e5ff,#8b5cf6);
+                             -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+                             background-clip:text;">
+                    PARÂMETROS DE AUDITORIA FORENSE
+                </span>
+                <span style="font-size:0.6rem;color:rgba(0,229,255,0.4);margin-left:0.75rem;
+                             border:1px solid rgba(0,229,255,0.2);padding:2px 8px;border-radius:4px;
+                             font-family:'JetBrains Mono',monospace;letter-spacing:0.15em;
+                             -webkit-text-fill-color:rgba(0,229,255,0.4);">
+                    ISO/IEC 27037:2012 · Art. 125.º CPP
+                </span>
+            </h3>
+
+            <!-- Linha 1: Sujeito Passivo -->
+            <div class="pure-audit-row" style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:0.75rem;margin-bottom:0.75rem;">
+                <div class="pure-audit-field">
+                    <div class="pure-audit-label">
+                        <i class="fas fa-user-shield" style="color:rgba(0,229,255,0.5);font-size:0.65rem;margin-right:4px;"></i>
+                        SUJEITO PASSIVO
+                    </div>
+                    <div id="pure-subject-name" class="pure-audit-value pure-audit-primary">---</div>
+                    <div class="pure-audit-sub">Identificação fiscal · RGPD Art. 4.º n.º 1</div>
+                </div>
+                <div class="pure-audit-field">
+                    <div class="pure-audit-label">
+                        <i class="fas fa-fingerprint" style="color:rgba(0,229,255,0.5);font-size:0.65rem;margin-right:4px;"></i>
+                        NIF
+                    </div>
+                    <div id="pure-subject-nif" class="pure-audit-value pure-audit-primary">---</div>
+                    <div class="pure-audit-sub">AT · Art. 19.º LGT</div>
+                </div>
+                <div class="pure-audit-field">
+                    <div class="pure-audit-label">
+                        <i class="fas fa-building" style="color:rgba(0,229,255,0.5);font-size:0.65rem;margin-right:4px;"></i>
+                        PLATAFORMA
+                    </div>
+                    <div id="pure-subject-platform" class="pure-audit-value">---</div>
+                    <div class="pure-audit-sub">DAC7 · DL n.º 41/2023</div>
+                </div>
             </div>
-            <div class="pure-data-block" style="flex:1; background: rgba(255,255,255,0.03); border-radius: 6px; padding: 12px 14px;">
-                <div class="pure-data-label">NIF</div>
-                <div id="pure-subject-nif" class="pure-subject-value" style="font-size:1rem; font-weight:600; color:#00E5FF;">---</div>
+
+            <!-- Linha 2: Parâmetros de Auditoria -->
+            <div class="pure-audit-row" style="display:grid;grid-template-columns:repeat(4,1fr);gap:0.75rem;margin-bottom:0.75rem;">
+                <div class="pure-audit-field">
+                    <div class="pure-audit-label">
+                        <i class="fas fa-calendar-alt" style="color:rgba(139,92,246,0.6);font-size:0.65rem;margin-right:4px;"></i>
+                        PERÍODO AUDITADO
+                    </div>
+                    <div id="pure-audit-period" class="pure-audit-value">---</div>
+                    <div class="pure-audit-sub">Semestre de referência</div>
+                </div>
+                <div class="pure-audit-field">
+                    <div class="pure-audit-label">
+                        <i class="fas fa-balance-scale" style="color:rgba(139,92,246,0.6);font-size:0.65rem;margin-right:4px;"></i>
+                        NORMA APLICÁVEL
+                    </div>
+                    <div id="pure-audit-norm" class="pure-audit-value">Art. 103.º RGIT</div>
+                    <div class="pure-audit-sub">Art. 119.º RGIT · DAC7</div>
+                </div>
+                <div class="pure-audit-field">
+                    <div class="pure-audit-label">
+                        <i class="fas fa-shield-alt" style="color:rgba(139,92,246,0.6);font-size:0.65rem;margin-right:4px;"></i>
+                        METODOLOGIA
+                    </div>
+                    <div id="pure-audit-method" class="pure-audit-value" style="font-size:0.75rem;">ISO/IEC 27037</div>
+                    <div class="pure-audit-sub">NIST SP 800-86 · DORA</div>
+                </div>
+                <div class="pure-audit-field">
+                    <div class="pure-audit-label">
+                        <i class="fas fa-user-tie" style="color:rgba(139,92,246,0.6);font-size:0.65rem;margin-right:4px;"></i>
+                        PERITO RESPONSÁVEL
+                    </div>
+                    <div id="pure-audit-expert" class="pure-audit-value" style="font-size:0.7rem;">UNIFED-A.S.</div>
+                    <div class="pure-audit-sub" id="pure-audit-eidas">eIDAS · [VALIDADO]</div>
+                </div>
             </div>
-            <div class="pure-data-block" style="flex:1; background: rgba(255,255,255,0.03); border-radius: 6px; padding: 12px 14px;">
-                <div class="pure-data-label">Plataforma</div>
-                <div id="pure-subject-platform" class="pure-subject-value" style="font-size:1rem; font-weight:600; color:#00E5FF;">---</div>
+
+            <!-- Linha 3: Gestão de Evidências — Estado Zero (BigData) -->
+            <div id="pure-evidence-zero-state" class="pure-audit-evidence-zero" style="
+                background:rgba(0,229,255,0.03);
+                border:1px dashed rgba(0,229,255,0.15);
+                border-radius:0.75rem;
+                padding:1rem 1.25rem;
+                display:flex;
+                align-items:center;
+                gap:1rem;
+                flex-wrap:wrap;">
+                <div style="display:flex;align-items:center;gap:0.6rem;flex:1;">
+                    <i class="fas fa-database" style="color:rgba(0,229,255,0.35);font-size:1.1rem;"></i>
+                    <div>
+                        <div style="font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;
+                                    color:rgba(0,229,255,0.5);font-family:'Orbitron',monospace;margin-bottom:2px;">
+                            GESTÃO DE EVIDÊNCIAS · BIGDATA
+                        </div>
+                        <div style="font-size:0.75rem;color:rgba(148,163,184,0.5);font-family:'JetBrains Mono',monospace;">
+                            Estado: <span style="color:rgba(245,158,11,0.8);font-weight:600;">ZERO-STATE</span>
+                            &nbsp;·&nbsp; Aguardando carregamento de lote forense
+                        </div>
+                    </div>
+                </div>
+                <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+                    <span class="pure-evidence-counter-zero" data-type="CTRL">CTRL: <strong id="pure-ctrl-qty-zero">0</strong></span>
+                    <span class="pure-evidence-counter-zero" data-type="SAF-T">SAF-T: <strong id="pure-saft-qty-zero">0</strong></span>
+                    <span class="pure-evidence-counter-zero" data-type="FAT">FAT: <strong id="pure-fat-qty-zero">0</strong></span>
+                    <span class="pure-evidence-counter-zero" data-type="EXT">EXT: <strong id="pure-ext-qty-zero">0</strong></span>
+                    <span class="pure-evidence-counter-zero" data-type="DAC7">DAC7: <strong id="pure-dac7-qty-zero">0</strong></span>
+                </div>
+                <div style="font-size:0.65rem;color:rgba(148,163,184,0.3);font-family:'JetBrains Mono',monospace;">
+                    ISO/IEC 27037:2012 · Cadeia de Custódia Inactiva
+                </div>
             </div>
-        </div>
+
+        </div><!-- /#pureAuditParamsCard -->
 
         <!-- Evidências (oculto até script) -->
         <div id="pureEvidenceSection" class="evidence-management-section-solid" style="margin-bottom:1rem;display:none;flex-direction:row;flex-wrap:wrap;gap:0.75rem;align-items:center;">
@@ -1178,6 +1478,37 @@
         discrepancyContainer.innerHTML = '<canvas id="discrepancyChart"></canvas>';
         document.body.appendChild(discrepancyContainer);
     }
+
+    /* =========================================================================
+       SYNC-ZERO: Espelha contadores da box intermédia (-zero) a partir dos
+       IDs originais actualizados por script_injection.js
+       ========================================================================= */
+    (function _syncZeroCounters() {
+        var pairs = [
+            ['pure-ctrl-qty',  'pure-ctrl-qty-zero'],
+            ['pure-saft-qty',  'pure-saft-qty-zero'],
+            ['pure-fat-qty',   'pure-fat-qty-zero'],
+            ['pure-ext-qty',   'pure-ext-qty-zero'],
+            ['pure-dac7-qty',  'pure-dac7-qty-zero'],
+        ];
+        function _sync() {
+            pairs.forEach(function(pair) {
+                var src  = document.getElementById(pair[0]);
+                var dest = document.getElementById(pair[1]);
+                if (src && dest && dest.textContent !== src.textContent) {
+                    dest.textContent = src.textContent;
+                }
+            });
+        }
+        // Sincronizar em cada evento de análise completa
+        window.addEventListener('UNIFED_ANALYSIS_COMPLETE', _sync);
+        // Fallback: polling leve (1s) enquanto não houver evento
+        var _pollTimer = setInterval(function() {
+            _sync();
+            // Parar polling após análise real ser carregada
+            if (window._unifedDataLoaded === true) { clearInterval(_pollTimer); }
+        }, 1000);
+    })();
 
 </script>
 </body>
