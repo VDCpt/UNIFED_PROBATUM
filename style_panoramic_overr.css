@@ -1,0 +1,196 @@
+/* ============================================================================
+   UNIFED-PROBATUM · STYLE PANORAMIC OVERRIDE v1.0
+   ============================================================================
+   Versão      : v1.0.0-PANORAMIC
+   Gerado em   : 2026-04-23
+   Âmbito      : Retificações de UI Elite para reunião de 60 advogados
+   Sequência   : Carregar APÓS style.css
+   Norma       : ISO/IEC 27037:2012 · Art. 125.º CPP
+   ============================================================================ */
+
+/* ── 1. LAYOUT PANORÂMICO ──────────────────────────────────────────────── */
+#pureDashboardWrapper,
+.pure-container {
+  width: 98vw;
+  max-width: 98vw;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+/* ── 2. GLASSMORPHISM — Login Box ──────────────────────────────────────── */
+#ds-ac-box {
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+  background: rgba(6, 12, 24, 0.90) !important;
+  border: 1px solid rgba(0, 229, 255, 0.22) !important;
+  box-shadow:
+    0 25px 60px rgba(0, 0, 0, 0.7),
+    0 0 0 1px rgba(255, 255, 255, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+/* ── 3. GLASSMORPHISM — Splash / Box Intermédia ────────────────────────── */
+#ds-splash-box {
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+  background: rgba(8, 14, 28, 0.90) !important;
+  border: 1px solid rgba(0, 229, 255, 0.20) !important;
+  box-shadow:
+    0 30px 80px rgba(0, 0, 0, 0.75),
+    0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 0 120px rgba(0, 229, 255, 0.04) !important;
+}
+
+/* ── 4. GLASSMORPHISM — Cards Dashboard ────────────────────────────────── */
+.ds-card,
+.pure-section,
+.pure-card {
+  backdrop-filter: blur(20px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(160%) !important;
+}
+
+/* ── 5. TIPOGRAFIA ELITE — Legibilidade Processual ─────────────────────── */
+.ds-card-label,
+.pure-card-title,
+.pure-audit-label,
+.pure-data-label,
+.aux-section-header span,
+.hdr-btn,
+.pure-label {
+  letter-spacing: 0.10em !important;
+  text-transform: uppercase !important;
+}
+
+/* Títulos principais Orbitron */
+h1, h2, h3,
+.ds-card-label,
+.pure-section-title,
+[id*="pure-title"],
+.pure-verdict-label {
+  font-family: 'Orbitron', 'JetBrains Mono', monospace !important;
+}
+
+/* ── 6. BORDER ELITE — Linha superior de acento em todas as cards ───────── */
+.pure-card::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(0, 229, 255, 0.5) 30%,
+    rgba(139, 92, 246, 0.4) 70%,
+    transparent 100%
+  );
+  border-radius: 1px 1px 0 0;
+  pointer-events: none;
+}
+
+/* ── 7. EVIDÊNCIAS — Contadores em Estado Zero ──────────────────────────── */
+/* Garantir que o bloco de evidências original não duplica com a box intermédia */
+#pureEvidenceSection:not(.forensic-revealed) {
+  display: none !important;
+}
+
+/* ── 8. HOVER STATES — Elite Micro-interacções ──────────────────────────── */
+.hdr-btn {
+  transition: all 0.18s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+}
+
+.pure-card {
+  transition:
+    box-shadow 0.25s ease,
+    border-color 0.25s ease,
+    transform 0.18s ease !important;
+}
+.pure-card:hover {
+  transform: translateY(-1px);
+}
+
+/* ── 9. SCROLLBAR ELITE ─────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.2); border-radius: 3px; }
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 229, 255, 0.25);
+  border-radius: 3px;
+  transition: background 0.2s;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(0, 229, 255, 0.45); }
+
+/* ── 10. RESPONSIVO — Mobile/Tablet ─────────────────────────────────────── */
+@media (max-width: 1024px) {
+  #pureDashboardWrapper,
+  .pure-container {
+    width: 100vw;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+}
+
+/* ── 11. LED-MATRIX — Ecrã FBI/INTERPOL Phosphor Green ─────────────────────
+   [FIX-UI-03] Verde Monocromático Phosphor (#33ff33) com bloom multi-camada
+   e scanlines via ::before. Aplicar em qualquer contentor ASCII Art.
+   ─────────────────────────────────────────────────────────────────────────── */
+.led-matrix {
+    font-family: 'Courier New', Courier, monospace;
+    color: #33ff33;
+    text-shadow:
+        0 0 2px  rgba(51, 255, 51, 0.80),   /* Brilho do pixel */
+        0 0 10px rgba(51, 255, 51, 0.50),   /* Bloom primário */
+        0 0 20px rgba(51, 255, 51, 0.30);   /* Bloom secundário (ambiente) */
+    background: #000000;
+    padding: 20px;
+    border: 2px solid #33ff33;
+    border-radius: 5px;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Scanlines — sobreposição de gradiente linear a 4 px */
+.led-matrix::before {
+    content: " ";
+    display: block;
+    position: absolute;
+    top: 0; left: 0; bottom: 0; right: 0;
+    background: linear-gradient(
+        rgba(18, 16, 16, 0) 50%,
+        rgba(0,  0,  0, 0.25) 50%
+    );
+    background-size: 100% 4px;
+    z-index: 2;
+    pointer-events: none;
+}
+
+/* ASCII Art dentro do contentor LED */
+.led-matrix pre.ascii-art {
+    margin: 0;
+    line-height: 1;
+    letter-spacing: 2px;
+    opacity: 0.90;
+    position: relative;
+    z-index: 1;
+    font-size: clamp(5px, 0.95vw, 9px);
+    white-space: pre;
+    overflow-x: auto;
+}
+
+/* Variante compacta para a login box (max-width 460 px) */
+#ds-ac-box .led-matrix {
+    padding: 14px 16px;
+    border-width: 1px;
+    border-color: rgba(51, 255, 51, 0.50);
+    margin-bottom: 0;
+}
+#ds-ac-box .led-matrix pre.ascii-art {
+    font-size: clamp(4px, 0.75vw, 7px);
+}
+
+/* Animação de flicker subtil (opcional — activar via classe .led-flicker) */
+@keyframes led-flicker {
+    0%, 100% { opacity: 0.90; }
+    92%       { opacity: 0.88; }
+    94%       { opacity: 0.78; }
+    96%       { opacity: 0.86; }
+}
+.led-flicker .ascii-art { animation: led-flicker 8s ease-in-out infinite; }
