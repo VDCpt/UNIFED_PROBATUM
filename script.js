@@ -3438,6 +3438,11 @@ async function resetSystem() {
     UNIFEDSystem.dataMonths.clear();
     UNIFEDSystem.processedFiles.clear();
     UNIFEDSystem.fileSources.clear();
+    /* PATCH S-06 · FIX-TRIADA-IDEMPOTENCY: ao reiniciar para Zero-Knowledge, a flag de
+       inicialização da Tríade Documental deve ser reposta — caso contrário, uma segunda
+       exportação sem F5 falha silenciosamente por idempotência mal preservada,
+       inibindo a recolha de prova material em segunda instância pericial. */
+    window._UNIFED_TRIADA_INITIALIZED = false;
     resetAuxiliaryData();
     
     await UNIFEDSystem.generateMasterHash();
@@ -5241,7 +5246,11 @@ let _nifafAlertedHash = null;
 
 function updateDashboard() {
     const totals = UNIFEDSystem.analysis.totals;
-    const cross = UNIFEDSystem.analysis.crossings;
+    /* PATCH S-05 · FIX-CROSS-DEREF: crossings pode ser undefined se ensureDemoDataLoaded
+       for chamado antes da análise (ex.: switchLanguage → updateDashboard).
+       O fallback para {} garante que todos os acessos cross.X retornem undefined
+       (coercível para 0 via || 0) em vez de lançar TypeError fatal. */
+    const cross  = UNIFEDSystem.analysis.crossings || {};
     const twoAxis = UNIFEDSystem.analysis.twoAxis;
 
     const netValue = totals.ganhosLiquidos || 0;
