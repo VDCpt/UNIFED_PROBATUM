@@ -3235,7 +3235,7 @@ function openHashModal() {
 // ============================================================================
 window.resetUIVisual = function() {
     // [VEC-05] Purga Total de Memória Zero-Knowledge — Full Build 2026-04-18
-    console.warn('[FORENSIC-CORE] Purga Total de Memória Zero-Knowledge iniciada.');
+    console.log('[FORENSIC-CORE] Purga Total de Memória Zero-Knowledge iniciada.');
 
     // 1. Destruir instâncias Chart.js (Chart.getChart() como mecanismo primário)
     ['mainChart','discrepancyChart','mainDiscrepancyChart','atfChartCanvas','atfChartCanvasModal'].forEach(function(id) {
@@ -3289,7 +3289,7 @@ window.resetUIVisual = function() {
     }
 
     window.logAudit('Zero-Knowledge: purga total de memória executada com sucesso.', 'success');
-    console.warn('[FORENSIC-CORE] ✓ resetUIVisual Zero-Knowledge concluído.');
+    console.log('[FORENSIC-CORE] ✓ resetUIVisual Zero-Knowledge concluído.');
 };
 
 // ============================================================================

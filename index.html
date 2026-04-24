@@ -26,6 +26,7 @@
 <title>UNIFED-PROBATUM — Sistema de Peritagem Forense Digital</title>
 <!-- style.css: Single Source of Truth (fusão style_additions) -->
 <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style_panoramic_overr.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
       integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="
       crossorigin="anonymous" referrerpolicy="no-referrer">
@@ -1819,12 +1820,7 @@ function _applyI18nNexus() {
     overlay.id = 'ds-ac-overlay';
     overlay.innerHTML = [
       '<div id="ds-ac-box">',
-      '<div id="ds-ac-led-wrap"><div class="led-matrix"><pre class="ascii-art">██╗   ██╗███╗   ██╗██╗██████╗ ██████╗ ██████╗ 
-██║   ██║████╗  ██║██║██╔════╝██╔════╝ ██╔══██╗
-██║   ██║██╔██╗ ██║██║█████╗  █████╗  ██║  ██║
-██║   ██║██║╚██╗██║██║██╔══╝  ██╔══╝  ██║  ██║
-╚██████╔╝██║ ╚████║██║██║     ███████╗██████╔╝
- ╚═════╝ ╚══╝  ╚═══╝╚═╝╚═╝     ╚══════╝╚═════╝ </pre></div></div>',
+      '<div id="ds-ac-led-wrap"><div class="led-matrix"><pre class="ascii-art">██╗   ██╗███╗   ██╗██╗██████╗ ██████╗ ██████╗ \n██║   ██║████╗  ██║██║██╔════╝██╔════╝ ██╔══██╗\n██║   ██║██╔██╗ ██║██║█████╗  █████╗  ██║  ██║\n██║   ██║██║╚██╗██║██║██╔══╝  ██╔══╝  ██║  ██║\n╚██████╔╝██║ ╚████║██║██║     ███████╗██████╔╝\n ╚═════╝ ╚══╝  ╚═══╝╚═╝╚═╝     ╚══════╝╚═════╝</pre></div></div>',
       '<div id="ds-ac-header">',
       '<div id="ds-ac-badge">UNIFED-PROBATUM v13.12.3 · Diamond-Shield</div>',
       '<div id="ds-ac-title">Sistema de<br><span class="ds-ac-accent">Peritagem Forense</span><br>Digital</div>',
@@ -2738,10 +2734,10 @@ window.addEventListener('UNIFED_ANALYSIS_COMPLETE', function(evt) {
 <script src="nexus.js" defer></script>
 <script src="enrichment.js" defer></script>
 <!-- Bateria de Contraditório v1.0 — art. 327.º CPP -->
-<script src="legal_tactics_engine_v1.0.js" defer></script>
-<script src="legal_tactics_ui_v1.0.js" defer></script>
-<script src="legal_tactics_pdf_export_v1.0.js" defer></script>
-<script src="legal_tactics_orchestrator_v1.0.js" defer></script>
+<script src="legal_tactics_engine.js" defer></script>
+<script src="legal_tactics_ui.js" defer></script>
+<script src="legal_tactics_pdf_export.js" defer></script>
+<script src="legal_tactics_orchestrator.js" defer></script>
 <!-- ============================================================================
      FIX-EXT-03: Módulo Tríade Documental — anteriormente ausente do manifesto
      Expõe: window._triadaUpdateLabels · gerarPDF · gerarDocx · gerarAnexoCustodia
