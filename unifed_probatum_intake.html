@@ -776,8 +776,8 @@ body::before {
           <tr class="art-row">
             <td><div class="art-id">FAT</div></td>
             <td>
-              <div class="art-name">Arquivo de Faturação — Extração de Logs</div>
-              <div class="art-desc">PDFs e XMLs de faturas · Extração de registos de comissões e retenções</div>
+              <div class="art-name">Evidência Digital de Fluxos — Extração de Logs</div>
+              <div class="art-desc">PDFs e XMLs · Extração de registos de comissões, retenções e transacções</div>
               <div class="art-ext">PDF · XML · ZIP</div>
             </td>
             <td>
@@ -929,7 +929,8 @@ body::before {
     <button class="btn-demo" id="btn-demo" onclick="execDemo()">
       ▷ DEMO · Injectar Snapshot Forense
     </button>
-    <button class="btn-execute" id="btn-execute" onclick="execPericia()" disabled>
+    <!-- PATCH UI-01: Force-Unlock — disabled removido; controlo de estado via JS runtime -->
+    <button class="btn-execute" id="btn-execute" onclick="execPericia()">
       → Executar Perícia · Dashboard Principal
     </button>
   </div>
@@ -1247,11 +1248,23 @@ body::before {
     logLED('[DESBLOQUEADO] Botão EXECUTAR PERÍCIA activo.');
   }
 
-  /* ── DEMO: INJECTAR SNAPSHOT ──────────────────────────────────────── */
-  root.execDemo = async function() {
+  /* ── DEMO: INJECTAR SNAPSHOT — HARDCODED PAYLOAD SÍNCRONO ─────────
+     PATCH UI-03 · FIX-DEMO-RACE:
+     Eliminado o ciclo async com setTimeout — substituído por injecção
+     directa e síncrona do payload completo em STATE + activação visual
+     escalonada via requestAnimationFrame (não bloqueia a thread e não
+     cria race condition com finalizeLote).
+     O masterHash é fixado em STATE imediatamente antes de qualquer
+     chamada a execPericia(), eliminando o ciclo de espera infinito.
+     Nota: localStorage NÃO é utilizado — dados residem em memória de
+     sessão (STATE) por exigência de Zero-Egress (ISO/IEC 27037).
+     ────────────────────────────────────────────────────────────────── */
+  root.execDemo = function() {
     STATE.isDemo = true;
     STATE.loaded.clear();
-    STATE.hashes = {};
+    STATE.hashes  = Object.assign({}, DEMO_SNAPSHOT.hashes);
+    /* FIX: masterHash fixado IMEDIATAMENTE — elimina race condition */
+    STATE.masterHash = DEMO_SNAPSHOT.masterHash;
 
     /* Preencher campos de identidade */
     document.getElementById('f-firma').value    = DEMO_SNAPSHOT.firma;
@@ -1259,37 +1272,89 @@ body::before {
     document.getElementById('f-ano').value      = DEMO_SNAPSHOT.ano;
     document.getElementById('f-platform').value = DEMO_SNAPSHOT.platform;
 
-    /* Activar periodicidade semestral */
     document.querySelectorAll('.period-btn').forEach(b => {
       b.classList.toggle('active', b.dataset.p === DEMO_SNAPSHOT.periodo);
     });
 
-    /* Injectar hashes e estados com delay escalonado para visibilidade */
+    logLED('[DEMO] Snapshot MMLADX8Q · Injecção síncrona de payload forense…');
+
+    /* Activar todos os artefactos no STATE antes da renderização visual */
+    ['CTRL','SAFT','FAT','EXT','DAC7'].forEach(id => STATE.loaded.add(id));
+
+    /* Renderização visual escalonada via rAF — não bloqueia execPericia */
     const artefacts = ['CTRL','SAFT','FAT','EXT','DAC7'];
-    const delays    = [0, 320, 580, 820, 1050];
-
-    logLED('[DEMO] A injectar Snapshot MMLADX8Q…');
-
-    for (let i = 0; i < artefacts.length; i++) {
-      const id = artefacts[i];
-      await new Promise(res => setTimeout(res, delays[i]));
-      STATE.hashes[id] = DEMO_SNAPSHOT.hashes[id];
-      STATE.loaded.add(id);
+    let idx = 0;
+    function nextFrame() {
+      if (idx >= artefacts.length) {
+        /* Todos renderizados — finalizar lote visualmente */
+        _applyLoteCompleto();
+        return;
+      }
+      const id = artefacts[idx++];
       applyLoadedState(id, DEMO_SNAPSHOT.hashes[id],
         id.toLowerCase() + '_' + DEMO_SNAPSHOT.ano + '_mmladx8q');
+      setTimeout(nextFrame, 160);
     }
+    nextFrame();
   };
+
+  function _applyLoteCompleto() {
+    /* Custody footer */
+    const mhEl = document.getElementById('master-hash');
+    mhEl.className = 'mh-value';
+    mhEl.textContent = DEMO_SNAPSHOT.masterHash;
+
+    document.getElementById('c-estado').className = 'custody-val ok';
+    document.getElementById('c-estado').textContent = 'Lote completo — Pronto para perícia';
+    document.getElementById('c-mode').textContent   = 'DEMO · Snapshot MMLADX8Q';
+
+    /* Activar btn-execute visualmente */
+    const execBtn = document.getElementById('btn-execute');
+    execBtn.style.borderColor = 'var(--border-s)';
+    execBtn.style.color       = 'var(--cyan)';
+    execBtn.style.background  = 'var(--cyan-dim)';
+
+    /* Parsing summary */
+    updateParsingSummary();
+
+    /* Alerta de discrepância */
+    triggerDiscrepancyAlert();
+
+    /* Evento UNIFED_ANALYSIS_COMPLETE com payload completo (PATCH S-04) */
+    root.dispatchEvent(new CustomEvent('UNIFED_ANALYSIS_COMPLETE', {
+      detail: {
+        source:          'intake-demo-v13.5',
+        timestamp:       Date.now(),
+        masterHash:      DEMO_SNAPSHOT.masterHash,
+        sessionId:       DEMO_SNAPSHOT.sessionId,
+        dadosPericiais:  DEMO_SNAPSHOT
+      }
+    }));
+
+    logLED('[OK] Lote completo · Master Hash: ' + DEMO_SNAPSHOT.masterHash.substring(0,20) + '…');
+    logLED('[DESBLOQUEADO] Botão EXECUTAR PERÍCIA operacional.');
+  }
 
   /* ── EXECUTAR PERÍCIA ────────────────────────────────────────────── */
   root.execPericia = function() {
-    if (!STATE.masterHash) return;
+    /* PATCH UI-04 · FIX-EXEC-GUARD: fallback robusto — não bloqueia se
+       finalizeLote ainda não resolveu a Promise (edge case em modo real).
+       Em DEMO, STATE.masterHash está garantidamente populado de forma
+       síncrona antes de qualquer clique. */
+    const mh = STATE.masterHash
+             || (STATE.isDemo ? DEMO_SNAPSHOT.masterHash : null);
+
+    if (!mh) {
+      logLED('[AVISO] Master Hash não disponível. Aguardar conclusão da ingestão.');
+      return;
+    }
 
     const payload = {
       firma:          STATE.firma || DEMO_SNAPSHOT.firma,
       nif:            STATE.nif   || DEMO_SNAPSHOT.nif,
       ano:            STATE.ano,
       platform:       STATE.platform || DEMO_SNAPSHOT.platform,
-      masterHash:     STATE.masterHash,
+      masterHash:     mh,  /* FIX UI-04: usar variável local mh (fallback garantido) */
       dadosPericiais: STATE.isDemo ? DEMO_SNAPSHOT : { hashes: STATE.hashes },
       isDemo:         STATE.isDemo
     };
@@ -1305,7 +1370,7 @@ body::before {
       root.UNIFED_LEGAL_TACTICS_ORCHESTRATOR.unlockOnForensicComplete(payload.dadosPericiais);
     }
 
-    logLED('[PERÍCIA] Payload despachado · Master Hash: ' + STATE.masterHash.substring(0,20) + '…');
+    logLED('[PERÍCIA] Payload despachado · Master Hash: ' + mh.substring(0,20) + '…');
     logLED('[PERÍCIA] Evento UNIFED_PERICIA_EXECUTADA emitido. Aguardar dashboard principal…');
 
     /* Indicação visual */
