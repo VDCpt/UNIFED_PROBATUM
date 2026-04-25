@@ -4623,7 +4623,23 @@ function updateSmokingGunUI() {
 function renderTemporalChart(atfData) {
     const canvas = document.getElementById('atfChartCanvas');
     if (!canvas) {
-        console.warn('[ATF] Canvas #atfChartCanvas não encontrado');
+        /* PATCH S-08b · FIX-ATF-CANVAS-RETRY: guarda defensiva com retry via rAF.
+           Cenário: renderTemporalChart invocada antes do pureATFCard ser revelado
+           (ex: chamada directa sem passar por forceRevealSmokingGun).
+           O retry único via rAF garante uma segunda tentativa no próximo frame
+           sem criar ciclo infinito nem emitir console.warn confessional no F12. */
+        if (!renderTemporalChart._retryScheduled) {
+            renderTemporalChart._retryScheduled = true;
+            requestAnimationFrame(function _atfCanvasRetry() {
+                renderTemporalChart._retryScheduled = false;
+                const retryCanvas = document.getElementById('atfChartCanvas');
+                if (retryCanvas) {
+                    renderTemporalChart(atfData);
+                } else {
+                    console.info('[ATF] Canvas #atfChartCanvas não disponível após retry — pureATFCard pode estar oculto.');
+                }
+            });
+        }
         return;
     }
 
@@ -4732,11 +4748,16 @@ function enhanceTriangulationMatrix() {
 
 function forceRevealSmokingGun() {
     // IDs de módulos críticos — revelação com display:flex (cards em row) onde aplicável
+    /* PATCH S-08 · FIX-ATF-CANVAS: pureATFCard adicionado à lista criticalModules.
+       Causa raiz: o canvas #atfChartCanvas existe no DOM (fetch panel.html resolvido)
+       mas o contentor pai permanecia display:none, tornando as dimensões 0×0 e
+       impedindo a inicialização do Chart.js. A revelação deve preceder renderTemporalChart. */
     const criticalModules = [
         'pureDiscCard', 'pureZonaCinzentaCard', 'pureVerdictCard', 'card-asfixia',
         'smoking-gun-1', 'smoking-gun-2', 'triangulationMatrixContainer',
         'colarinho-branco', 'smokingGunRow', 'mainDiscrepancyChartContainer',
-        'mainChartContainer'
+        'mainChartContainer',
+        'pureATFCard'   /* PATCH S-08: revelar antes de renderTemporalChart */
     ];
 
     criticalModules.forEach(id => {
