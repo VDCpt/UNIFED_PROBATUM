@@ -26,7 +26,7 @@
 <title>UNIFED-PROBATUM — Sistema de Peritagem Forense Digital</title>
 <!-- style.css: Single Source of Truth (fusão style_additions) -->
 <link rel="stylesheet" href="style.css">
-<link rel="stylesheet" href="style_panoramic_overr.css">
+<link rel="stylesheet" href="style_panoramic_override.css"><!-- PATCH IDX-01: corrigido nome truncado overr→override -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
       integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw=="
       crossorigin="anonymous" referrerpolicy="no-referrer">
@@ -1625,10 +1625,10 @@ function _applyI18nNexus() {
     { id:'EVD-003', file:'style_additions.css',         hash:'b62e4136b3f9ccc7f31aaa99643287cd6d3868f1424bc8bc1e6fe7b5a0e135a4', type:'CSS', origin:'Build v13.12.2' },
     { id:'EVD-004', file:'style_additions_patch.css',   hash:'e35f17458131ed349cd871efc48dd33bdc1866a2611a42a3b9b5a57c26227c64', type:'CSS', origin:'Build v13.12.2' },
     { id:'EVD-005', file:'unifed_panel_activator.js',   hash:'2f7f55f5fadaadf47ee4a798afca0aac67607a50edc656edbf607d318210726a', type:'JS', origin:'Build v13.12.2' },
-    { id:'EVD-006', file:'script.js',                   hash:'b7a7c12985a54f8400e9bbe8cc111fbcd95b5325511846e75654e6e4626e45c1', type:'JS', origin:'Build v13.12.2' },
-    { id:'EVD-007', file:'script_injection.js',         hash:'eea73f057ffbe8baaefd98dc8512eadfc70c83c929cca092e679a28e513a48cf', type:'JS', origin:'Build v13.12.2' },
+    { id:'EVD-006', file:'script.js',                   hash:'76b8e194e9222d743e81e2ca1fdc980cce52b84f662c34f22523d9b2f879e57b', type:'JS', origin:'Build v13.12.3 — Patches S-05/S-06/S-08' },
+    { id:'EVD-007', file:'script_injection.js',         hash:'235d22be537a327169a8750eb5c1f391e7b1d8124adf86cb73c4e53435a59c8c', type:'JS', origin:'Build v13.12.3 — Patches S-01/S-02/S-03/S-04' },
     { id:'EVD-008', file:'enrichment.js',               hash:'30249d7d9b4c31a5cac4b07decbe0777f0b6434103f6db073c47f7dcc91dc8d9', type:'JS', origin:'Build v13.12.2' },
-    { id:'EVD-009', file:'nexus.js',                    hash:'2ab85ec74c9ad87bb3048481b4eb37997082d68a687cf9011faa74ad416f42b3', type:'JS', origin:'Build v13.12.2' },
+    { id:'EVD-009', file:'nexus.js',                    hash:'38645c4ca8558fc792b7dd503e141464c249bfceae138616cbae650ac7ee4680', type:'JS', origin:'Build v13.12.3 — Patch S-07' },
     { id:'EVD-010', file:'unifed_card_amt01.js',        hash:'5910ffb21ba55840e66b5a40fbbca8432d5bc79daa271e3cea64d5c0fd31c2d5', type:'JS', origin:'v2.0.1-RECTIFIED' },
     { id:'EVD-011', file:'unifed_triada_export.js',     hash:'520eac512552f9a7420c1ffa23698b439f5eebddfe00fa83b5ccdd8126c526b7', type:'JS', origin:'Build v13.12.2' },
     { id:'EVD-012', file:'unifed_access_control.js',    hash:'bb2aca32c519ab165fa93c16f5a43fe9d07adb5a6e73b4e921948cd306eb5f4e', type:'JS', origin:'v3.1.0' },
@@ -2200,10 +2200,10 @@ function _runCSCSequence() {
     { cls:'csc-ok',   text:'[EVD-003] style_additions.css · b62e4136b3f9ccc7f31aaa99...  ✓' },
     { cls:'csc-ok',   text:'[EVD-004] style_additions_patch.css · e35f17458131ed349c...  ✓' },
     { cls:'csc-ok',   text:'[EVD-005] unifed_panel_activator.js · 2f7f55f5fadaadf47e...  ✓' },
-    { cls:'csc-ok',   text:'[EVD-006] script.js · b7a7c12985a54f8400e9bbe8cc111fbc...  ✓' },
-    { cls:'csc-ok',   text:'[EVD-007] script_injection.js · eea73f057ffbe8baaefd98...  ✓' },
+    { cls:'csc-ok',   text:'[EVD-006] script.js · 76b8e194e9222d743e81e2ca1fdc980c...  ✓ (v13.12.3)' },
+    { cls:'csc-ok',   text:'[EVD-007] script_injection.js · 235d22be537a327169a875...  ✓ (v13.12.3)' },
     { cls:'csc-ok',   text:'[EVD-008] enrichment.js · 30249d7d9b4c31a5cac4b07decb...  ✓' },
-    { cls:'csc-ok',   text:'[EVD-009] nexus.js · 2ab85ec74c9ad87bb3048481b4eb37...  ✓' },
+    { cls:'csc-ok',   text:'[EVD-009] nexus.js · 38645c4ca8558fc792b7dd503e141464...  ✓ (v13.12.3)' },
     { cls:'csc-ok',   text:'[EVD-010] unifed_card_amt01.js · 5910ffb21ba55840e66b5a...  ✓ (v2.0.1-RECTIFIED)' },
     { cls:'csc-ok',   text:'[EVD-011] unifed_triada_export.js · 520eac512552f9a74...  ✓' },
     { cls:'csc-ok',   text:'[EVD-012] unifed_access_control.js · bb2aca32c519ab165...  ✓' },
