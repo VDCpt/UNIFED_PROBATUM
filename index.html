@@ -13,7 +13,7 @@
   Conformidade : DORA (UE) 2022/2554 · Art. 125.º CPP · ISO/IEC 27037:2012
                : Lei n.º 109/2009 (Cibercrime) · Diretiva DAC7 (UE) 2021/514
                : Art. 119.º RGIT · RGPD Art. 32.º · eIDAS
-  Hash SHA-256 : 2cc9039cff521fa20ce9748ea10ebb59b83de0e922899071a81f1494a0728b54
+  Hash SHA-256 : [REMOVIDO — ver ficheiro de credenciais externo · acesso_seguro.txt]
   Master Hash  : a538cdf55996f9509249c51ecdf5ee15f46b403b85411a4d0f18590f54f3a417
   ============================================================================
   ARQUITECTURA:
@@ -2202,10 +2202,10 @@ function _runCSCSequence() {
     { cls:'csc-ok',   text:'[EVD-005] unifed_panel_activator.js · 2f7f55f5fadaadf47e...  ✓' },
     { cls:'csc-ok',   text:'[EVD-006] script.js · 76b8e194e9222d743e81e2ca1fdc980c...  ✓ (v13.12.3)' },
     { cls:'csc-ok',   text:'[EVD-007] script_injection.js · 235d22be537a327169a875...  ✓ (v13.12.3)' },
-    { cls:'csc-ok',   text:'[EVD-008] enrichment.js · 30249d7d9b4c31a5cac4b07decb...  ✓' },
+    { cls:'csc-ok',   text:'[EVD-008] enrichment.js · 30249d7d9b4c31a5cac4b07decbe07...  ✓ (v13.12.3)' },
     { cls:'csc-ok',   text:'[EVD-009] nexus.js · 38645c4ca8558fc792b7dd503e141464...  ✓ (v13.12.3)' },
     { cls:'csc-ok',   text:'[EVD-010] unifed_card_amt01.js · 5910ffb21ba55840e66b5a...  ✓ (v2.0.1-RECTIFIED)' },
-    { cls:'csc-ok',   text:'[EVD-011] unifed_triada_export.js · 520eac512552f9a74...  ✓' },
+    { cls:'csc-ok',   text:'[EVD-011] unifed_triada_export.js · 520eac512552f9a7420c1f...  ✓ (v13.12.3)' },
     { cls:'csc-ok',   text:'[EVD-012] unifed_access_control.js · bb2aca32c519ab165...  ✓' },
     { cls:'csc-ok',   text:'[EVD-013] unifed_core_harmonizer.js · 6991a2f52db992b81...  ✓' },
     { cls:'csc-ok',   text:'[EVD-014] proxy_worker.js · 3deccf4ebcd4786d9eb4b378f...  ✓' },
@@ -2309,6 +2309,12 @@ function _activateDashboard() {
       wrapper.classList.add('activated');
     });
   }
+
+  /* PATCH F-01 · FIX-DROPZONE-REVEAL: globalDropZone permanecia display:none após
+     _activateDashboard(). O Módulo 13 (_initDropZone) configura os listeners mas
+     não revela o elemento — a revelação tem de ocorrer aqui, após o wrapper. */
+  var dropZone = document.getElementById('globalDropZone');
+  if (dropZone) dropZone.style.display = 'block';
 
   // Render dashboard em Zero-State
   setTimeout(function() {
