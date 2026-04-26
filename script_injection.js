@@ -1852,10 +1852,18 @@
                 }
                 
                 try {
+                    /* PATCH 3 · FIX-REALCASE-DEADLOCK: waitForPureDashboard() entrava em deadlock
+                       se o utilizador não tivesse passado pelo splash screen (que executa o fetch
+                       de panel.html). A injecção de forceFinalState() garante que o panel.html
+                       é inserido no DOM antes de aguardar #pureDashboard, eliminando a Promise
+                       não resolvida. */
+                    if (typeof window.forceFinalState === 'function' && !document.getElementById('pureDashboard')) {
+                        await window.forceFinalState();
+                    }
+
                     if (typeof window._activatePurePanel === 'function') {
                         await window._activatePurePanel();
                     }
-                    
                     await waitForPureDashboard();
                     initializeCoreDashboard();
                     
@@ -2554,13 +2562,25 @@
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> A EXECUTAR PERÍCIA...';
 
             try {
-                // 1. Garantir dados do caso real carregados
-                let loadFn = window.ensureDemoDataLoaded
-                    || window.UNIFED_INTERNAL?.ensureDemoDataLoaded;
-                if (typeof loadFn === 'function') {
-                    await loadFn();
+                // 1. Garantir dados do caso real APENAS se não houver evidências carregadas
+                /* PATCH 1 · FIX-RET08-SEQUESTRO: execução incondicional de ensureDemoDataLoaded()
+                   destruía UNIFEDSystem.documents e UNIFEDSystem.analysis.totals sempre que o
+                   utilizador clicava "Executar Perícia", esmagando ficheiros reais com dados
+                   estáticos do Caso MMLADX8Q. A guarda hasUserFiles preserva os dados do
+                   utilizador quando existem documentos carregados (counts.total > 0). */
+                const hasUserFiles = window.UNIFEDSystem &&
+                                     window.UNIFEDSystem.counts &&
+                                     window.UNIFEDSystem.counts.total > 0;
+                if (!hasUserFiles) {
+                    let loadFn = window.ensureDemoDataLoaded
+                        || window.UNIFED_INTERNAL?.ensureDemoDataLoaded;
+                    if (typeof loadFn === 'function') {
+                        await loadFn();
+                    } else {
+                        console.warn('[UNIFED] RET-08: ensureDemoDataLoaded indisponível.');
+                    }
                 } else {
-                    console.warn('[UNIFED] RET-08: ensureDemoDataLoaded indisponível.');
+                    console.info('[UNIFED] Ficheiros de utilizador detetados. Bypass à injeção de dados de demonstração.');
                 }
 
                 // 2. Executar análise completa (calcula cruzamentos, IVA, IRC, Asfixia)

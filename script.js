@@ -3817,6 +3817,27 @@ async function processBatchFiles(files) {
 }
 
 // ============================================================================
+/* PATCH 4 · FIX-DETECTFILETYPE-MISSING: a função detectFileType não estava
+   declarada em nenhum módulo da base de código. processQueue() invocava
+   await detectFileType(file) dentro de um try/catch que absorvia o
+   ReferenceError silenciosamente, abortando o processamento de cada
+   ficheiro sem qualquer log de erro — o pipeline de ingestão falhava
+   na totalidade sem qualquer sinal visível ao operador.
+   Declaração injectada imediatamente antes de processQueue() para garantir
+   que está no mesmo scope de execução. */
+async function detectFileType(file) {
+    const name = file.name.toLowerCase();
+    if (name.endsWith('.csv') && name.includes('131509')) return 'saft';
+    if (name.includes('controlo') || name.includes('hash')) return 'control';
+    if (name.includes('dac7')) return 'dac7';
+    if (name.endsWith('.pdf')) {
+        if (name.match(/pt\d{4}-\d{5}/i) || name.includes('fatura') || name.includes('invoice')) return 'invoice';
+        return 'statement'; // Default para PDFs não identificados como faturas
+    }
+    return 'unknown';
+}
+
+// ============================================================================
 // RETIFICAÇÃO: processQueue - APENAS atualiza UI básica, NÃO executa análise
 // ============================================================================
 async function processQueue() {
