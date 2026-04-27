@@ -927,29 +927,23 @@ window.UNIFEDSystem = window.UNIFEDSystem || {};
 // ============================================================================
 // MÓDULO 6 · PERITIA EXECUTION GUARD — Zero-knowledge check for UNIFED_EXECUTE_PERITIA
 // ============================================================================
-/* PATCH S-07 · FIX-NEXUS-GUARD:
-   1. Removido console.warn que emitia falso positivo confessional no F12,
-      sinalizando "código inacabado" perante perito da contraparte.
-   2. Adicionado evt.stopImmediatePropagation() em estado zero-knowledge —
-      sem este bloqueio, módulos subsequentes no mesmo listener podiam
-      executar com objeto de análise nulo, resultando em TypeError em cascata.
-   3. Delegação para enrichment.js formalizada via console.info rastreável. */
 (function _peritiaExecutionGuard() {
     window.addEventListener('UNIFED_EXECUTE_PERITIA', function _onPeritiaExecute(evt) {
-        console.log('[UNIFED-ENRICHMENT] UNIFED_EXECUTE_PERITIA recebido.', (evt.detail || {}).masterHash || '');
-
+        console.log('[UNIFED-ENRICHMENT] UNIFED_EXECUTE_PERITIA recebido...', (evt.detail || {}).masterHash || '');
+        
+        // Verificar se há dados reais
         const sys = window.UNIFEDSystem;
         const hasRealData = (sys && sys.analysis && sys.analysis.totals && sys.analysis.totals.ganhos > 0) ||
                             (window._unifedDataLoaded === true);
-
         if (!hasRealData) {
             console.log('[NEXUS] Estado zero-knowledge: a ignorar execução de peritIA.');
-            evt.stopImmediatePropagation(); /* FIX-S07: impede propagação com estado nulo */
+            e.stopImmediatePropagation();
             return;
         }
-
-        /* Guarda satisfeita — delegação explícita ao enrichment.js */
-        console.info('[NEXUS] Guarda de Execução validada. Delegação de renderização para enrichment.js.');
+        // NOTA: O código original que renderiza gráficos deve ser mantido aqui.
+        // Como não foi fornecido, este listener apenas previne a execução indevida.
+        // Caso exista lógica adicional, deve ser inserida a seguir a esta guarda.
+        console.info('[NEXUS] Guarda de Execução validada. Delegação de renderização para enrichment.js. ');
     });
 })();
 

@@ -3289,6 +3289,13 @@ window.resetUIVisual = function() {
     }
 
     window.logAudit('Zero-Knowledge: purga total de memória executada com sucesso.', 'success');
+    
+    
+    // [S-06] Reset Tríade Documental — permite re-execução após Zero-Knowledge
+    if (window._UNIFED_TRIADA_INITIALIZED) {
+        window._UNIFED_TRIADA_INITIALIZED = false;
+        console.log('[FORENSIC-CORE] ✓ Tríade Documental resetada para Zero-State.');
+    }
     console.log('[FORENSIC-CORE] ✓ resetUIVisual Zero-Knowledge concluído.');
 };
 
@@ -3438,11 +3445,6 @@ async function resetSystem() {
     UNIFEDSystem.dataMonths.clear();
     UNIFEDSystem.processedFiles.clear();
     UNIFEDSystem.fileSources.clear();
-    /* PATCH S-06 · FIX-TRIADA-IDEMPOTENCY: ao reiniciar para Zero-Knowledge, a flag de
-       inicialização da Tríade Documental deve ser reposta — caso contrário, uma segunda
-       exportação sem F5 falha silenciosamente por idempotência mal preservada,
-       inibindo a recolha de prova material em segunda instância pericial. */
-    window._UNIFED_TRIADA_INITIALIZED = false;
     resetAuxiliaryData();
     
     await UNIFEDSystem.generateMasterHash();
@@ -3814,27 +3816,6 @@ async function processBatchFiles(files) {
     if (!isProcessingQueue) {
         processQueue();
     }
-}
-
-// ============================================================================
-/* PATCH 4 · FIX-DETECTFILETYPE-MISSING: a função detectFileType não estava
-   declarada em nenhum módulo da base de código. processQueue() invocava
-   await detectFileType(file) dentro de um try/catch que absorvia o
-   ReferenceError silenciosamente, abortando o processamento de cada
-   ficheiro sem qualquer log de erro — o pipeline de ingestão falhava
-   na totalidade sem qualquer sinal visível ao operador.
-   Declaração injectada imediatamente antes de processQueue() para garantir
-   que está no mesmo scope de execução. */
-async function detectFileType(file) {
-    const name = file.name.toLowerCase();
-    if (name.endsWith('.csv') && name.includes('131509')) return 'saft';
-    if (name.includes('controlo') || name.includes('hash')) return 'control';
-    if (name.includes('dac7')) return 'dac7';
-    if (name.endsWith('.pdf')) {
-        if (name.match(/pt\d{4}-\d{5}/i) || name.includes('fatura') || name.includes('invoice')) return 'invoice';
-        return 'statement'; // Default para PDFs não identificados como faturas
-    }
-    return 'unknown';
 }
 
 // ============================================================================
@@ -4602,7 +4583,7 @@ async function performAudit() {
 }
 
 function updateSmokingGunUI() {
-    const cross = UNIFEDSystem.analysis.crossings;
+    const cross = UNIFEDSystem.analysis.crossings || {};
     if (!cross) return;
 
     const sg2Value = cross.discrepanciaCritica || 0;
@@ -4644,23 +4625,7 @@ function updateSmokingGunUI() {
 function renderTemporalChart(atfData) {
     const canvas = document.getElementById('atfChartCanvas');
     if (!canvas) {
-        /* PATCH S-08b · FIX-ATF-CANVAS-RETRY: guarda defensiva com retry via rAF.
-           Cenário: renderTemporalChart invocada antes do pureATFCard ser revelado
-           (ex: chamada directa sem passar por forceRevealSmokingGun).
-           O retry único via rAF garante uma segunda tentativa no próximo frame
-           sem criar ciclo infinito nem emitir console.warn confessional no F12. */
-        if (!renderTemporalChart._retryScheduled) {
-            renderTemporalChart._retryScheduled = true;
-            requestAnimationFrame(function _atfCanvasRetry() {
-                renderTemporalChart._retryScheduled = false;
-                const retryCanvas = document.getElementById('atfChartCanvas');
-                if (retryCanvas) {
-                    renderTemporalChart(atfData);
-                } else {
-                    console.info('[ATF] Canvas #atfChartCanvas não disponível após retry — pureATFCard pode estar oculto.');
-                }
-            });
-        }
+        console.warn('[ATF] Canvas #atfChartCanvas não encontrado');
         return;
     }
 
@@ -4769,16 +4734,11 @@ function enhanceTriangulationMatrix() {
 
 function forceRevealSmokingGun() {
     // IDs de módulos críticos — revelação com display:flex (cards em row) onde aplicável
-    /* PATCH S-08 · FIX-ATF-CANVAS: pureATFCard adicionado à lista criticalModules.
-       Causa raiz: o canvas #atfChartCanvas existe no DOM (fetch panel.html resolvido)
-       mas o contentor pai permanecia display:none, tornando as dimensões 0×0 e
-       impedindo a inicialização do Chart.js. A revelação deve preceder renderTemporalChart. */
     const criticalModules = [
         'pureDiscCard', 'pureZonaCinzentaCard', 'pureVerdictCard', 'card-asfixia',
         'smoking-gun-1', 'smoking-gun-2', 'triangulationMatrixContainer',
         'colarinho-branco', 'smokingGunRow', 'mainDiscrepancyChartContainer',
-        'mainChartContainer',
-        'pureATFCard'   /* PATCH S-08: revelar antes de renderTemporalChart */
+        'mainChartContainer'
     ];
 
     criticalModules.forEach(id => {
@@ -5288,11 +5248,7 @@ let _nifafAlertedHash = null;
 
 function updateDashboard() {
     const totals = UNIFEDSystem.analysis.totals;
-    /* PATCH S-05 · FIX-CROSS-DEREF: crossings pode ser undefined se ensureDemoDataLoaded
-       for chamado antes da análise (ex.: switchLanguage → updateDashboard).
-       O fallback para {} garante que todos os acessos cross.X retornem undefined
-       (coercível para 0 via || 0) em vez de lançar TypeError fatal. */
-    const cross  = UNIFEDSystem.analysis.crossings || {};
+    const cross = UNIFEDSystem.analysis.crossings || {};
     const twoAxis = UNIFEDSystem.analysis.twoAxis;
 
     const netValue = totals.ganhosLiquidos || 0;
@@ -5493,7 +5449,7 @@ function updateDashboard() {
 }
 
 function activateIntermittentAlerts() {
-    const cross = UNIFEDSystem.analysis.crossings;
+    const cross = UNIFEDSystem.analysis.crossings || {};
     const twoAxis = UNIFEDSystem.analysis.twoAxis;
 
     const kpiInvCard = document.getElementById('kpiInvCard');
@@ -5582,7 +5538,7 @@ function updateModulesUI() {
 
 function showAlerts() {
     const totals = UNIFEDSystem.analysis.totals;
-    const cross = UNIFEDSystem.analysis.crossings;
+    const cross = UNIFEDSystem.analysis.crossings || {};
     const t = translations[currentLang];
 
     const verdictDisplay = document.getElementById('verdictDisplay');
@@ -5945,7 +5901,7 @@ async function exportPDF() {
         const platform = PLATFORM_DATA[UNIFEDSystem.selectedPlatform] || PLATFORM_DATA.outra;
         const totals = UNIFEDSystem.analysis.totals;
         const twoAxis = UNIFEDSystem.analysis.twoAxis;
-        const cross = UNIFEDSystem.analysis.crossings;
+        const cross = UNIFEDSystem.analysis.crossings || {};
         const verdict = UNIFEDSystem.analysis.verdict || { level: { pt: 'N/A', en: 'N/A' }, key: 'low', color: '#8c7ae6', description: { pt: 'Perícia não executada.', en: 'Forensic exam not executed.' }, percent: '0.00%' };
 
         let pageNumber = 1;
