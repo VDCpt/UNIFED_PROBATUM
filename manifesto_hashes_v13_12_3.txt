@@ -1,0 +1,110 @@
+============================================================================
+UNIFED-PROBATUM v13.12.3-DIAMOND-SHIELD
+MANIFESTO DE INTEGRIDADE — HASHES SHA-256
+Gerado em  : 2026-04-26
+Norma      : ISO/IEC 27037:2012 · Art. 125.º CPP · DORA (UE) 2022/2554
+Método     : sha256sum (GNU coreutils) sobre ficheiros binários originais
+============================================================================
+
+FICHEIROS DO REPOSITÓRIO GITHUB (branch: main)
+═══════════════════════════════════════════════
+
+ID           FICHEIRO                          SHA-256
+─────────────────────────────────────────────────────────────────────────────
+EVD-001      index.html                        1cef31a920fe79ead8b91ae779f3f1b200f6cbb3ba7388ee5fab19f287188414
+EVD-002      style.css                         52ac87e14085e6607fb0283555bae3c95cb1c854f30c3e069af7a4e62cb5d67f
+EVD-003      style_panoramic_override.css      2488119565a9ff8752a64ded74074f83c3334f44b3d3078153dab6450787639e
+EVD-004      panel.html                        4ebe1fa5726ba3454ca3c5a9f6e733bc5d919cbf62a4b2af7e9e1ce503bd6b4c
+EVD-005      script.js                         76b8e194e9222d743e81e2ca1fdc980cce52b84f662c34f22523d9b2f879e57b
+EVD-006      script_injection.js               235d22be537a327169a8750eb5c1f391e7b1d8124adf86cb73c4e53435a59c8c
+EVD-007      enrichment.js                     30249d7d9b4c31a5cac4b07decbe0777f0b6434103f6db073c47f7dcc91dc8d9
+EVD-008      nexus.js                          38645c4ca8558fc792b7dd503e141464c249bfceae138616cbae650ac7ee4680
+EVD-009      legal_tactics_engine.js           f508bed553d9fc4f7559bd3927f5260778f3f2ad2341781c9cb54e6141feeb3f
+EVD-010      legal_tactics_ui.js               73cd5abe99bba80d29eb57967ebe468e6d715603349d0622b2737a9a225e3a4e
+EVD-011      legal_tactics_pdf_export.js       3e77f282546c7309721140c953c6e5afc0b228235daf154bffeefd8e675ecbfa
+EVD-012      legal_tactics_orchestrator.js     7575f72c2f3229046b8498c20a4da613945c3c47e651707a4e64dd1e133ceb71
+EVD-013      unifed_triada_export.js           520eac512552f9a7420c1ffa23698b439f5eebddfe00fa83b5ccdd8126c526b7
+EVD-014      unifed_probatum_v13_12_3.html     0e17c5c061333c08e0a1eff36315f2b8c8e3b98839c44d91c6cc3166125233ea
+
+─────────────────────────────────────────────────────────────────────────────
+
+ARTEFACTOS DE OUTPUT (sessões de retificação 2026-04-24/25/26)
+═══════════════════════════════════════════════════════════════
+
+ID           FICHEIRO (output)                 SHA-256                              PATCHES
+─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+EVD-OUT-01   script_injection.js (retificado)  235d22be537a327169a8750eb5c1f391e7b1d8124adf86cb73c4e53435a59c8c  S-01/S-02/S-03/S-04/S-04b
+EVD-OUT-02   script.js (retificado)            76b8e194e9222d743e81e2ca1fdc980cce52b84f662c34f22523d9b2f879e57b  S-05/S-06/S-08a/S-08b
+EVD-OUT-03   nexus.js (retificado)             38645c4ca8558fc792b7dd503e141464c249bfceae138616cbae650ac7ee4680  S-07
+EVD-OUT-04   index.html (retificado)           1cef31a920fe79ead8b91ae779f3f1b200f6cbb3ba7388ee5fab19f287188414  IDX-01/IDX-02/IDX-03/IDX-04/IDX-05/F-01/F-02/F-03/F-04
+EVD-OUT-05   unifed_probatum_v13_12_3.html     0e17c5c061333c08e0a1eff36315f2b8c8e3b98839c44d91c6cc3166125233ea  UI-01/UI-02/UI-03/UI-04
+
+─────────────────────────────────────────────────────────────────────────────
+
+MASTER HASH DO LOTE DE PRODUÇÃO (EVD-OUT-01 ‖ EVD-OUT-02 ‖ EVD-OUT-03)
+══════════════════════════════════════════════════════════════════════════
+7be41312e922b890cde5599b8e40f88e2bda8b02cd114c4065388ce26ad07558
+
+MASTER HASH DO LOTE INDEX (EVD-OUT-04)
+════════════════════════════════════════
+SHA-256(index.html retificado):
+1cef31a920fe79ead8b91ae779f3f1b200f6cbb3ba7388ee5fab19f287188414
+
+─────────────────────────────────────────────────────────────────────────────
+
+CREDENCIAL DE ACESSO (referência — senha em acesso_seguro.txt)
+═══════════════════════════════════════════════════════════════
+STORED_HASH (index.html linha 1730):
+2cc9039cff521fa20ce9748ea10ebb59b83de0e922899071a81f1494a0728b54
+[A senha em texto claro consta exclusivamente em acesso_seguro.txt]
+
+─────────────────────────────────────────────────────────────────────────────
+
+MATRIZ DE PATCHES APLICADOS — LOTE COMPLETO
+═══════════════════════════════════════════
+
+ID      FICHEIRO                LINHA    FALHA CORRIGIDA
+─────────────────────────────────────────────────────────────────────────────
+S-01    script_injection.js     L919     masterHash.substring() sem null-guard
+S-02    script_injection.js     L1163    delete sys.analysis.crossings (deref)
+S-03    script_injection.js     L1562    .sidebar-header-fixed inexistente
+S-04    script_injection.js     L2665    UNIFED_ANALYSIS_COMPLETE sem payload
+S-04b   script_injection.js     L1345    executePendingAnalysis sem payload
+S-05    script.js               L5253    crossings sem || {} em updateDashboard
+S-06    script.js               L3445    resetSystem não repunha flag TRIADA
+S-07    nexus.js                L930     console.warn confessional + sem stop
+S-08a   script.js               L4760    pureATFCard ausente de criticalModules
+S-08b   script.js               L4624    console.warn ATF sem retry rAF
+IDX-01  index.html              L29      CSS truncado overr→override
+IDX-02  index.html              L2198    EVD-006 script.js hash desactualizado
+IDX-03  index.html              L2199    EVD-007 script_injection.js hash desat.
+IDX-04  index.html              L2201    EVD-009 nexus.js hash desactualizado
+IDX-05  index.html              L2209    CSC log hashes desactualizados
+F-01    index.html              L2313    globalDropZone nunca revelada
+F-02    index.html              L16      Senha em comentário de cabeçalho
+F-03    index.html              L2207    EVD-008 enrichment.js hash
+F-04    index.html              L2210    EVD-011 triada_export hash
+UI-01   unifed_probatum_*.html  L933     btn-execute disabled hardcoded
+UI-02   unifed_probatum_*.html  L779     Terminologia contabilística
+UI-03   unifed_probatum_*.html  L1262    execDemo async (race condition)
+UI-04   unifed_probatum_*.html  L1344    execPericia fallback masterHash
+
+─────────────────────────────────────────────────────────────────────────────
+
+FICHEIROS A ELIMINAR DO REPOSITÓRIO GITHUB
+═══════════════════════════════════════════
+1. surgical_patches.js     — não é módulo executável; expõe vulnerabilidades
+2. unifed_probatum_intake.html — versão obsoleta, supersedida por v13_12_3
+
+VERIFICAÇÃO DE INTEGRIDADE (instruções para o perito)
+══════════════════════════════════════════════════════
+Para verificar qualquer ficheiro:
+   sha256sum NOME_DO_FICHEIRO
+
+Para verificar o SHA-256 da senha:
+   echo -n "SENHA_AQUI" | sha256sum
+   (comparar com STORED_HASH em index.html linha 1730)
+
+============================================================================
+FIM DO MANIFESTO DE INTEGRIDADE — UNIFED-PROBATUM v13.12.3-DIAMOND-SHIELD
+============================================================================
