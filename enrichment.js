@@ -199,7 +199,7 @@ Maximo 900 palavras. Prosa juridica formal. Sem preambulos.`;
         // Fallback estático – sem qualquer tentativa de fetch para evitar erros de rede
         console.log('[UNIFED-AI] Modo de segurança ativo – a usar narrativa jurídica local (fallback estático).');
         var baseNarrative = _fallbackNarrative('Execução em modo standalone (narrativa local)');
-        
+
         // ========================================================================
         // RETIFICAÇÃO: Inserção dinâmica do fragmento sobre inversão do ónus da prova
         // quando a percentagem de omissão de comissões for superior a 50%
@@ -214,7 +214,7 @@ Maximo 900 palavras. Prosa juridica formal. Sem preambulos.`;
             baseNarrative += additionalBurden;
             console.log('[UNIFED-AI] Fragmento de inversão do ónus da prova adicionado (discrepância > 50%: ' + fmtPct + '%).');
         }
-        
+
         return baseNarrative;
     } catch (err) {
         const isCors = err.message.indexOf('fetch') !== -1 || err.message.indexOf('Failed') !== -1;
@@ -979,7 +979,7 @@ window.renderATFChart = function(data) {
                     borderWidth: 3,
                     tension: 0.3,
                     pointRadius: 5,
-                    pointBackgroundColor: data.discrepancySeries.map((v, i) => 
+                    pointBackgroundColor: data.discrepancySeries.map((v, i) =>
                         data.outlierMonths && data.outlierMonths.includes(data.months[i]) ? '#EF4444' : '#F59E0B'
                     )
                 }
@@ -1001,8 +1001,8 @@ window.renderATFChart = function(data) {
             },
             scales: {
                 y: {
-                    ticks: { 
-                        color: '#94a3b8', 
+                    ticks: {
+                        color: '#94a3b8',
                         callback: function(v) { return window.UNIFEDSystem.utils.formatCurrency(v); }
                     },
                     grid: { color: 'rgba(255,255,255,0.05)' }
@@ -1130,7 +1130,7 @@ function openATFModal() {
         '</div>' +
         '</div>';
     document.body.appendChild(modal);
-    
+
     // RET-07: Criar canvas DENTRO do modal para o gráfico ATF
     var _modalInner = modal.querySelector('[style*="max-width:1100px"]') || modal.firstElementChild;
     if (_modalInner) {
@@ -1295,11 +1295,11 @@ window.generateBurdenOfProofSection = generateBurdenOfProofSection;
     window.addEventListener('UNIFED_ANALYSIS_COMPLETE', function _onAnalysisComplete(evt) {
         console.log('[UNIFED-ENRICHMENT] UNIFED_ANALYSIS_COMPLETE recebido. Sincronizando UI...', (evt && evt.detail) || '');
         var _sys = window.UNIFEDSystem || {};
-        
+
         // ========== NOVA CONDIÇÃO: só processar se houver dados reais ==========
         const hasRealData = (_sys.analysis && _sys.analysis.totals && _sys.analysis.totals.ganhos > 0) ||
                             (window._unifedDataLoaded === true);
-        
+
         if (!hasRealData) {
             console.log('[UNIFED-ENRICHMENT] Estado zero-knowledge: a ignorar renderização de gráficos e RAG.');
             // Garantir que os containers dos gráficos ficam ocultos
@@ -1310,19 +1310,19 @@ window.generateBurdenOfProofSection = generateBurdenOfProofSection;
             return;
         }
         // =======================================================================
-        
+
         // Sincronização original
         if (window.UNIFED_INTERNAL) {
             if (typeof window.UNIFED_INTERNAL.syncMetrics === 'function') window.UNIFED_INTERNAL.syncMetrics();
             if (typeof window.UNIFED_INTERNAL.updateAuxiliaryUI === 'function') window.UNIFED_INTERNAL.updateAuxiliaryUI();
         }
-        
+
         // Uncloaking atómico
         document.querySelectorAll(
             '.pure-data-value, .pure-delta-value, .pure-atf-big, ' +
             '.smoking-gun-module, .pure-sg-val, [data-pt], [data-en]'
         ).forEach(function(el) { el.classList.add('forensic-revealed'); });
-        
+
         // Revelar bloco RAG se existir (apenas com dados reais)
         const narrativeContainer = document.getElementById('bloco-rag-legal');
         if (narrativeContainer) {
@@ -1337,7 +1337,7 @@ window.generateBurdenOfProofSection = generateBurdenOfProofSection;
             `;
             narrativeContainer.innerHTML = fallbackHTML;
         }
-        
+
         // ========== PATCH 2: renderização de gráficos apenas quando a perícia tiver sido executada ==========
         if (window._unifedAnalysisPending === false) {
             if (typeof window.renderDiscrepancyCharts === 'function') {
@@ -1356,44 +1356,44 @@ window.generateBurdenOfProofSection = generateBurdenOfProofSection;
         } else {
             console.log('[UNIFED-ENRICHMENT] Análise ainda pendente – gráficos não renderizados.');
         }
-        
+
         console.log('[UNIFED-ENRICHMENT] Uncloaking, RAG e gráficos condicionados concluídos (dados reais presentes).');
     });
 
     // ── Event-Based Lazy Rendering: UNIFED_EXECUTE_PERITIA com hidratação cirúrgica (PATCH 2) ──
     window.addEventListener('UNIFED_EXECUTE_PERITIA', function _onPeritiaExecute(evt) {
         console.log('[UNIFED-ENRICHMENT] UNIFED_EXECUTE_PERITIA recebido. Motor gráfico ATF e hidratação a inicializar...', (evt.detail || {}).masterHash || '');
-        
+
         // Verificar se existem dados reais antes de renderizar
         const sys = window.UNIFEDSystem;
         const hasRealData = (sys && sys.analysis && sys.analysis.totals && sys.analysis.totals.ganhos > 0) ||
                             (window._unifedDataLoaded === true);
-        
+
         if (!hasRealData) {
             console.log('[UNIFED-ENRICHMENT] UNIFED_EXECUTE_PERITIA: sem dados reais, renderização ignorada.');
             return;
         }
-        
+
         // ========== HIDRATAÇÃO CIRÚRGICA (Instrução Técnica 3) ==========
         const analysis = sys && sys.analysis;
         const totals = analysis && analysis.totals;
         const crossings = analysis && analysis.crossings;
         const format = (window.UNIFEDSystem && window.UNIFEDSystem.utils && window.UNIFEDSystem.utils.formatCurrency) || window.formatCurrency;
-        
+
         if (totals && crossings && typeof format === 'function') {
             // 1. Módulo DAC7 (Decomposição)
             const faturaTri = document.getElementById('pure-fatura-tri');
             if (faturaTri) faturaTri.innerText = format(totals.faturaPlataforma || 262.94);
-            
+
             const liquidoTri = document.getElementById('pure-liquido-tri');
             if (liquidoTri) liquidoTri.innerText = format(totals.ganhosLiquidos || 7709.84);
-            
+
             // 2. Cálculo Tributário Pericial (Prova Rainha)
             const btor = totals.despesas || 2447.89;
             const btf = totals.faturaPlataforma || 262.94;
             const diferenca = crossings.discrepanciaCritica || (btor - btf);
             const difPercent = crossings.percentagemOmissao || ((btor > 0) ? (diferenca / btor) * 100 : 0);
-            
+
             // Atualizar nós de texto (se existirem)
             const btorEl = document.getElementById('calc-btor');
             if (btorEl) btorEl.innerText = format(btor);
@@ -1401,12 +1401,12 @@ window.generateBurdenOfProofSection = generateBurdenOfProofSection;
             if (btfEl) btfEl.innerText = format(btf);
             const diffEl = document.getElementById('calc-diferenca');
             if (diffEl) diffEl.innerText = `${format(diferenca)} (${difPercent.toFixed(2)}%)`;
-            
+
             console.log('[UNIFED-ENRICHMENT] Hidratação cirúrgica concluída: BTOR=' + format(btor) + ', BTF=' + format(btf) + ', Δ=' + format(diferenca));
         } else {
             console.warn('[UNIFED-ENRICHMENT] Dados insuficientes para hidratação cirúrgica.');
         }
-        
+
         // Renderização de gráficos ATF com verificação de dados reais
         if (typeof window.renderDiscrepancyCharts === 'function') {
             const totals = window.UNIFEDSystem?.analysis?.totals;
@@ -1435,7 +1435,7 @@ window.generateBurdenOfProofSection = generateBurdenOfProofSection;
         }
         console.log('[UNIFED-ENRICHMENT] Lazy rendering e hidratação concluídos (UNIFED_EXECUTE_PERITIA).');
     });
-    
+
     // Garantir formatCurrency disponível
     if (!window.UNIFEDSystem.utils.formatCurrency) {
         window.UNIFEDSystem.utils.formatCurrency = function(val) {
@@ -1443,7 +1443,7 @@ window.generateBurdenOfProofSection = generateBurdenOfProofSection;
         };
         if (!window.formatCurrency) window.formatCurrency = window.UNIFEDSystem.utils.formatCurrency;
     }
-    
+
     console.log('[UNIFED-ENRICHMENT] ✅ Módulo de Enriquecimento v13.12.2-i18n carregado (POLÍTICA ZERO-OMISSÃO refatorada + PATCH 2).');
 })();
 

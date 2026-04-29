@@ -75,7 +75,7 @@ window.updateAnalysisButton = function() {
     const btn = document.getElementById('analyzeBtn');
     if (btn) {
         const hasClient = !!(window.UNIFEDSystem && window.UNIFEDSystem.client);
-        const hasFiles = window.UNIFEDSystem && window.UNIFEDSystem.documents && 
+        const hasFiles = window.UNIFEDSystem && window.UNIFEDSystem.documents &&
                          Object.values(window.UNIFEDSystem.documents).some(d => d.files && d.files.length > 0);
         btn.disabled = !(hasClient && hasFiles);
     }
@@ -89,7 +89,7 @@ console.log('UNIFED - PROBATUM SCRIPT v13.12.2-i18n · DORA COMPLIANT · ATIVADO
 // ============================================================================
 (function _validateDOMElements() {
     'use strict';
-    
+
     const criticalElements = [
         { id: 'analyzeBtn', name: 'Botão EXECUTAR PERÍCIA', severity: 'CRÍTICA' },
         { id: 'demoModeBtn', name: 'Botão CASO REAL (ANONIMIZADO)', severity: 'CRÍTICA' },
@@ -100,7 +100,7 @@ console.log('UNIFED - PROBATUM SCRIPT v13.12.2-i18n · DORA COMPLIANT · ATIVADO
         { id: 'logsModal', name: 'Modal de Registos de Atividades', severity: 'MÉDIA' },
         { id: 'custodyChainTriggerBtn', name: 'Botão Cadeia de Custódia', severity: 'ALTA' }
     ];
-    
+
     function validateDOMIntegrity() {
         console.log('[UNIFED-DOM-VALIDATOR] Iniciando validação de integridade do DOM...');
         let missingElements = [];
@@ -124,7 +124,7 @@ console.log('UNIFED - PROBATUM SCRIPT v13.12.2-i18n · DORA COMPLIANT · ATIVADO
             return false;
         }
     }
-    
+
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', validateDOMIntegrity, { once: true });
     } else {
@@ -3289,13 +3289,6 @@ window.resetUIVisual = function() {
     }
 
     window.logAudit('Zero-Knowledge: purga total de memória executada com sucesso.', 'success');
-    
-    
-    // [S-06] Reset Tríade Documental — permite re-execução após Zero-Knowledge
-    if (window._UNIFED_TRIADA_INITIALIZED) {
-        window._UNIFED_TRIADA_INITIALIZED = false;
-        console.log('[FORENSIC-CORE] ✓ Tríade Documental resetada para Zero-State.');
-    }
     console.log('[FORENSIC-CORE] ✓ resetUIVisual Zero-Knowledge concluído.');
 };
 
@@ -3304,9 +3297,9 @@ window.resetUIVisual = function() {
 // ============================================================================
 window._hydrateRawDataValues = function() {
     if (!window._unifedDataLoaded) return;
-    
+
     const fmt = window.UNIFED_INTERNAL?.fmt || ((v) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(v));
-    
+
     // Valores absolutos conforme caderno de encargos
     const valores = {
         'pure-ganhos': 10157.73,
@@ -3321,7 +3314,7 @@ window._hydrateRawDataValues = function() {
         'pure-fatura': 262.94,
         'pure-liquido': 7709.84
     };
-    
+
     Object.entries(valores).forEach(([id, val]) => {
         const el = document.getElementById(id);
         if (el) {
@@ -3367,27 +3360,27 @@ window._hydrateRawDataValues = function() {
             if (el) el.textContent = fmt(vals[i]);
         });
     }
-    
+
     console.log('[UNIFED] RET-12: Valores brutos hidratados em index.html + panel.html');
 };
 
 /**
- * [RETIFICAÇÃO v13.12.2-i18n] 
+ * [RETIFICAÇÃO v13.12.2-i18n]
  * Bloco Consolidado: Ciclo de Vida da Sessão e Revelação de Dados
  */
 
 // ============================================================================
 // RETIFICAÇÃO: revealForensicData com classe CSS e suspensão do Nexus
 // ============================================================================
-/** 
- * FIX 2.4: Revelação de IDs probatórios e orquestração de gráficos 
+/**
+ * FIX 2.4: Revelação de IDs probatórios e orquestração de gráficos
  * Garante que o container existe e está visível antes da chamada ao Chart.js
  */
 function revealForensicData() {
     const probatoryElements = [
-        '#smoking-gun-1', '#smoking-gun-2', '#area-cinzenta', 
+        '#smoking-gun-1', '#smoking-gun-2', '#area-cinzenta',
         '#colarinho-branco', '#bloco-rag-legal',
-        '.pure-data-value', '.pure-delta-value', '.pure-atf-big', 
+        '.pure-data-value', '.pure-delta-value', '.pure-atf-big',
         '.pure-sg-val', '.pure-zc-val'
     ];
 
@@ -3425,7 +3418,7 @@ async function resetSystem() {
         return;
     }
     ForensicLogger.addEntry('SYSTEM_RESET_REQUESTED');
-    
+
     UNIFEDSystem.analysis = {
         totals: { saftBruto:0, saftIliquido:0, saftIva:0, ganhos:0, despesas:0, ganhosLiquidos:0, faturaPlataforma:0, dac7Q1:0, dac7Q2:0, dac7Q3:0, dac7Q4:0, dac7TotalPeriodo:0 },
         twoAxis: { revenueGap:0, expenseGap:0, revenueGapActive:false, expenseGapActive:false },
@@ -3445,10 +3438,15 @@ async function resetSystem() {
     UNIFEDSystem.dataMonths.clear();
     UNIFEDSystem.processedFiles.clear();
     UNIFEDSystem.fileSources.clear();
+    /* PATCH S-06 · FIX-TRIADA-IDEMPOTENCY: ao reiniciar para Zero-Knowledge, a flag de
+       inicialização da Tríade Documental deve ser reposta — caso contrário, uma segunda
+       exportação sem F5 falha silenciosamente por idempotência mal preservada,
+       inibindo a recolha de prova material em segunda instância pericial. */
+    window._UNIFED_TRIADA_INITIALIZED = false;
     resetAuxiliaryData();
-    
+
     await UNIFEDSystem.generateMasterHash();
-    
+
     updateModulesUI();
     updateDashboard();
     forensicDataSynchronization();
@@ -3459,7 +3457,7 @@ async function resetSystem() {
     document.querySelectorAll('.forensic-revealed').forEach(el => el.classList.remove('forensic-revealed'));
 
     console.warn('[FORENSIC] Reset solicitado. Restaurando Toolbar de 6 botões...');
-    
+
     const consoleElem = document.getElementById('forensic-console');
     if (consoleElem) consoleElem.innerHTML = '';
 
@@ -3498,7 +3496,7 @@ async function resetSystem() {
     }, 150);
 
     window.dispatchEvent(new CustomEvent('UNIFED_CORE_READY', { detail: { reset: true } }));
-    
+
     logAudit('🔄 Sistema reiniciado – todas as evidências e análises foram limpas.', 'success');
     showToast(currentLang === 'pt' ? 'Sistema reiniciado com sucesso.' : 'System reset successfully.', 'success');
     ForensicLogger.addEntry('SYSTEM_RESET_COMPLETED');
@@ -3559,7 +3557,7 @@ function populateYears() {
         sel.appendChild(opt);
     }
 }
- 
+
 function startClockAndDate() {
     const update = () => {
         const now = new Date();
@@ -3816,6 +3814,23 @@ async function processBatchFiles(files) {
     if (!isProcessingQueue) {
         processQueue();
     }
+}
+
+// ============================================================================
+// INJEÇÃO CIRÚRGICA: Função de resolução MIME Type / Extensão
+/* RET-4 · FIX-DETECTFILETYPE: adicionado 'manifest' ao controlo;
+   corrigido escape da regex (\\d → \d) que impedia match em nomes
+   de ficheiros do padrão PT2024-12345. */
+async function detectFileType(file) {
+    const name = file.name.toLowerCase();
+    if (name.endsWith('.csv') && name.includes('131509')) return 'saft';
+    if (name.includes('controlo') || name.includes('hash') || name.includes('manifest')) return 'control';
+    if (name.includes('dac7')) return 'dac7';
+    if (name.endsWith('.pdf')) {
+        if (name.match(/pt\d{4}-\d{5}/i) || name.includes('fatura') || name.includes('invoice')) return 'invoice';
+        return 'statement'; // Default estrito para extratos bancários
+    }
+    return 'unknown';
 }
 
 // ============================================================================
@@ -4583,7 +4598,7 @@ async function performAudit() {
 }
 
 function updateSmokingGunUI() {
-    const cross = UNIFEDSystem.analysis.crossings || {};
+    const cross = UNIFEDSystem.analysis.crossings;
     if (!cross) return;
 
     const sg2Value = cross.discrepanciaCritica || 0;
@@ -4625,7 +4640,23 @@ function updateSmokingGunUI() {
 function renderTemporalChart(atfData) {
     const canvas = document.getElementById('atfChartCanvas');
     if (!canvas) {
-        console.warn('[ATF] Canvas #atfChartCanvas não encontrado');
+        /* PATCH S-08b · FIX-ATF-CANVAS-RETRY: guarda defensiva com retry via rAF.
+           Cenário: renderTemporalChart invocada antes do pureATFCard ser revelado
+           (ex: chamada directa sem passar por forceRevealSmokingGun).
+           O retry único via rAF garante uma segunda tentativa no próximo frame
+           sem criar ciclo infinito nem emitir console.warn confessional no F12. */
+        if (!renderTemporalChart._retryScheduled) {
+            renderTemporalChart._retryScheduled = true;
+            requestAnimationFrame(function _atfCanvasRetry() {
+                renderTemporalChart._retryScheduled = false;
+                const retryCanvas = document.getElementById('atfChartCanvas');
+                if (retryCanvas) {
+                    renderTemporalChart(atfData);
+                } else {
+                    console.info('[ATF] Canvas #atfChartCanvas não disponível após retry — pureATFCard pode estar oculto.');
+                }
+            });
+        }
         return;
     }
 
@@ -4720,7 +4751,7 @@ function enhanceTriangulationMatrix() {
         const cells = row.querySelectorAll('td');
         if (cells.length < 2) return;
         const cellText = cells[0]?.innerText || '';
-        if (cellText.includes('Δ C1') || cellText.includes('Δ C2') || 
+        if (cellText.includes('Δ C1') || cellText.includes('Δ C2') ||
             cellText.includes('Δ C3') || cellText.includes('Δ C4') ||
             cellText.includes('DISCREPÂNCIA') || cellText.includes('OMISSÃO')) {
             row.classList.add('pure-matrix-alert');
@@ -4734,11 +4765,16 @@ function enhanceTriangulationMatrix() {
 
 function forceRevealSmokingGun() {
     // IDs de módulos críticos — revelação com display:flex (cards em row) onde aplicável
+    /* PATCH S-08 · FIX-ATF-CANVAS: pureATFCard adicionado à lista criticalModules.
+       Causa raiz: o canvas #atfChartCanvas existe no DOM (fetch panel.html resolvido)
+       mas o contentor pai permanecia display:none, tornando as dimensões 0×0 e
+       impedindo a inicialização do Chart.js. A revelação deve preceder renderTemporalChart. */
     const criticalModules = [
         'pureDiscCard', 'pureZonaCinzentaCard', 'pureVerdictCard', 'card-asfixia',
         'smoking-gun-1', 'smoking-gun-2', 'triangulationMatrixContainer',
         'colarinho-branco', 'smokingGunRow', 'mainDiscrepancyChartContainer',
-        'mainChartContainer'
+        'mainChartContainer',
+        'pureATFCard'   /* PATCH S-08: revelar antes de renderTemporalChart */
     ];
 
     criticalModules.forEach(id => {
@@ -4814,7 +4850,7 @@ window.performForensicCrossings = async function(rawData) {
     const sys = window.UNIFEDSystem;
     if (!sys || !sys.analysis) return;
     const t = sys.analysis.totals || {};
-    
+
     // Atualiza totais se rawData fornecido (para uso externo)
     if (rawData) {
         t.ganhos = rawData.ganhos || t.ganhos;
@@ -4823,13 +4859,13 @@ window.performForensicCrossings = async function(rawData) {
         t.despesas = rawData.despesas || t.despesas;
         t.faturaPlataforma = rawData.fatura || t.faturaPlataforma;
     }
-    
+
     const ganhos = t.ganhos || 0;
     const saftBruto = t.saftBruto || 0;
     const dac7 = t.dac7TotalPeriodo || 0;
     const despesas = t.despesas || 0;
     const fatura = t.faturaPlataforma || 0;
-    
+
     // Cálculos principais (preservando toda a lógica original)
     const discrepanciaSaftVsDac7 = saftBruto - dac7;
     const percentagemSaftVsDac7 = saftBruto > 0 ? (discrepanciaSaftVsDac7 / saftBruto) * 100 : 0;
@@ -4840,7 +4876,7 @@ window.performForensicCrossings = async function(rawData) {
     const agravamentoBrutoIRC = discrepanciaCritica;
     const ircEstimado = discrepanciaCritica * 0.21;
     const asfixiaFinanceira = saftBruto * 0.06;
-    
+
     // Meses com dados (para projeções)
     const mesesDados = sys.dataMonths.size || 1;
     const discrepanciaMensalMedia = discrepanciaCritica / mesesDados;
@@ -4848,7 +4884,7 @@ window.performForensicCrossings = async function(rawData) {
     const impactoAnualMercado = impactoMensalMercado * 12;
     const impactoSeteAnosMercado = 1743598080.00; // valor fixo conforme smoking gun
     const discrepancia5IMT = discrepanciaSaftVsDac7 * 0.05;
-    
+
     // Atualiza objeto crossings — campos completos C1-C4 (FIX-BRIDGE-01b)
     sys.analysis.crossings = {
         discrepanciaSaftVsDac7, percentagemSaftVsDac7,
@@ -5128,12 +5164,12 @@ function selectQuestions(riskKey) {
 function filterDAC7ByPeriod() {
     const periodo = UNIFEDSystem.selectedPeriodo || 'anual';
     const dac7 = UNIFEDSystem.documents.dac7.totals;
-    
+
     // RETIFICAÇÃO: Verificar se existem dados reais
-    const hasRealData = (UNIFEDSystem.analysis.totals && 
-                         (UNIFEDSystem.analysis.totals.ganhos > 0 || 
+    const hasRealData = (UNIFEDSystem.analysis.totals &&
+                         (UNIFEDSystem.analysis.totals.ganhos > 0 ||
                           UNIFEDSystem.analysis.totals.dac7TotalPeriodo > 0));
-    
+
     // Se não há dados reais, mostrar todos os 4 cards com zeros
     if (!hasRealData) {
         [1, 2, 3, 4].forEach(q => {
@@ -5147,7 +5183,7 @@ function filterDAC7ByPeriod() {
         }
         return 0;
     }
-    
+
     const visibilityMap = {
         'anual': [1, 2, 3, 4],
         '1s': [1, 2],
@@ -5248,7 +5284,11 @@ let _nifafAlertedHash = null;
 
 function updateDashboard() {
     const totals = UNIFEDSystem.analysis.totals;
-    const cross = UNIFEDSystem.analysis.crossings || {};
+    /* PATCH S-05 · FIX-CROSS-DEREF: crossings pode ser undefined se ensureDemoDataLoaded
+       for chamado antes da análise (ex.: switchLanguage → updateDashboard).
+       O fallback para {} garante que todos os acessos cross.X retornem undefined
+       (coercível para 0 via || 0) em vez de lançar TypeError fatal. */
+    const cross  = UNIFEDSystem.analysis.crossings || {};
     const twoAxis = UNIFEDSystem.analysis.twoAxis;
 
     const netValue = totals.ganhosLiquidos || 0;
@@ -5449,7 +5489,7 @@ function updateDashboard() {
 }
 
 function activateIntermittentAlerts() {
-    const cross = UNIFEDSystem.analysis.crossings || {};
+    const cross = UNIFEDSystem.analysis.crossings;
     const twoAxis = UNIFEDSystem.analysis.twoAxis;
 
     const kpiInvCard = document.getElementById('kpiInvCard');
@@ -5485,7 +5525,7 @@ function activateIntermittentAlerts() {
     }
 
     document.querySelectorAll('.led-status').forEach(led => {
-        led.className = 'led-status led-off'; 
+        led.className = 'led-status led-off';
     });
 
     const statCommCard = document.getElementById('statCommCard');
@@ -5509,15 +5549,25 @@ function activateIntermittentAlerts() {
 }
 
 function updateModulesUI() {
-    const totals = UNIFEDSystem.analysis.totals;
+    /* RET-2 · FIX-UPDATEMODULESUI-FALSEPOSITIVE: a função consumia exclusivamente
+       UNIFEDSystem.analysis.totals, que só é preenchido no momento da Execução da
+       Perícia. Durante a ingestão de ficheiros, os valores acumulam em
+       UNIFEDSystem.documents.*.totals mas não eram reflectidos na UI, criando a
+       percepção visual de que os ficheiros eram substituídos em vez de acumulados.
+       A leitura combinada (totals || docs.*) garante visibilidade em tempo real. */
+    const totals = UNIFEDSystem.analysis.totals || {};
+    const docs   = UNIFEDSystem.documents || {};
+    const dac7   = docs.dac7?.totals || {};
+    const saft   = docs.saft?.totals || {};
+    const stmts  = docs.statements?.totals || {};
 
-    setElementText('saftIliquidoValue', formatCurrency(totals.saftIliquido || 0));
-    setElementText('saftIvaValue', formatCurrency(totals.saftIva || 0));
-    setElementText('saftBrutoValue', formatCurrency(totals.saftBruto || 0));
+    setElementText('saftIliquidoValue', formatCurrency(totals.saftIliquido || saft.iliquido || 0));
+    setElementText('saftIvaValue',      formatCurrency(totals.saftIva      || saft.iva      || 0));
+    setElementText('saftBrutoValue',    formatCurrency(totals.saftBruto    || saft.bruto    || 0));
 
-    setElementText('stmtGanhosValue', formatCurrency(totals.ganhos || 0));
-    setElementText('stmtDespesasValue', formatCurrency(totals.despesas || 0));
-    setElementText('stmtGanhosLiquidosValue', formatCurrency(totals.ganhosLiquidos || 0));
+    setElementText('stmtGanhosValue',        formatCurrency(totals.ganhos         || stmts.ganhos         || 0));
+    setElementText('stmtDespesasValue',      formatCurrency(totals.despesas       || stmts.despesas       || 0));
+    setElementText('stmtGanhosLiquidosValue',formatCurrency(totals.ganhosLiquidos || stmts.ganhosLiquidos || 0));
 
     setElementText('dac7Q1Value', formatCurrency(totals.dac7Q1 || 0));
     setElementText('dac7Q2Value', formatCurrency(totals.dac7Q2 || 0));
@@ -5538,7 +5588,7 @@ function updateModulesUI() {
 
 function showAlerts() {
     const totals = UNIFEDSystem.analysis.totals;
-    const cross = UNIFEDSystem.analysis.crossings || {};
+    const cross = UNIFEDSystem.analysis.crossings;
     const t = translations[currentLang];
 
     const verdictDisplay = document.getElementById('verdictDisplay');
@@ -5901,7 +5951,7 @@ async function exportPDF() {
         const platform = PLATFORM_DATA[UNIFEDSystem.selectedPlatform] || PLATFORM_DATA.outra;
         const totals = UNIFEDSystem.analysis.totals;
         const twoAxis = UNIFEDSystem.analysis.twoAxis;
-        const cross = UNIFEDSystem.analysis.crossings || {};
+        const cross = UNIFEDSystem.analysis.crossings;
         const verdict = UNIFEDSystem.analysis.verdict || { level: { pt: 'N/A', en: 'N/A' }, key: 'low', color: '#8c7ae6', description: { pt: 'Perícia não executada.', en: 'Forensic exam not executed.' }, percent: '0.00%' };
 
         let pageNumber = 1;
@@ -8640,7 +8690,7 @@ function setupIniciarButton() {
     const startBtn = document.getElementById('startSessionBtn');
     if (!startBtn) return;
     if (startBtn.getAttribute('data-iniciar-listener') === 'true') return;
-    
+
     startBtn.addEventListener('click', async (e) => {
         e.preventDefault();
         console.log('[UNIFED] Botão INICIAR clicado — resetUIVisual e forceFinalState.');
@@ -8680,23 +8730,23 @@ function setupIniciarButton() {
 // ============================================================================
 (function _initializeUnifiedSetupBlock() {
     'use strict';
-    
+
     function executeAllSetups() {
         console.log('[UNIFED-INIT] 🚀 Iniciando bloco unificado de setup...');
-        
+
         try {
             // 1. Setup do UI visual
             if (typeof window.resetUIVisual === 'function') {
                 window.resetUIVisual();
                 console.log('[UNIFED-INIT] ✓ resetUIVisual() completado');
             }
-            
+
             // 2. Setup botão de iniciar (splash screen)
             if (typeof setupIniciarButton === 'function') {
                 setupIniciarButton();
                 console.log('[UNIFED-INIT] ✓ setupIniciarButton() completado');
             }
-            
+
             // 3. Setup botão de PURGA (ACH-001 FIX)
             if (typeof setupWipeButton === 'function') {
                 setupWipeButton();
@@ -8704,7 +8754,7 @@ function setupIniciarButton() {
             } else {
                 console.warn('[UNIFED-INIT] ⚠ setupWipeButton() não encontrada');
             }
-            
+
             // 4. Setup botão de LIMPAR CONSOLE (ACH-002 FIX)
             if (typeof setupClearConsoleButton === 'function') {
                 setupClearConsoleButton();
@@ -8712,7 +8762,7 @@ function setupIniciarButton() {
             } else {
                 console.warn('[UNIFED-INIT] ⚠ setupClearConsoleButton() não encontrada');
             }
-            
+
             // 5. Setup modal de REGISTOS (ACH-003 FIX)
             if (typeof setupLogsModal === 'function') {
                 setupLogsModal();
@@ -8720,13 +8770,13 @@ function setupIniciarButton() {
             } else {
                 console.warn('[UNIFED-INIT] ⚠ setupLogsModal() não encontrada');
             }
-            
+
             // 6. Setup detecção de dual-screen
             if (typeof setupDualScreenDetection === 'function') {
                 setupDualScreenDetection();
                 console.log('[UNIFED-INIT] ✓ setupDualScreenDetection() completado');
             }
-            
+
             // RET-05: Binding programático do botão PT/EN (langToggleBtn)
             (function _bindLangToggle() {
                 var _langBtn = document.getElementById('langToggleBtn');
@@ -8738,7 +8788,7 @@ function setupIniciarButton() {
                     console.log('[UNIFED-INIT] ✓ langToggleBtn listener registado (RET-05)');
                 }
             })();
-            
+
             // RET-06: Ativar botões da toolbar após carregamento completo
             setTimeout(function _enableToolbarButtons() {
                 var _toolbarIds = ['exportPDFBtn', 'exportJSONBtn', 'resetBtn', 'clearConsoleBtn',
@@ -8757,20 +8807,20 @@ function setupIniciarButton() {
                 });
                 console.log('[UNIFED-INIT] ✓ Botões da toolbar ativados (RET-06)');
             }, 900);
-            
+
             console.log('[UNIFED-INIT] ✅ Bloco unificado de setup completado com sucesso');
-            
+
         } catch (err) {
             console.error('[UNIFED-INIT] ❌ Erro durante bloco de setup:', err);
         }
     }
-    
+
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', executeAllSetups, { once: true });
     } else {
         executeAllSetups();
     }
-    
+
     window._execAllSetups = executeAllSetups;
 })();
 

@@ -916,9 +916,10 @@
                 { id: 'pure-nc-total', val: totalNaoSujeitosCalc },
                 { id: 'pure-verdict', val: dadosReaisCarregados ? 'RISCO CRÍTICO · DESVIO PADRÃO > 2σ' : 'AGUARDANDO PERÍCIA' },
                 { id: 'pure-verdict-pct', val: dadosReaisCarregados ? ((t.despesas - t.faturaPlataforma) / (t.despesas || 1) * 100).toFixed(2) + '%' : '0.00%' },
-                { id: 'pure-hash-prefix-verdict', val: (sys && sys.masterHash) ? sys.masterHash.substring(0, 16).toUpperCase() + '...' : (window._unifedDataLoaded === true ? data.masterHash.substring(0, 16) + '...' : '---') },
+                /* PATCH S-01 · FIX-HASH-NULL: null-guard duplo — masterHash || dataIntegrityHash || '' */
+                { id: 'pure-hash-prefix-verdict', val: (sys && sys.masterHash) ? sys.masterHash.substring(0, 16).toUpperCase() + '...' : (window._unifedDataLoaded === true ? ((data.masterHash || data.dataIntegrityHash || '').substring(0, 16) + '...') : '---') },
                 { id: 'pure-session-id', val: (sys && sys.sessionId) ? sys.sessionId : (window._unifedDataLoaded === true ? data.sessionId : '--------') },
-                { id: 'pure-hash-prefix', val: (sys && sys.masterHash) ? sys.masterHash.substring(0, 12).toUpperCase() + '...' : (window._unifedDataLoaded === true ? data.masterHash.substring(0, 12) + '...' : '---') },
+                { id: 'pure-hash-prefix', val: (sys && sys.masterHash) ? sys.masterHash.substring(0, 12).toUpperCase() + '...' : (window._unifedDataLoaded === true ? ((data.masterHash || data.dataIntegrityHash || '').substring(0, 12) + '...') : '---') },
                 { id: 'pure-subject-name', val: (window._unifedDataLoaded === true) ? data.client.name : '---' },
                 { id: 'pure-subject-nif', val: (window._unifedDataLoaded === true) ? data.client.nif : '---' },
                 { id: 'pure-subject-platform', val: (window._unifedDataLoaded === true) ? data.client.platform : '---' },
@@ -1159,12 +1160,17 @@
                 sys.analysis.totals.dac7TotalPeriodo = t.dac7TotalPeriodo;
                 // ⚠️ IMPORTANTE: NÃO preencher campos de análise (iva6Omitido, iva23Omitido, asfixiaFinanceira)
 
-                // REMOVIDO: sys.analysis.crossings (não deve existir neste estado)
-                if (sys.analysis.crossings) {
-        Object.keys(sys.analysis.crossings).forEach(key => sys.analysis.crossings[key] = 0);
-    } else {
-        sys.analysis.crossings = {};
-    }
+                /* PATCH S-02 · FIX-CROSSINGS-DEREF: sanitizar sem destruir referência —
+                   delete causava TypeError em updateDashboard() quando chamado antes
+                   da análise (ex.: langToggleBtn → switchLanguage → updateDashboard).
+                   Zeramos os valores e garantimos que o objeto existe. */
+                if (sys.analysis.crossings && typeof sys.analysis.crossings === 'object') {
+                    Object.keys(sys.analysis.crossings).forEach(function(k) {
+                        sys.analysis.crossings[k] = 0;
+                    });
+                } else {
+                    sys.analysis.crossings = {};
+                }
 
                 // Garantir que o cliente fica registado
                 if (!sys.client && data.client) {
@@ -1336,13 +1342,18 @@
             // =================================================================
             // 4. Disparar eventos globais
             // =================================================================
+            /* PATCH S-04b · FIX-PAYLOAD-DROP: enriquecimento idêntico ao RET-08 —
+               garante que o orquestrador recebe dadosPericiais em qualquer ponto
+               de entrada da análise. */
             window.dispatchEvent(new CustomEvent('UNIFED_ANALYSIS_COMPLETE', {
                 detail: {
-                    timestamp: Date.now(),
-                    source: 'executePendingAnalysis',
-                    sessionId: sys.sessionId || 'N/A',
-                    masterHash: sys.masterHash || 'N/A',
-                    dadosPericiais: sys.analysis || {}
+                    timestamp:      Date.now(),
+                    source:         'executePendingAnalysis',
+                    sessionId:      sys.sessionId || 'N/A',
+                    masterHash:     sys.masterHash || 'N/A',
+                    dadosPericiais: (sys && sys.analysis)
+                                   ? Object.assign({}, sys.analysis)
+                                   : {}
                 }
             }));
             window.dispatchEvent(new CustomEvent('UNIFED_EXECUTE_PERITIA', {
@@ -1556,6 +1567,22 @@
         let _dataLoaded = false;
 
         function showClientIdentificationBlock() {
+            /* PATCH S-03 · FIX-UI-SIDEBAR: .sidebar-header-fixed foi removido na refatoração
+               do panel.html. A rastreabilidade visual é garantida pelos IDs diretos
+               #pure-subject-name, #pure-subject-nif e #pure-subject-header.
+               A função mantém fallback para estrutura legada sem emitir console.warn
+               (falso positivo que mina a credibilidade em perícia). */
+            const nameEl   = document.getElementById('pure-subject-name');
+            const nifEl    = document.getElementById('pure-subject-nif');
+            const headerEl = document.getElementById('pure-subject-header');
+
+            if (nameEl || nifEl) {
+                // Nova estrutura — identificação gerida por _updateAuxiliaryUI
+                if (headerEl) headerEl.style.display = 'block';
+                return;
+            }
+
+            // Fallback: estrutura legada (panel.html antigo com .sidebar-header-fixed)
             let block = document.getElementById('clientIdentificationBlock');
             if (!block) {
                 const sidebarHeader = document.querySelector('.sidebar-header-fixed');
@@ -1563,12 +1590,12 @@
                     sidebarHeader.id = 'clientIdentificationBlock';
                     block = sidebarHeader;
                 } else {
-                    console.warn('[UNIFED] Elemento .sidebar-header-fixed não encontrado. O bloco de identificação não será exibido.');
+                    // FIX-S03: info em vez de warn — ausência esperada na nova UI
+                    console.info('[UNIFED] .sidebar-header-fixed ausente (nova UI). Identificação gerida por #pure-subject-name/#pure-subject-nif.');
                     return;
                 }
             }
-            const subjectHeader = document.getElementById('pure-subject-header');
-            if (subjectHeader) subjectHeader.style.display = 'block';
+            if (headerEl) headerEl.style.display = 'block';
         }
 
         function waitForPureDashboard() {
@@ -1825,10 +1852,22 @@
                 }
                 
                 try {
+                    /* RET-1 · FIX-DEADLOCK-PURESAFT: a condição anterior verificava
+                       !document.getElementById('pureDashboard'), mas #pureDashboard é
+                       um elemento ESTÁTICO do index.html — devolvia sempre false, pelo
+                       que forceFinalState() nunca era invocado e o sistema aguardava
+                       indefinidamente o nó #pure-saft (exclusivo do panel.html injectado).
+                       A condição correcta é verificar a ausência de #pure-saft, que só
+                       existe após a injecção bem-sucedida do panel.html. */
+                    if (!document.getElementById('pure-saft') && typeof loadPanelHTML === 'function') {
+                        await loadPanelHTML();
+                    } else if (typeof window.forceFinalState === 'function' && !document.getElementById('pureDashboard')) {
+                        await window.forceFinalState();
+                    }
+
                     if (typeof window._activatePurePanel === 'function') {
                         await window._activatePurePanel();
                     }
-                    
                     await waitForPureDashboard();
                     initializeCoreDashboard();
                     
@@ -2410,8 +2449,7 @@
                     status:            'READY',
                     masterHash:        _dynHashForReady,
                     dataIntegrityHash: _DATA_INTEGRITY_HASH,
-                    sessionId:         _REAL_CASE_MMLADX8Q.sessionId,
-                    dadosPericiais:    window.UNIFEDSystem?.analysis || {}
+                    sessionId:         _REAL_CASE_MMLADX8Q.sessionId
                 }
             }));
 
@@ -2528,13 +2566,25 @@
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> A EXECUTAR PERÍCIA...';
 
             try {
-                // 1. Garantir dados do caso real carregados
-                let loadFn = window.ensureDemoDataLoaded
-                    || window.UNIFED_INTERNAL?.ensureDemoDataLoaded;
-                if (typeof loadFn === 'function') {
-                    await loadFn();
+                // 1. Garantir dados do caso real APENAS se não houver evidências carregadas
+                /* PATCH 1 · FIX-RET08-SEQUESTRO: execução incondicional de ensureDemoDataLoaded()
+                   destruía UNIFEDSystem.documents e UNIFEDSystem.analysis.totals sempre que o
+                   utilizador clicava "Executar Perícia", esmagando ficheiros reais com dados
+                   estáticos do Caso MMLADX8Q. A guarda hasUserFiles preserva os dados do
+                   utilizador quando existem documentos carregados (counts.total > 0). */
+                const hasUserFiles = window.UNIFEDSystem &&
+                                     window.UNIFEDSystem.counts &&
+                                     window.UNIFEDSystem.counts.total > 0;
+                if (!hasUserFiles) {
+                    let loadFn = window.ensureDemoDataLoaded
+                        || window.UNIFED_INTERNAL?.ensureDemoDataLoaded;
+                    if (typeof loadFn === 'function') {
+                        await loadFn();
+                    } else {
+                        console.warn('[UNIFED] RET-08: ensureDemoDataLoaded indisponível.');
+                    }
                 } else {
-                    console.warn('[UNIFED] RET-08: ensureDemoDataLoaded indisponível.');
+                    console.info('[UNIFED] Artefactos de utilizador detetados na memória. Injeção de demonstração abortada para preservar a Cadeia de Custódia.');
                 }
 
                 // 2. Executar análise completa (calcula cruzamentos, IVA, IRC, Asfixia)
@@ -2636,11 +2686,20 @@
                 window.dispatchEvent(new CustomEvent('UNIFED_EXECUTE_PERITIA', {
                     detail: { timestamp: new Date().toISOString() }
                 }));
+                /* PATCH S-04 · FIX-PAYLOAD-DROP: emissão com payload completo — sem este
+                   payload o legal_tactics_orchestrator.js não consegue inicializar o
+                   contexto jurídico e o painel de contraditório permanece em display:none
+                   (bloqueio do Art. 327.º CPP em ambiente de audiência). */
                 window.dispatchEvent(new CustomEvent('UNIFED_ANALYSIS_COMPLETE', {
-                    detail: { 
-                        source: 'RET-08', 
-                        timestamp: Date.now(),
-                        dadosPericiais: window.UNIFEDSystem?.analysis || {}
+                    detail: {
+                        source:          'RET-08',
+                        timestamp:       Date.now(),
+                        masterHash:      (window.activeForensicSession && window.activeForensicSession.masterHash)
+                                         || (window.UNIFEDSystem && window.UNIFEDSystem.masterHash)
+                                         || null,
+                        dadosPericiais:  (window.UNIFEDSystem && window.UNIFEDSystem.analysis)
+                                         ? Object.assign({}, window.UNIFEDSystem.analysis)
+                                         : {}
                     }
                 }));
 
