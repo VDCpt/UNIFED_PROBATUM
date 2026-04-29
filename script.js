@@ -253,7 +253,9 @@ const forensicRound = (num) => {
 
 window.formatCurrency = function(val) {
     const lang = (typeof window.currentLang !== 'undefined') ? window.currentLang : 'pt';
-    const locale = lang === 'en' ? 'en-GB' : 'pt-PT';
+    /* PASSO-2 · LOCALE MAP: en-GB → en-US estrito (sem hibridização).
+       document.documentElement.lang é actualizado em switchLanguage(). */
+    const locale = lang === 'en' ? 'en-US' : 'pt-PT';
     const num = forensicRound(val);
     return new Intl.NumberFormat(locale, {
         style: 'currency',
@@ -2180,6 +2182,16 @@ function switchLanguage() {
     console.log('[UNIFED-LANG] switchLanguage chamado. currentLang antes:', currentLang);
     currentLang = currentLang === 'pt' ? 'en' : 'pt';
     console.log('[UNIFED-LANG] currentLang depois:', currentLang);
+
+    /* PASSO-2 · LOCALE PURGE: actualizar lang no documento inteiro —
+       impede hibridização visual (mistura pt/en).
+       en activa en-US estrito; pt activa pt-PT jurídico. */
+    document.documentElement.lang = currentLang === 'en' ? 'en-US' : 'pt-PT';
+
+    /* Purgar todos os nós com data-lang residual do idioma anterior */
+    document.querySelectorAll('[data-lang]').forEach(function(el) {
+        el.style.display = el.getAttribute('data-lang') === currentLang ? '' : 'none';
+    });
 
     const t = translations[currentLang];
 

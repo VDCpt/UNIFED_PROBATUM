@@ -272,16 +272,26 @@
            revealForensicData() remove estas classes após análise concluída
            ================================================================ */
         /* ── Estado zero-knowledge: dados ainda não carregados ─────────────────────── */
+        /* PROTO-1 · POINTER-EVENTS OVERRIDE: pointer-events mantidos para não bloquear
+           interacção do utilizador com botões de exportação e contraditório.
+           A opacidade e blur comunicam visualmente o estado sem impedir cliques. */
         .zero-state {
-            opacity: 0.18; pointer-events: none;
-            filter: blur(1.5px) grayscale(0.4);
+            opacity: 0.28;
+            filter: blur(0.8px) grayscale(0.3);
             transition: opacity 0.5s ease, filter 0.5s ease, transform 0.5s ease;
         }
         /* ── Estado bloqueado: módulo aguarda análise (pós-carregamento) ──────── */
         .locked {
-            opacity: 0; pointer-events: none;
-            transform: translateY(10px);
+            opacity: 0.12;
+            transform: translateY(6px);
             transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        /* ── Estado desbloqueado: botões totalmente operacionais ──────────────── */
+        .unlocked {
+            opacity: 1 !important;
+            pointer-events: all !important;
+            filter: none !important;
+            transform: none !important;
         }
         /* ── Estado revelado: após revealForensicData() ── animação FBI enter ─── */
         .forensic-revealed {
@@ -1488,6 +1498,294 @@
         }, 1000);
     })();
 
+</script>
+<!-- =====================================================================
+     UNIFED-PROBATUM v13.12.3-DIAMOND-SHIELD · CONSOLIDATED RUNTIME PATCH
+     Protocolos: PROTO-1 (Hydration) · PROTO-2 (Event Delegation) ·
+                 PROTO-3 (Static Export) · PROTO-4 (Blob URL) ·
+                 PROTO-5 (Web Worker) · PROTO-6 (Virtual Scroll) ·
+                 PROTO-7 (Memory / TypedArray)
+     Norma: ISO/IEC 27037:2012 · Zero-Egress · Art. 125.º CPP
+     ===================================================================== -->
+<script>
+(function _unifedRuntimePatch(root) {
+  'use strict';
+
+  /* ── SESSIONSTORE: NIF e Nome do Arguido (volátil — zero-egress) ──────
+     sessionStorage é destruído com o fecho do separador. Não persiste
+     entre sessões nem entre origens. Conforme ISO/IEC 27037:2012 §8.4
+     (volatilidade intencional da prova em contexto de demonstração).
+     NOTA: localStorage foi explicitamente rejeitado por persistência
+     insegura entre sessões (contaminação de perícias futuras). */
+  root.window.UNIFED_saveSubject = function(nif, nome) {
+    try {
+      sessionStorage.setItem('UNIFED_NIF',  nif  || '');
+      sessionStorage.setItem('UNIFED_NOME', nome || '');
+    } catch(e) { /* sessionStorage indisponível em modo privado — continuar */ }
+  };
+  root.window.UNIFED_loadSubject = function() {
+    try {
+      return {
+        nif:  sessionStorage.getItem('UNIFED_NIF')  || '',
+        nome: sessionStorage.getItem('UNIFED_NOME') || ''
+      };
+    } catch(e) { return { nif: '', nome: '' }; }
+  };
+  root.window.UNIFED_clearSubject = function() {
+    try { sessionStorage.removeItem('UNIFED_NIF'); sessionStorage.removeItem('UNIFED_NOME'); }
+    catch(e) {}
+  };
+
+  /* Auto-restaurar NIF/Nome nos campos visíveis ao carregar o painel */
+  document.addEventListener('DOMContentLoaded', function _restoreSubject() {
+    var s = root.window.UNIFED_loadSubject();
+    if (s.nif) {
+      var nifEl = document.getElementById('pure-subject-nif');
+      if (nifEl && nifEl.textContent === '---') nifEl.textContent = s.nif;
+    }
+    if (s.nome) {
+      var nomeEl = document.getElementById('pure-subject-name');
+      if (nomeEl && nomeEl.textContent === '---') nomeEl.textContent = s.nome;
+    }
+  });
+     Forçar _isHydrating = false em DOMContentLoaded para desbloquear
+     listeners que verificam este flag antes de executar.
+     Elimina o estado de espera infinita em ambientes sem splash screen. */
+  document.addEventListener('DOMContentLoaded', function _immHydration() {
+    root.window._isHydrating = false;
+    root.window._unifed_hydration_forced = true;
+    if (typeof root.window.cscLog === 'function') {
+      root.window.cscLog('[PROTO-1] Hydration forçada: _isHydrating=false', 'sys');
+    }
+  });
+
+  /* ── PROTO-2: EVENT LISTENER RE-ATTACHMENT via Event Delegation ────────
+     Delegação de eventos no document para todos os botões de exportação
+     e contraditório. Mitiga falhas de nó dinâmico (botões renderizados
+     após o carregamento inicial do DOM). */
+  document.addEventListener('click', function _delegatedClickHandler(e) {
+    var t = e.target.closest('[data-unifed-action]');
+    if (!t) return;
+    var action = t.getAttribute('data-unifed-action');
+    switch (action) {
+      case 'export-pdf':
+        if (typeof root.window.exportPDF === 'function') root.window.exportPDF();
+        else _exportFallback('PDF');
+        break;
+      case 'export-docx':
+        if (typeof root.window.exportDOCX === 'function') root.window.exportDOCX();
+        else _exportFallback('DOCX');
+        break;
+      case 'export-json':
+        _exportBlobJSON();
+        break;
+      case 'export-csv':
+        _exportBlobCSV();
+        break;
+      case 'unlock-panel':
+        _forceUnlockAll();
+        break;
+    }
+  });
+
+  /* ── PROTO-3: STATIC EXPORT BUTTONS INJECTION ──────────────────────────
+     Injectar botões de exportação como nós HTML estáticos no DOM.
+     Não depende de innerHTML condicional nem de validação de dados externa. */
+  function _injectStaticExportBar() {
+    if (document.getElementById('unifed-static-export-bar')) return; /* idempotente */
+    var bar = document.createElement('div');
+    bar.id = 'unifed-static-export-bar';
+    bar.style.cssText = 'position:fixed;bottom:16px;right:16px;display:flex;flex-direction:column;gap:8px;z-index:9000;';
+    var buttons = [
+      { action:'export-json', label:'⬇ JSON',  color:'rgba(0,229,255,.9)',  bg:'rgba(0,229,255,.12)' },
+      { action:'export-csv',  label:'⬇ CSV',   color:'rgba(99,153,34,.9)',  bg:'rgba(99,153,34,.12)' },
+      { action:'export-pdf',  label:'⬇ PDF',   color:'rgba(240,80,80,.9)',  bg:'rgba(240,80,80,.12)' },
+      { action:'unlock-panel',label:'🔓 Force Unlock', color:'rgba(186,117,23,.9)', bg:'rgba(186,117,23,.12)' }
+    ];
+    buttons.forEach(function(b) {
+      var btn = document.createElement('button');
+      btn.setAttribute('data-unifed-action', b.action);
+      btn.style.cssText = 'padding:8px 14px;font-size:11px;font-family:var(--font-mono,monospace);' +
+        'letter-spacing:.08em;background:' + b.bg + ';border:0.5px solid ' + b.color + ';' +
+        'border-radius:4px;color:' + b.color + ';cursor:pointer;white-space:nowrap;' +
+        'backdrop-filter:blur(12px);';
+      btn.textContent = b.label;
+      bar.appendChild(btn);
+    });
+    document.body.appendChild(bar);
+  }
+
+  /* ── PROTO-4: BLOB URL GENERATION ─────────────────────────────────────
+     Geração local de ficheiros via URL.createObjectURL(new Blob(...)).
+     Zero dependência de rotas de backend. */
+  function _exportBlobJSON() {
+    var data = root.window.UNIFEDSystem || {};
+    var json = JSON.stringify(data, null, 2);
+    var blob = new Blob([json], { type: 'application/json' });
+    _downloadBlob(blob, 'unifed_export_' + _ts() + '.json');
+  }
+
+  function _exportBlobCSV() {
+    var docs = (root.window.UNIFEDSystem && root.window.UNIFEDSystem.documents) || {};
+    var rows = ['ID;Tipo;Valor;Data'];
+    Object.keys(docs).forEach(function(k) {
+      var d = docs[k];
+      if (d && d.totals) {
+        rows.push([k, 'totals', JSON.stringify(d.totals), _ts()].join(';'));
+      }
+    });
+    var blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8' });
+    _downloadBlob(blob, 'unifed_export_' + _ts() + '.csv');
+  }
+
+  function _downloadBlob(blob, filename) {
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function() { URL.revokeObjectURL(url); document.body.removeChild(a); }, 1000);
+  }
+
+  function _exportFallback(type) {
+    alert('[UNIFED] Motor de exportação ' + type + ' não carregado. Utilize o botão JSON/CSV para exportação via Blob URL.');
+  }
+
+  /* ── PROTO-5: WEB WORKER PARA HASH SHA-256 (Off-Main-Thread) ──────────
+     Delegar cálculo de hashes para Web Worker via Blob URL inline.
+     Evita bloqueio da main thread durante processamento de BigData.
+     NOTA: SubtleCrypto está disponível em Workers em contexto seguro. */
+  var _workerBlob = new Blob([
+    '(function(){' +
+    'self.onmessage = async function(e){' +
+    '  var buf = e.data.buffer;' +
+    '  try{' +
+    '    var hb = await crypto.subtle.digest("SHA-256", buf);' +
+    '    var hex = Array.from(new Uint8Array(hb)).map(function(b){return b.toString(16).padStart(2,"0");}).join("");' +
+    '    self.postMessage({id:e.data.id, hash:hex, error:null});' +
+    '  }catch(err){' +
+    '    self.postMessage({id:e.data.id, hash:null, error:err.message});' +
+    '  }' +
+    '};' +
+    '})();'
+  ], { type: 'text/javascript' });
+
+  var _workerURL = URL.createObjectURL(_workerBlob);
+
+  /* API pública: computar hash em background */
+  root.window.UNIFED_hashWorker = {
+    _worker: null,
+    _pending: {},
+    _get: function() {
+      if (!this._worker) {
+        this._worker = new Worker(_workerURL);
+        var self = this;
+        this._worker.onmessage = function(e) {
+          var cb = self._pending[e.data.id];
+          if (cb) { cb(e.data.hash, e.data.error); delete self._pending[e.data.id]; }
+        };
+      }
+      return this._worker;
+    },
+    compute: function(arrayBuffer, callback) {
+      var id = 'h_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+      this._pending[id] = callback;
+      /* Transferência de posse do buffer — zero-copy */
+      this._get().postMessage({ id: id, buffer: arrayBuffer }, [arrayBuffer]);
+    }
+  };
+
+  /* ── PROTO-6: VIRTUAL SCROLLING (DOM Virtualization) ──────────────────
+     Renderização apenas dos ~20 nós visíveis no viewport.
+     Para listas de evidências com 1M+ registos. */
+  root.window.UNIFED_VirtualList = function(container, items, rowHeight, renderFn) {
+    if (!container) return;
+    var total = items.length;
+    var visible = Math.ceil(container.clientHeight / rowHeight) + 4; /* buffer */
+    var scrollTop = 0;
+
+    var spacer = document.createElement('div');
+    spacer.style.height = (total * rowHeight) + 'px';
+    spacer.style.position = 'relative';
+    container.appendChild(spacer);
+
+    var pool = [];
+    for (var i = 0; i < visible; i++) {
+      var node = document.createElement('div');
+      node.style.cssText = 'position:absolute;width:100%;height:' + rowHeight + 'px;';
+      spacer.appendChild(node);
+      pool.push(node);
+    }
+
+    function _render() {
+      var startIdx = Math.max(0, Math.floor(scrollTop / rowHeight) - 2);
+      pool.forEach(function(node, i) {
+        var idx = startIdx + i;
+        if (idx >= total) { node.style.display = 'none'; return; }
+        node.style.display = '';
+        node.style.top = (idx * rowHeight) + 'px';
+        renderFn(node, items[idx], idx);
+      });
+    }
+
+    container.addEventListener('scroll', function() {
+      scrollTop = container.scrollTop;
+      requestAnimationFrame(_render);
+    });
+
+    _render();
+    return { refresh: _render };
+  };
+
+  /* ── PROTO-7: MEMORY — TypedArray para dados binários ─────────────────
+     Substituir Arrays genéricos por Uint8Array para buffers de evidências.
+     Reduz pressão sobre o GC em ciclos de processamento de BigData. */
+  root.window.UNIFED_readFileChunked = function(file, chunkSize, onChunk, onDone) {
+    chunkSize = chunkSize || 2 * 1024 * 1024; /* 2 MB por chunk */
+    var offset = 0;
+
+    function readNext() {
+      if (offset >= file.size) { if (onDone) onDone(); return; }
+      var slice = file.slice(offset, offset + chunkSize);
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        /* Uint8Array — zero-copy TypedArray sobre o buffer */
+        var chunk = new Uint8Array(e.target.result);
+        onChunk(chunk, offset);
+        offset += chunkSize;
+        requestAnimationFrame(readNext); /* yield à main thread */
+      };
+      reader.readAsArrayBuffer(slice);
+    }
+    readNext();
+  };
+
+  /* ── FORCE UNLOCK ALL ─────────────────────────────────────────────────
+     Botão de emergência para reunião: remove todos os bloqueios CSS. */
+  function _forceUnlockAll() {
+    document.querySelectorAll('.zero-state, .locked, .unifed-hidden-until-analysis').forEach(function(el) {
+      el.classList.remove('zero-state', 'locked', 'unifed-hidden-until-analysis');
+      el.classList.add('unlocked', 'forensic-revealed');
+    });
+    root.window._isHydrating = false;
+    if (typeof root.window.cscLog === 'function') {
+      root.window.cscLog('[FORCE-UNLOCK] Todos os bloqueios CSS removidos para demonstração.', 'sys');
+    }
+  }
+  root.window.UNIFED_forceUnlockAll = _forceUnlockAll;
+
+  function _ts() { return new Date().toISOString().replace(/[:.]/g,'-').slice(0,19); }
+
+  /* ── ARRANQUE ─────────────────────────────────────────────────────── */
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', _injectStaticExportBar);
+  } else {
+    _injectStaticExportBar();
+  }
+
+  console.info('[UNIFED] Runtime Patch v13.12.3 · Protocolos 1-7 instalados.');
+
+})(window);
 </script>
 </body>
 </html>
